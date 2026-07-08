@@ -19,18 +19,25 @@ without walking to the pump house.
 ## System overview
 
 ```
-[Pump + sensors] ── [Controller (ESP32)] ── WiFi/GSM ── [Cloud broker] ── [Android app]
+[Pump + sensors] ── [Controller (GSM)] ── MQTT ── [AWS IoT Core] ── [Android app]
+                                                       │
+                                    IoT Rules → Timestream (history)
+                                              → Lambda → FCM (push alerts)
 ```
 
-- **Controller** reads pump electricals and status, executes protection logic
-  locally (dry-run / overload cutoff must not depend on connectivity), and
-  publishes telemetry.
-- **Android app** shows live status, history, and alerts, and sends start/stop
-  commands.
+- **Controller** reads pump electricals (3-phase voltages/currents, phase
+  sequence) and status, executes protection logic locally (cutoffs must not
+  depend on connectivity), publishes telemetry to
+  `pumps/<THING_NAME>/telemetry`, and follows AWS IoT Device Shadow deltas
+  for remote ON/OFF (see `android/README.md` §3 for the exact contract).
+- **Android app** (`android/`) — Kotlin + Jetpack Compose, live MQTT dashboard,
+  shadow-based pump control, Timestream-backed history charts, FCM alerts.
+  Setup instructions in `android/README.md`; AWS-side pieces (IoT policy,
+  Lambdas) in `android/aws-setup/`.
 
 ## Status
 
-- [ ] Android app — design complete (see `docs/android-app-design.md`), implementation pending
-- [ ] Firmware — not started
+- [x] Android app — implemented (`android/`), needs AWS IDs filled into `AwsConfig.kt`
+- [ ] AWS setup — Cognito pool, IoT policy, Timestream rule, Lambdas, Firebase project
+- [ ] Firmware — not started (must implement the telemetry/shadow contract)
 - [ ] Hardware — not started
-- [ ] Cloud/broker selection — not decided
