@@ -1,0 +1,23 @@
+# Android
+android/**/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/captures/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# ESP-IDF / firmware
+firmware/**/build/
+firmware/**/sdkconfig.old
+firmware/**/managed_components/
+firmware/**/dependencies.lock
+
+# General
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.env
