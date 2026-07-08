@@ -12,6 +12,7 @@ without walking to the pump house.
 | Directory | Contents |
 |---|---|
 | `android/` | Android app (monitoring + control UI) |
+| `web/` | Web dashboard design mockup (static HTML, demo data) |
 | `firmware/` | Pump-side controller firmware (ESP32 / ESP-IDF) |
 | `hardware/` | Schematics, PCB design files, BOM |
 | `docs/` | System design, app design, protocol specs |
