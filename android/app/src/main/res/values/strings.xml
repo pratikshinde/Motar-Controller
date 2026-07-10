@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pump Monitor</string>
+
+    <!-- Bottom navigation -->
+    <string name="tab_monitor">Monitor</string>
+    <string name="tab_history">History</string>
+    <string name="tab_alerts">Alerts</string>
+
+    <!-- Connection / pump status -->
+    <string name="status_running">RUNNING</string>
+    <string name="status_stopped">STOPPED</string>
+    <string name="status_connecting">CONNECTING</string>
+    <string name="status_reconnecting">RECONNECTING</string>
+    <string name="status_disconnected">OFFLINE</string>
+
+    <!-- Dashboard cards -->
+    <string name="card_line_voltages">LINE VOLTAGES (440V)</string>
+    <string name="volts">Volts</string>
+    <string name="phase_present">PRESENT</string>
+    <string name="phase_missing">MISSING</string>
+    <string name="card_phase_currents">PHASE CURRENTS</string>
+    <string name="card_phase_sequence">PHASE SEQUENCE</string>
+    <string name="seq_correct">✓ CORRECT</string>
+    <string name="seq_reverse">✕ REVERSE</string>
+    <string name="seq_no_data">NO DATA</string>
+    <string name="card_run_time">RUN TIME</string>
+    <string name="total_run_time">TOTAL RUN TIME</string>
+    <string name="last_cycle_run_time">LAST CYCLE RUN TIME</string>
+    <string name="hms_caption">Hours : Minutes : Seconds</string>
+    <string name="card_pump_control">PUMP CONTROL</string>
+    <string name="pump_on">ON</string>
+    <string name="pump_off">OFF</string>
+    <string name="pump_unknown">UNKNOWN</string>
+    <string name="waiting_for_pump">WAITING FOR PUMP…</string>
+    <string name="tap_to_toggle">Tap to toggle • command goes via Device Shadow</string>
+    <string name="start_pump">Start pump</string>
+    <string name="stop_pump">Stop pump</string>
+    <string name="card_faults">PUMP FAULTS</string>
+    <string name="all_clear">ALL CLEAR</string>
+
+    <!-- History -->
+    <string name="history_title">History</string>
+    <string name="history_error">Couldn\'t load history: %1$s</string>
+    <string name="history_no_data">No data yet.</string>
+
+    <!-- Alerts -->
+    <string name="alerts_title">Alerts</string>
+    <string name="alerts_description">Push notifications arrive even when the app is closed. Recent alerts received while the app is open appear below.</string>
+    <string name="alerts_empty">No alerts in this session.</string>
+
+    <!-- Login (phone OTP) -->
+    <string name="login_title">Sign in</string>
+    <string name="login_subtitle">Control and monitor your pumps from anywhere</string>
+    <string name="login_phone_label">Mobile number</string>
+    <string name="login_send_otp">SEND OTP</string>
+    <string name="login_otp_label">Enter the 6-digit OTP</string>
+    <string name="login_otp_sent">OTP sent to %1$s</string>
+    <string name="login_verify">VERIFY</string>
+    <string name="login_resend">Resend OTP</string>
+    <string name="login_change_number">Change number</string>
+    <string name="login_invalid_phone">Enter a valid 10-digit mobile number</string>
+    <string name="login_invalid_otp">Enter the 6-digit OTP</string>
+    <string name="login_failed">Verification failed: %1$s</string>
+    <string name="login_demo_notice">Firebase is not configured (google-services.json missing) — OTP login is unavailable.</string>
+    <string name="login_demo_continue">CONTINUE IN DEMO MODE</string>
+
+    <!-- Pump list -->
+    <string name="pumps_title">My Pumps</string>
+    <string name="pumps_subtitle">Select a pump to open its dashboard</string>
+    <string name="pumps_empty">No pumps are linked to this account yet. Contact your installer.</string>
+    <string name="pumps_error">Couldn\'t load your pumps: %1$s — showing the default pump.</string>
+    <string name="pump_device_id">Device: %1$s</string>
+    <string name="sign_out">Sign out</string>
+
+    <!-- Language picker -->
+    <string name="language">Language</string>
+    <string name="language_choose">Choose language</string>
+    <string name="cancel">Cancel</string>
+</resources>

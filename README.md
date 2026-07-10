@@ -39,6 +39,7 @@ without walking to the pump house.
 ## Status
 
 - [x] Android app — implemented (`android/`), needs AWS IDs filled into `AwsConfig.kt`
-- [ ] AWS setup — Cognito pool, IoT policy, Timestream rule, Lambdas, Firebase project
+- [x] Android app v2 — phone OTP login (Firebase Auth), multi-pump list per customer, 6 languages (en/hi/kn/mr/ta/te)
+- [ ] AWS setup — Cognito pool, IoT policy, Timestream rule, Lambdas (history/alerts/pumps), DynamoDB `PumpOwners`, Firebase project
 - [ ] Firmware — not started (must implement the telemetry/shadow contract)
 - [ ] Hardware — not started

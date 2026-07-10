@@ -26,21 +26,24 @@ object AwsConfig {
      */
     const val IOT_ENDPOINT = "REPLACE-ME-ats.iot.ap-south-1.amazonaws.com"
 
-    /** IoT Thing name of the pump controller. */
-    const val THING_NAME = "WaterPump01"
-
-    /** Topic the pump firmware publishes telemetry JSON to. */
-    const val TELEMETRY_TOPIC = "pumps/$THING_NAME/telemetry"
-
-    /** Device Shadow topics (classic shadow). */
-    const val SHADOW_UPDATE = "\$aws/things/$THING_NAME/shadow/update"
-    const val SHADOW_UPDATE_ACCEPTED = "\$aws/things/$THING_NAME/shadow/update/accepted"
-    const val SHADOW_GET = "\$aws/things/$THING_NAME/shadow/get"
-    const val SHADOW_GET_ACCEPTED = "\$aws/things/$THING_NAME/shadow/get/accepted"
+    /**
+     * Fallback pump shown when the pumps API isn't deployed/reachable, so the
+     * app stays usable with a single hardcoded pump during bring-up.
+     */
+    const val DEFAULT_THING_NAME = "WaterPump01"
 
     /**
-     * API Gateway base URL for historical telemetry (see aws-setup/README).
+     * API Gateway base URL — one HTTP API serving GET /history (charts) and
+     * GET /pumps (the signed-in user's pump list). See aws-setup/.
      * e.g. "https://abc123.execute-api.ap-south-1.amazonaws.com/prod/"
      */
-    const val HISTORY_API_BASE_URL = "https://REPLACE-ME.execute-api.ap-south-1.amazonaws.com/prod/"
+    const val API_BASE_URL = "https://REPLACE-ME.execute-api.ap-south-1.amazonaws.com/prod/"
+
+    // ---- Per-pump MQTT topics (thing = the pump's IoT Thing name) ----
+
+    fun telemetryTopic(thing: String) = "pumps/$thing/telemetry"
+    fun shadowUpdate(thing: String) = "\$aws/things/$thing/shadow/update"
+    fun shadowUpdateAccepted(thing: String) = "\$aws/things/$thing/shadow/update/accepted"
+    fun shadowGet(thing: String) = "\$aws/things/$thing/shadow/get"
+    fun shadowGetAccepted(thing: String) = "\$aws/things/$thing/shadow/get/accepted"
 }

@@ -49,6 +49,20 @@ data class Telemetry(
     @SerializedName("faults") val faults: List<String> = emptyList(),
 )
 
+/** A pump registered to the signed-in user, from GET /pumps. */
+data class Pump(
+    /** IoT Thing name — drives MQTT topics, shadow, history and FCM topic. */
+    @SerializedName("thingName") val thingName: String,
+    /** Friendly display name, e.g. "Borewell Pump". */
+    @SerializedName("name") val name: String,
+    /** Optional, e.g. "North field". */
+    @SerializedName("location") val location: String = "",
+)
+
+data class PumpsResponse(
+    @SerializedName("pumps") val pumps: List<Pump>,
+)
+
 /** One point returned by the history API. */
 data class HistoryPoint(
     @SerializedName("ts") val timestamp: Long,

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">పంప్ మానిటర్</string>
+
+    <string name="tab_monitor">మానిటర్</string>
+    <string name="tab_history">చరిత్ర</string>
+    <string name="tab_alerts">హెచ్చరికలు</string>
+
+    <string name="status_running">నడుస్తోంది</string>
+    <string name="status_stopped">ఆగింది</string>
+    <string name="status_connecting">కనెక్ట్ అవుతోంది</string>
+    <string name="status_reconnecting">మళ్లీ కనెక్ట్ అవుతోంది</string>
+    <string name="status_disconnected">ఆఫ్‌లైన్</string>
+
+    <string name="card_line_voltages">లైన్ వోల్టేజీలు (440V)</string>
+    <string name="volts">వోల్ట్</string>
+    <string name="phase_present">ఉంది</string>
+    <string name="phase_missing">లేదు</string>
+    <string name="card_phase_currents">ఫేజ్ కరెంట్లు</string>
+    <string name="card_phase_sequence">ఫేజ్ క్రమం</string>
+    <string name="seq_correct">✓ సరైనది</string>
+    <string name="seq_reverse">✕ తిరగబడింది</string>
+    <string name="seq_no_data">డేటా లేదు</string>
+    <string name="card_run_time">నడిచిన సమయం</string>
+    <string name="total_run_time">మొత్తం నడిచిన సమయం</string>
+    <string name="last_cycle_run_time">చివరి సైకిల్ సమయం</string>
+    <string name="hms_caption">గంటలు : నిమిషాలు : సెకన్లు</string>
+    <string name="card_pump_control">పంప్ నియంత్రణ</string>
+    <string name="pump_on">ఆన్</string>
+    <string name="pump_off">ఆఫ్</string>
+    <string name="pump_unknown">తెలియదు</string>
+    <string name="waiting_for_pump">పంప్ కోసం వేచి ఉంది…</string>
+    <string name="tap_to_toggle">ఆన్/ఆఫ్ చేయడానికి నొక్కండి</string>
+    <string name="start_pump">పంప్ ఆన్ చేయండి</string>
+    <string name="stop_pump">పంప్ ఆఫ్ చేయండి</string>
+    <string name="card_faults">పంప్ లోపాలు</string>
+    <string name="all_clear">అంతా బాగుంది</string>
+
+    <string name="history_title">చరిత్ర</string>
+    <string name="history_error">చరిత్ర లోడ్ కాలేదు: %1$s</string>
+    <string name="history_no_data">ఇంకా డేటా లేదు.</string>
+
+    <string name="alerts_title">హెచ్చరికలు</string>
+    <string name="alerts_description">యాప్ మూసివేసినా నోటిఫికేషన్లు వస్తాయి. యాప్ తెరిచి ఉన్నప్పుడు వచ్చిన తాజా హెచ్చరికలు కింద కనిపిస్తాయి.</string>
+    <string name="alerts_empty">ఈ సెషన్‌లో హెచ్చరికలు లేవు.</string>
+
+    <string name="login_title">సైన్ ఇన్</string>
+    <string name="login_subtitle">మీ పంపులను ఎక్కడి నుండైనా నియంత్రించండి</string>
+    <string name="login_phone_label">మొబైల్ నంబర్</string>
+    <string name="login_send_otp">OTP పంపండి</string>
+    <string name="login_otp_label">6 అంకెల OTP నమోదు చేయండి</string>
+    <string name="login_otp_sent">%1$s కు OTP పంపబడింది</string>
+    <string name="login_verify">ధృవీకరించండి</string>
+    <string name="login_resend">OTP మళ్లీ పంపండి</string>
+    <string name="login_change_number">నంబర్ మార్చండి</string>
+    <string name="login_invalid_phone">సరైన 10 అంకెల మొబైల్ నంబర్ నమోదు చేయండి</string>
+    <string name="login_invalid_otp">6 అంకెల OTP నమోదు చేయండి</string>
+    <string name="login_failed">ధృవీకరణ విఫలమైంది: %1$s</string>
+    <string name="login_demo_notice">Firebase కాన్ఫిగర్ కాలేదు — OTP లాగిన్ అందుబాటులో లేదు.</string>
+    <string name="login_demo_continue">డెమో మోడ్‌లో కొనసాగండి</string>
+
+    <string name="pumps_title">నా పంపులు</string>
+    <string name="pumps_subtitle">డాష్‌బోర్డ్ తెరవడానికి పంప్ ఎంచుకోండి</string>
+    <string name="pumps_empty">ఈ ఖాతాకు ఇంకా పంపులు అనుసంధానించబడలేదు. మీ ఇన్‌స్టాలర్‌ను సంప్రదించండి.</string>
+    <string name="pumps_error">పంపులు లోడ్ కాలేదు: %1$s — డిఫాల్ట్ పంప్ చూపబడుతోంది.</string>
+    <string name="pump_device_id">పరికరం: %1$s</string>
+    <string name="sign_out">సైన్ అవుట్</string>
+
+    <string name="language">భాష</string>
+    <string name="language_choose">భాషను ఎంచుకోండి</string>
+    <string name="cancel">రద్దు</string>
+</resources>

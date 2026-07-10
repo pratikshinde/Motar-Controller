@@ -43,9 +43,10 @@ dependencies {
     implementation("com.amazonaws:aws-android-sdk-iot:2.77.0")
     implementation("com.amazonaws:aws-android-sdk-core:2.77.0")
 
-    // --- Firebase Cloud Messaging (push alerts) ---
+    // --- Firebase: Cloud Messaging (push alerts) + Auth (phone OTP login) ---
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-auth")
 
     // --- REST API for history (API Gateway + Lambda) ---
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

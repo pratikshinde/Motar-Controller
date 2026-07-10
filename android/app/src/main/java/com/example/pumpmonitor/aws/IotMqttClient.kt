@@ -53,7 +53,15 @@ class IotMqttClient(context: Context) {
     private val _shadowReported = MutableStateFlow<JsonObject?>(null)
     val shadowReported: StateFlow<JsonObject?> = _shadowReported
 
-    fun connect() {
+    /** IoT Thing name of the pump this client is currently attached to. */
+    private var thingName: String = AwsConfig.DEFAULT_THING_NAME
+
+    fun connect(thingName: String) {
+        this.thingName = thingName
+        // Reset per-pump state so a previously viewed pump's data never leaks
+        // into the next pump's dashboard.
+        _telemetryJson.value = null
+        _shadowReported.value = null
         _connectionState.value = ConnectionState.CONNECTING
         try {
             mqttManager.connect(credentialsProvider,
@@ -80,14 +88,14 @@ class IotMqttClient(context: Context) {
 
     /** Subscribe + request current shadow every time we (re)connect. */
     private fun onConnected() {
-        subscribe(AwsConfig.TELEMETRY_TOPIC) { payload ->
+        subscribe(AwsConfig.telemetryTopic(thingName)) { payload ->
             _telemetryJson.value = payload
         }
-        subscribe(AwsConfig.SHADOW_GET_ACCEPTED) { payload -> parseShadow(payload) }
-        subscribe(AwsConfig.SHADOW_UPDATE_ACCEPTED) { payload -> parseShadow(payload) }
+        subscribe(AwsConfig.shadowGetAccepted(thingName)) { payload -> parseShadow(payload) }
+        subscribe(AwsConfig.shadowUpdateAccepted(thingName)) { payload -> parseShadow(payload) }
 
         // Ask for the current shadow document so the UI is never stale.
-        publish(AwsConfig.SHADOW_GET, "")
+        publish(AwsConfig.shadowGet(thingName), "")
     }
 
     private fun subscribe(topic: String, onMessage: (String) -> Unit) {
@@ -117,7 +125,7 @@ class IotMqttClient(context: Context) {
      */
     fun setDesiredState(desired: Map<String, Any>) {
         val doc = mapOf("state" to mapOf("desired" to desired))
-        publish(AwsConfig.SHADOW_UPDATE, gson.toJson(doc))
+        publish(AwsConfig.shadowUpdate(thingName), gson.toJson(doc))
     }
 
     fun publish(topic: String, message: String) {

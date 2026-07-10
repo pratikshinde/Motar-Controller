@@ -21,12 +21,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,21 +41,24 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pumpmonitor.R
 import com.example.pumpmonitor.aws.ConnectionState
 import com.example.pumpmonitor.data.Telemetry
 import com.example.pumpmonitor.ui.PumpViewModel
 import com.example.pumpmonitor.ui.theme.Neon
 
 @Composable
-fun DashboardScreen(vm: PumpViewModel) {
+fun DashboardScreen(vm: PumpViewModel, onBack: () -> Unit = {}) {
     val conn by vm.connectionState.collectAsState()
     val t by vm.telemetry.collectAsState()
     val pumpOn by vm.reportedPumpOn.collectAsState()
     val pending by vm.commandPending.collectAsState()
+    val pump by vm.selectedPump.collectAsState()
 
     Column(
         Modifier
@@ -63,7 +68,13 @@ fun DashboardScreen(vm: PumpViewModel) {
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        HeaderCard(conn, running = pumpOn == true, gsmRssi = t?.gsmRssi)
+        HeaderCard(
+            conn,
+            running = pumpOn == true,
+            gsmRssi = t?.gsmRssi,
+            pumpName = pump?.name ?: stringResource(R.string.app_name),
+            onBack = onBack,
+        )
         LineVoltagesCard(t)
         PhaseCurrentsCard(t)
         PhaseSequenceCard(reverse = t?.seqReverse == true, hasData = t != null)
@@ -76,15 +87,28 @@ fun DashboardScreen(vm: PumpViewModel) {
 /* ---------------------------------------------------------- header */
 
 @Composable
-private fun HeaderCard(conn: ConnectionState, running: Boolean, gsmRssi: Int?) {
+private fun HeaderCard(
+    conn: ConnectionState,
+    running: Boolean,
+    gsmRssi: Int?,
+    pumpName: String,
+    onBack: () -> Unit,
+) {
     NeonCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = Neon.Cyan,
+                )
+            }
             Column(Modifier.weight(1f)) {
                 Text(
-                    "PUMP MONITOR",
+                    pumpName.uppercase(),
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     letterSpacing = 2.sp,
                 )
                 Text(
@@ -97,9 +121,11 @@ private fun HeaderCard(conn: ConnectionState, running: Boolean, gsmRssi: Int?) {
             }
             StatusPill(
                 label = when {
-                    conn != ConnectionState.CONNECTED -> conn.name
-                    running -> "RUNNING"
-                    else -> "STOPPED"
+                    conn == ConnectionState.CONNECTING -> stringResource(R.string.status_connecting)
+                    conn == ConnectionState.RECONNECTING -> stringResource(R.string.status_reconnecting)
+                    conn != ConnectionState.CONNECTED -> stringResource(R.string.status_disconnected)
+                    running -> stringResource(R.string.status_running)
+                    else -> stringResource(R.string.status_stopped)
                 },
                 color = when {
                     conn != ConnectionState.CONNECTED -> Neon.Yellow
@@ -164,7 +190,7 @@ private fun GsmBars(rssi: Int) {
 @Composable
 private fun LineVoltagesCard(t: Telemetry?) {
     NeonCard {
-        SectionTitle("⚡ LINE VOLTAGES (440V)")
+        SectionTitle("⚡ " + stringResource(R.string.card_line_voltages))
         Row(
             Modifier.fillMaxWidth().padding(top = 12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -203,14 +229,14 @@ private fun VoltageRing(label: String, volts: Float?, present: Boolean?, color: 
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold, fontSize = 17.sp,
                 )
-                Text("Volts", color = Neon.TextMuted, fontSize = 9.sp,
+                Text(stringResource(R.string.volts), color = Neon.TextMuted, fontSize = 9.sp,
                     fontFamily = FontFamily.Monospace)
             }
         }
         Spacer(Modifier.height(6.dp))
         val ok = present == true
         Text(
-            if (ok) "PRESENT" else "MISSING",
+            stringResource(if (ok) R.string.phase_present else R.string.phase_missing),
             color = if (ok) Neon.Green else Neon.Red,
             fontFamily = FontFamily.Monospace, fontSize = 10.sp,
             fontWeight = FontWeight.Bold, letterSpacing = 1.sp,
@@ -231,7 +257,7 @@ private const val MAX_CURRENT_A = 15f  // full-scale for the bars; set to your C
 @Composable
 private fun PhaseCurrentsCard(t: Telemetry?) {
     NeonCard {
-        SectionTitle("~ PHASE CURRENTS")
+        SectionTitle("~ " + stringResource(R.string.card_phase_currents))
         Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             CurrentBar("R", t?.iR, Neon.Red)
             CurrentBar("Y", t?.iY, Neon.Yellow)
@@ -284,7 +310,7 @@ private fun CurrentBar(phase: String, amps: Float?, color: Color) {
 @Composable
 private fun PhaseSequenceCard(reverse: Boolean, hasData: Boolean) {
     NeonCard {
-        SectionTitle("⟳ PHASE SEQUENCE")
+        SectionTitle("⟳ " + stringResource(R.string.card_phase_sequence))
         Column(
             Modifier.fillMaxWidth().padding(top = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -301,9 +327,9 @@ private fun PhaseSequenceCard(reverse: Boolean, hasData: Boolean) {
                     fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             }
             val (label, color) = when {
-                !hasData -> "NO DATA" to Neon.TextMuted
-                reverse -> "✕ REVERSE" to Neon.Red
-                else -> "✓ CORRECT" to Neon.Green
+                !hasData -> stringResource(R.string.seq_no_data) to Neon.TextMuted
+                reverse -> stringResource(R.string.seq_reverse) to Neon.Red
+                else -> stringResource(R.string.seq_correct) to Neon.Green
             }
             Text(
                 label, color = color, fontFamily = FontFamily.Monospace,
@@ -329,10 +355,10 @@ private fun formatHms(totalSec: Long): String {
 @Composable
 private fun RunTimeCard(t: Telemetry?) {
     NeonCard {
-        SectionTitle("◷ RUN TIME")
+        SectionTitle("◷ " + stringResource(R.string.card_run_time))
         Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            RunTimeRow("TOTAL RUN TIME", t?.totalRunSec, Neon.Cyan)
-            RunTimeRow("LAST CYCLE RUN TIME", t?.lastCycleRunSec, Neon.Orange)
+            RunTimeRow(stringResource(R.string.total_run_time), t?.totalRunSec, Neon.Cyan)
+            RunTimeRow(stringResource(R.string.last_cycle_run_time), t?.lastCycleRunSec, Neon.Orange)
         }
     }
 }
@@ -353,7 +379,7 @@ private fun RunTimeRow(label: String, sec: Long?, color: Color) {
                 color = color, fontSize = 26.sp, fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace,
             )
-            Text("Hours : Minutes : Seconds", color = Neon.TextMuted,
+            Text(stringResource(R.string.hms_caption), color = Neon.TextMuted,
                 fontSize = 10.sp, fontFamily = FontFamily.Monospace)
         }
     }
@@ -370,7 +396,7 @@ private fun PumpControlCard(pumpOn: Boolean?, pending: Boolean, onToggle: (Boole
         else -> Neon.Red
     }
     NeonCard {
-        SectionTitle("⏻ PUMP CONTROL")
+        SectionTitle("⏻ " + stringResource(R.string.card_pump_control))
         Column(
             Modifier.fillMaxWidth().padding(top = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -392,7 +418,7 @@ private fun PumpControlCard(pumpOn: Boolean?, pending: Boolean, onToggle: (Boole
             ) {
                 Icon(
                     Icons.Filled.PowerSettingsNew,
-                    contentDescription = if (on) "Stop pump" else "Start pump",
+                    contentDescription = stringResource(if (on) R.string.stop_pump else R.string.start_pump),
                     tint = color,
                     modifier = Modifier.size(56.dp),
                 )
@@ -400,18 +426,22 @@ private fun PumpControlCard(pumpOn: Boolean?, pending: Boolean, onToggle: (Boole
             if (pending) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = Neon.Yellow)
-                    Text("  WAITING FOR PUMP...", color = Neon.Yellow, fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace, letterSpacing = 1.sp)
+                    Text("  " + stringResource(R.string.waiting_for_pump), color = Neon.Yellow,
+                        fontSize = 11.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.sp)
                 }
             } else {
                 Text(
-                    when (pumpOn) { true -> "ON"; false -> "OFF"; null -> "UNKNOWN" },
+                    stringResource(when (pumpOn) {
+                        true -> R.string.pump_on
+                        false -> R.string.pump_off
+                        null -> R.string.pump_unknown
+                    }),
                     color = color, fontSize = 20.sp, fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace, letterSpacing = 4.sp,
                 )
             }
             Text(
-                "Tap to toggle • command goes via Device Shadow",
+                stringResource(R.string.tap_to_toggle),
                 color = Neon.TextMuted, fontSize = 10.sp, fontFamily = FontFamily.Monospace,
             )
         }
@@ -423,10 +453,10 @@ private fun PumpControlCard(pumpOn: Boolean?, pending: Boolean, onToggle: (Boole
 @Composable
 private fun FaultsCard(faults: List<String>) {
     NeonCard {
-        SectionTitle("⚠ PUMP FAULTS")
+        SectionTitle("⚠ " + stringResource(R.string.card_faults))
         if (faults.isEmpty()) {
             Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                Text("ALL CLEAR", color = Neon.Cyan, fontFamily = FontFamily.Monospace,
+                Text(stringResource(R.string.all_clear), color = Neon.Cyan, fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold, letterSpacing = 3.sp)
             }
         } else {

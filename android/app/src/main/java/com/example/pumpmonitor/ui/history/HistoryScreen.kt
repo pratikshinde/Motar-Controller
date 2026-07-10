@@ -24,7 +24,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.pumpmonitor.R
 import com.example.pumpmonitor.data.HistoryPoint
 import com.example.pumpmonitor.ui.PumpViewModel
 
@@ -50,7 +52,7 @@ fun HistoryScreen(vm: PumpViewModel) {
         Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("History", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.history_title), style = MaterialTheme.typography.titleLarge)
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             metrics.forEach { (key, label) ->
@@ -75,10 +77,13 @@ fun HistoryScreen(vm: PumpViewModel) {
             Column(Modifier.padding(16.dp)) {
                 when {
                     error != null -> Text(
-                        "Couldn't load history: $error\n\nCheck HISTORY_API_BASE_URL in AwsConfig.kt.",
+                        stringResource(R.string.history_error, error ?: ""),
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    points.isEmpty() -> Text("No data yet.", style = MaterialTheme.typography.bodySmall)
+                    points.isEmpty() -> Text(
+                        stringResource(R.string.history_no_data),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     else -> LineChart(points, Modifier.fillMaxWidth().height(240.dp))
                 }
             }

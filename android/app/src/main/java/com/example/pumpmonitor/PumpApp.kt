@@ -4,14 +4,14 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.example.pumpmonitor.aws.IotMqttClient
-import com.example.pumpmonitor.data.HistoryApi
+import com.example.pumpmonitor.data.BackendApi
 
 class PumpApp : Application() {
 
     lateinit var iot: IotMqttClient
         private set
 
-    val historyApi: HistoryApi by lazy { HistoryApi.create() }
+    val api: BackendApi by lazy { BackendApi.create() }
 
     override fun onCreate() {
         super.onCreate()

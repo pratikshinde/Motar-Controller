@@ -4,10 +4,13 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pumpmonitor.PumpApp
+import com.example.pumpmonitor.aws.AwsConfig
 import com.example.pumpmonitor.aws.ConnectionState
 import com.example.pumpmonitor.data.HistoryPoint
+import com.example.pumpmonitor.data.Pump
 import com.example.pumpmonitor.data.PumpAlert
 import com.example.pumpmonitor.data.Telemetry
+import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +24,66 @@ class PumpViewModel(app: Application) : AndroidViewModel(app) {
     private val pumpApp = app as PumpApp
     private val iot = pumpApp.iot
     private val gson = Gson()
+
+    // ------------------------------------------------ pump list
+
+    private val _pumps = MutableStateFlow<List<Pump>>(emptyList())
+    val pumps: StateFlow<List<Pump>> = _pumps
+
+    private val _pumpsLoading = MutableStateFlow(false)
+    val pumpsLoading: StateFlow<Boolean> = _pumpsLoading
+
+    private val _pumpsError = MutableStateFlow<String?>(null)
+    val pumpsError: StateFlow<String?> = _pumpsError
+
+    private val _selectedPump = MutableStateFlow<Pump?>(null)
+    val selectedPump: StateFlow<Pump?> = _selectedPump
+
+    /** userId = signed-in phone number in E.164 (or "demo" without Firebase). */
+    fun loadPumps(userId: String) {
+        viewModelScope.launch {
+            _pumpsLoading.value = true
+            runCatching { pumpApp.api.getPumps(userId) }
+                .onSuccess {
+                    _pumps.value = it.pumps
+                    _pumpsError.value = null
+                }
+                .onFailure {
+                    // Pumps API not deployed/reachable yet — stay usable with
+                    // the single default pump from AwsConfig.
+                    _pumps.value = listOf(
+                        Pump(thingName = AwsConfig.DEFAULT_THING_NAME, name = "Water Pump")
+                    )
+                    _pumpsError.value = it.message ?: it.javaClass.simpleName
+                }
+            _pumpsLoading.value = false
+            subscribeAlertTopics()
+        }
+    }
+
+    /** One FCM topic per owned pump so alert pushes arrive for all of them. */
+    private fun subscribeAlertTopics() {
+        runCatching {
+            val fcm = FirebaseMessaging.getInstance()
+            _pumps.value.forEach { fcm.subscribeToTopic("pump-${it.thingName}") }
+        }
+    }
+
+    fun selectPump(pump: Pump) {
+        _selectedPump.value = pump
+        _commandPending.value = false
+        _history.value = emptyList()
+        _historyError.value = null
+        iot.disconnect()
+        iot.connect(pump.thingName)
+    }
+
+    fun closePump() {
+        iot.disconnect()
+        _selectedPump.value = null
+    }
+
+    // -------------------------------------- live data (selected pump)
 
     val connectionState: StateFlow<ConnectionState> = iot.connectionState
 
@@ -52,7 +115,6 @@ class PumpViewModel(app: Application) : AndroidViewModel(app) {
     val alerts: StateFlow<List<PumpAlert>> = _alerts
 
     init {
-        iot.connect()
         // Clear "pending" once the shadow reports any change.
         viewModelScope.launch {
             iot.shadowReported.collect { if (it != null) _commandPending.value = false }
@@ -65,8 +127,9 @@ class PumpViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun loadHistory(metric: String = "vRY", hours: Int = 24) {
+        val thing = _selectedPump.value?.thingName ?: return
         viewModelScope.launch {
-            runCatching { pumpApp.historyApi.getHistory(metric = metric, hours = hours) }
+            runCatching { pumpApp.api.getHistory(pumpId = thing, metric = metric, hours = hours) }
                 .onSuccess {
                     _history.value = it.points
                     _historyError.value = null
