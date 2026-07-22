@@ -208,7 +208,7 @@ app.post('/api/users', async (req, res) => {
 app.post('/api/alerts/send', async (req, res) => {
   try {
     const { phone_number, template_key, vars, language, channel } = req.body;
-    const phone = phone_number || '+919876543210';
+    const phone = phone_number || '+919741323830';
     const tKey = template_key || 'SINGLE_PHASING';
     const lang = language || 'hi';
     const targetChannel = channel || 'BOTH';
