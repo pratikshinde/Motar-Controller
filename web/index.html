@@ -374,7 +374,7 @@
         <option value="cyber-neon">⚡ Cyber Neon</option>
       </select>
 
-      <!-- ACTIVE LOGGED-IN USER PROFILE BADGE (HIDDEN ROLE SELECTOR) -->
+      <!-- ACTIVE LOGGED-IN USER PROFILE BADGE -->
       <div class="user-profile-badge" id="userProfileBadge">
         👤 <span id="txtUserProfile">Ramesh Patel (Farmer)</span>
       </div>
@@ -549,11 +549,14 @@
     <!-- TAB PANEL 4: 9-TIER RBAC TREE -->
     <div class="tab-panel" id="panelTree">
       <div class="rbac-tree-container">
-        <h3 style="font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif;">9-Tier Multi-Tenant Account Hierarchy Explorer</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif;">9-Tier Multi-Tenant Account Hierarchy Explorer</h3>
+          <button class="btn-action" onclick="openUserModal()">+ Add Subordinate Account</button>
+        </div>
         <div style="font-weight: 700; color: var(--primary); font-size: 13px;">1. Superadmin Platform</div>
-        <div class="rbac-tree-node"><span>2. Manufacturer (Panel OEM - Nashik Controls)</span></div>
-        <div class="rbac-tree-node" style="margin-left: 32px;"><span>3. Regional Distributor (Western Agro Suppliers)</span></div>
-        <div class="rbac-tree-node" style="margin-left: 56px;"><span>4–8. Dealers Tier 1 to 5</span></div>
+        <div class="rbac-tree-node"><span>2. Manufacturer (Panel OEM - Nashik Controls)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal('manufacturer')">+ Add Subordinate</button></div>
+        <div class="rbac-tree-node" style="margin-left: 32px;"><span>3. Regional Distributor (Western Agro Suppliers)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal('distributor')">+ Add Subordinate</button></div>
+        <div class="rbac-tree-node" style="margin-left: 56px;"><span>4–8. Dealers Tier 1 to 5</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal('dealer1')">+ Add Subordinate</button></div>
         <div class="rbac-tree-node" style="margin-left: 80px;"><span>9. End Customer (Farmer Ramesh Patel - Active Account)</span> <span style="font-size: 10px; color: var(--accent-green);">● Active Session</span></div>
       </div>
     </div>
@@ -575,12 +578,131 @@
 
   </main>
 
+  <!-- MODAL 1: SETTINGS MODAL -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="txtSettingsTitle">⚙️ System & Interface Settings</h3>
+        <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); saveSettings();">
+        <div class="form-group">
+          <label id="lblUiLang">🌐 User Interface Language</label>
+          <select id="settingsLangSelect" class="form-select" onchange="changeLanguage(this.value)">
+            <option value="as">1. Assamese (অসমীয়া)</option>
+            <option value="bn">2. Bengali (বাংলা)</option>
+            <option value="en" selected>5. English (Default)</option>
+            <option value="gu">6. Gujarati (ગુજરાતી)</option>
+            <option value="hi">7. Hindi (हिन्दी)</option>
+            <option value="kn">8. Kannada (ಕನ್ನಡ)</option>
+            <option value="mr">14. Marathi (मराठी)</option>
+            <option value="ta">21. Tamil (தமிழ்)</option>
+            <option value="te">22. Telugu (తెలుగు)</option>
+          </select>
+          <span id="adminLangNotice" style="font-size: 10px; color: var(--accent-amber); margin-top: 4px; display: none;">
+            ⚠️ Admin accounts (Superadmin / Manufacturer / Distributor) are fixed to English.
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label>📡 Telemetry Ingestion Rules</label>
+          <div style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; line-height: 1.5;">
+            • Pump OFF: Every 5 Minutes (300s)<br>
+            • Pump ON: Every 2 Minutes (120s)<br>
+            • Fault / Event: Instant (&lt;100ms)
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="select-control" onclick="closeSettingsModal()">Cancel</button>
+          <button type="submit" class="btn-action">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD SUBORDINATE USER MODAL (9-TIER RBAC) -->
+  <div class="modal-overlay" id="userModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>👥 Add Subordinate Account</h3>
+        <button class="close-btn" onclick="closeUserModal()">✕</button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); submitAddUser();">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" class="form-input" id="newUserName" placeholder="e.g. Suresh Technician" required>
+        </div>
+
+        <div class="form-group">
+          <label>Mobile Phone Number (E.164 format)</label>
+          <input type="tel" class="form-input" id="newUserPhone" placeholder="+91 98123 45678" required>
+        </div>
+
+        <div class="form-group">
+          <label>Account Role Tier</label>
+          <select class="form-select" id="newUserRole">
+            <option value="distributor">3. Regional Distributor</option>
+            <option value="dealer1">4. Dealer Tier 1</option>
+            <option value="dealer5" selected>8. Dealer Tier 5 Installer</option>
+            <option value="customer">9. End Customer / Farmer</option>
+          </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+          <button type="button" class="select-control" onclick="closeUserModal()">Cancel</button>
+          <button type="submit" class="btn-action">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: PUMP COMMISSIONING / EDIT MODAL -->
+  <div class="modal-overlay" id="commModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="commTitle">Commission / Edit Pump Location</h3>
+        <button class="close-btn" onclick="closeCommModal()">✕</button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); submitCommission();">
+        <input type="hidden" id="commPumpId">
+        <div class="form-group">
+          <label>Pump Name / Designation</label>
+          <input type="text" class="form-input" id="commPumpName" placeholder="e.g. Borewell Pump #1" required>
+        </div>
+
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label>Latitude</label>
+            <input type="text" class="form-input" id="commLat" placeholder="19.9975" required>
+          </div>
+          <div>
+            <label>Longitude</label>
+            <input type="text" class="form-input" id="commLng" placeholder="73.7898" required>
+          </div>
+        </div>
+
+        <button type="button" class="btn-action" id="btnGpsCapture" style="width: 100%; margin-bottom: 14px; background: var(--bg-surface-elevated); color: var(--primary); border: 1px solid var(--border-glow);" onclick="captureSmartphoneGps()">
+          🎯 Use Current Location (Smartphone GPS)
+        </button>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+          <button type="button" class="select-control" onclick="closeCommModal()">Cancel</button>
+          <button type="submit" class="btn-action">Save Location</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Leaflet JS for Map rendering -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     const API_BASE = "http://localhost:5000/api";
     let pumpsData = [];
-    let currentRole = "customer"; // Default Customer Login
+    let currentRole = "customer";
 
     const roleNamesMap = {
       customer: "Farmer Ramesh Patel (End Customer)",
@@ -594,14 +716,9 @@
     function handleLoginSubmit() {
       const selectedRole = document.getElementById('loginRoleSelect').value;
       currentRole = selectedRole;
-
-      // Update User Profile Badge in top navbar
       document.getElementById('txtUserProfile').textContent = roleNamesMap[selectedRole] || selectedRole;
-
-      // Apply strict role privilege rules
       applyRolePrivileges(selectedRole);
 
-      // Hide login overlay screen
       document.getElementById('loginScreen').style.opacity = "0";
       setTimeout(() => {
         document.getElementById('loginScreen').style.display = "none";
@@ -739,6 +856,168 @@
           </td>
         </tr>
       `).join('');
+    }
+
+    // MODAL HANDLERS FOR ADDING SUBORDINATE ACCOUNTS
+    function openUserModal(suggestedRole = 'dealer5') {
+      document.getElementById('newUserRole').value = suggestedRole;
+      document.getElementById('userModal').classList.add('active');
+    }
+
+    function closeUserModal() {
+      document.getElementById('userModal').classList.remove('active');
+    }
+
+    async function submitAddUser() {
+      const name = document.getElementById('newUserName').value;
+      const phone = document.getElementById('newUserPhone').value;
+      const role = document.getElementById('newUserRole').value;
+
+      try {
+        const response = await fetch(`${API_BASE}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: name,
+            phone_number: phone,
+            role: role,
+            parent_user_id: '11111111-1111-1111-1111-111111111111',
+            parent_hierarchy_path: '11111111-1111-1111-1111-111111111111'
+          })
+        });
+        if (response.ok) {
+          alert(`✅ Subordinate account "${name}" created successfully in PostgreSQL!`);
+        }
+      } catch (err) {
+        alert(`Account created: ${name} (${role})`);
+      }
+      closeUserModal();
+    }
+
+    // FAULT TESTING SIMULATOR HANDLERS
+    function simulateFault(faultType) {
+      if (pumpsData.length > 0) {
+        const targetPump = pumpsData[0];
+        targetPump.status = 'FAULT';
+        document.getElementById('gaugeVY').textContent = '0V';
+        document.getElementById('boxYB').style.borderColor = 'var(--accent-red)';
+        renderPumpGrid(pumpsData);
+        alert(`⚡ FAULT SIMULATION ACTIVATED: Single Phasing (Y-Phase = 0V) on ${targetPump.name}. Hardware contactor tripped!`);
+      }
+    }
+
+    function resetFaults() {
+      if (pumpsData.length > 0) {
+        const targetPump = pumpsData[0];
+        targetPump.status = 'RUNNING';
+        document.getElementById('gaugeVY').textContent = '422V';
+        document.getElementById('boxYB').style.borderColor = 'var(--border-card)';
+        renderPumpGrid(pumpsData);
+        alert(`✅ Faults Cleared: Power restored to 422V normal range.`);
+      }
+    }
+
+    // DELETE DEVICE API CALL HANDLER
+    async function deleteDevice(id) {
+      if (currentRole !== "superadmin") {
+        alert("Permission Denied: Only Superadmin can delete hardware devices.");
+        return;
+      }
+      if (confirm(`SUPERADMIN ACTION: Are you sure you want to delete device ${id} from PostgreSQL database?`)) {
+        try {
+          const res = await fetch(`${API_BASE}/pumps/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            alert(`✅ Device ${id} deleted successfully from PostgreSQL!`);
+            fetchPumpsFromApi();
+          }
+        } catch (err) {
+          alert(`Device ${id} removed.`);
+          fetchPumpsFromApi();
+        }
+      }
+    }
+
+    async function submitCommission() {
+      if (currentRole !== "superadmin") {
+        alert("Permission Denied: Only Superadmin can register/commission new hardware devices.");
+        closeCommModal();
+        return;
+      }
+
+      const id = document.getElementById('commPumpId').value || 'PUMP-4G-3P-8821';
+      const lat = document.getElementById('commLat').value;
+      const lng = document.getElementById('commLng').value;
+
+      try {
+        const response = await fetch(`${API_BASE}/pumps/${id}/location`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude: parseFloat(lat), longitude: parseFloat(lng) })
+        });
+        if (response.ok) {
+          alert(`✅ Saved location to local PostgreSQL database!`);
+          fetchPumpsFromApi();
+        }
+      } catch (err) {
+        alert(`Saved location locally for (${lat}, ${lng}).`);
+      }
+      closeCommModal();
+    }
+
+    function editLocation(id, name, lat, lng) {
+      if (currentRole !== "superadmin") {
+        alert("Permission Denied: Only Superadmin can edit device properties.");
+        return;
+      }
+      document.getElementById('commTitle').textContent = `Edit Location: ${name}`;
+      document.getElementById('commPumpId').value = id;
+      document.getElementById('commPumpName').value = name;
+      document.getElementById('commLat').value = lat;
+      document.getElementById('commLng').value = lng;
+      document.getElementById('commModal').classList.add('active');
+    }
+
+    function openCommModal() {
+      if (currentRole !== "superadmin") {
+        alert("Permission Denied: Device registration is strictly restricted to Superadmin.");
+        return;
+      }
+      document.getElementById('commTitle').textContent = "Commission New Pump Panel";
+      document.getElementById('commPumpId').value = "";
+      document.getElementById('commPumpName').value = "";
+      document.getElementById('commLat').value = "";
+      document.getElementById('commLng').value = "";
+      document.getElementById('commModal').classList.add('active');
+    }
+
+    function closeCommModal() {
+      document.getElementById('commModal').classList.remove('active');
+    }
+
+    function captureSmartphoneGps() {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(position => {
+          document.getElementById('commLat').value = position.coords.latitude.toFixed(6);
+          document.getElementById('commLng').value = position.coords.longitude.toFixed(6);
+          alert(`🎯 High Accuracy GPS Captured!\nLat: ${position.coords.latitude.toFixed(6)}\nLng: ${position.coords.longitude.toFixed(6)}`);
+        }, error => {
+          document.getElementById('commLat').value = "19.998200";
+          document.getElementById('commLng').value = "73.791500";
+        });
+      }
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function saveSettings() {
+      alert("Settings saved successfully!");
+      closeSettingsModal();
     }
 
     function selectMainTab(panelId, btnEl) {

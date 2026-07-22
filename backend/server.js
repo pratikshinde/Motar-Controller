@@ -45,6 +45,7 @@ app.get('/api', (req, res) => {
     endpoints: {
       getPumps: 'GET /api/pumps?hierarchy_path=...&page=1&limit=50&search=...',
       updateLocation: 'POST /api/pumps/:id/location',
+      deletePump: 'DELETE /api/pumps/:id',
       ingestTelemetry: 'POST /api/telemetry',
       createSubordinateUser: 'POST /api/users'
     }
@@ -58,7 +59,7 @@ app.get('/api/pumps', async (req, res) => {
   try {
     const parentPath = req.query.hierarchy_path || '11111111-1111-1111-1111-111111111111';
     const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(parseInt(req.query.limit) || 50, 500); // Cap max limit per query
+    const limit = Math.min(parseInt(req.query.limit) || 50, 500);
     const offset = (page - 1) * limit;
     const search = req.query.search ? `%${req.query.search}%` : null;
 
@@ -79,7 +80,6 @@ app.get('/api/pumps', async (req, res) => {
 
     const result = await pool.query(queryText, queryParams);
 
-    // Fleet Summary Aggregate Counters for Admin Dashboard
     const statsRes = await pool.query(
       `SELECT 
          COUNT(*) as total_devices,
@@ -133,7 +133,25 @@ app.post('/api/pumps/:id/location', async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// 3. POST /api/telemetry: Ingest 4G Cellular Telemetry Packet
+// 3. DELETE /api/pumps/:id: Superadmin Delete Device Endpoint
+// ----------------------------------------------------------------------------
+app.delete('/api/pumps/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(`DELETE FROM agripump.pumps WHERE id = $1 RETURNING id`, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Pump device not found' });
+    }
+
+    res.json({ message: `Pump ${id} deleted successfully`, deleted_id: id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// 4. POST /api/telemetry: Ingest 4G Cellular Telemetry Packet
 // ----------------------------------------------------------------------------
 app.post('/api/telemetry', async (req, res) => {
   try {
@@ -158,7 +176,7 @@ app.post('/api/telemetry', async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// 4. POST /api/users: Create Subordinate User Account (9-Tier RBAC)
+// 5. POST /api/users: Create Subordinate User Account (9-Tier RBAC)
 // ----------------------------------------------------------------------------
 app.post('/api/users', async (req, res) => {
   try {
@@ -166,13 +184,14 @@ app.post('/api/users', async (req, res) => {
 
     const userRes = await pool.query(`SELECT public.uuid_generate_v4() as new_id`);
     const newId = userRes.rows[0].new_id;
-    const newPath = `${parent_hierarchy_path}/${newId}`;
+    const parentPath = parent_hierarchy_path || '11111111-1111-1111-1111-111111111111';
+    const newPath = `${parentPath}/${newId}`;
 
     const result = await pool.query(
       `INSERT INTO agripump.users (id, full_name, phone_number, role, hierarchy_path, parent_user_id, preferred_language)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, full_name, role, hierarchy_path`,
-      [newId, full_name, phone_number, role, newPath, parent_user_id, preferred_language || 'en']
+      [newId, full_name, phone_number, role, newPath, parent_user_id || null, preferred_language || 'en']
     );
 
     res.status(201).json({ message: 'Subordinate user created', user: result.rows[0] });
