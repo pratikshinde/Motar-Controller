@@ -3,6 +3,12 @@ node_modules/
 backend/node_modules/
 web/node_modules/
 
+# Android build cache
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
 # Environment files
 .env
 backend/.env
