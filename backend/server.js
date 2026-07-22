@@ -4,6 +4,8 @@ const path = require('path');
 const { Pool } = require('pg');
 require('dotenv').config();
 
+const { sendDltSms, sendWhatsAppAlert, DLT_TEMPLATES } = require('./services/notificationService');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -195,6 +197,40 @@ app.post('/api/users', async (req, res) => {
     );
 
     res.status(201).json({ message: 'Subordinate user created', user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// 6. POST /api/alerts/send: DLT SMS & WhatsApp Multi-Channel Alert Trigger
+// ----------------------------------------------------------------------------
+app.post('/api/alerts/send', async (req, res) => {
+  try {
+    const { phone_number, template_key, vars, language, channel } = req.body;
+    const phone = phone_number || '+919876543210';
+    const tKey = template_key || 'SINGLE_PHASING';
+    const lang = language || 'hi';
+    const targetChannel = channel || 'BOTH';
+
+    let smsResult = null;
+    let waResult = null;
+
+    if (targetChannel === 'SMS' || targetChannel === 'BOTH') {
+      smsResult = await sendDltSms(phone, tKey, vars || ['Borewell Pump #1'], lang);
+    }
+    if (targetChannel === 'WHATSAPP' || targetChannel === 'BOTH') {
+      waResult = await sendWhatsAppAlert(phone, tKey, vars || ['Borewell Pump #1'], lang);
+    }
+
+    res.json({
+      status: 'DISPATCHED',
+      phone_number: phone,
+      template_key: tKey,
+      language: lang,
+      sms: smsResult,
+      whatsapp: waResult
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
