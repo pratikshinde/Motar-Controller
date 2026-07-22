@@ -9,11 +9,11 @@
         android:name=".PumpApp"
         android:label="@string/app_name"
         android:icon="@android:drawable/ic_menu_manage"
-        android:theme="@android:style/Theme.Material.NoTitleBar"
+        android:theme="@style/Theme.PumpMonitor"
         android:allowBackup="true">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
