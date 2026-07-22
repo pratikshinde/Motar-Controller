@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="sapphire">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriPump SmartSpace — Zero-Scroll Tabbed IoT Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS & MarkerCluster for 1000s of map markers -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  
+  <style>
+    /* THEME SYSTEM */
+    [data-theme="sapphire"] {
+      --bg-body: #070b14;
+      --bg-surface: rgba(15, 23, 42, 0.9);
+      --bg-surface-elevated: rgba(30, 41, 59, 0.7);
+      --border-card: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(56, 189, 248, 0.25);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.35);
+      --accent-green: #10b981;
+      --accent-red: #f43f5e;
+      --accent-amber: #f59e0b;
+      --accent-purple: #a855f7;
+      --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    [data-theme="agro-light"] {
+      --bg-body: #f1f5f9;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #f8fafc;
+      --border-card: rgba(0, 0, 0, 0.08);
+      --border-glow: rgba(16, 185, 129, 0.3);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #059669;
+      --primary-glow: rgba(5, 150, 105, 0.25);
+      --accent-green: #10b981;
+      --accent-red: #e11d48;
+      --accent-amber: #d97706;
+      --accent-purple: #7c3aed;
+      --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    [data-theme="cyber-neon"] {
+      --bg-body: #020617;
+      --bg-surface: #0f172a;
+      --bg-surface-elevated: #1e293b;
+      --border-card: rgba(34, 211, 238, 0.2);
+      --border-glow: rgba(34, 211, 238, 0.5);
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --primary: #22d3ee;
+      --primary-glow: rgba(34, 211, 238, 0.5);
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-amber: #eab308;
+      --accent-purple: #c084fc;
+      --card-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ZERO-SCROLL VIEWPORT CONFIGURATION */
+    html, body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ANIMATIONS */
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 8px var(--primary-glow); }
+      50% { box-shadow: 0 0 20px var(--primary-glow); }
+      100% { box-shadow: 0 0 8px var(--primary-glow); }
+    }
+    @keyframes faultAlertPulse {
+      0% { box-shadow: 0 0 8px rgba(244, 63, 94, 0.4); border-color: var(--accent-red); }
+      50% { box-shadow: 0 0 25px rgba(244, 63, 94, 0.9); border-color: #ff003b; }
+      100% { box-shadow: 0 0 8px rgba(244, 63, 94, 0.4); border-color: var(--accent-red); }
+    }
+    @keyframes beaconPulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.3); opacity: 1; } }
+
+    .pulse-glow-anim { animation: pulseGlow 3s infinite ease-in-out; }
+    .fault-anim { animation: faultAlertPulse 0.9s infinite ease-in-out !important; }
+    .beacon-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); animation: beaconPulse 1.5s infinite; }
+    .beacon-dot-fault { background: var(--accent-red); }
+
+    /* LOGIN OVERLAY */
+    .login-overlay {
+      position: fixed; inset: 0; background: var(--bg-body);
+      display: flex; place-items: center; justify-content: center; z-index: 500;
+      backdrop-filter: blur(16px); transition: opacity 0.4s ease;
+    }
+    .login-card {
+      background: var(--bg-surface); border: 1px solid var(--border-glow);
+      border-radius: 28px; width: 100%; max-width: 440px; padding: 36px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6); text-align: center;
+    }
+
+    /* TOP COMPACT APP BAR */
+    header.app-navbar {
+      height: 60px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-card);
+      backdrop-filter: blur(16px);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .brand-section { display: flex; align-items: center; gap: 12px; }
+    .brand-logo-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+      display: grid; place-items: center; font-weight: 800; color: #fff;
+      font-family: 'Space Grotesk', sans-serif; font-size: 18px;
+    }
+    .brand-text h1 { font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; }
+    .brand-text span { font-size: 10px; color: var(--accent-green); font-family: 'JetBrains Mono', monospace; }
+
+    .navbar-controls { display: flex; align-items: center; gap: 8px; }
+
+    .select-control {
+      background: var(--bg-surface-elevated); border: 1px solid var(--border-card);
+      color: var(--text-main); padding: 6px 10px; border-radius: 8px;
+      font-size: 11px; font-weight: 600; outline: none; cursor: pointer;
+    }
+
+    .btn-action {
+      background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+      color: #fff; font-weight: 700; font-size: 12px; padding: 7px 14px;
+      border-radius: 8px; border: none; cursor: pointer; transition: transform 0.2s;
+    }
+    .btn-action:hover { opacity: 0.95; transform: translateY(-1px); }
+
+    .btn-icon-setting {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-icon-setting:hover { border-color: var(--primary); }
+
+    /* SECONDARY TABBED BAR & ADMIN FLEET STATS BAR */
+    nav.tab-header-bar {
+      height: 52px;
+      background: var(--bg-surface-elevated);
+      border-bottom: 1px solid var(--border-card);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .tabs-group { display: flex; align-items: center; gap: 8px; }
+
+    .main-tab-btn {
+      display: flex; align-items: center; gap: 8px; padding: 7px 14px;
+      border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--text-muted);
+      background: transparent; border: 1px solid transparent; cursor: pointer; transition: all 0.2s ease;
+    }
+    .main-tab-btn:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.04); }
+    .main-tab-btn.active {
+      background: var(--bg-surface); color: var(--primary);
+      border-color: var(--border-glow); box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    /* FLEET KPI COUNTERS BAR FOR 1000s OF DEVICES */
+    .fleet-kpi-bar {
+      display: flex; align-items: center; gap: 12px; font-size: 11px;
+      font-family: 'JetBrains Mono', monospace; background: var(--bg-surface);
+      padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border-card);
+    }
+    .kpi-chip { display: flex; align-items: center; gap: 4px; font-weight: 700; }
+
+    /* VIEWPORT WORKSPACE */
+    main.viewport-workspace {
+      flex: 1; height: calc(100vh - 112px); display: flex;
+      flex-direction: column; position: relative; overflow: hidden; padding: 16px 24px;
+    }
+
+    .tab-panel {
+      width: 100%; height: 100%; display: none;
+      flex-direction: column; gap: 16px; animation: fadeInTab 0.3s ease;
+    }
+    .tab-panel.active-panel { display: flex; }
+
+    @keyframes fadeInTab {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* TELEMETRY SPLIT */
+    .telemetry-split {
+      display: grid; grid-template-columns: 360px 1fr;
+      gap: 16px; height: 100%; overflow: hidden;
+    }
+
+    .compact-hero-card {
+      background: var(--bg-surface); border: 1px solid var(--border-card);
+      border-radius: 18px; padding: 16px; display: flex; flex-direction: column;
+      justify-content: space-between; box-shadow: var(--card-shadow);
+    }
+
+    .compact-title h3 { font-size: 15px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; }
+    .compact-title span { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--accent-green); }
+
+    .compact-gauges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin: 12px 0; }
+    .gauge-box { background: var(--bg-surface-elevated); border: 1px solid var(--border-card); border-radius: 14px; padding: 10px 6px; }
+    .svg-gauge-container { position: relative; width: 70px; height: 70px; margin: 0 auto 6px auto; }
+    .svg-gauge-container svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .gauge-bg-ring { fill: none; stroke: var(--bg-surface); stroke-width: 8; }
+    .gauge-val-ring { fill: none; stroke: var(--primary); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 251; transition: stroke-dashoffset 0.8s ease; }
+    .gauge-center-text { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+    .gauge-box label { font-size: 9px; font-weight: 700; color: var(--text-muted); }
+
+    .current-bars-container { display: flex; flex-direction: column; gap: 8px; }
+    .current-bar-item { display: flex; align-items: center; gap: 10px; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+    .progress-track { flex: 1; height: 8px; background: var(--bg-surface-elevated); border-radius: 999px; overflow: hidden; border: 1px solid var(--border-card); }
+    .progress-fill { height: 100%; border-radius: 999px; transition: width 0.6s ease; }
+
+    .sim-mini-bar {
+      background: var(--bg-surface-elevated); border-radius: 12px; padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border-card);
+    }
+    .sim-mini-bar label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+    .sim-mini-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .btn-sim-sm { padding: 6px; border-radius: 6px; font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; background: rgba(244, 63, 94, 0.15); color: var(--accent-red); border: 1px solid rgba(244, 63, 94, 0.3); cursor: pointer; }
+    .btn-sim-sm-reset { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border-color: rgba(16, 185, 129, 0.3); grid-column: span 2; }
+
+    .grid-search-bar { display: flex; gap: 8px; margin-bottom: 10px; }
+    .search-input { flex: 1; background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 8px; padding: 6px 12px; color: var(--text-main); font-size: 12px; outline: none; }
+
+    .compact-pump-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px; flex: 1; overflow-y: auto; padding-right: 4px;
+    }
+
+    .compact-pump-card {
+      background: var(--bg-surface); border: 1px solid var(--border-card);
+      border-radius: 18px; padding: 16px; box-shadow: var(--card-shadow);
+      display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s;
+    }
+    .compact-pump-card:hover { border-color: var(--border-glow); }
+
+    .pump-card-head { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border-card); }
+    .status-badge { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 800; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 5px; }
+    .status-on { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-off { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); border: 1px solid rgba(148, 163, 184, 0.3); }
+    .status-fault { background: rgba(244, 63, 94, 0.15); color: var(--accent-red); border: 1px solid rgba(244, 63, 94, 0.3); }
+
+    .meter-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; text-align: center; }
+    .meter-box { background: var(--bg-surface-elevated); padding: 6px 4px; border-radius: 8px; border: 1px solid var(--border-card); }
+    .meter-box span { font-size: 9px; color: var(--text-muted); font-weight: 700; display: block; }
+    .meter-box strong { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--text-main); }
+
+    .location-bar { display: flex; align-items: center; justify-content: space-between; font-size: 10px; font-family: 'JetBrains Mono', monospace; background: var(--bg-surface-elevated); padding: 6px 10px; border-radius: 8px; margin-bottom: 10px; }
+    .edit-icon { cursor: pointer; color: var(--primary); font-weight: 700; }
+
+    .cooldown-badge {
+      font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--accent-amber);
+      font-weight: 800; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 2px 8px; border-radius: 6px; display: none;
+    }
+
+    .power-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .power-switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-surface-elevated); transition: .3s; border-radius: 34px; border: 1px solid var(--border-card); }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: var(--text-muted); transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--accent-green); }
+    input:checked + .slider:before { transform: translateX(20px); background-color: #fff; }
+
+    /* TAB 2: GIS MAP */
+    #mapHeroFull { width: 100%; height: 100%; border-radius: 18px; border: 1px solid var(--border-card); }
+
+    /* TAB 3: DEVICES REGISTRY TABLE */
+    .devices-table-card {
+      background: var(--bg-surface); border: 1px solid var(--border-card);
+      border-radius: 18px; padding: 20px; height: 100%; display: flex;
+      flex-direction: column; gap: 14px; box-shadow: var(--card-shadow);
+    }
+    .devices-table-head { display: flex; align-items: center; justify-content: space-between; }
+    .devices-table-head h3 { font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; }
+    .devices-table-container { flex: 1; overflow-y: auto; border: 1px solid var(--border-card); border-radius: 12px; }
+    table.device-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+    table.device-table th { background: var(--bg-surface-elevated); color: var(--text-muted); padding: 12px 14px; font-weight: 700; text-transform: uppercase; font-size: 10px; border-bottom: 1px solid var(--border-card); }
+    table.device-table td { padding: 12px 14px; border-bottom: 1px solid var(--border-card); font-family: 'JetBrains Mono', monospace; }
+    table.device-table tr:hover { background: var(--bg-surface-elevated); }
+
+    /* TAB 4: RBAC TREE CONTAINER */
+    .rbac-tree-container {
+      background: var(--bg-surface); border: 1px solid var(--border-card); border-radius: 18px; padding: 20px;
+      height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+    }
+    .rbac-tree-node { background: var(--bg-surface-elevated); border: 1px solid var(--border-card); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+
+    /* MODALS */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: flex; place-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+    .modal-card { background: var(--bg-surface); border: 1px solid var(--border-glow); border-radius: 24px; width: 100%; max-width: 480px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal-header h3 { font-size: 18px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; color: var(--primary); }
+    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+    .form-input, .form-select { width: 100%; background: var(--bg-surface-elevated); border: 1px solid var(--border-card); border-radius: 10px; padding: 10px 12px; color: var(--text-main); font-size: 13px; outline: none; }
+  </style>
+</head>
+<body>
+
+  <!-- AUTHENTICATION LOGIN OVERLAY SCREEN -->
+  <div class="login-overlay" id="loginScreen">
+    <div class="login-card">
+      <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--accent-purple)); margin: 0 auto 16px auto; display: grid; place-items: center; font-size: 26px; color: #fff; font-weight: 800; box-shadow: 0 0 20px var(--primary-glow);">⚡</div>
+      <h2 style="font-size: 22px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">AgriPump SmartSpace</h2>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px;">Sign in to manage large-scale multi-tenant pump networks</p>
+
+      <form onsubmit="event.preventDefault(); handleLoginSubmit();">
+        <div class="form-group" style="text-align: left;">
+          <label>Mobile Number (SMS OTP Auth)</label>
+          <input type="tel" class="form-input" id="loginPhone" value="+91 99000 00000" required>
+        </div>
+
+        <div class="form-group" style="text-align: left;">
+          <label>Authentication Mode</label>
+          <select class="form-select" id="loginRoleSelect">
+            <option value="superadmin">1. Superadmin Platform (Global Fleet View - 10,000+ Devices)</option>
+            <option value="manufacturer">2. Manufacturer (Panel OEM - Regional Fleets)</option>
+            <option value="distributor">3. Regional Distributor</option>
+            <option value="dealer1">4. Dealer Tier 1</option>
+            <option value="dealer5">8. Dealer Tier 5 Installer</option>
+            <option value="customer">9. End Customer / Farmer (Personal Fleet)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-action" style="width: 100%; padding: 12px; font-size: 14px; margin-top: 8px;">🔐 Sign In / Verify OTP</button>
+
+        <div style="margin-top: 16px; font-size: 11px; color: var(--text-muted);">
+          <span>Connected to API: </span><strong style="color: var(--accent-green);">http://localhost:5000/api</strong>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOP COMPACT APP NAVBAR -->
+  <header class="app-navbar">
+    <div class="brand-section">
+      <div class="brand-logo-icon">⚡</div>
+      <div class="brand-text">
+        <h1>AgriPump SmartSpace</h1>
+        <span id="txtApiStatus">API: Connected (http://localhost:5000)</span>
+      </div>
+    </div>
+
+    <div class="navbar-controls">
+      <!-- THEME SELECTOR -->
+      <select id="themeSelect" class="select-control" onchange="changeTheme(this.value)">
+        <option value="sapphire" selected>🌌 Sapphire Dark</option>
+        <option value="agro-light">🌿 Agro Clean Light</option>
+        <option value="cyber-neon">⚡ Cyber Neon</option>
+      </select>
+
+      <!-- ROLE SELECTOR -->
+      <select id="roleSelect" class="select-control" onchange="switchRole(this.value)">
+        <option value="superadmin">1. Superadmin (10,000+ Fleet View)</option>
+        <option value="manufacturer">2. Manufacturer (Assign Only)</option>
+        <option value="distributor">3. Distributor (Assign Only)</option>
+        <option value="dealer1">4. Dealer Tier 1 (Assign Only)</option>
+        <option value="dealer5">8. Dealer Tier 5 (Assign Only)</option>
+        <option value="customer">9. End Customer (Control Only)</option>
+      </select>
+
+      <!-- SETTINGS BUTTON -->
+      <button class="btn-icon-setting" id="btnSettings" onclick="openSettingsModal()">
+        ⚙️ Settings
+      </button>
+
+      <!-- EXCLUSIVE SUPERADMIN REGISTRATION BUTTON -->
+      <button class="btn-action" id="btnCommission" onclick="openCommModal()" title="Device Registration Restricted to Superadmin Only">
+        + Commission Pump
+      </button>
+      <button class="select-control" id="btnLogout" style="background: rgba(244, 63, 94, 0.15); color: var(--accent-red); border-color: rgba(244, 63, 94, 0.3);" onclick="handleLogout()">🚪 Logout</button>
+    </div>
+  </header>
+
+  <!-- SECONDARY TABBED NAVIGATION & FLEET KPI AGGREGATE BAR -->
+  <nav class="tab-header-bar">
+    <div class="tabs-group">
+      <button class="main-tab-btn active" id="btnTab1" onclick="selectMainTab('panelTelemetry', this)">
+        <span>⚡ 1. Live Telemetry & Control</span>
+      </button>
+      <button class="main-tab-btn" id="btnTab2" onclick="selectMainTab('panelMap', this)">
+        <span>🗺️ 2. GIS Geo-Location Map</span>
+      </button>
+      <button class="main-tab-btn" id="btnTab3" onclick="selectMainTab('panelDevices', this)">
+        <span>📱 3. Devices Registry</span>
+      </button>
+      <button class="main-tab-btn" id="btnTab4" onclick="selectMainTab('panelTree', this)">
+        <span>👥 4. RBAC 9-Tier Hierarchy</span>
+      </button>
+      <button class="main-tab-btn" id="btnTab5" onclick="selectMainTab('panelLogs', this)">
+        <span>🚨 5. Fault Incident Logs</span>
+      </button>
+    </div>
+
+    <!-- AGGREGATE FLEET COUNTERS FOR 1000s OF DEVICES -->
+    <div class="fleet-kpi-bar">
+      <span class="kpi-chip" style="color: var(--primary)">📊 Total Fleet: <strong id="kpiTotal">10,482</strong></span>
+      <span class="kpi-chip" style="color: var(--accent-green)">🟢 Running: <strong id="kpiRunning">8,120</strong></span>
+      <span class="kpi-chip" style="color: var(--accent-red)">🚨 Faults: <strong id="kpiFaults">14</strong></span>
+      <span class="kpi-chip" style="color: var(--text-muted)">⚪ Idle: <strong id="kpiStopped">2,348</strong></span>
+    </div>
+  </nav>
+
+  <!-- FIT-TO-SCREEN VIEWPORT WORKSPACE -->
+  <main class="viewport-workspace">
+
+    <!-- TAB PANEL 1: LIVE TELEMETRY & MULTI-PUMP CONTROL -->
+    <div class="tab-panel active-panel" id="panelTelemetry">
+      <div class="telemetry-split">
+        
+        <!-- LEFT: 3-PHASE HEALTH MONITOR HERO -->
+        <div class="compact-hero-card pulse-glow-anim">
+          <div class="compact-title">
+            <h3 id="txtHeroTitle">3-Phase Power Health Monitor</h3>
+            <span id="seqStatus"><span class="beacon-dot"></span> R-Y-B NORMAL</span>
+          </div>
+
+          <!-- 3 Radial Ring Meters -->
+          <div class="compact-gauges-grid">
+            <div class="gauge-box">
+              <div class="svg-gauge-container">
+                <svg viewBox="0 0 100 100">
+                  <circle class="gauge-bg-ring" cx="50" cy="50" r="40"></circle>
+                  <circle class="gauge-val-ring" id="arcVR" cx="50" cy="50" r="40" style="stroke-dashoffset: 45;"></circle>
+                </svg>
+                <div class="gauge-center-text" id="gaugeVR">418V</div>
+              </div>
+              <label id="lblVoltRY">Phase R-Y</label>
+            </div>
+
+            <div class="gauge-box" id="boxYB">
+              <div class="svg-gauge-container">
+                <svg viewBox="0 0 100 100">
+                  <circle class="gauge-bg-ring" cx="50" cy="50" r="40"></circle>
+                  <circle class="gauge-val-ring" id="arcVY" cx="50" cy="50" r="40" style="stroke-dashoffset: 41;"></circle>
+                </svg>
+                <div class="gauge-center-text" id="gaugeVY">422V</div>
+              </div>
+              <label id="lblVoltYB">Phase Y-B</label>
+            </div>
+
+            <div class="gauge-box">
+              <div class="svg-gauge-container">
+                <svg viewBox="0 0 100 100">
+                  <circle class="gauge-bg-ring" cx="50" cy="50" r="40"></circle>
+                  <circle class="gauge-val-ring" id="arcVB" cx="50" cy="50" r="40" style="stroke-dashoffset: 48;"></circle>
+                </svg>
+                <div class="gauge-center-text" id="gaugeVB">415V</div>
+              </div>
+              <label id="lblVoltBR">Phase B-R</label>
+            </div>
+          </div>
+
+          <!-- Phase Currents Progress Bars -->
+          <div class="current-bars-container">
+            <div class="current-bar-item">
+              <span>Ph R: <strong id="valIR">14.2A</strong></span>
+              <div class="progress-track"><div class="progress-fill" id="barIR" style="width: 71%; background: var(--primary);"></div></div>
+            </div>
+            <div class="current-bar-item">
+              <span>Ph Y: <strong id="valIY">14.5A</strong></span>
+              <div class="progress-track"><div class="progress-fill" id="barIY" style="width: 72%; background: var(--accent-green);"></div></div>
+            </div>
+            <div class="current-bar-item">
+              <span>Ph B: <strong id="valIB">14.1A</strong></span>
+              <div class="progress-track"><div class="progress-fill" id="barIB" style="width: 70%; background: var(--accent-purple);"></div></div>
+            </div>
+          </div>
+
+          <!-- MINI FAULT SIMULATOR -->
+          <div class="sim-mini-bar">
+            <label>⚡ Hardware Fault Testing</label>
+            <div class="sim-mini-btns">
+              <button class="btn-sim-sm" id="btnSimPhaseLoss" onclick="simulateFault('phase_loss')">⚡ Phase Loss</button>
+              <button class="btn-sim-sm" id="btnSimDryRun" onclick="simulateFault('dry_run')">💧 Dry Run</button>
+              <button class="btn-sim-sm-reset" id="btnSimReset" onclick="resetFaults()">✅ Clear Faults</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: COMPACT PUMP CARDS GRID & FLEET SEARCH -->
+        <div style="display: flex; flex-direction: column; height: 100%;">
+          <div class="grid-search-bar">
+            <input type="text" class="search-input" id="searchFleetInput" placeholder="🔍 Search among 10,000+ devices by Name, ID, or Location..." oninput="handleSearch(this.value)">
+          </div>
+          <div class="compact-pump-grid" id="pumpGrid"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB PANEL 2: FULLSCREEN GIS MAP WITH CLUSTERING -->
+    <div class="tab-panel" id="panelMap">
+      <div id="mapHeroFull"></div>
+    </div>
+
+    <!-- TAB PANEL 3: DEVICES REGISTRY PAGE -->
+    <div class="tab-panel" id="panelDevices">
+      <div class="devices-table-card">
+        <div class="devices-table-head">
+          <div>
+            <h3 id="txtDevicesTitle">📱 Hardware Device Registry & Fleet Inventory</h3>
+            <p style="font-size: 11px; color: var(--text-muted);" id="txtDevicePolicyNotice">Superadmin Fleet View: Indexed Server-Side Pagination Active (10,482 Total Devices)</p>
+          </div>
+          <button class="btn-action" id="btnRegisterDevice" onclick="openCommModal()">+ Register Device (Superadmin)</button>
+        </div>
+
+        <div class="devices-table-container">
+          <table class="device-table">
+            <thead>
+              <tr>
+                <th>Device ID (Thing Name)</th>
+                <th>Supply Type</th>
+                <th>Interval (Off / On)</th>
+                <th>Cellular Signal</th>
+                <th>Firmware</th>
+                <th>GPS Location</th>
+                <th>Status</th>
+                <th>Actions & Assignment</th>
+              </tr>
+            </thead>
+            <tbody id="deviceTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB PANEL 4: 9-TIER RBAC TREE -->
+    <div class="tab-panel" id="panelTree">
+      <div class="rbac-tree-container">
+        <h3 style="font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif;">9-Tier Multi-Tenant Account Hierarchy Explorer</h3>
+        <div style="font-weight: 700; color: var(--primary); font-size: 13px;">1. Superadmin Platform (10,482 Devices Across India)</div>
+        <div class="rbac-tree-node"><span>2. Manufacturer (Panel OEM - Nashik Controls - 4,200 Devices)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal()">+ Add Subordinate</button></div>
+        <div class="rbac-tree-node" style="margin-left: 32px;"><span>3. Regional Distributor (Western Agro Suppliers - 1,800 Devices)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal()">+ Add Subordinate</button></div>
+        <div class="rbac-tree-node" style="margin-left: 56px;"><span>4–8. Dealers Tier 1 to 5 (Local Electricians & Retail Stores)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal()">+ Add Subordinate</button></div>
+        <div class="rbac-tree-node" style="margin-left: 80px;"><span>9. End Customer (Farmer Ramesh Patel - 3 Pumps)</span> <span style="font-size: 10px; color: var(--text-muted);">End of Hierarchy</span></div>
+      </div>
+    </div>
+
+    <!-- TAB PANEL 5: FAULT INCIDENT LOGS -->
+    <div class="tab-panel" id="panelLogs">
+      <div class="rbac-tree-container">
+        <h3 style="font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; color: var(--accent-red);">🚨 Real-Time Fleet Fault Incident & Protection Logs</h3>
+        <div style="font-size: 12px; font-family: 'JetBrains Mono', monospace; display: flex; flex-direction: column; gap: 8px;">
+          <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); padding: 10px; border-radius: 8px; color: var(--accent-red);">
+            [22-Jul-2026 23:20:12] ⚠️ Canal Pump #2: Single Phasing (Y-Phase Voltage = 0V). Hardware Contactor Tripped in 1.2s. SMS/WhatsApp Alert Sent to +919876543210.
+          </div>
+          <div style="background: var(--bg-surface-elevated); padding: 10px; border-radius: 8px; color: var(--text-muted);">
+            [22-Jul-2026 18:45:00] ✅ Borewell Pump #1: Over-voltage auto-recovered (418V). Contactor re-engaged after 30s safety timer.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Leaflet JS for Map rendering -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    const API_BASE = "http://localhost:5000/api";
+    let pumpsData = [];
+    let currentRole = "superadmin";
+
+    // CONNECT TO SCALABLE PAGINATED API (http://localhost:5000/api/pumps?page=1&limit=50)
+    async function fetchPumpsFromApi(searchQuery = '') {
+      try {
+        const url = `${API_BASE}/pumps?page=1&limit=50${searchQuery ? '&search=' + encodeURIComponent(searchQuery) : ''}`;
+        const response = await fetch(url);
+        if (response.ok) {
+          const resData = await response.json();
+          pumpsData = resData.pumps || resData;
+
+          // Update Admin Aggregate KPI Counters
+          if (resData.meta && resData.meta.stats) {
+            const stats = resData.meta.stats;
+            document.getElementById('kpiTotal').textContent = parseInt(stats.total_devices || 10482).toLocaleString();
+            document.getElementById('kpiRunning').textContent = parseInt(stats.running_count || 8120).toLocaleString();
+            document.getElementById('kpiFaults').textContent = parseInt(stats.fault_count || 14).toLocaleString();
+            document.getElementById('kpiStopped').textContent = parseInt(stats.stopped_count || 2348).toLocaleString();
+          }
+
+          renderPumpGrid(pumpsData);
+          renderDeviceTable(pumpsData);
+          document.getElementById('txtApiStatus').textContent = "API: Connected (http://localhost:5000)";
+          document.getElementById('txtApiStatus').style.color = "var(--accent-green)";
+        }
+      } catch (err) {
+        pumpsData = [
+          { id: "PUMP-4G-3P-8821", name: "Borewell Pump #1", supply_type: "3-phase", hp_rating: 15.0, latitude: 19.9975, longitude: 73.7898, status: "RUNNING", firmware_version: "v2.4.1" },
+          { id: "PUMP-4G-3P-4412", name: "Canal Pump #2", supply_type: "3-phase", hp_rating: 7.5, latitude: 20.0050, longitude: 73.7620, status: "FAULT", firmware_version: "v2.4.1" }
+        ];
+        renderPumpGrid(pumpsData);
+        renderDeviceTable(pumpsData);
+      }
+    }
+
+    function handleSearch(queryStr) {
+      fetchPumpsFromApi(queryStr);
+    }
+
+    function renderPumpGrid(pumps) {
+      const grid = document.getElementById('pumpGrid');
+      const isSuperadmin = (currentRole === "superadmin");
+      const isCustomer = (currentRole === "customer");
+
+      grid.innerHTML = pumps.map(p => `
+        <div class="compact-pump-card ${p.status === 'FAULT' ? 'fault-anim' : ''}" id="card-${p.id}">
+          <div class="pump-card-head">
+            <div>
+              <h3 style="font-size: 14px; font-weight: 800;">${p.name} (${p.hp_rating} HP)</h3>
+              <p style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">${p.supply_type} • ID: ${p.id}</p>
+            </div>
+            <span class="status-badge ${p.status === 'RUNNING' ? 'status-on' : (p.status === 'FAULT' ? 'status-fault' : 'status-off')}">
+              <span class="beacon-dot ${p.status === 'FAULT' ? 'beacon-dot-fault' : ''}"></span> ${p.status}
+            </span>
+          </div>
+
+          <div class="meter-row">
+            <div class="meter-box"><span>Volt R-Y</span><strong style="color: var(--primary)">418 V</strong></div>
+            <div class="meter-box"><span>Volt Y-B</span><strong style="color: ${p.status === 'FAULT' ? 'var(--accent-red)' : 'var(--primary)'}">${p.status === 'FAULT' ? '0 V' : '422 V'}</strong></div>
+            <div class="meter-box"><span>Volt B-R</span><strong style="color: var(--primary)">415 V</strong></div>
+          </div>
+
+          <div class="location-bar">
+            <span>📍 GPS: <span>${p.latitude}° N, ${p.longitude}° E</span></span>
+            ${isSuperadmin 
+              ? `<span class="edit-icon" onclick="editLocation('${p.id}', '${p.name}', '${p.latitude}', '${p.longitude}')">✏️ Edit</span>` 
+              : (isCustomer 
+                  ? `<span style="color: var(--accent-green); font-size: 10px;">🟢 Assigned</span>`
+                  : `<span class="edit-icon" style="color: var(--accent-amber);" onclick="openAssignModal('${p.id}', '${p.name}')">🔗 Assign</span>`
+                )
+            }
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);" class="txtRemoteSwitch">Remote Switch</span>
+              <span class="cooldown-badge" id="cd-${p.id}">⏳ Cooldown: 45s</span>
+            </div>
+            <label class="power-switch">
+              <input type="checkbox" id="switch-${p.id}" ${p.status === 'RUNNING' ? 'checked' : ''} onchange="togglePump('${p.id}', this.checked)">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDeviceTable(pumps) {
+      const tbody = document.getElementById('deviceTableBody');
+      const isSuperadmin = (currentRole === "superadmin");
+      const isCustomer = (currentRole === "customer");
+
+      tbody.innerHTML = pumps.map(p => `
+        <tr>
+          <td><strong>${p.id}</strong></td>
+          <td>${p.supply_type}</td>
+          <td>5m Off / 2m On</td>
+          <td><span style="color: var(--accent-green)">📶 84% (-68 dBm)</span></td>
+          <td>${p.firmware_version}</td>
+          <td>${p.latitude}° N, ${p.longitude}° E</td>
+          <td><span class="status-badge ${p.status === 'RUNNING' ? 'status-on' : 'status-fault'}">● ${p.status}</span></td>
+          <td>
+            ${isSuperadmin 
+              ? `<button class="btn-sim-sm" style="color: var(--primary); border-color: var(--primary); margin-right: 4px;" onclick="editLocation('${p.id}', '${p.name}', '${p.latitude}', '${p.longitude}')">✏️ Edit</button>
+                 <button class="btn-sim-sm" style="color: var(--accent-red); border-color: var(--accent-red);" onclick="deleteDevice('${p.id}')">🗑️ Delete</button>` 
+              : (isCustomer
+                  ? `<span style="font-size: 11px; color: var(--text-muted);">End Owner</span>`
+                  : `<button class="btn-sim-sm" style="color: var(--accent-amber); border-color: var(--accent-amber);" onclick="openAssignModal('${p.id}', '${p.name}')">🔗 Assign to Subordinate</button>`
+                )
+            }
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function switchRole(roleKey) {
+      currentRole = roleKey;
+      fetchPumpsFromApi();
+    }
+
+    function selectMainTab(panelId, btnEl) {
+      document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active-panel'));
+      const activePanel = document.getElementById(panelId);
+      activePanel.classList.add('active-panel');
+
+      if (panelId === 'panelMap' && !leafletMap) {
+        initFullMap();
+      }
+    }
+
+    function changeTheme(themeName) {
+      document.documentElement.setAttribute('data-theme', themeName);
+    }
+
+    let leafletMap = null;
+
+    function initFullMap() {
+      setTimeout(() => {
+        leafletMap = L.map('mapHeroFull').setView([19.9975, 73.7898], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(leafletMap);
+
+        pumpsData.forEach(p => {
+          L.marker([p.latitude, p.longitude]).addTo(leafletMap)
+            .bindPopup(`<b>${p.name}</b><br>Status: ${p.status}<br><a href="#" onclick="editLocation('${p.id}', '${p.name}', '${p.latitude}', '${p.longitude}')">✏️ Edit Location</a>`);
+        });
+      }, 100);
+    }
+
+    function handleLoginSubmit() {
+      const selectedRole = document.getElementById('loginRoleSelect').value;
+      switchRole(selectedRole);
+      document.getElementById('roleSelect').value = selectedRole;
+      document.getElementById('loginScreen').style.opacity = "0";
+      setTimeout(() => {
+        document.getElementById('loginScreen').style.display = "none";
+        fetchPumpsFromApi();
+      }, 400);
+    }
+
+    function handleLogout() {
+      document.getElementById('loginScreen').style.display = "flex";
+      setTimeout(() => { document.getElementById('loginScreen').style.opacity = "1"; }, 10);
+    }
+
+    function togglePump(pumpId, isChecked) {
+      const cooldownBadge = document.getElementById(`cd-${pumpId}`);
+      const switchEl = document.getElementById(`switch-${pumpId}`);
+
+      switchEl.disabled = true;
+      if (cooldownBadge) cooldownBadge.style.display = "inline-block";
+
+      let remainingSec = 45;
+      if (cooldownBadge) cooldownBadge.textContent = `⏳ Cooldown: ${remainingSec}s`;
+
+      const timer = setInterval(() => {
+        remainingSec--;
+        if (remainingSec > 0) {
+          if (cooldownBadge) cooldownBadge.textContent = `⏳ Cooldown: ${remainingSec}s`;
+        } else {
+          clearInterval(timer);
+          if (cooldownBadge) cooldownBadge.style.display = "none";
+          switchEl.disabled = false;
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
