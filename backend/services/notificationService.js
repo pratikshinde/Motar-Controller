@@ -3,8 +3,6 @@
  * Compliant with TRAI (India) DLT Regulations & Meta WhatsApp Business API
  */
 
-const axios = require('axios');
-
 // ----------------------------------------------------------------------------
 // 1. TRAI DLT APPROVED TEMPLATE REGISTRY (23 LANGUAGES)
 // ----------------------------------------------------------------------------
@@ -59,13 +57,13 @@ const DLT_TEMPLATES = {
 };
 
 // ----------------------------------------------------------------------------
-// 2. MSG91 DLT SMS SENDER INTEGRATION
+// 2. MSG91 DLT SMS SENDER INTEGRATION (BUILT-IN FETCH)
 // ----------------------------------------------------------------------------
 async function sendDltSms(phoneNumber, templateKey, vars = [], lang = 'hi') {
   const template = DLT_TEMPLATES[templateKey];
   if (!template) throw new Error(`Unknown DLT template key: ${templateKey}`);
 
-  const msg91AuthKey = process.env.MSG91_AUTH_KEY || 'MOCK_MSG91_AUTH_KEY';
+  const msg91AuthKey = process.env.MSG91_AUTH_KEY;
   const msg91FlowId = process.env.MSG91_FLOW_ID || template.dlt_template_id;
 
   const payload = {
@@ -81,11 +79,14 @@ async function sendDltSms(phoneNumber, templateKey, vars = [], lang = 'hi') {
   };
 
   try {
-    if (process.env.MSG91_AUTH_KEY) {
-      const response = await axios.post('https://api.msg91.com/api/v5/flow/', payload, {
-        headers: { authkey: msg91AuthKey, 'Content-Type': 'application/json' }
+    if (msg91AuthKey) {
+      const response = await fetch('https://api.msg91.com/api/v5/flow/', {
+        method: 'POST',
+        headers: { authkey: msg91AuthKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-      return { status: 'SENT', gateway: 'MSG91_DLT', response: response.data };
+      const data = await response.json();
+      return { status: 'SENT', gateway: 'MSG91_DLT', response: data };
     } else {
       console.log(`📱 [DLT SMS MOCK] To: ${phoneNumber} | Header: ${template.dlt_header} | Template ID: ${template.dlt_template_id}`);
       console.log(`   Message (${lang.toUpperCase()}): ${template[lang] || template['en']}`);
@@ -101,7 +102,7 @@ async function sendDltSms(phoneNumber, templateKey, vars = [], lang = 'hi') {
 // 3. WHATSAPP BUSINESS API ALERT SENDER (META CLOUD API)
 // ----------------------------------------------------------------------------
 async function sendWhatsAppAlert(phoneNumber, templateKey, vars = [], lang = 'hi') {
-  const whatsappToken = process.env.WHATSAPP_API_TOKEN || 'MOCK_META_WA_TOKEN';
+  const whatsappToken = process.env.WHATSAPP_API_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_ID || '10987654321';
 
   const payload = {
@@ -121,13 +122,14 @@ async function sendWhatsAppAlert(phoneNumber, templateKey, vars = [], lang = 'hi
   };
 
   try {
-    if (process.env.WHATSAPP_API_TOKEN) {
-      const response = await axios.post(
-        `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-        payload,
-        { headers: { Authorization: `Bearer ${whatsappToken}`, 'Content-Type': 'application/json' } }
-      );
-      return { status: 'SENT', gateway: 'META_WHATSAPP', response: response.data };
+    if (whatsappToken) {
+      const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${whatsappToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      return { status: 'SENT', gateway: 'META_WHATSAPP', response: data };
     } else {
       console.log(`💬 [WHATSAPP API MOCK] To: ${phoneNumber} | Template: agripump_${templateKey.toLowerCase()} (${lang})`);
       console.log(`   Vars: ${JSON.stringify(vars)}`);
