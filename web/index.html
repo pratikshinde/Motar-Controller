@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <!-- Leaflet CSS & MarkerCluster for 1000s of map markers -->
+  <!-- Leaflet CSS for Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   
   <style>
@@ -138,6 +138,13 @@
       font-size: 11px; font-weight: 600; outline: none; cursor: pointer;
     }
 
+    .user-profile-badge {
+      background: var(--bg-surface-elevated); border: 1px solid var(--border-card);
+      padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
+      color: var(--primary); display: flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
     .btn-action {
       background: linear-gradient(135deg, var(--primary), var(--accent-purple));
       color: #fff; font-weight: 700; font-size: 12px; padding: 7px 14px;
@@ -146,30 +153,17 @@
     .btn-action:hover { opacity: 0.95; transform: translateY(-1px); }
 
     .btn-icon-setting {
-      background: var(--bg-surface-elevated);
-      border: 1px solid var(--border-card);
-      color: var(--text-main);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      background: var(--bg-surface-elevated); border: 1px solid var(--border-card);
+      color: var(--text-main); padding: 6px 12px; border-radius: 8px;
+      font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;
     }
     .btn-icon-setting:hover { border-color: var(--primary); }
 
     /* SECONDARY TABBED BAR & ADMIN FLEET STATS BAR */
     nav.tab-header-bar {
-      height: 52px;
-      background: var(--bg-surface-elevated);
-      border-bottom: 1px solid var(--border-card);
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
+      height: 52px; background: var(--bg-surface-elevated);
+      border-bottom: 1px solid var(--border-card); padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
     }
 
     .tabs-group { display: flex; align-items: center; gap: 8px; }
@@ -185,7 +179,7 @@
       border-color: var(--border-glow); box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
 
-    /* FLEET KPI COUNTERS BAR FOR 1000s OF DEVICES */
+    /* FLEET KPI COUNTERS BAR */
     .fleet-kpi-bar {
       display: flex; align-items: center; gap: 12px; font-size: 11px;
       font-family: 'JetBrains Mono', monospace; background: var(--bg-surface);
@@ -333,23 +327,23 @@
     <div class="login-card">
       <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--accent-purple)); margin: 0 auto 16px auto; display: grid; place-items: center; font-size: 26px; color: #fff; font-weight: 800; box-shadow: 0 0 20px var(--primary-glow);">⚡</div>
       <h2 style="font-size: 22px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">AgriPump SmartSpace</h2>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px;">Sign in to manage large-scale multi-tenant pump networks</p>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px;">Sign in with your mobile number to manage pump networks</p>
 
       <form onsubmit="event.preventDefault(); handleLoginSubmit();">
         <div class="form-group" style="text-align: left;">
           <label>Mobile Number (SMS OTP Auth)</label>
-          <input type="tel" class="form-input" id="loginPhone" value="+91 99000 00000" required>
+          <input type="tel" class="form-input" id="loginPhone" value="+91 98765 43210" required>
         </div>
 
         <div class="form-group" style="text-align: left;">
-          <label>Authentication Mode</label>
+          <label>Authentication Account Role</label>
           <select class="form-select" id="loginRoleSelect">
-            <option value="superadmin">1. Superadmin Platform (Global Fleet View - 10,000+ Devices)</option>
-            <option value="manufacturer">2. Manufacturer (Panel OEM - Regional Fleets)</option>
-            <option value="distributor">3. Regional Distributor</option>
-            <option value="dealer1">4. Dealer Tier 1</option>
+            <option value="customer" selected>9. End Customer / Farmer (+91 98765 43210)</option>
+            <option value="superadmin">1. Superadmin Platform (+91 99000 00000)</option>
+            <option value="manufacturer">2. Panel Manufacturer (Nashik Controls)</option>
+            <option value="distributor">3. Regional Distributor (Western Agro)</option>
+            <option value="dealer1">4. Dealer Tier 1 (Shree Ganesh Electric)</option>
             <option value="dealer5">8. Dealer Tier 5 Installer</option>
-            <option value="customer">9. End Customer / Farmer (Personal Fleet)</option>
           </select>
         </div>
 
@@ -380,15 +374,10 @@
         <option value="cyber-neon">⚡ Cyber Neon</option>
       </select>
 
-      <!-- ROLE SELECTOR -->
-      <select id="roleSelect" class="select-control" onchange="switchRole(this.value)">
-        <option value="superadmin">1. Superadmin (10,000+ Fleet View)</option>
-        <option value="manufacturer">2. Manufacturer (Assign Only)</option>
-        <option value="distributor">3. Distributor (Assign Only)</option>
-        <option value="dealer1">4. Dealer Tier 1 (Assign Only)</option>
-        <option value="dealer5">8. Dealer Tier 5 (Assign Only)</option>
-        <option value="customer">9. End Customer (Control Only)</option>
-      </select>
+      <!-- ACTIVE LOGGED-IN USER PROFILE BADGE (HIDDEN ROLE SELECTOR) -->
+      <div class="user-profile-badge" id="userProfileBadge">
+        👤 <span id="txtUserProfile">Ramesh Patel (Farmer)</span>
+      </div>
 
       <!-- SETTINGS BUTTON -->
       <button class="btn-icon-setting" id="btnSettings" onclick="openSettingsModal()">
@@ -399,6 +388,7 @@
       <button class="btn-action" id="btnCommission" onclick="openCommModal()" title="Device Registration Restricted to Superadmin Only">
         + Commission Pump
       </button>
+
       <button class="select-control" id="btnLogout" style="background: rgba(244, 63, 94, 0.15); color: var(--accent-red); border-color: rgba(244, 63, 94, 0.3);" onclick="handleLogout()">🚪 Logout</button>
     </div>
   </header>
@@ -423,12 +413,12 @@
       </button>
     </div>
 
-    <!-- AGGREGATE FLEET COUNTERS FOR 1000s OF DEVICES -->
-    <div class="fleet-kpi-bar">
-      <span class="kpi-chip" style="color: var(--primary)">📊 Total Fleet: <strong id="kpiTotal">10,482</strong></span>
-      <span class="kpi-chip" style="color: var(--accent-green)">🟢 Running: <strong id="kpiRunning">8,120</strong></span>
-      <span class="kpi-chip" style="color: var(--accent-red)">🚨 Faults: <strong id="kpiFaults">14</strong></span>
-      <span class="kpi-chip" style="color: var(--text-muted)">⚪ Idle: <strong id="kpiStopped">2,348</strong></span>
+    <!-- AGGREGATE FLEET COUNTERS FOR ACTIVE FLEET -->
+    <div class="fleet-kpi-bar" id="fleetKpiBar">
+      <span class="kpi-chip" style="color: var(--primary)">📊 Total: <strong id="kpiTotal">3</strong></span>
+      <span class="kpi-chip" style="color: var(--accent-green)">🟢 Running: <strong id="kpiRunning">1</strong></span>
+      <span class="kpi-chip" style="color: var(--accent-red)">🚨 Faults: <strong id="kpiFaults">1</strong></span>
+      <span class="kpi-chip" style="color: var(--text-muted)">⚪ Idle: <strong id="kpiStopped">1</strong></span>
     </div>
   </nav>
 
@@ -512,7 +502,7 @@
         <!-- RIGHT: COMPACT PUMP CARDS GRID & FLEET SEARCH -->
         <div style="display: flex; flex-direction: column; height: 100%;">
           <div class="grid-search-bar">
-            <input type="text" class="search-input" id="searchFleetInput" placeholder="🔍 Search among 10,000+ devices by Name, ID, or Location..." oninput="handleSearch(this.value)">
+            <input type="text" class="search-input" id="searchFleetInput" placeholder="🔍 Search pumps by Name, ID, or Location..." oninput="handleSearch(this.value)">
           </div>
           <div class="compact-pump-grid" id="pumpGrid"></div>
         </div>
@@ -520,7 +510,7 @@
       </div>
     </div>
 
-    <!-- TAB PANEL 2: FULLSCREEN GIS MAP WITH CLUSTERING -->
+    <!-- TAB PANEL 2: FULLSCREEN GIS MAP -->
     <div class="tab-panel" id="panelMap">
       <div id="mapHeroFull"></div>
     </div>
@@ -531,7 +521,7 @@
         <div class="devices-table-head">
           <div>
             <h3 id="txtDevicesTitle">📱 Hardware Device Registry & Fleet Inventory</h3>
-            <p style="font-size: 11px; color: var(--text-muted);" id="txtDevicePolicyNotice">Superadmin Fleet View: Indexed Server-Side Pagination Active (10,482 Total Devices)</p>
+            <p style="font-size: 11px; color: var(--text-muted);" id="txtDevicePolicyNotice">End Customer View: Assigned Personal Fleet</p>
           </div>
           <button class="btn-action" id="btnRegisterDevice" onclick="openCommModal()">+ Register Device (Superadmin)</button>
         </div>
@@ -560,11 +550,11 @@
     <div class="tab-panel" id="panelTree">
       <div class="rbac-tree-container">
         <h3 style="font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif;">9-Tier Multi-Tenant Account Hierarchy Explorer</h3>
-        <div style="font-weight: 700; color: var(--primary); font-size: 13px;">1. Superadmin Platform (10,482 Devices Across India)</div>
-        <div class="rbac-tree-node"><span>2. Manufacturer (Panel OEM - Nashik Controls - 4,200 Devices)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal()">+ Add Subordinate</button></div>
-        <div class="rbac-tree-node" style="margin-left: 32px;"><span>3. Regional Distributor (Western Agro Suppliers - 1,800 Devices)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal()">+ Add Subordinate</button></div>
-        <div class="rbac-tree-node" style="margin-left: 56px;"><span>4–8. Dealers Tier 1 to 5 (Local Electricians & Retail Stores)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal()">+ Add Subordinate</button></div>
-        <div class="rbac-tree-node" style="margin-left: 80px;"><span>9. End Customer (Farmer Ramesh Patel - 3 Pumps)</span> <span style="font-size: 10px; color: var(--text-muted);">End of Hierarchy</span></div>
+        <div style="font-weight: 700; color: var(--primary); font-size: 13px;">1. Superadmin Platform</div>
+        <div class="rbac-tree-node"><span>2. Manufacturer (Panel OEM - Nashik Controls)</span></div>
+        <div class="rbac-tree-node" style="margin-left: 32px;"><span>3. Regional Distributor (Western Agro Suppliers)</span></div>
+        <div class="rbac-tree-node" style="margin-left: 56px;"><span>4–8. Dealers Tier 1 to 5</span></div>
+        <div class="rbac-tree-node" style="margin-left: 80px;"><span>9. End Customer (Farmer Ramesh Patel - Active Account)</span> <span style="font-size: 10px; color: var(--accent-green);">● Active Session</span></div>
       </div>
     </div>
 
@@ -590,9 +580,62 @@
   <script>
     const API_BASE = "http://localhost:5000/api";
     let pumpsData = [];
-    let currentRole = "superadmin";
+    let currentRole = "customer"; // Default Customer Login
 
-    // CONNECT TO SCALABLE PAGINATED API (http://localhost:5000/api/pumps?page=1&limit=50)
+    const roleNamesMap = {
+      customer: "Farmer Ramesh Patel (End Customer)",
+      superadmin: "Superadmin Platform (Platform Owner)",
+      manufacturer: "Nashik Controls (Manufacturer)",
+      distributor: "Western Agro (Distributor)",
+      dealer1: "Ganesh Electric (Dealer Tier 1)",
+      dealer5: "Suresh Technician (Dealer Tier 5)"
+    };
+
+    function handleLoginSubmit() {
+      const selectedRole = document.getElementById('loginRoleSelect').value;
+      currentRole = selectedRole;
+
+      // Update User Profile Badge in top navbar
+      document.getElementById('txtUserProfile').textContent = roleNamesMap[selectedRole] || selectedRole;
+
+      // Apply strict role privilege rules
+      applyRolePrivileges(selectedRole);
+
+      // Hide login overlay screen
+      document.getElementById('loginScreen').style.opacity = "0";
+      setTimeout(() => {
+        document.getElementById('loginScreen').style.display = "none";
+        fetchPumpsFromApi();
+      }, 400);
+    }
+
+    function handleLogout() {
+      document.getElementById('loginScreen').style.display = "flex";
+      setTimeout(() => { document.getElementById('loginScreen').style.opacity = "1"; }, 10);
+    }
+
+    function applyRolePrivileges(roleKey) {
+      const isSuperadmin = (roleKey === "superadmin");
+      const isCustomer = (roleKey === "customer");
+      const btnComm = document.getElementById('btnCommission');
+      const btnRegDev = document.getElementById('btnRegisterDevice');
+      const policyNotice = document.getElementById('txtDevicePolicyNotice');
+
+      if (isSuperadmin) {
+        if (btnComm) { btnComm.style.display = "inline-block"; }
+        if (btnRegDev) { btnRegDev.style.display = "inline-block"; }
+        if (policyNotice) policyNotice.textContent = "Superadmin Mode: Full Device Creation, Registration, Edit & Delete Privileges Enabled";
+      } else if (isCustomer) {
+        if (btnComm) { btnComm.style.display = "none"; }
+        if (btnRegDev) { btnRegDev.style.display = "none"; }
+        if (policyNotice) policyNotice.textContent = "End Customer View: Assigned Personal Fleet & Remote Contactor Switch Enabled.";
+      } else {
+        if (btnComm) { btnComm.style.display = "none"; }
+        if (btnRegDev) { btnRegDev.style.display = "none"; }
+        if (policyNotice) policyNotice.textContent = `${roleKey.toUpperCase()} View: Subordinate Device Assignment Enabled.`;
+      }
+    }
+
     async function fetchPumpsFromApi(searchQuery = '') {
       try {
         const url = `${API_BASE}/pumps?page=1&limit=50${searchQuery ? '&search=' + encodeURIComponent(searchQuery) : ''}`;
@@ -601,19 +644,16 @@
           const resData = await response.json();
           pumpsData = resData.pumps || resData;
 
-          // Update Admin Aggregate KPI Counters
           if (resData.meta && resData.meta.stats) {
             const stats = resData.meta.stats;
-            document.getElementById('kpiTotal').textContent = parseInt(stats.total_devices || 10482).toLocaleString();
-            document.getElementById('kpiRunning').textContent = parseInt(stats.running_count || 8120).toLocaleString();
-            document.getElementById('kpiFaults').textContent = parseInt(stats.fault_count || 14).toLocaleString();
-            document.getElementById('kpiStopped').textContent = parseInt(stats.stopped_count || 2348).toLocaleString();
+            document.getElementById('kpiTotal').textContent = stats.total_devices || pumpsData.length;
+            document.getElementById('kpiRunning').textContent = stats.running_count || 1;
+            document.getElementById('kpiFaults').textContent = stats.fault_count || 1;
+            document.getElementById('kpiStopped').textContent = stats.stopped_count || 1;
           }
 
           renderPumpGrid(pumpsData);
           renderDeviceTable(pumpsData);
-          document.getElementById('txtApiStatus').textContent = "API: Connected (http://localhost:5000)";
-          document.getElementById('txtApiStatus').style.color = "var(--accent-green)";
         }
       } catch (err) {
         pumpsData = [
@@ -623,10 +663,6 @@
         renderPumpGrid(pumpsData);
         renderDeviceTable(pumpsData);
       }
-    }
-
-    function handleSearch(queryStr) {
-      fetchPumpsFromApi(queryStr);
     }
 
     function renderPumpGrid(pumps) {
@@ -705,11 +741,6 @@
       `).join('');
     }
 
-    function switchRole(roleKey) {
-      currentRole = roleKey;
-      fetchPumpsFromApi();
-    }
-
     function selectMainTab(panelId, btnEl) {
       document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
       btnEl.classList.add('active');
@@ -739,22 +770,6 @@
             .bindPopup(`<b>${p.name}</b><br>Status: ${p.status}<br><a href="#" onclick="editLocation('${p.id}', '${p.name}', '${p.latitude}', '${p.longitude}')">✏️ Edit Location</a>`);
         });
       }, 100);
-    }
-
-    function handleLoginSubmit() {
-      const selectedRole = document.getElementById('loginRoleSelect').value;
-      switchRole(selectedRole);
-      document.getElementById('roleSelect').value = selectedRole;
-      document.getElementById('loginScreen').style.opacity = "0";
-      setTimeout(() => {
-        document.getElementById('loginScreen').style.display = "none";
-        fetchPumpsFromApi();
-      }, 400);
-    }
-
-    function handleLogout() {
-      document.getElementById('loginScreen').style.display = "flex";
-      setTimeout(() => { document.getElementById('loginScreen').style.opacity = "1"; }, 10);
     }
 
     function togglePump(pumpId, isChecked) {
