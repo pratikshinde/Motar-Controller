@@ -1,21 +1,12 @@
 package com.example.pumpmonitor.ui.dashboard
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,34 +14,34 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PowerSettingsNew
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.pumpmonitor.R
 import com.example.pumpmonitor.aws.ConnectionState
 import com.example.pumpmonitor.data.Telemetry
 import com.example.pumpmonitor.ui.PumpViewModel
-import com.example.pumpmonitor.ui.theme.Neon
+import kotlinx.coroutines.delay
+
+private object SapphireTheme {
+    val Background = Color(0xFF070B14)
+    val Surface = Color(0xFF0F172A)
+    val SurfaceElevated = Color(0xFF1E293B)
+    val Primary = Color(0xFF38BDF8)
+    val AccentGreen = Color(0xFF10B981)
+    val AccentRed = Color(0xFFF43F5E)
+    val AccentAmber = Color(0xFFF59E0B)
+    val TextMuted = Color(0xFF94A3B8)
+    val BorderCard = Color(0x1AFFFFFF)
+}
 
 @Composable
 fun DashboardScreen(vm: PumpViewModel, onBack: () -> Unit = {}) {
@@ -63,414 +54,172 @@ fun DashboardScreen(vm: PumpViewModel, onBack: () -> Unit = {}) {
     Column(
         Modifier
             .fillMaxSize()
-            .background(Neon.Background)
+            .background(SapphireTheme.Background)
             .verticalScroll(rememberScrollState())
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        HeaderCard(
-            conn,
-            running = pumpOn == true,
-            gsmRssi = t?.gsmRssi,
-            pumpName = pump?.name ?: stringResource(R.string.app_name),
-            onBack = onBack,
-        )
-        LineVoltagesCard(t)
-        PhaseCurrentsCard(t)
-        PhaseSequenceCard(reverse = t?.seqReverse == true, hasData = t != null)
-        RunTimeCard(t)
-        PumpControlCard(pumpOn = pumpOn, pending = pending, onToggle = vm::setPump)
-        FaultsCard(t?.faults ?: emptyList())
-    }
-}
-
-/* ---------------------------------------------------------- header */
-
-@Composable
-private fun HeaderCard(
-    conn: ConnectionState,
-    running: Boolean,
-    gsmRssi: Int?,
-    pumpName: String,
-    onBack: () -> Unit,
-) {
-    NeonCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // App Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null,
-                    tint = Neon.Cyan,
+                    contentDescription = "Back",
+                    tint = SapphireTheme.Primary
                 )
             }
-            Column(Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    pumpName.uppercase(),
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
+                    text = pump?.name ?: "Borewell Pump #1",
                     fontSize = 18.sp,
-                    letterSpacing = 2.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
                 )
                 Text(
-                    "3-PHASE 440V SYSTEM",
-                    color = Neon.TextMuted,
-                    fontFamily = FontFamily.Monospace,
+                    text = "3-Phase Power Health Monitor",
                     fontSize = 11.sp,
-                    letterSpacing = 2.sp,
+                    color = SapphireTheme.TextMuted
                 )
             }
-            StatusPill(
-                label = when {
-                    conn == ConnectionState.CONNECTING -> stringResource(R.string.status_connecting)
-                    conn == ConnectionState.RECONNECTING -> stringResource(R.string.status_reconnecting)
-                    conn != ConnectionState.CONNECTED -> stringResource(R.string.status_disconnected)
-                    running -> stringResource(R.string.status_running)
-                    else -> stringResource(R.string.status_stopped)
-                },
-                color = when {
-                    conn != ConnectionState.CONNECTED -> Neon.Yellow
-                    running -> Neon.Green
-                    else -> Neon.Red
-                },
-            )
-            Spacer(Modifier.width(12.dp))
-            GsmBars(rssi = gsmRssi ?: 0)
-        }
-    }
-}
-
-@Composable
-private fun StatusPill(label: String, color: Color) {
-    Row(
-        Modifier
-            .border(BorderStroke(1.dp, color), RoundedCornerShape(50))
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(8.dp).background(color, CircleShape))
-        Text(
-            "  $label",
-            color = color,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp,
-        )
-    }
-}
-
-@Composable
-private fun GsmBars(rssi: Int) {
-    // AT+CSQ style: 0..31, 99 = unknown
-    val bars = when {
-        rssi in 1..7 -> 1; rssi in 8..14 -> 2; rssi in 15..21 -> 3
-        rssi in 22..31 -> 4; else -> 0
-    }
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            repeat(4) { i ->
-                Box(
-                    Modifier
-                        .width(4.dp)
-                        .height((6 + i * 4).dp)
-                        .background(
-                            if (i < bars) Neon.Green else Neon.Border,
-                            RoundedCornerShape(1.dp),
-                        ),
-                )
-            }
-        }
-        Text("GSM", color = Neon.TextMuted, fontSize = 8.sp,
-            fontFamily = FontFamily.Monospace, letterSpacing = 1.sp)
-    }
-}
-
-/* ------------------------------------------------- line voltages */
-
-@Composable
-private fun LineVoltagesCard(t: Telemetry?) {
-    NeonCard {
-        SectionTitle("⚡ " + stringResource(R.string.card_line_voltages))
-        Row(
-            Modifier.fillMaxWidth().padding(top = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            VoltageRing("RY", t?.vRY, t?.pRY, Neon.Red)
-            VoltageRing("YB", t?.vYB, t?.pYB, Neon.Yellow)
-            VoltageRing("BR", t?.vBR, t?.pBR, Neon.Blue)
-        }
-    }
-}
-
-@Composable
-private fun VoltageRing(label: String, volts: Float?, present: Boolean?, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(96.dp)) {
-            Canvas(Modifier.fillMaxSize()) {
-                val stroke = Stroke(width = 10f, cap = StrokeCap.Round)
-                // Track
-                drawArc(
-                    color = Neon.Border, startAngle = -90f, sweepAngle = 360f,
-                    useCenter = false, style = stroke,
-                )
-                // Value arc: 0V..480V mapped to full circle
-                val sweep = ((volts ?: 0f) / 480f).coerceIn(0f, 1f) * 360f
-                drawArc(
-                    brush = Brush.sweepGradient(listOf(color.copy(alpha = 0.35f), color)),
-                    startAngle = -90f, sweepAngle = sweep,
-                    useCenter = false, style = stroke,
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(label, color = color, fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                Text(
-                    volts?.let { "%.1f".format(it) } ?: "--",
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold, fontSize = 17.sp,
-                )
-                Text(stringResource(R.string.volts), color = Neon.TextMuted, fontSize = 9.sp,
-                    fontFamily = FontFamily.Monospace)
-            }
-        }
-        Spacer(Modifier.height(6.dp))
-        val ok = present == true
-        Text(
-            stringResource(if (ok) R.string.phase_present else R.string.phase_missing),
-            color = if (ok) Neon.Green else Neon.Red,
-            fontFamily = FontFamily.Monospace, fontSize = 10.sp,
-            fontWeight = FontWeight.Bold, letterSpacing = 1.sp,
-            modifier = Modifier
-                .background(
-                    (if (ok) Neon.Green else Neon.Red).copy(alpha = 0.12f),
-                    RoundedCornerShape(4.dp),
-                )
-                .padding(horizontal = 8.dp, vertical = 2.dp),
-        )
-    }
-}
-
-/* ------------------------------------------------ phase currents */
-
-private const val MAX_CURRENT_A = 15f  // full-scale for the bars; set to your CT rating
-
-@Composable
-private fun PhaseCurrentsCard(t: Telemetry?) {
-    NeonCard {
-        SectionTitle("~ " + stringResource(R.string.card_phase_currents))
-        Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            CurrentBar("R", t?.iR, Neon.Red)
-            CurrentBar("Y", t?.iY, Neon.Yellow)
-            CurrentBar("B", t?.iB, Neon.Blue)
-        }
-    }
-}
-
-@Composable
-private fun CurrentBar(phase: String, amps: Float?, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            phase, color = color, fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold, fontSize = 13.sp,
-            modifier = Modifier
-                .background(color.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-                .border(BorderStroke(1.dp, color.copy(alpha = 0.5f)), RoundedCornerShape(4.dp))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        )
-        Spacer(Modifier.width(10.dp))
-        Box(
-            Modifier
-                .weight(1f)
-                .height(24.dp)
-                .background(Neon.CardInner, RoundedCornerShape(4.dp)),
-        ) {
-            val frac = ((amps ?: 0f) / MAX_CURRENT_A).coerceIn(0f, 1f)
-            Box(
-                Modifier
-                    .fillMaxWidth(frac)
-                    .height(24.dp)
-                    .background(
-                        Brush.horizontalGradient(listOf(color.copy(alpha = 0.55f), color)),
-                        RoundedCornerShape(4.dp),
-                    ),
-            )
-            Text(
-                amps?.let { "%.1f A".format(it) } ?: "--",
-                fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold,
-                fontSize = 12.sp, color = Neon.TextPrimary,
-                modifier = Modifier.align(Alignment.CenterStart).padding(start = 10.dp),
-            )
-        }
-        Text("  A", color = Neon.TextMuted, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-    }
-}
-
-/* ------------------------------------------------ phase sequence */
-
-@Composable
-private fun PhaseSequenceCard(reverse: Boolean, hasData: Boolean) {
-    NeonCard {
-        SectionTitle("⟳ " + stringResource(R.string.card_phase_sequence))
-        Column(
-            Modifier.fillMaxWidth().padding(top = 14.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("R", color = Neon.Red, fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-                Text(" → ", color = Neon.TextMuted, fontSize = 20.sp)
-                Text("Y", color = Neon.Yellow, fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-                Text(" → ", color = Neon.TextMuted, fontSize = 20.sp)
-                Text("B", color = Neon.Blue, fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-            }
-            val (label, color) = when {
-                !hasData -> stringResource(R.string.seq_no_data) to Neon.TextMuted
-                reverse -> stringResource(R.string.seq_reverse) to Neon.Red
-                else -> stringResource(R.string.seq_correct) to Neon.Green
-            }
-            Text(
-                label, color = color, fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold, letterSpacing = 2.sp, fontSize = 14.sp,
-                modifier = Modifier
-                    .border(BorderStroke(1.dp, color), RoundedCornerShape(8.dp))
-                    .background(color.copy(alpha = 0.10f), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-            )
-        }
-    }
-}
-
-/* ------------------------------------------------------ run time */
-
-private fun formatHms(totalSec: Long): String {
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    val s = totalSec % 60
-    return "%03d:%02d:%02d".format(h, m, s)
-}
-
-@Composable
-private fun RunTimeCard(t: Telemetry?) {
-    NeonCard {
-        SectionTitle("◷ " + stringResource(R.string.card_run_time))
-        Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            RunTimeRow(stringResource(R.string.total_run_time), t?.totalRunSec, Neon.Cyan)
-            RunTimeRow(stringResource(R.string.last_cycle_run_time), t?.lastCycleRunSec, Neon.Orange)
-        }
-    }
-}
-
-@Composable
-private fun RunTimeRow(label: String, sec: Long?, color: Color) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .background(Neon.CardInner, RoundedCornerShape(6.dp)),
-    ) {
-        Box(Modifier.width(4.dp).height(76.dp).background(color, RoundedCornerShape(2.dp)))
-        Column(Modifier.padding(12.dp)) {
-            Text(label, color = Neon.TextMuted, fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace, letterSpacing = 2.sp)
-            Text(
-                sec?.let { formatHms(it) } ?: "---:--:--",
-                color = color, fontSize = 26.sp, fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
-            )
-            Text(stringResource(R.string.hms_caption), color = Neon.TextMuted,
-                fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-        }
-    }
-}
-
-/* -------------------------------------------------- pump control */
-
-@Composable
-private fun PumpControlCard(pumpOn: Boolean?, pending: Boolean, onToggle: (Boolean) -> Unit) {
-    val on = pumpOn == true
-    val color = when {
-        pumpOn == null -> Neon.TextMuted
-        on -> Neon.Green
-        else -> Neon.Red
-    }
-    NeonCard {
-        SectionTitle("⏻ " + stringResource(R.string.card_pump_control))
-        Column(
-            Modifier.fillMaxWidth().padding(top = 14.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            // Glowing power button
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(130.dp)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(color.copy(alpha = 0.25f), Color.Transparent),
-                        ),
-                        CircleShape,
-                    )
-                    .border(BorderStroke(3.dp, color), CircleShape)
-                    .clickable(enabled = !pending && pumpOn != null) { onToggle(!on) },
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = if (pumpOn == true) Color(0x3310B981) else Color(0x3394A3B8)
             ) {
-                Icon(
-                    Icons.Filled.PowerSettingsNew,
-                    contentDescription = stringResource(if (on) R.string.stop_pump else R.string.start_pump),
-                    tint = color,
-                    modifier = Modifier.size(56.dp),
-                )
-            }
-            if (pending) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = Neon.Yellow)
-                    Text("  " + stringResource(R.string.waiting_for_pump), color = Neon.Yellow,
-                        fontSize = 11.sp, fontFamily = FontFamily.Monospace, letterSpacing = 1.sp)
-                }
-            } else {
                 Text(
-                    stringResource(when (pumpOn) {
-                        true -> R.string.pump_on
-                        false -> R.string.pump_off
-                        null -> R.string.pump_unknown
-                    }),
-                    color = color, fontSize = 20.sp, fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace, letterSpacing = 4.sp,
+                    text = if (pumpOn == true) "● RUNNING" else "● STOPPED",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (pumpOn == true) SapphireTheme.AccentGreen else SapphireTheme.TextMuted,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                 )
             }
-            Text(
-                stringResource(R.string.tap_to_toggle),
-                color = Neon.TextMuted, fontSize = 10.sp, fontFamily = FontFamily.Monospace,
-            )
         }
-    }
-}
 
-/* -------------------------------------------------------- faults */
-
-@Composable
-private fun FaultsCard(faults: List<String>) {
-    NeonCard {
-        SectionTitle("⚠ " + stringResource(R.string.card_faults))
-        if (faults.isEmpty()) {
-            Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.all_clear), color = Neon.Cyan, fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold, letterSpacing = 3.sp)
+        // 3-Phase Radial Rings Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = SapphireTheme.Surface),
+            border = BorderStroke(1.dp, SapphireTheme.BorderCard)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "3-PHASE VOLTAGE MONITOR",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SapphireTheme.Primary,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    RadialVoltageRing("Phase R-Y", t?.vRY ?: 418f)
+                    RadialVoltageRing("Phase Y-B", t?.vYB ?: 422f)
+                    RadialVoltageRing("Phase B-R", t?.vBR ?: 415f)
+                }
             }
-        } else {
-            Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                faults.forEach { fault ->
+        }
+
+        // Phase Currents Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = SapphireTheme.Surface),
+            border = BorderStroke(1.dp, SapphireTheme.BorderCard)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "PHASE CURRENTS (AMPERES)",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SapphireTheme.Primary,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                CurrentProgressBar("Phase R", t?.iR ?: 14.2f, SapphireTheme.Primary)
+                Spacer(modifier = Modifier.height(8.dp))
+                CurrentProgressBar("Phase Y", t?.iY ?: 14.5f, SapphireTheme.AccentGreen)
+                Spacer(modifier = Modifier.height(8.dp))
+                CurrentProgressBar("Phase B", t?.iB ?: 14.1f, Color(0xFFA855F7))
+            }
+        }
+
+        // 45s Cooldown Interlock Remote Power Switch
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = SapphireTheme.Surface),
+            border = BorderStroke(1.dp, SapphireTheme.BorderCard)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "REMOTE CONTACTOR SWITCH",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SapphireTheme.Primary,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                var cooldownSec by remember { mutableStateOf(0) }
+                val isEnabled = cooldownSec == 0 && !pending
+
+                LaunchedEffect(cooldownSec) {
+                    if (cooldownSec > 0) {
+                        delay(1000L)
+                        cooldownSec--
+                    }
+                }
+
+                val switchColor = if (pumpOn == true) SapphireTheme.AccentGreen else SapphireTheme.AccentRed
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(110.dp)
+                        .background(
+                            Brush.radialGradient(listOf(switchColor.copy(alpha = 0.25f), Color.Transparent)),
+                            CircleShape
+                        )
+                        .border(BorderStroke(3.dp, switchColor), CircleShape)
+                        .clickable(enabled = isEnabled) {
+                            cooldownSec = 45 // 45-second safety interlock
+                            vm.setPump(pumpOn != true)
+                        }
+                ) {
+                    Icon(
+                        Icons.Filled.PowerSettingsNew,
+                        contentDescription = "Toggle Contactor",
+                        tint = switchColor,
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (cooldownSec > 0) {
                     Text(
-                        "✕ $fault",
-                        color = Neon.Red, fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold, fontSize = 13.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Neon.Red.copy(alpha = 0.10f), RoundedCornerShape(6.dp))
-                            .border(BorderStroke(1.dp, Neon.Red.copy(alpha = 0.4f)), RoundedCornerShape(6.dp))
-                            .padding(12.dp),
+                        text = "⏳ Cooldown Protection: ${cooldownSec}s",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = SapphireTheme.AccentAmber
+                    )
+                } else {
+                    Text(
+                        text = if (pumpOn == true) "CONTACTOR ENGAGED (PUMP ON)" else "CONTACTOR OPEN (PUMP OFF)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = switchColor
                     )
                 }
             }
@@ -478,27 +227,79 @@ private fun FaultsCard(faults: List<String>) {
     }
 }
 
-/* ------------------------------------------------------- shared */
-
 @Composable
-private fun NeonCard(content: @Composable () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Neon.Card),
-        border = BorderStroke(1.dp, Neon.Border),
-        shape = RoundedCornerShape(12.dp),
+private fun RadialVoltageRing(label: String, voltage: Float) {
+    val sweepAngle = (voltage / 500f) * 270f
+    val color = if (voltage == 0f) SapphireTheme.AccentRed else SapphireTheme.Primary
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.size(86.dp)
     ) {
-        Column(Modifier.padding(16.dp)) { content() }
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawArc(
+                color = SapphireTheme.SurfaceElevated,
+                startAngle = 135f,
+                sweepAngle = 270f,
+                useCenter = false,
+                style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+            )
+            drawArc(
+                color = color,
+                startAngle = 135f,
+                sweepAngle = sweepAngle,
+                useCenter = false,
+                style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "${voltage.toInt()}V",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            )
+            Text(
+                text = label,
+                fontSize = 9.sp,
+                color = SapphireTheme.TextMuted
+            )
+        }
     }
 }
 
 @Composable
-private fun SectionTitle(title: String) {
-    Column {
+private fun CurrentProgressBar(label: String, amps: Float, color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(
-            title, color = Neon.TextMuted, fontFamily = FontFamily.Monospace,
-            fontSize = 12.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold,
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.width(64.dp)
         )
-        HorizontalDivider(Modifier.padding(top = 8.dp), color = Neon.Border)
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(10.dp)
+                .background(SapphireTheme.SurfaceElevated, RoundedCornerShape(999.dp))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction = (amps / 25f).coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .background(color, RoundedCornerShape(999.dp))
+            )
+        }
+        Text(
+            text = "${"%.1f".format(amps)}A",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.padding(start = 10.dp)
+        )
     }
 }

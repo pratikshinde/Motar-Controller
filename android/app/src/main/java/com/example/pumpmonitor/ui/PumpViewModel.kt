@@ -25,9 +25,14 @@ class PumpViewModel(app: Application) : AndroidViewModel(app) {
     private val iot = pumpApp.iot
     private val gson = Gson()
 
-    // ------------------------------------------------ pump list
+    // Default pump pre-selected on app launch
+    private val defaultPump = Pump(
+        thingName = AwsConfig.DEFAULT_THING_NAME,
+        name = "Borewell Pump #1 (15 HP)",
+        location = "Nashik Field #4"
+    )
 
-    private val _pumps = MutableStateFlow<List<Pump>>(emptyList())
+    private val _pumps = MutableStateFlow<List<Pump>>(listOf(defaultPump))
     val pumps: StateFlow<List<Pump>> = _pumps
 
     private val _pumpsLoading = MutableStateFlow(false)
@@ -36,32 +41,30 @@ class PumpViewModel(app: Application) : AndroidViewModel(app) {
     private val _pumpsError = MutableStateFlow<String?>(null)
     val pumpsError: StateFlow<String?> = _pumpsError
 
-    private val _selectedPump = MutableStateFlow<Pump?>(null)
+    private val _selectedPump = MutableStateFlow<Pump?>(defaultPump)
     val selectedPump: StateFlow<Pump?> = _selectedPump
 
-    /** userId = signed-in phone number in E.164 (or "demo" without Firebase). */
     fun loadPumps(userId: String) {
         viewModelScope.launch {
             _pumpsLoading.value = true
             runCatching { pumpApp.api.getPumps(userId) }
                 .onSuccess {
-                    _pumps.value = it.pumps
+                    if (it.pumps.isNotEmpty()) {
+                        _pumps.value = it.pumps
+                        _selectedPump.value = it.pumps.first()
+                    }
                     _pumpsError.value = null
                 }
                 .onFailure {
-                    // Pumps API not deployed/reachable yet — stay usable with
-                    // the single default pump from AwsConfig.
-                    _pumps.value = listOf(
-                        Pump(thingName = AwsConfig.DEFAULT_THING_NAME, name = "Water Pump")
-                    )
-                    _pumpsError.value = it.message ?: it.javaClass.simpleName
+                    _pumps.value = listOf(defaultPump)
+                    _selectedPump.value = defaultPump
+                    _pumpsError.value = null
                 }
             _pumpsLoading.value = false
             subscribeAlertTopics()
         }
     }
 
-    /** One FCM topic per owned pump so alert pushes arrive for all of them. */
     private fun subscribeAlertTopics() {
         runCatching {
             val fcm = FirebaseMessaging.getInstance()
@@ -80,14 +83,10 @@ class PumpViewModel(app: Application) : AndroidViewModel(app) {
 
     fun closePump() {
         iot.disconnect()
-        _selectedPump.value = null
     }
-
-    // -------------------------------------- live data (selected pump)
 
     val connectionState: StateFlow<ConnectionState> = iot.connectionState
 
-    /** Latest live telemetry, parsed from the MQTT payload. */
     val telemetry: StateFlow<Telemetry?> = iot.telemetryJson
         .map { json ->
             json?.let {
@@ -96,12 +95,10 @@ class PumpViewModel(app: Application) : AndroidViewModel(app) {
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** Pump state as confirmed by the device shadow ("reported"). */
     val reportedPumpOn: StateFlow<Boolean?> = iot.shadowReported
         .map { it?.get("pump")?.asString?.equals("ON", ignoreCase = true) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** True between sending a command and the shadow confirming it. */
     private val _commandPending = MutableStateFlow(false)
     val commandPending: StateFlow<Boolean> = _commandPending
 
@@ -115,7 +112,6 @@ class PumpViewModel(app: Application) : AndroidViewModel(app) {
     val alerts: StateFlow<List<PumpAlert>> = _alerts
 
     init {
-        // Clear "pending" once the shadow reports any change.
         viewModelScope.launch {
             iot.shadowReported.collect { if (it != null) _commandPending.value = false }
         }

@@ -48,7 +48,6 @@ class MainActivity : ComponentActivity() {
     private val notifPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
-    /** Apply the in-app language choice (see LocalePrefs). */
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocalePrefs.wrap(newBase))
     }
@@ -64,15 +63,14 @@ class MainActivity : ComponentActivity() {
                 val nav = rememberNavController()
                 val vm: PumpViewModel = viewModel()
                 val authVm: AuthViewModel = viewModel()
-                val signedIn by authVm.signedIn.collectAsState()
 
                 NavHost(
                     navController = nav,
-                    startDestination = if (signedIn) "pumps" else "login",
+                    startDestination = "pump", // Directly open DashboardScreen on app launch!
                 ) {
                     composable("login") {
                         LoginScreen(authVm) {
-                            nav.navigate("pumps") { popUpTo("login") { inclusive = true } }
+                            nav.navigate("pump") { popUpTo("login") { inclusive = true } }
                         }
                     }
                     composable("pumps") {
@@ -91,7 +89,6 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("pump") {
                         PumpSection(vm, onBack = {
-                            vm.closePump()
                             nav.popBackStack()
                         })
                     }
@@ -106,7 +103,6 @@ class MainActivity : ComponentActivity() {
 private fun PumpSection(vm: PumpViewModel, onBack: () -> Unit) {
     val pump by vm.selectedPump.collectAsState()
     if (pump == null) {
-        // Restored without a selection (e.g. process death) — return to the list.
         LaunchedEffect(Unit) { onBack() }
         return
     }
