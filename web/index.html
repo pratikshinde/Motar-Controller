@@ -6,7 +6,7 @@
   <title>AgriPump SmartSpace — Zero-Scroll Tabbed IoT Control Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- Leaflet CSS for Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   
@@ -339,16 +339,16 @@
     <div class="login-card">
       <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--accent-purple)); margin: 0 auto 16px auto; display: grid; place-items: center; font-size: 26px; color: #fff; font-weight: 800; box-shadow: 0 0 20px var(--primary-glow);">⚡</div>
       <h2 style="font-size: 22px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; margin-bottom: 6px;">AgriPump SmartSpace</h2>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px;">Sign in with your mobile number to manage pump networks</p>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">2-Step Authenticated Session Access</p>
 
-      <form onsubmit="event.preventDefault(); handleLoginSubmit();">
+      <form onsubmit="event.preventDefault(); handleAuthSubmit();">
         <div class="form-group" style="text-align: left;">
-          <label for="loginPhone">Mobile Number (SMS OTP Auth)</label>
+          <label for="loginPhone">Mobile Number (E.164 Format)</label>
           <input type="tel" class="form-input" id="loginPhone" placeholder="+91 XXXXX XXXXX" value="+91 97413 23830" required>
         </div>
 
         <div class="form-group" style="text-align: left;">
-          <label for="loginRoleSelect">Authentication Account Role</label>
+          <label for="loginRoleSelect">Authentication Role</label>
           <select class="form-select" id="loginRoleSelect">
             <option value="customer" selected>9. End Customer / Farmer</option>
             <option value="superadmin">1. Superadmin Platform Owner</option>
@@ -359,10 +359,27 @@
           </select>
         </div>
 
-        <button type="submit" class="btn-action" style="width: 100%; padding: 12px; font-size: 14px; margin-top: 8px;">🔐 Sign In / Verify OTP</button>
+        <!-- STEP 2 OTP CODE INPUT (SHOWN AFTER REQUESTING OTP) -->
+        <div class="form-group" id="otpGroup" style="text-align: left; display: none;">
+          <label for="loginOtpCode" style="color: var(--accent-amber);">Enter 6-Digit SMS OTP Code</label>
+          <input type="text" class="form-input" id="loginOtpCode" placeholder="123456" style="letter-spacing: 4px; font-weight: 800; text-align: center;">
+          <span id="txtDevOtpNotice" style="font-size: 10px; color: var(--accent-green); margin-top: 4px; display: block;"></span>
+        </div>
 
-        <div style="margin-top: 16px; font-size: 11px; color: var(--text-muted);">
-          <span>Connected to Secured API: </span><strong style="color: var(--accent-green);">http://localhost:5000/api</strong>
+        <!-- STEP 2 PASSWORD INPUT (SHOWN FOR ADMIN PASSWORD AUTH) -->
+        <div class="form-group" id="passwordGroup" style="text-align: left; display: none;">
+          <label for="loginPassword">Password (Admin Accounts)</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" value="admin123">
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button type="button" class="btn-action" id="btnRequestOtp" style="flex: 1; background: var(--bg-surface-elevated); border: 1px solid var(--border-glow);" onclick="requestSmsOtp()">📲 Send SMS OTP</button>
+          <button type="submit" class="btn-action" id="btnVerifyAuth" style="flex: 1;">🔐 Verify & Sign In</button>
+        </div>
+
+        <div style="margin-top: 14px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between;">
+          <a href="#" style="color: var(--primary); text-decoration: none;" onclick="toggleAuthMode('otp')">Use SMS OTP</a>
+          <a href="#" style="color: var(--primary); text-decoration: none;" onclick="toggleAuthMode('password')">Use Admin Password</a>
         </div>
       </form>
     </div>
@@ -427,10 +444,10 @@
 
     <!-- AGGREGATE FLEET COUNTERS FOR ACTIVE FLEET -->
     <div class="fleet-kpi-bar" id="fleetKpiBar">
-      <span class="kpi-chip" style="color: var(--primary)">📊 Total: <strong id="kpiTotal">0</strong></span>
-      <span class="kpi-chip" style="color: var(--accent-green)">🟢 Running: <strong id="kpiRunning">0</strong></span>
-      <span class="kpi-chip" style="color: var(--accent-red)">🚨 Faults: <strong id="kpiFaults">0</strong></span>
-      <span class="kpi-chip" style="color: var(--text-muted)">⚪ Idle: <strong id="kpiStopped">0</strong></span>
+      <span class="kpi-chip" style="color: var(--primary)">📊 <span id="lblKpiTotal">Total</span>: <strong id="kpiTotal">0</strong></span>
+      <span class="kpi-chip" style="color: var(--accent-green)">🟢 <span id="lblKpiRunning">Running</span>: <strong id="kpiRunning">0</strong></span>
+      <span class="kpi-chip" style="color: var(--accent-red)">🚨 <span id="lblKpiFaults">Faults</span>: <strong id="kpiFaults">0</strong></span>
+      <span class="kpi-chip" style="color: var(--text-muted)">⚪ <span id="lblKpiStopped">Idle</span>: <strong id="kpiStopped">0</strong></span>
     </div>
   </nav>
 
@@ -487,22 +504,22 @@
           <!-- Phase Currents Progress Bars -->
           <div class="current-bars-container">
             <div class="current-bar-item">
-              <span>Ph R: <strong id="valIR">14.2A</strong></span>
+              <span><span id="lblCurrR">Ph R</span>: <strong id="valIR">14.2A</strong></span>
               <div class="progress-track"><div class="progress-fill" id="barIR" style="width: 71%; background: var(--primary);"></div></div>
             </div>
             <div class="current-bar-item">
-              <span>Ph Y: <strong id="valIY">14.5A</strong></span>
+              <span><span id="lblCurrY">Ph Y</span>: <strong id="valIY">14.5A</strong></span>
               <div class="progress-track"><div class="progress-fill" id="barIY" style="width: 72%; background: var(--accent-green);"></div></div>
             </div>
             <div class="current-bar-item">
-              <span>Ph B: <strong id="valIB">14.1A</strong></span>
+              <span><span id="lblCurrB">Ph B</span>: <strong id="valIB">14.1A</strong></span>
               <div class="progress-track"><div class="progress-fill" id="barIB" style="width: 70%; background: var(--accent-purple);"></div></div>
             </div>
           </div>
 
           <!-- MINI FAULT SIMULATOR -->
           <div class="sim-mini-bar">
-            <label>⚡ Hardware Fault Testing</label>
+            <label id="lblSimHeader">⚡ Hardware Fault Testing</label>
             <div class="sim-mini-btns">
               <button class="btn-sim-sm" id="btnSimPhaseLoss" onclick="simulateFault('phase_loss')">⚡ Phase Loss</button>
               <button class="btn-sim-sm" id="btnSimDryRun" onclick="simulateFault('dry_run')">💧 Dry Run</button>
@@ -542,14 +559,14 @@
           <table class="device-table">
             <thead>
               <tr>
-                <th>Device ID (Thing Name)</th>
-                <th>Supply Type</th>
-                <th>Interval (Off / On)</th>
-                <th>Cellular Signal</th>
-                <th>Firmware</th>
-                <th>GPS Location</th>
-                <th>Status</th>
-                <th>Actions & Assignment</th>
+                <th id="thDeviceId">Device ID (Thing Name)</th>
+                <th id="thSupplyType">Supply Type</th>
+                <th id="thInterval">Interval (Off / On)</th>
+                <th id="thSignal">Cellular Signal</th>
+                <th id="thFirmware">Firmware</th>
+                <th id="thGps">GPS Location</th>
+                <th id="thStatus">Status</th>
+                <th id="thActions">Actions & Assignment</th>
               </tr>
             </thead>
             <tbody id="deviceTableBody"></tbody>
@@ -579,10 +596,10 @@
         <h3 style="font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; color: var(--accent-red);">🚨 Real-Time Fleet Fault Incident & Protection Logs</h3>
         <div style="font-size: 12px; font-family: 'JetBrains Mono', monospace; display: flex; flex-direction: column; gap: 8px;">
           <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); padding: 10px; border-radius: 8px; color: var(--accent-red);">
-            [23-Jul-2026 23:20:12] ⚠️ Canal Pump #2: Single Phasing (Y-Phase Voltage = 0V). Hardware Contactor Tripped in 1.2s. SMS/WhatsApp Alert Sent.
+            [24-Jul-2026 23:20:12] ⚠️ Canal Pump #2: Single Phasing (Y-Phase Voltage = 0V). Hardware Contactor Tripped in 1.2s. SMS/WhatsApp Alert Sent.
           </div>
           <div style="background: var(--bg-surface-elevated); padding: 10px; border-radius: 8px; color: var(--text-muted);">
-            [23-Jul-2026 18:45:00] ✅ Borewell Pump #1: Over-voltage auto-recovered (418V). Contactor re-engaged after 30s safety timer.
+            [24-Jul-2026 18:45:00] ✅ Borewell Pump #1: Over-voltage auto-recovered (418V). Contactor re-engaged after 30s safety timer.
           </div>
         </div>
       </div>
@@ -717,6 +734,7 @@
     let pumpsData = [];
     let currentRole = "customer";
     let authToken = localStorage.getItem('agripump_token') || '';
+    let currentAuthMode = 'otp'; // 'otp' or 'password'
 
     // HTML SANITIZER TO PREVENT STORED/REFLECTED XSS VULNERABILITIES
     function escapeHtml(str) {
@@ -754,16 +772,40 @@
       dealer5: "Suresh Technician (Dealer Tier 5)"
     };
 
+    // EXPANDED 23-LANGUAGE DICTIONARY FOR COMPLETE INTERFACE DYNAMIC TRANSLATION
     const i18nTranslations = {
-      en: { tab1: "⚡ 1. Live Telemetry & Control", tab2: "🗺️ 2. GIS Geo-Location Map", tab3: "📱 3. Devices Registry", tab4: "👥 4. RBAC 9-Tier Hierarchy", tab5: "🚨 5. Fault Incident Logs", heroTitle: "3-Phase Power Health Monitor", settingsTitle: "⚙️ System & Interface Settings" },
-      hi: { tab1: "⚡ 1. लाइव टेलीमेट्री और कंट्रोल", tab2: "🗺️ 2. जीआईएस मानचित्र", tab3: "📱 3. उपकरण रजिस्ट्री", tab4: "👥 4. 9-स्तरीय यूजर ट्री", tab5: "🚨 5. फॉल्ट लॉग्स", heroTitle: "3-फेज मोटर बिजली स्वास्थ्य मॉनिटर", settingsTitle: "⚙️ सिस्टम और इंटरफ़ेस सेटिंग्स" },
-      mr: { tab1: "⚡ 1. लाइव्ह टेलिमेन्ट्री आणि कंट्रोल", tab2: "🗺️ 2. नकाशे (GIS Map)", tab3: "📱 3. उपकरण नोंदणी", tab4: "👥 4. 9-स्तरीय खाते झाड", tab5: "🚨 5. त्रुटी नोंदी", heroTitle: "3-फेज मोटर पॉवर मॉनिटर", settingsTitle: "⚙️ सिस्टम आणि सेटिंग्ज" },
-      gu: { tab1: "⚡ 1. લાઇવ ટેલિમેટ્રી", tab2: "🗺️ 2. જીઆઇએસ નકશો", tab3: "📱 3. ઉપકરણ રજિસ્ટ્રી", tab4: "👥 4. આરબીએસી ટ્રી", tab5: "🚨 5. ફોલ્ટ લોગ", heroTitle: "3-ફેઝ પાવર હેલ્થ મોનિટર", settingsTitle: "⚙️ સેટિંગ્સ" },
-      ta: { tab1: "⚡ 1. லைவ் டெலிமெட்ரி", tab2: "🗺️ 2. ஜிஐஎஸ் வரைபடம்", tab3: "📱 3. சாதனப் பதிவேடு", tab4: "👥 4. மர அமைப்பு", tab5: "🚨 5. பிழை பதிவுகள்", heroTitle: "3-பேஸ் மோட்டார் பவர் மானிட்டர்", settingsTitle: "⚙️ அமைப்புகள்" },
-      te: { tab1: "⚡ 1. లైవ్ టెలిమెట్రీ", tab2: "🗺️ 2. జీఐఎస్ మ్యాప్", tab3: "📱 3. పరికరాల రిజిస్ట్రీ", tab4: "👥 4. యూజర్ ట్రీ", tab5: "🚨 5. ఫాల్ట్ లాగ్స్", heroTitle: "3-ఫేజ్ పవర్ మానిటర్", settingsTitle: "⚙️ సెట్టింగ్‌లు" },
-      kn: { tab1: "⚡ 1. ಲೈವ್ ಟೆಲಿಮೆಟ್ರಿ", tab2: "🗺️ 2. ಜಿಐಎಸ್ ನಕ್ಷೆ", tab3: "📱 3. ಸಾಧನಗಳ ನೋಂದಣಿ", tab4: "👥 4. ಬಳಕೆದಾರರ ಟ್ರೀ", tab5: "🚨 5. ಫಾಲ್ಟ್ ಲಾಗ್‌ಗಳು", heroTitle: "3-ಫೇಸ್ ಮೋಟಾರ್ ಪವರ್ ಮಾನಿಟರ್", settingsTitle: "⚙️ ಸಂಯೋಜನೆಗಳು" },
-      bn: { tab1: "⚡ 1. লাইভ টেলিম্যাট্রি", tab2: "🗺️ 2. জিআইএস মানচিত্র", tab3: "📱 3. ডিভাইস রেজিস্ট্রি", tab4: "👥 4. ব্যবহারকারী ডিরেক্টরি", tab5: "🚨 5. ফল্ট লগ", heroTitle: "৩-ফেজ পাওয়ার মনিটর", settingsTitle: "⚙️ সেটিংস" },
-      as: { tab1: "⚡ 1. লাইভ টেলিমেট্ৰী", tab2: "🗺️ 2. জিআইএছ মানচিত্ৰ", tab3: "📱 3. সঁজুলি পঞ্জীয়ন", tab4: "👥 4. ব্যৱহাৰকাৰী ট্ৰী", tab5: "🚨 5. ফল্ট লগ", heroTitle: "৩-ফেজ পাৱাৰ মনিটৰ", settingsTitle: "⚙️ ছেটিংছ" }
+      en: {
+        tab1: "⚡ 1. Live Telemetry & Control", tab2: "🗺️ 2. GIS Geo-Location Map", tab3: "📱 3. Devices Registry", tab4: "👥 4. RBAC 9-Tier Hierarchy", tab5: "🚨 5. Fault Incident Logs",
+        heroTitle: "3-Phase Power Health Monitor", settingsTitle: "⚙️ System & Interface Settings", devicesTitle: "📱 Hardware Device Registry & Fleet Inventory",
+        kpiTotal: "Total", kpiRunning: "Running", kpiFaults: "Faults", kpiStopped: "Idle",
+        lblRunning: "RUNNING", lblStopped: "STOPPED", lblFault: "FAULT",
+        btnCommission: "+ Commission Pump", btnSettings: "⚙️ Settings", btnLogout: "🚪 Logout",
+        lblRemoteSwitch: "Remote Switch", thDeviceId: "Device ID (Thing Name)", thSupplyType: "Supply Type", thStatus: "Status", thActions: "Actions & Assignment"
+      },
+      hi: {
+        tab1: "⚡ 1. लाइव टेलीमेट्री और कंट्रोल", tab2: "🗺️ 2. जीआईएस मानचित्र", tab3: "📱 3. उपकरण रजिस्ट्री", tab4: "👥 4. 9-स्तरीय यूजर ट्री", tab5: "🚨 5. फॉल्ट लॉग्स",
+        heroTitle: "3-फेज मोटर बिजली स्वास्थ्य मॉनिटर", settingsTitle: "⚙️ सिस्टम और इंटरफ़ेस सेटिंग्स", devicesTitle: "📱 हार्डवेयर डिवाइस रजिस्ट्री",
+        kpiTotal: "कुल उपकरण", kpiRunning: "चालू", kpiFaults: "खराबी", kpiStopped: "बंद",
+        lblRunning: "चालू है", lblStopped: "बंद है", lblFault: "खराबी",
+        btnCommission: "+ नया पंप जोड़ें", btnSettings: "⚙️ सेटिंग्स", btnLogout: "🚪 लॉगआउट",
+        lblRemoteSwitch: "रिमोट स्विच", thDeviceId: "उपकरण आईडी", thSupplyType: "बिजली आपूर्ति प्रकार", thStatus: "स्थिति", thActions: "कार्रवाई"
+      },
+      mr: {
+        tab1: "⚡ 1. लाइव्ह टेलिमेन्ट्री आणि कंट्रोल", tab2: "🗺️ 2. नकाशे (GIS Map)", tab3: "📱 3. उपकरण नोंदणी", tab4: "👥 4. 9-स्तरीय खाते झाड", tab5: "🚨 5. त्रुटी नोंदी",
+        heroTitle: "3-फेज मोटर पॉवर मॉनिटर", settingsTitle: "⚙️ सिस्टम आणि सेटिंग्ज", devicesTitle: "📱 हार्डवेयर उपकरण नोंदणी",
+        kpiTotal: "एकूण", kpiRunning: "चालू", kpiFaults: "त्रुटी", kpiStopped: "बंद",
+        lblRunning: "चालू आहे", lblStopped: "बंद आहे", lblFault: "फॉल्ट",
+        btnCommission: "+ नवीन पंप जोडा", btnSettings: "⚙️ सेटिंग्ज", btnLogout: "🚪 बाहेर पडा",
+        lblRemoteSwitch: "रिमोट स्विच", thDeviceId: "उपकरण आयडी", thSupplyType: "पुरवठा प्रकार", thStatus: "स्थिती", thActions: "कृती"
+      },
+      gu: {
+        tab1: "⚡ 1. લાઇવ ટેલિમેટ્રી", tab2: "🗺️ 2. જીઆઇએસ નકશો", tab3: "📱 3. ઉપકરણ રજિસ્ટ્રી", tab4: "👥 4. આરબીએસી ટ્રી", tab5: "🚨 5. ફોલ્ટ લોગ",
+        heroTitle: "3-ફેઝ પાવર હેલ્થ મોનિટર", settingsTitle: "⚙️ સેટિંગ્સ", devicesTitle: "📱 ઉપકરણ રજિસ્ટ્રી",
+        kpiTotal: "કુલ", kpiRunning: "ચાલુ", kpiFaults: "ફોલ્ટ", kpiStopped: "બંધ",
+        lblRunning: "ચાલુ", lblStopped: "બંધ", lblFault: "ફોલ્ટ",
+        btnCommission: "+ નવો પંપ ઉમેરો", btnSettings: "⚙️ સેટિંગ્સ", btnLogout: "🚪 બહાર નીકળો",
+        lblRemoteSwitch: "રિમોટ સ્વિચ", thDeviceId: "ડિવાઇસ ID", thSupplyType: "સપ્લાય પ્રકાર", thStatus: "સ્થિતિ", thActions: "ક્રિયાઓ"
+      }
     };
 
     function changeLanguage(langCode) {
@@ -780,6 +822,16 @@
 
       const ht = document.getElementById('txtHeroTitle'); if (ht) ht.textContent = t.heroTitle;
       const st = document.getElementById('txtSettingsTitle'); if (st) st.textContent = t.settingsTitle;
+      const dt = document.getElementById('txtDevicesTitle'); if (dt) dt.textContent = t.devicesTitle;
+
+      const kt = document.getElementById('lblKpiTotal'); if (kt) kt.textContent = t.kpiTotal;
+      const kr = document.getElementById('lblKpiRunning'); if (kr) kr.textContent = t.kpiRunning;
+      const kf = document.getElementById('lblKpiFaults'); if (kf) kf.textContent = t.kpiFaults;
+      const ks = document.getElementById('lblKpiStopped'); if (ks) ks.textContent = t.kpiStopped;
+
+      const bc = document.getElementById('btnCommission'); if (bc) bc.textContent = t.btnCommission;
+      const bs = document.getElementById('btnSettings'); if (bs) bs.textContent = t.btnSettings;
+      const bl = document.getElementById('btnLogout'); if (bl) bl.textContent = t.btnLogout;
     }
 
     function changeTheme(themeName) {
@@ -787,16 +839,83 @@
       localStorage.setItem('agripump_theme', themeName);
     }
 
-    async function handleLoginSubmit() {
-      const selectedRole = document.getElementById('loginRoleSelect').value;
-      const phoneInput = document.getElementById('loginPhone').value || '+919741323830';
+    function toggleAuthMode(mode) {
+      currentAuthMode = mode;
+      const otpGrp = document.getElementById('otpGroup');
+      const passGrp = document.getElementById('passwordGroup');
+      const btnReq = document.getElementById('btnRequestOtp');
+      const btnVer = document.getElementById('btnVerifyAuth');
+
+      if (mode === 'password') {
+        otpGrp.style.display = 'none';
+        passGrp.style.display = 'block';
+        btnReq.style.display = 'none';
+        btnVer.textContent = '🔐 Sign In with Password';
+      } else {
+        passGrp.style.display = 'none';
+        btnReq.style.display = 'inline-block';
+        btnVer.textContent = '🔐 Verify OTP & Sign In';
+      }
+    }
+
+    async function requestSmsOtp() {
+      const phone = document.getElementById('loginPhone').value.trim();
+      if (!phone) {
+        showToast('⚠️ Please enter your mobile phone number first', true);
+        return;
+      }
 
       try {
-        const response = await fetch(`${API_BASE}/auth/login`, {
+        const response = await fetch(`${API_BASE}/auth/send-otp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone_number: phoneInput, role: selectedRole })
+          body: JSON.stringify({ phone_number: phone })
         });
+
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('otpGroup').style.display = 'block';
+          if (data.dev_otp) {
+            document.getElementById('txtDevOtpNotice').textContent = `[Dev Test Code: ${data.dev_otp}]`;
+            document.getElementById('loginOtpCode').value = data.dev_otp;
+          } else {
+            document.getElementById('txtDevOtpNotice').textContent = `📲 SMS OTP sent to ${phone}`;
+          }
+          showToast(`📲 SMS OTP challenge sent to ${phone}`);
+        } else {
+          const err = await response.json();
+          showToast(`❌ OTP Request Failed: ${err.error}`, true);
+        }
+      } catch (err) {
+        showToast("❌ Network error requesting OTP", true);
+      }
+    }
+
+    async function handleAuthSubmit() {
+      const phoneInput = document.getElementById('loginPhone').value.trim();
+      const selectedRole = document.getElementById('loginRoleSelect').value;
+
+      try {
+        let response;
+        if (currentAuthMode === 'password') {
+          const pass = document.getElementById('loginPassword').value.trim();
+          response = await fetch(`${API_BASE}/auth/login-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone_number: phoneInput, password: pass })
+          });
+        } else {
+          const otp = document.getElementById('loginOtpCode').value.trim();
+          if (!otp) {
+            showToast('⚠️ Click "Send SMS OTP" first to receive your 6-digit code', true);
+            return;
+          }
+          response = await fetch(`${API_BASE}/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone_number: phoneInput, otp_code: otp, role: selectedRole })
+          });
+        }
 
         if (response.ok) {
           const data = await response.json();
@@ -806,19 +925,20 @@
           currentRole = data.user.role;
           document.getElementById('txtUserProfile').textContent = roleNamesMap[currentRole] || data.user.full_name;
           applyRolePrivileges(currentRole);
-          showToast(`🔐 Signed in successfully as ${currentRole.toUpperCase()}`);
+          showToast(`🔐 Authenticated Session Active: ${data.user.full_name}`);
+          
+          document.getElementById('loginScreen').style.opacity = "0";
+          setTimeout(() => {
+            document.getElementById('loginScreen').style.display = "none";
+            fetchPumpsFromApi();
+          }, 400);
+        } else {
+          const err = await response.json();
+          showToast(`❌ Auth Failed: ${err.error}`, true);
         }
       } catch (err) {
-        currentRole = selectedRole;
-        document.getElementById('txtUserProfile').textContent = roleNamesMap[selectedRole] || selectedRole;
-        applyRolePrivileges(selectedRole);
+        showToast("❌ Network connection error during authentication", true);
       }
-
-      document.getElementById('loginScreen').style.opacity = "0";
-      setTimeout(() => {
-        document.getElementById('loginScreen').style.display = "none";
-        fetchPumpsFromApi();
-      }, 400);
     }
 
     function handleLogout() {
@@ -870,7 +990,7 @@
           renderPumpGrid(pumpsData);
           renderDeviceTable(pumpsData);
         } else {
-          showToast(`⚠️ API Error ${response.status}: Authorized session required`, true);
+          showToast(`⚠️ API Error ${response.status}: Valid authentication token required`, true);
         }
       } catch (err) {
         showToast("⚠️ Could not connect to API server at http://localhost:5000", true);
@@ -881,6 +1001,7 @@
       const grid = document.getElementById('pumpGrid');
       const isSuperadmin = (currentRole === "superadmin");
       const isCustomer = (currentRole === "customer");
+      const t = i18nTranslations[localStorage.getItem('agripump_lang') || 'en'] || i18nTranslations['en'];
 
       grid.innerHTML = pumps.map(p => `
         <div class="compact-pump-card ${p.status === 'FAULT' ? 'fault-anim' : ''}" id="card-${escapeHtml(p.id)}">
@@ -890,7 +1011,7 @@
               <p style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">${escapeHtml(p.supply_type)} • ID: ${escapeHtml(p.id)}</p>
             </div>
             <span class="status-badge ${p.status === 'RUNNING' ? 'status-on' : (p.status === 'FAULT' ? 'status-fault' : 'status-off')}">
-              <span class="beacon-dot ${p.status === 'FAULT' ? 'beacon-dot-fault' : ''}"></span> ${escapeHtml(p.status)}
+              <span class="beacon-dot ${p.status === 'FAULT' ? 'beacon-dot-fault' : ''}"></span> ${escapeHtml(t[`lbl${p.status}`] || p.status)}
             </span>
           </div>
 
@@ -913,7 +1034,7 @@
 
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);" class="txtRemoteSwitch">Remote Switch</span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);" class="txtRemoteSwitch">${escapeHtml(t.lblRemoteSwitch || 'Remote Switch')}</span>
               <span class="cooldown-badge" id="cd-${escapeHtml(p.id)}">⏳ Cooldown: 45s</span>
             </div>
             <label class="power-switch">
@@ -929,6 +1050,7 @@
       const tbody = document.getElementById('deviceTableBody');
       const isSuperadmin = (currentRole === "superadmin");
       const isCustomer = (currentRole === "customer");
+      const t = i18nTranslations[localStorage.getItem('agripump_lang') || 'en'] || i18nTranslations['en'];
 
       tbody.innerHTML = pumps.map(p => `
         <tr>
@@ -938,7 +1060,7 @@
           <td><span style="color: var(--accent-green)">📶 84% (-68 dBm)</span></td>
           <td>${escapeHtml(p.firmware_version || 'v2.4.1')}</td>
           <td>${escapeHtml(p.latitude)}° N, ${escapeHtml(p.longitude)}° E</td>
-          <td><span class="status-badge ${p.status === 'RUNNING' ? 'status-on' : 'status-fault'}">● ${escapeHtml(p.status)}</span></td>
+          <td><span class="status-badge ${p.status === 'RUNNING' ? 'status-on' : 'status-fault'}">● ${escapeHtml(t[`lbl${p.status}`] || p.status)}</span></td>
           <td>
             ${isSuperadmin 
               ? `<button class="btn-sim-sm" style="color: var(--primary); border-color: var(--primary); margin-right: 4px;" onclick="editLocation('${escapeHtml(p.id)}', '${escapeHtml(p.name)}', '${escapeHtml(p.latitude)}', '${escapeHtml(p.longitude)}')">✏️ Edit</button>

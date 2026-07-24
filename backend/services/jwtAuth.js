@@ -4,7 +4,8 @@
  */
 const crypto = require('crypto');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'agripump_jwt_secret_key_2026_production_secure';
+// Generate secure per-instance runtime secret if env variable is omitted
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
 function base64UrlEncode(str) {
   return Buffer.from(str)

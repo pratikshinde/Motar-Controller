@@ -20,13 +20,14 @@ EXCEPTION WHEN OTHERS THEN
 END $$;
 
 -- ----------------------------------------------------------------------------
--- 1. USERS & 9-TIER HIERARCHY TABLE
+-- 1. USERS & 9-TIER HIERARCHY TABLE WITH AUTH CREDENTIALS
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS agripump.users (
     id UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     full_name VARCHAR(100) NOT NULL,
     phone_number VARCHAR(20) UNIQUE NOT NULL, -- E.164 format (+919876543210)
     email VARCHAR(100),
+    password_hash VARCHAR(255), -- Securely hashed password for admin accounts
     role VARCHAR(30) NOT NULL CHECK (
         role IN (
             'superadmin', 'manufacturer', 'distributor', 
@@ -34,19 +35,34 @@ CREATE TABLE IF NOT EXISTS agripump.users (
         )
     ),
     -- Path Enumeration String for O(1) Hierarchy Tree Scoping
-    -- Example: "superadmin_id/mfg_01/dist_02/dealer1_05/customer_99"
     hierarchy_path TEXT NOT NULL,
     parent_user_id UUID REFERENCES agripump.users(id) ON DELETE SET NULL,
     preferred_language VARCHAR(10) DEFAULT 'en',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Ensure password_hash column exists on existing installations
+ALTER TABLE agripump.users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+
 -- Index for fast path enumeration descendant lookup
 CREATE INDEX IF NOT EXISTS idx_users_hierarchy_path ON agripump.users (hierarchy_path text_pattern_ops);
 CREATE INDEX IF NOT EXISTS idx_users_phone ON agripump.users (phone_number);
 
 -- ----------------------------------------------------------------------------
--- 2. PUMPS & DEVICE REGISTRY TABLE
+-- 2. OTP CHALLENGE STATE TABLE (REAL MOBILE AUTHENTICATION)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS agripump.otp_challenges (
+    phone_number VARCHAR(20) PRIMARY KEY,
+    otp_code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    attempts INT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_otp_expires ON agripump.otp_challenges (expires_at);
+
+-- ----------------------------------------------------------------------------
+-- 3. PUMPS & DEVICE REGISTRY TABLE
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS agripump.pumps (
     id VARCHAR(50) PRIMARY KEY, -- Device Thing Name: e.g. "PUMP-4G-3P-8821"
@@ -72,7 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_pumps_lat_lng ON agripump.pumps (latitude, longit
 CREATE INDEX IF NOT EXISTS idx_pumps_hierarchy_path ON agripump.pumps (hierarchy_path text_pattern_ops);
 
 -- ----------------------------------------------------------------------------
--- 3. TELEMETRY HISTORY TABLE
+-- 4. TELEMETRY HISTORY TABLE
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS agripump.telemetry_history (
     id BIGSERIAL PRIMARY KEY,
@@ -98,7 +114,7 @@ CREATE TABLE IF NOT EXISTS agripump.telemetry_history (
 CREATE INDEX IF NOT EXISTS idx_telemetry_pump_time ON agripump.telemetry_history (pump_id, recorded_at DESC);
 
 -- ----------------------------------------------------------------------------
--- 4. FAULT INCIDENT & PROTECTION LOGS TABLE
+-- 5. FAULT INCIDENT & PROTECTION LOGS TABLE
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS agripump.fault_logs (
     id BIGSERIAL PRIMARY KEY,
@@ -116,13 +132,13 @@ CREATE TABLE IF NOT EXISTS agripump.fault_logs (
 CREATE INDEX IF NOT EXISTS idx_fault_logs_pump ON agripump.fault_logs (pump_id, occurred_at DESC);
 
 -- ----------------------------------------------------------------------------
--- SAMPLE INITIAL SEED DATA
+-- SAMPLE INITIAL SEED DATA WITH SAMPLE PASSWORDS
 -- ----------------------------------------------------------------------------
-INSERT INTO agripump.users (id, full_name, phone_number, role, hierarchy_path, preferred_language)
+INSERT INTO agripump.users (id, full_name, phone_number, role, hierarchy_path, preferred_language, password_hash)
 VALUES 
-  ('11111111-1111-1111-1111-111111111111', 'Superadmin Platform', '+919900000000', 'superadmin', '11111111-1111-1111-1111-111111111111', 'en'),
-  ('22222222-2222-2222-2222-222222222222', 'Ramesh Patel (Farmer)', '+919876543210', 'customer', '11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222', 'hi')
-ON CONFLICT (phone_number) DO NOTHING;
+  ('11111111-1111-1111-1111-111111111111', 'Superadmin Platform', '+919900000000', 'superadmin', '11111111-1111-1111-1111-111111111111', 'en', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'), -- admin123
+  ('22222222-2222-2222-2222-222222222222', 'Ramesh Patel (Farmer)', '+919741323830', 'customer', '11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222', 'hi', NULL)
+ON CONFLICT (id) DO UPDATE SET phone_number = EXCLUDED.phone_number, password_hash = EXCLUDED.password_hash;
 
 INSERT INTO agripump.pumps (id, name, supply_type, hp_rating, owner_user_id, hierarchy_path, latitude, longitude, status)
 VALUES 

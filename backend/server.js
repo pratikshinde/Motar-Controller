@@ -1,10 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 const { Pool } = require('pg');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const { sendDltSms, sendWhatsAppAlert, DLT_TEMPLATES } = require('./services/notificationService');
+const { sendDltSms, sendWhatsAppAlert } = require('./services/notificationService');
 const { signToken } = require('./services/jwtAuth');
 const { authenticateToken, requireRole } = require('./middleware/authMiddleware');
 
@@ -54,6 +55,11 @@ pool.connect((err, client, release) => {
   }
 });
 
+// Helper to hash passwords using SHA-256
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
 // ----------------------------------------------------------------------------
 // ROOT HEALTH CHECK & API SITEMAP
 // ----------------------------------------------------------------------------
@@ -63,7 +69,9 @@ app.get('/api', (req, res) => {
     system: 'AgriPump SmartSpace IoT REST API',
     database: 'PostgreSQL propcb (schema: agripump)',
     endpoints: {
-      authLogin: 'POST /api/auth/login',
+      sendOtp: 'POST /api/auth/send-otp',
+      verifyOtp: 'POST /api/auth/verify-otp',
+      loginPassword: 'POST /api/auth/login-password',
       getPumps: 'GET /api/pumps?hierarchy_path=...&page=1&limit=50&search=...',
       createPump: 'POST /api/pumps (Superadmin Only)',
       updateLocation: 'POST /api/pumps/:id/location (Superadmin Only)',
@@ -76,37 +84,103 @@ app.get('/api', (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// 0. POST /api/auth/login: JWT Authentication Login Endpoint
+// 0A. POST /api/auth/send-otp: Generate & Dispatch 6-Digit Mobile SMS OTP
 // ----------------------------------------------------------------------------
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/send-otp', async (req, res) => {
   try {
-    const { phone_number, role } = req.body;
+    const { phone_number } = req.body;
     if (!phone_number) {
       return res.status(400).json({ error: 'Mobile phone number is required' });
     }
 
-    const cleanPhone = phone_number.replace(/\s+/g, '');
+    const cleanPhone = phone_number.trim().replace(/\s+/g, '');
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Upsert OTP challenge into database with 5-minute expiration
+    await pool.query(
+      `INSERT INTO agripump.otp_challenges (phone_number, otp_code, expires_at)
+       VALUES ($1, $2, CURRENT_TIMESTAMP + INTERVAL '5 minutes')
+       ON CONFLICT (phone_number) DO UPDATE SET 
+         otp_code = EXCLUDED.otp_code,
+         expires_at = EXCLUDED.expires_at,
+         attempts = 0,
+         created_at = CURRENT_TIMESTAMP`,
+      [cleanPhone, otpCode]
+    );
+
+    // Dispatch OTP via live DLT SMS / mock gateway
+    const smsResult = await sendDltSms(cleanPhone, 'SINGLE_PHASING', [otpCode], 'hi');
+
+    console.log(`🔐 [AUTH OTP GENERATED] Phone: ${cleanPhone} | OTP Code: ${otpCode} (Expires in 5m)`);
+
+    res.json({
+      message: 'OTP challenge generated and dispatched',
+      phone_number: cleanPhone,
+      sms: smsResult,
+      // Provide dev_otp field in sandbox mode for instant testing without cellular network wait
+      dev_otp: process.env.NODE_ENV !== 'production' ? otpCode : undefined
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// 0B. POST /api/auth/verify-otp: Verify Mobile OTP Challenge & Issue JWT Token
+// ----------------------------------------------------------------------------
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { phone_number, otp_code, role } = req.body;
+    if (!phone_number || !otp_code) {
+      return res.status(400).json({ error: 'phone_number and otp_code are required' });
+    }
+
+    const cleanPhone = phone_number.trim().replace(/\s+/g, '');
     const userRole = role || 'customer';
 
-    // Look up existing user or construct default authenticated session
-    let userRecord = {
-      id: '11111111-1111-1111-1111-111111111111',
-      full_name: userRole === 'superadmin' ? 'Superadmin Platform' : (userRole === 'customer' ? 'Ramesh Patel (Farmer)' : `${userRole.toUpperCase()} Account`),
-      phone_number: cleanPhone,
-      role: userRole,
-      hierarchy_path: '11111111-1111-1111-1111-111111111111'
-    };
+    // Verify active OTP challenge in agripump.otp_challenges
+    const challengeRes = await pool.query(
+      `SELECT phone_number, otp_code, expires_at FROM agripump.otp_challenges 
+       WHERE phone_number = $1 AND expires_at > CURRENT_TIMESTAMP`,
+      [cleanPhone]
+    );
 
-    try {
-      const dbUserRes = await pool.query(
-        `SELECT id, full_name, phone_number, role, hierarchy_path FROM agripump.users WHERE phone_number = $1 OR role = $2 LIMIT 1`,
-        [cleanPhone, userRole]
+    if (challengeRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Authentication Failed: OTP code has expired or was not requested. Please request a new OTP.' });
+    }
+
+    const challenge = challengeRes.rows[0];
+    if (challenge.otp_code !== otp_code.trim()) {
+      await pool.query(`UPDATE agripump.otp_challenges SET attempts = attempts + 1 WHERE phone_number = $1`, [cleanPhone]);
+      return res.status(401).json({ error: 'Authentication Failed: Invalid OTP verification code. Please check your mobile SMS.' });
+    }
+
+    // OTP verified successfully! Consume challenge
+    await pool.query(`DELETE FROM agripump.otp_challenges WHERE phone_number = $1`, [cleanPhone]);
+
+    // STRICT USER LOOKUP BY PHONE NUMBER ALONE (Fixing OR vulnerability)
+    let userRecord;
+    const dbUserRes = await pool.query(
+      `SELECT id, full_name, phone_number, role, hierarchy_path FROM agripump.users WHERE phone_number = $1`,
+      [cleanPhone]
+    );
+
+    if (dbUserRes.rows.length > 0) {
+      userRecord = dbUserRes.rows[0];
+    } else {
+      // Auto-provision new customer account for verified mobile number
+      const newIdRes = await pool.query(`SELECT public.uuid_generate_v4() as new_id`);
+      const newId = newIdRes.rows[0].new_id;
+      const rootPath = '11111111-1111-1111-1111-111111111111';
+      const userPath = `${rootPath}/${newId}`;
+
+      const newUserRes = await pool.query(
+        `INSERT INTO agripump.users (id, full_name, phone_number, role, hierarchy_path, parent_user_id, preferred_language)
+         VALUES ($1, $2, $3, $4, $5, $6, 'hi')
+         RETURNING id, full_name, phone_number, role, hierarchy_path`,
+        [newId, `Farmer ${cleanPhone.slice(-4)}`, cleanPhone, userRole, userPath, '11111111-1111-1111-1111-111111111111']
       );
-      if (dbUserRes.rows.length > 0) {
-        userRecord = dbUserRes.rows[0];
-      }
-    } catch (dbErr) {
-      console.warn('DB lookup warning during auth:', dbErr.message);
+      userRecord = newUserRes.rows[0];
     }
 
     const token = signToken({
@@ -117,9 +191,60 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
     res.json({
-      message: 'Authentication successful',
+      message: 'OTP authentication successful',
       token,
       user: userRecord
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// 0C. POST /api/auth/login-password: Administrative Password Verification
+// ----------------------------------------------------------------------------
+app.post('/api/auth/login-password', async (req, res) => {
+  try {
+    const { phone_number, password } = req.body;
+    if (!phone_number || !password) {
+      return res.status(400).json({ error: 'phone_number and password are required' });
+    }
+
+    const cleanPhone = phone_number.trim().replace(/\s+/g, '');
+    const inputHash = hashPassword(password.trim());
+
+    // STRICT USER LOOKUP BY PHONE NUMBER
+    const dbUserRes = await pool.query(
+      `SELECT id, full_name, phone_number, role, hierarchy_path, password_hash FROM agripump.users WHERE phone_number = $1`,
+      [cleanPhone]
+    );
+
+    if (dbUserRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Authentication Failed: Account not found' });
+    }
+
+    const userRecord = dbUserRes.rows[0];
+    if (!userRecord.password_hash || userRecord.password_hash !== inputHash) {
+      return res.status(401).json({ error: 'Authentication Failed: Incorrect password' });
+    }
+
+    const token = signToken({
+      id: userRecord.id,
+      phone_number: userRecord.phone_number,
+      role: userRecord.role,
+      hierarchy_path: userRecord.hierarchy_path
+    });
+
+    res.json({
+      message: 'Password authentication successful',
+      token,
+      user: {
+        id: userRecord.id,
+        full_name: userRecord.full_name,
+        phone_number: userRecord.phone_number,
+        role: userRecord.role,
+        hierarchy_path: userRecord.hierarchy_path
+      }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -132,7 +257,12 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/pumps', authenticateToken, async (req, res) => {
   try {
     const userHierarchyPath = req.user.hierarchy_path || '11111111-1111-1111-1111-111111111111';
-    const parentPath = req.query.hierarchy_path || userHierarchyPath;
+    
+    // STRICT HIERARCHY SCOPING FIX: Non-superadmin users CANNOT override hierarchy_path via query string
+    const parentPath = (req.user.role === 'superadmin')
+      ? (req.query.hierarchy_path || userHierarchyPath)
+      : userHierarchyPath;
+
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 50, 500);
     const offset = (page - 1) * limit;
@@ -199,8 +329,8 @@ app.post('/api/pumps', authenticateToken, requireRole(['superadmin']), async (re
     const hPath = hierarchy_path || req.user.hierarchy_path || '11111111-1111-1111-1111-111111111111';
 
     const result = await pool.query(
-      `INSERT INTO agripump.pumps (id, name, supply_type, hp_rating, latitude, longitude, status, hierarchy_path, firmware_version)
-       VALUES ($1, $2, $3, $4, $5, $6, 'STOPPED', $7, 'v2.4.1')
+      `INSERT INTO agripump.pumps (id, name, supply_type, hp_rating, owner_user_id, latitude, longitude, status, hierarchy_path, firmware_version)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'STOPPED', $8, 'v2.4.1')
        ON CONFLICT (id) DO UPDATE SET 
          name = EXCLUDED.name,
          supply_type = EXCLUDED.supply_type,
@@ -208,7 +338,7 @@ app.post('/api/pumps', authenticateToken, requireRole(['superadmin']), async (re
          latitude = EXCLUDED.latitude,
          longitude = EXCLUDED.longitude
        RETURNING id, name, supply_type, hp_rating, latitude, longitude, status, hierarchy_path, firmware_version`,
-      [pumpId, pumpName, sType, hp, lat, lng, hPath]
+      [pumpId, pumpName, sType, hp, req.user.id, lat, lng, hPath]
     );
 
     res.status(201).json({ message: 'Pump device registered successfully', pump: result.rows[0] });
@@ -297,7 +427,7 @@ app.post('/api/telemetry', async (req, res) => {
 // ----------------------------------------------------------------------------
 app.post('/api/users', authenticateToken, requireRole(['superadmin', 'manufacturer', 'distributor', 'dealer1', 'dealer5']), async (req, res) => {
   try {
-    const { full_name, phone_number, role, parent_user_id, parent_hierarchy_path, preferred_language } = req.body;
+    const { full_name, phone_number, role, parent_user_id, parent_hierarchy_path, preferred_language, password } = req.body;
 
     if (!full_name || !phone_number || !role) {
       return res.status(400).json({ error: 'full_name, phone_number, and role are required' });
@@ -307,12 +437,13 @@ app.post('/api/users', authenticateToken, requireRole(['superadmin', 'manufactur
     const newId = userRes.rows[0].new_id;
     const parentPath = parent_hierarchy_path || req.user.hierarchy_path || '11111111-1111-1111-1111-111111111111';
     const newPath = `${parentPath}/${newId}`;
+    const passHash = password ? hashPassword(password) : null;
 
     const result = await pool.query(
-      `INSERT INTO agripump.users (id, full_name, phone_number, role, hierarchy_path, parent_user_id, preferred_language)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO agripump.users (id, full_name, phone_number, role, hierarchy_path, parent_user_id, preferred_language, password_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, full_name, role, hierarchy_path`,
-      [newId, full_name.trim(), phone_number.trim(), role, newPath, parent_user_id || req.user.id, preferred_language || 'en']
+      [newId, full_name.trim(), phone_number.trim(), role, newPath, parent_user_id || req.user.id, preferred_language || 'en', passHash]
     );
 
     res.status(201).json({ message: 'Subordinate user created', user: result.rows[0] });
