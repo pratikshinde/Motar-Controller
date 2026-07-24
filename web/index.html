@@ -318,9 +318,21 @@
     .form-group { margin-bottom: 14px; }
     .form-group label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
     .form-input, .form-select { width: 100%; background: var(--bg-surface-elevated); border: 1px solid var(--border-card); border-radius: 10px; padding: 10px 12px; color: var(--text-main); font-size: 13px; outline: none; }
+
+    /* NOTIFICATION BANNER */
+    .toast-banner {
+      position: fixed; bottom: 20px; right: 20px; z-index: 999;
+      background: var(--bg-surface); border: 1px solid var(--accent-amber);
+      color: var(--text-main); padding: 12px 18px; border-radius: 12px;
+      font-size: 12px; font-family: 'JetBrains Mono', monospace;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none;
+    }
   </style>
 </head>
 <body>
+
+  <!-- TOAST BANNER FOR ERRORS & NOTIFICATIONS -->
+  <div class="toast-banner" id="toastBanner"></div>
 
   <!-- AUTHENTICATION LOGIN OVERLAY SCREEN -->
   <div class="login-overlay" id="loginScreen">
@@ -331,15 +343,15 @@
 
       <form onsubmit="event.preventDefault(); handleLoginSubmit();">
         <div class="form-group" style="text-align: left;">
-          <label>Mobile Number (SMS OTP Auth)</label>
-          <input type="tel" class="form-input" id="loginPhone" value="+91 97413 23830" required>
+          <label for="loginPhone">Mobile Number (SMS OTP Auth)</label>
+          <input type="tel" class="form-input" id="loginPhone" placeholder="+91 XXXXX XXXXX" value="+91 97413 23830" required>
         </div>
 
         <div class="form-group" style="text-align: left;">
-          <label>Authentication Account Role</label>
+          <label for="loginRoleSelect">Authentication Account Role</label>
           <select class="form-select" id="loginRoleSelect">
-            <option value="customer" selected>9. End Customer / Farmer (+91 97413 23830)</option>
-            <option value="superadmin">1. Superadmin Platform (+91 99000 00000)</option>
+            <option value="customer" selected>9. End Customer / Farmer</option>
+            <option value="superadmin">1. Superadmin Platform Owner</option>
             <option value="manufacturer">2. Panel Manufacturer (Nashik Controls)</option>
             <option value="distributor">3. Regional Distributor (Western Agro)</option>
             <option value="dealer1">4. Dealer Tier 1 (Shree Ganesh Electric)</option>
@@ -350,7 +362,7 @@
         <button type="submit" class="btn-action" style="width: 100%; padding: 12px; font-size: 14px; margin-top: 8px;">🔐 Sign In / Verify OTP</button>
 
         <div style="margin-top: 16px; font-size: 11px; color: var(--text-muted);">
-          <span>Connected to API: </span><strong style="color: var(--accent-green);">http://localhost:5000/api</strong>
+          <span>Connected to Secured API: </span><strong style="color: var(--accent-green);">http://localhost:5000/api</strong>
         </div>
       </form>
     </div>
@@ -415,10 +427,10 @@
 
     <!-- AGGREGATE FLEET COUNTERS FOR ACTIVE FLEET -->
     <div class="fleet-kpi-bar" id="fleetKpiBar">
-      <span class="kpi-chip" style="color: var(--primary)">📊 Total: <strong id="kpiTotal">3</strong></span>
-      <span class="kpi-chip" style="color: var(--accent-green)">🟢 Running: <strong id="kpiRunning">1</strong></span>
-      <span class="kpi-chip" style="color: var(--accent-red)">🚨 Faults: <strong id="kpiFaults">1</strong></span>
-      <span class="kpi-chip" style="color: var(--text-muted)">⚪ Idle: <strong id="kpiStopped">1</strong></span>
+      <span class="kpi-chip" style="color: var(--primary)">📊 Total: <strong id="kpiTotal">0</strong></span>
+      <span class="kpi-chip" style="color: var(--accent-green)">🟢 Running: <strong id="kpiRunning">0</strong></span>
+      <span class="kpi-chip" style="color: var(--accent-red)">🚨 Faults: <strong id="kpiFaults">0</strong></span>
+      <span class="kpi-chip" style="color: var(--text-muted)">⚪ Idle: <strong id="kpiStopped">0</strong></span>
     </div>
   </nav>
 
@@ -553,7 +565,7 @@
           <h3 style="font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif;">9-Tier Multi-Tenant Account Hierarchy Explorer</h3>
           <button class="btn-action" onclick="openUserModal()">+ Add Subordinate Account</button>
         </div>
-        <div style="font-weight: 700; color: var(--primary); font-size: 13px;">1. Superadmin Platform</div>
+        <div style="font-weight: 700; color: var(--primary); font-size: 13px;">1. Superadmin Platform Owner</div>
         <div class="rbac-tree-node"><span>2. Manufacturer (Panel OEM - Nashik Controls)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal('manufacturer')">+ Add Subordinate</button></div>
         <div class="rbac-tree-node" style="margin-left: 32px;"><span>3. Regional Distributor (Western Agro Suppliers)</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal('distributor')">+ Add Subordinate</button></div>
         <div class="rbac-tree-node" style="margin-left: 56px;"><span>4–8. Dealers Tier 1 to 5</span> <button class="btn-action" style="padding: 4px 10px; font-size: 10px;" onclick="openUserModal('dealer1')">+ Add Subordinate</button></div>
@@ -567,10 +579,10 @@
         <h3 style="font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; color: var(--accent-red);">🚨 Real-Time Fleet Fault Incident & Protection Logs</h3>
         <div style="font-size: 12px; font-family: 'JetBrains Mono', monospace; display: flex; flex-direction: column; gap: 8px;">
           <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); padding: 10px; border-radius: 8px; color: var(--accent-red);">
-            [22-Jul-2026 23:20:12] ⚠️ Canal Pump #2: Single Phasing (Y-Phase Voltage = 0V). Hardware Contactor Tripped in 1.2s. SMS/WhatsApp Alert Sent to +919876543210.
+            [23-Jul-2026 23:20:12] ⚠️ Canal Pump #2: Single Phasing (Y-Phase Voltage = 0V). Hardware Contactor Tripped in 1.2s. SMS/WhatsApp Alert Sent.
           </div>
           <div style="background: var(--bg-surface-elevated); padding: 10px; border-radius: 8px; color: var(--text-muted);">
-            [22-Jul-2026 18:45:00] ✅ Borewell Pump #1: Over-voltage auto-recovered (418V). Contactor re-engaged after 30s safety timer.
+            [23-Jul-2026 18:45:00] ✅ Borewell Pump #1: Over-voltage auto-recovered (418V). Contactor re-engaged after 30s safety timer.
           </div>
         </div>
       </div>
@@ -588,7 +600,7 @@
 
       <form onsubmit="event.preventDefault(); saveSettings();">
         <div class="form-group">
-          <label id="lblUiLang">🌐 User Interface Language</label>
+          <label id="lblUiLang" for="settingsLangSelect">🌐 User Interface Language</label>
           <select id="settingsLangSelect" class="form-select" onchange="changeLanguage(this.value)">
             <option value="as">1. Assamese (অসমীয়া)</option>
             <option value="bn">2. Bengali (বাংলা)</option>
@@ -600,9 +612,6 @@
             <option value="ta">21. Tamil (தமிழ்)</option>
             <option value="te">22. Telugu (తెలుగు)</option>
           </select>
-          <span id="adminLangNotice" style="font-size: 10px; color: var(--accent-amber); margin-top: 4px; display: none;">
-            ⚠️ Admin accounts (Superadmin / Manufacturer / Distributor) are fixed to English.
-          </span>
         </div>
 
         <div class="form-group">
@@ -632,17 +641,17 @@
 
       <form onsubmit="event.preventDefault(); submitAddUser();">
         <div class="form-group">
-          <label>Full Name</label>
+          <label for="newUserName">Full Name</label>
           <input type="text" class="form-input" id="newUserName" placeholder="e.g. Suresh Technician" required>
         </div>
 
         <div class="form-group">
-          <label>Mobile Phone Number (E.164 format)</label>
-          <input type="tel" class="form-input" id="newUserPhone" placeholder="+91 98123 45678" required>
+          <label for="newUserPhone">Mobile Phone Number (E.164 format)</label>
+          <input type="tel" class="form-input" id="newUserPhone" placeholder="+91 XXXXX XXXXX" required>
         </div>
 
         <div class="form-group">
-          <label>Account Role Tier</label>
+          <label for="newUserRole">Account Role Tier</label>
           <select class="form-select" id="newUserRole">
             <option value="distributor">3. Regional Distributor</option>
             <option value="dealer1">4. Dealer Tier 1</option>
@@ -663,24 +672,28 @@
   <div class="modal-overlay" id="commModal">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="commTitle">Commission / Edit Pump Location</h3>
+        <h3 id="commTitle">Commission / Register Pump Panel</h3>
         <button class="close-btn" onclick="closeCommModal()">✕</button>
       </div>
 
       <form onsubmit="event.preventDefault(); submitCommission();">
-        <input type="hidden" id="commPumpId">
         <div class="form-group">
-          <label>Pump Name / Designation</label>
+          <label for="commPumpId">Device ID (Thing Name / Serial No)</label>
+          <input type="text" class="form-input" id="commPumpId" placeholder="e.g. PUMP-4G-3P-9901" required>
+        </div>
+
+        <div class="form-group">
+          <label for="commPumpName">Pump Name / Designation</label>
           <input type="text" class="form-input" id="commPumpName" placeholder="e.g. Borewell Pump #1" required>
         </div>
 
         <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <div>
-            <label>Latitude</label>
+            <label for="commLat">Latitude</label>
             <input type="text" class="form-input" id="commLat" placeholder="19.9975" required>
           </div>
           <div>
-            <label>Longitude</label>
+            <label for="commLng">Longitude</label>
             <input type="text" class="form-input" id="commLng" placeholder="73.7898" required>
           </div>
         </div>
@@ -691,7 +704,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
           <button type="button" class="select-control" onclick="closeCommModal()">Cancel</button>
-          <button type="submit" class="btn-action">Save Location</button>
+          <button type="submit" class="btn-action">Save Device</button>
         </div>
       </form>
     </div>
@@ -703,6 +716,34 @@
     const API_BASE = "http://localhost:5000/api";
     let pumpsData = [];
     let currentRole = "customer";
+    let authToken = localStorage.getItem('agripump_token') || '';
+
+    // HTML SANITIZER TO PREVENT STORED/REFLECTED XSS VULNERABILITIES
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getAuthHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      return headers;
+    }
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toastBanner');
+      toast.style.borderColor = isError ? 'var(--accent-red)' : 'var(--accent-green)';
+      toast.style.display = 'block';
+      toast.textContent = msg;
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
 
     const roleNamesMap = {
       customer: "Farmer Ramesh Patel (End Customer)",
@@ -713,11 +754,65 @@
       dealer5: "Suresh Technician (Dealer Tier 5)"
     };
 
-    function handleLoginSubmit() {
+    const i18nTranslations = {
+      en: { tab1: "⚡ 1. Live Telemetry & Control", tab2: "🗺️ 2. GIS Geo-Location Map", tab3: "📱 3. Devices Registry", tab4: "👥 4. RBAC 9-Tier Hierarchy", tab5: "🚨 5. Fault Incident Logs", heroTitle: "3-Phase Power Health Monitor", settingsTitle: "⚙️ System & Interface Settings" },
+      hi: { tab1: "⚡ 1. लाइव टेलीमेट्री और कंट्रोल", tab2: "🗺️ 2. जीआईएस मानचित्र", tab3: "📱 3. उपकरण रजिस्ट्री", tab4: "👥 4. 9-स्तरीय यूजर ट्री", tab5: "🚨 5. फॉल्ट लॉग्स", heroTitle: "3-फेज मोटर बिजली स्वास्थ्य मॉनिटर", settingsTitle: "⚙️ सिस्टम और इंटरफ़ेस सेटिंग्स" },
+      mr: { tab1: "⚡ 1. लाइव्ह टेलिमेन्ट्री आणि कंट्रोल", tab2: "🗺️ 2. नकाशे (GIS Map)", tab3: "📱 3. उपकरण नोंदणी", tab4: "👥 4. 9-स्तरीय खाते झाड", tab5: "🚨 5. त्रुटी नोंदी", heroTitle: "3-फेज मोटर पॉवर मॉनिटर", settingsTitle: "⚙️ सिस्टम आणि सेटिंग्ज" },
+      gu: { tab1: "⚡ 1. લાઇવ ટેલિમેટ્રી", tab2: "🗺️ 2. જીઆઇએસ નકશો", tab3: "📱 3. ઉપકરણ રજિસ્ટ્રી", tab4: "👥 4. આરબીએસી ટ્રી", tab5: "🚨 5. ફોલ્ટ લોગ", heroTitle: "3-ફેઝ પાવર હેલ્થ મોનિટર", settingsTitle: "⚙️ સેટિંગ્સ" },
+      ta: { tab1: "⚡ 1. லைவ் டெலிமெட்ரி", tab2: "🗺️ 2. ஜிஐஎஸ் வரைபடம்", tab3: "📱 3. சாதனப் பதிவேடு", tab4: "👥 4. மர அமைப்பு", tab5: "🚨 5. பிழை பதிவுகள்", heroTitle: "3-பேஸ் மோட்டார் பவர் மானிட்டர்", settingsTitle: "⚙️ அமைப்புகள்" },
+      te: { tab1: "⚡ 1. లైవ్ టెలిమెట్రీ", tab2: "🗺️ 2. జీఐఎస్ మ్యాప్", tab3: "📱 3. పరికరాల రిజిస్ట్రీ", tab4: "👥 4. యూజర్ ట్రీ", tab5: "🚨 5. ఫాల్ట్ లాగ్స్", heroTitle: "3-ఫేజ్ పవర్ మానిటర్", settingsTitle: "⚙️ సెట్టింగ్‌లు" },
+      kn: { tab1: "⚡ 1. ಲೈವ್ ಟೆಲಿಮೆಟ್ರಿ", tab2: "🗺️ 2. ಜಿಐಎಸ್ ನಕ್ಷೆ", tab3: "📱 3. ಸಾಧನಗಳ ನೋಂದಣಿ", tab4: "👥 4. ಬಳಕೆದಾರರ ಟ್ರೀ", tab5: "🚨 5. ಫಾಲ್ಟ್ ಲಾಗ್‌ಗಳು", heroTitle: "3-ಫೇಸ್ ಮೋಟಾರ್ ಪವರ್ ಮಾನಿಟರ್", settingsTitle: "⚙️ ಸಂಯೋಜನೆಗಳು" },
+      bn: { tab1: "⚡ 1. লাইভ টেলিম্যাট্রি", tab2: "🗺️ 2. জিআইএস মানচিত্র", tab3: "📱 3. ডিভাইস রেজিস্ট্রি", tab4: "👥 4. ব্যবহারকারী ডিরেক্টরি", tab5: "🚨 5. ফল্ট লগ", heroTitle: "৩-ফেজ পাওয়ার মনিটর", settingsTitle: "⚙️ সেটিংস" },
+      as: { tab1: "⚡ 1. লাইভ টেলিমেট্ৰী", tab2: "🗺️ 2. জিআইএছ মানচিত্ৰ", tab3: "📱 3. সঁজুলি পঞ্জীয়ন", tab4: "👥 4. ব্যৱহাৰকাৰী ট্ৰী", tab5: "🚨 5. ফল্ট লগ", heroTitle: "৩-ফেজ পাৱাৰ মনিটৰ", settingsTitle: "⚙️ ছেটিংছ" }
+    };
+
+    function changeLanguage(langCode) {
+      const t = i18nTranslations[langCode] || i18nTranslations['en'];
+      localStorage.setItem('agripump_lang', langCode);
+      const select = document.getElementById('settingsLangSelect');
+      if (select) select.value = langCode;
+
+      const b1 = document.querySelector('#btnTab1 span'); if (b1) b1.textContent = t.tab1;
+      const b2 = document.querySelector('#btnTab2 span'); if (b2) b2.textContent = t.tab2;
+      const b3 = document.querySelector('#btnTab3 span'); if (b3) b3.textContent = t.tab3;
+      const b4 = document.querySelector('#btnTab4 span'); if (b4) b4.textContent = t.tab4;
+      const b5 = document.querySelector('#btnTab5 span'); if (b5) b5.textContent = t.tab5;
+
+      const ht = document.getElementById('txtHeroTitle'); if (ht) ht.textContent = t.heroTitle;
+      const st = document.getElementById('txtSettingsTitle'); if (st) st.textContent = t.settingsTitle;
+    }
+
+    function changeTheme(themeName) {
+      document.documentElement.setAttribute('data-theme', themeName);
+      localStorage.setItem('agripump_theme', themeName);
+    }
+
+    async function handleLoginSubmit() {
       const selectedRole = document.getElementById('loginRoleSelect').value;
-      currentRole = selectedRole;
-      document.getElementById('txtUserProfile').textContent = roleNamesMap[selectedRole] || selectedRole;
-      applyRolePrivileges(selectedRole);
+      const phoneInput = document.getElementById('loginPhone').value || '+919741323830';
+
+      try {
+        const response = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: phoneInput, role: selectedRole })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          authToken = data.token;
+          localStorage.setItem('agripump_token', authToken);
+          localStorage.setItem('agripump_user', JSON.stringify(data.user));
+          currentRole = data.user.role;
+          document.getElementById('txtUserProfile').textContent = roleNamesMap[currentRole] || data.user.full_name;
+          applyRolePrivileges(currentRole);
+          showToast(`🔐 Signed in successfully as ${currentRole.toUpperCase()}`);
+        }
+      } catch (err) {
+        currentRole = selectedRole;
+        document.getElementById('txtUserProfile').textContent = roleNamesMap[selectedRole] || selectedRole;
+        applyRolePrivileges(selectedRole);
+      }
 
       document.getElementById('loginScreen').style.opacity = "0";
       setTimeout(() => {
@@ -727,6 +822,9 @@
     }
 
     function handleLogout() {
+      authToken = '';
+      localStorage.removeItem('agripump_token');
+      localStorage.removeItem('agripump_user');
       document.getElementById('loginScreen').style.display = "flex";
       setTimeout(() => { document.getElementById('loginScreen').style.opacity = "1"; }, 10);
     }
@@ -756,7 +854,7 @@
     async function fetchPumpsFromApi(searchQuery = '') {
       try {
         const url = `${API_BASE}/pumps?page=1&limit=50${searchQuery ? '&search=' + encodeURIComponent(searchQuery) : ''}`;
-        const response = await fetch(url);
+        const response = await fetch(url, { headers: getAuthHeaders() });
         if (response.ok) {
           const resData = await response.json();
           pumpsData = resData.pumps || resData;
@@ -764,21 +862,18 @@
           if (resData.meta && resData.meta.stats) {
             const stats = resData.meta.stats;
             document.getElementById('kpiTotal').textContent = stats.total_devices || pumpsData.length;
-            document.getElementById('kpiRunning').textContent = stats.running_count || 1;
-            document.getElementById('kpiFaults').textContent = stats.fault_count || 1;
-            document.getElementById('kpiStopped').textContent = stats.stopped_count || 1;
+            document.getElementById('kpiRunning').textContent = stats.running_count || 0;
+            document.getElementById('kpiFaults').textContent = stats.fault_count || 0;
+            document.getElementById('kpiStopped').textContent = stats.stopped_count || 0;
           }
 
           renderPumpGrid(pumpsData);
           renderDeviceTable(pumpsData);
+        } else {
+          showToast(`⚠️ API Error ${response.status}: Authorized session required`, true);
         }
       } catch (err) {
-        pumpsData = [
-          { id: "PUMP-4G-3P-8821", name: "Borewell Pump #1", supply_type: "3-phase", hp_rating: 15.0, latitude: 19.9975, longitude: 73.7898, status: "RUNNING", firmware_version: "v2.4.1" },
-          { id: "PUMP-4G-3P-4412", name: "Canal Pump #2", supply_type: "3-phase", hp_rating: 7.5, latitude: 20.0050, longitude: 73.7620, status: "FAULT", firmware_version: "v2.4.1" }
-        ];
-        renderPumpGrid(pumpsData);
-        renderDeviceTable(pumpsData);
+        showToast("⚠️ Could not connect to API server at http://localhost:5000", true);
       }
     }
 
@@ -788,14 +883,14 @@
       const isCustomer = (currentRole === "customer");
 
       grid.innerHTML = pumps.map(p => `
-        <div class="compact-pump-card ${p.status === 'FAULT' ? 'fault-anim' : ''}" id="card-${p.id}">
+        <div class="compact-pump-card ${p.status === 'FAULT' ? 'fault-anim' : ''}" id="card-${escapeHtml(p.id)}">
           <div class="pump-card-head">
             <div>
-              <h3 style="font-size: 14px; font-weight: 800;">${p.name} (${p.hp_rating} HP)</h3>
-              <p style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">${p.supply_type} • ID: ${p.id}</p>
+              <h3 style="font-size: 14px; font-weight: 800;">${escapeHtml(p.name)} (${escapeHtml(p.hp_rating)} HP)</h3>
+              <p style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">${escapeHtml(p.supply_type)} • ID: ${escapeHtml(p.id)}</p>
             </div>
             <span class="status-badge ${p.status === 'RUNNING' ? 'status-on' : (p.status === 'FAULT' ? 'status-fault' : 'status-off')}">
-              <span class="beacon-dot ${p.status === 'FAULT' ? 'beacon-dot-fault' : ''}"></span> ${p.status}
+              <span class="beacon-dot ${p.status === 'FAULT' ? 'beacon-dot-fault' : ''}"></span> ${escapeHtml(p.status)}
             </span>
           </div>
 
@@ -806,12 +901,12 @@
           </div>
 
           <div class="location-bar">
-            <span>📍 GPS: <span>${p.latitude}° N, ${p.longitude}° E</span></span>
+            <span>📍 GPS: <span>${escapeHtml(p.latitude)}° N, ${escapeHtml(p.longitude)}° E</span></span>
             ${isSuperadmin 
-              ? `<span class="edit-icon" onclick="editLocation('${p.id}', '${p.name}', '${p.latitude}', '${p.longitude}')">✏️ Edit</span>` 
+              ? `<span class="edit-icon" onclick="editLocation('${escapeHtml(p.id)}', '${escapeHtml(p.name)}', '${escapeHtml(p.latitude)}', '${escapeHtml(p.longitude)}')">✏️ Edit</span>` 
               : (isCustomer 
                   ? `<span style="color: var(--accent-green); font-size: 10px;">🟢 Assigned</span>`
-                  : `<span class="edit-icon" style="color: var(--accent-amber);" onclick="openAssignModal('${p.id}', '${p.name}')">🔗 Assign</span>`
+                  : `<span class="edit-icon" style="color: var(--accent-amber);" onclick="openAssignModal('${escapeHtml(p.id)}', '${escapeHtml(p.name)}')">🔗 Assign</span>`
                 )
             }
           </div>
@@ -819,10 +914,10 @@
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);" class="txtRemoteSwitch">Remote Switch</span>
-              <span class="cooldown-badge" id="cd-${p.id}">⏳ Cooldown: 45s</span>
+              <span class="cooldown-badge" id="cd-${escapeHtml(p.id)}">⏳ Cooldown: 45s</span>
             </div>
             <label class="power-switch">
-              <input type="checkbox" id="switch-${p.id}" ${p.status === 'RUNNING' ? 'checked' : ''} onchange="togglePump('${p.id}', this.checked)">
+              <input type="checkbox" id="switch-${escapeHtml(p.id)}" ${p.status === 'RUNNING' ? 'checked' : ''} onchange="togglePump('${escapeHtml(p.id)}', this.checked)">
               <span class="slider"></span>
             </label>
           </div>
@@ -837,20 +932,20 @@
 
       tbody.innerHTML = pumps.map(p => `
         <tr>
-          <td><strong>${p.id}</strong></td>
-          <td>${p.supply_type}</td>
+          <td><strong>${escapeHtml(p.id)}</strong></td>
+          <td>${escapeHtml(p.supply_type)}</td>
           <td>5m Off / 2m On</td>
           <td><span style="color: var(--accent-green)">📶 84% (-68 dBm)</span></td>
-          <td>${p.firmware_version}</td>
-          <td>${p.latitude}° N, ${p.longitude}° E</td>
-          <td><span class="status-badge ${p.status === 'RUNNING' ? 'status-on' : 'status-fault'}">● ${p.status}</span></td>
+          <td>${escapeHtml(p.firmware_version || 'v2.4.1')}</td>
+          <td>${escapeHtml(p.latitude)}° N, ${escapeHtml(p.longitude)}° E</td>
+          <td><span class="status-badge ${p.status === 'RUNNING' ? 'status-on' : 'status-fault'}">● ${escapeHtml(p.status)}</span></td>
           <td>
             ${isSuperadmin 
-              ? `<button class="btn-sim-sm" style="color: var(--primary); border-color: var(--primary); margin-right: 4px;" onclick="editLocation('${p.id}', '${p.name}', '${p.latitude}', '${p.longitude}')">✏️ Edit</button>
-                 <button class="btn-sim-sm" style="color: var(--accent-red); border-color: var(--accent-red);" onclick="deleteDevice('${p.id}')">🗑️ Delete</button>` 
+              ? `<button class="btn-sim-sm" style="color: var(--primary); border-color: var(--primary); margin-right: 4px;" onclick="editLocation('${escapeHtml(p.id)}', '${escapeHtml(p.name)}', '${escapeHtml(p.latitude)}', '${escapeHtml(p.longitude)}')">✏️ Edit</button>
+                 <button class="btn-sim-sm" style="color: var(--accent-red); border-color: var(--accent-red);" onclick="deleteDevice('${escapeHtml(p.id)}')">🗑️ Delete</button>` 
               : (isCustomer
                   ? `<span style="font-size: 11px; color: var(--text-muted);">End Owner</span>`
-                  : `<button class="btn-sim-sm" style="color: var(--accent-amber); border-color: var(--accent-amber);" onclick="openAssignModal('${p.id}', '${p.name}')">🔗 Assign to Subordinate</button>`
+                  : `<button class="btn-sim-sm" style="color: var(--accent-amber); border-color: var(--accent-amber);" onclick="openAssignModal('${escapeHtml(p.id)}', '${escapeHtml(p.name)}')">🔗 Assign to Subordinate</button>`
                 )
             }
           </td>
@@ -876,20 +971,21 @@
       try {
         const response = await fetch(`${API_BASE}/users`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             full_name: name,
             phone_number: phone,
-            role: role,
-            parent_user_id: '11111111-1111-1111-1111-111111111111',
-            parent_hierarchy_path: '11111111-1111-1111-1111-111111111111'
+            role: role
           })
         });
         if (response.ok) {
-          alert(`✅ Subordinate account "${name}" created successfully in PostgreSQL!`);
+          showToast(`✅ Subordinate account "${name}" created successfully!`);
+        } else {
+          const err = await response.json();
+          showToast(`❌ Error: ${err.error}`, true);
         }
       } catch (err) {
-        alert(`Account created: ${name} (${role})`);
+        showToast("❌ Network error creating user", true);
       }
       closeUserModal();
     }
@@ -920,57 +1016,94 @@
     // DELETE DEVICE API CALL HANDLER
     async function deleteDevice(id) {
       if (currentRole !== "superadmin") {
-        alert("Permission Denied: Only Superadmin can delete hardware devices.");
+        showToast("Permission Denied: Only Superadmin can delete hardware devices.", true);
         return;
       }
       if (confirm(`SUPERADMIN ACTION: Are you sure you want to delete device ${id} from PostgreSQL database?`)) {
         try {
-          const res = await fetch(`${API_BASE}/pumps/${id}`, { method: 'DELETE' });
+          const res = await fetch(`${API_BASE}/pumps/${id}`, { 
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
           if (res.ok) {
-            alert(`✅ Device ${id} deleted successfully from PostgreSQL!`);
+            showToast(`✅ Device ${id} deleted successfully!`);
             fetchPumpsFromApi();
+          } else {
+            const err = await res.json();
+            showToast(`❌ Delete failed: ${err.error}`, true);
           }
         } catch (err) {
-          alert(`Device ${id} removed.`);
-          fetchPumpsFromApi();
+          showToast("❌ Network error deleting device", true);
         }
       }
     }
 
     async function submitCommission() {
       if (currentRole !== "superadmin") {
-        alert("Permission Denied: Only Superadmin can register/commission new hardware devices.");
+        showToast("Permission Denied: Device commissioning restricted to Superadmin.", true);
         closeCommModal();
         return;
       }
 
-      const id = document.getElementById('commPumpId').value || 'PUMP-4G-3P-8821';
-      const lat = document.getElementById('commLat').value;
-      const lng = document.getElementById('commLng').value;
+      const idInput = document.getElementById('commPumpId').value.trim();
+      const nameInput = document.getElementById('commPumpName').value.trim();
+      const lat = document.getElementById('commLat').value.trim();
+      const lng = document.getElementById('commLng').value.trim();
+
+      if (!nameInput) {
+        alert("Pump Name is required");
+        return;
+      }
+
+      const isEditing = idInput && pumpsData.some(p => p.id === idInput);
 
       try {
-        const response = await fetch(`${API_BASE}/pumps/${id}/location`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ latitude: parseFloat(lat), longitude: parseFloat(lng) })
-        });
+        let response;
+        if (isEditing) {
+          // Update location
+          response = await fetch(`${API_BASE}/pumps/${idInput}/location`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ latitude: parseFloat(lat), longitude: parseFloat(lng) })
+          });
+        } else {
+          // Create new device
+          const newId = idInput || `PUMP-4G-3P-${Math.floor(1000 + Math.random() * 9000)}`;
+          response = await fetch(`${API_BASE}/pumps`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              id: newId,
+              name: nameInput,
+              supply_type: '3-phase',
+              hp_rating: 15.0,
+              latitude: parseFloat(lat) || 19.9975,
+              longitude: parseFloat(lng) || 73.7898
+            })
+          });
+        }
+
         if (response.ok) {
-          alert(`✅ Saved location to local PostgreSQL database!`);
+          showToast(`✅ Device ${nameInput} saved successfully to PostgreSQL database!`);
           fetchPumpsFromApi();
+        } else {
+          const err = await response.json();
+          showToast(`❌ Commissioning Failed: ${err.error}`, true);
         }
       } catch (err) {
-        alert(`Saved location locally for (${lat}, ${lng}).`);
+        showToast("❌ Network Error while saving pump", true);
       }
       closeCommModal();
     }
 
     function editLocation(id, name, lat, lng) {
       if (currentRole !== "superadmin") {
-        alert("Permission Denied: Only Superadmin can edit device properties.");
+        showToast("Permission Denied: Only Superadmin can edit device properties.", true);
         return;
       }
       document.getElementById('commTitle').textContent = `Edit Location: ${name}`;
       document.getElementById('commPumpId').value = id;
+      document.getElementById('commPumpId').readOnly = true;
       document.getElementById('commPumpName').value = name;
       document.getElementById('commLat').value = lat;
       document.getElementById('commLng').value = lng;
@@ -979,14 +1112,15 @@
 
     function openCommModal() {
       if (currentRole !== "superadmin") {
-        alert("Permission Denied: Device registration is strictly restricted to Superadmin.");
+        showToast("Permission Denied: Device registration restricted to Superadmin.", true);
         return;
       }
       document.getElementById('commTitle').textContent = "Commission New Pump Panel";
       document.getElementById('commPumpId').value = "";
+      document.getElementById('commPumpId').readOnly = false;
       document.getElementById('commPumpName').value = "";
-      document.getElementById('commLat').value = "";
-      document.getElementById('commLng').value = "";
+      document.getElementById('commLat').value = "19.9975";
+      document.getElementById('commLng').value = "73.7898";
       document.getElementById('commModal').classList.add('active');
     }
 
@@ -999,7 +1133,7 @@
         navigator.geolocation.getCurrentPosition(position => {
           document.getElementById('commLat').value = position.coords.latitude.toFixed(6);
           document.getElementById('commLng').value = position.coords.longitude.toFixed(6);
-          alert(`🎯 High Accuracy GPS Captured!\nLat: ${position.coords.latitude.toFixed(6)}\nLng: ${position.coords.longitude.toFixed(6)}`);
+          showToast(`🎯 High Accuracy GPS Captured! (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`);
         }, error => {
           document.getElementById('commLat').value = "19.998200";
           document.getElementById('commLng').value = "73.791500";
@@ -1016,7 +1150,7 @@
     }
 
     function saveSettings() {
-      alert("Settings saved successfully!");
+      showToast("Settings saved successfully!");
       closeSettingsModal();
     }
 
@@ -1033,10 +1167,6 @@
       }
     }
 
-    function changeTheme(themeName) {
-      document.documentElement.setAttribute('data-theme', themeName);
-    }
-
     let leafletMap = null;
 
     function initFullMap() {
@@ -1046,7 +1176,7 @@
 
         pumpsData.forEach(p => {
           L.marker([p.latitude, p.longitude]).addTo(leafletMap)
-            .bindPopup(`<b>${p.name}</b><br>Status: ${p.status}<br><a href="#" onclick="editLocation('${p.id}', '${p.name}', '${p.latitude}', '${p.longitude}')">✏️ Edit Location</a>`);
+            .bindPopup(`<b>${escapeHtml(p.name)}</b><br>Status: ${escapeHtml(p.status)}<br><a href="#" onclick="editLocation('${escapeHtml(p.id)}', '${escapeHtml(p.name)}', '${escapeHtml(p.latitude)}', '${escapeHtml(p.longitude)}')">✏️ Edit Location</a>`);
         });
       }, 100);
     }
@@ -1072,6 +1202,33 @@
         }
       }, 1000);
     }
+
+    // ON DOM CONTENT LOADED INITIALIZATION
+    document.addEventListener('DOMContentLoaded', () => {
+      // Restore saved theme
+      const savedTheme = localStorage.getItem('agripump_theme') || 'sapphire';
+      changeTheme(savedTheme);
+      document.getElementById('themeSelect').value = savedTheme;
+
+      // Restore saved language
+      const savedLang = localStorage.getItem('agripump_lang') || 'en';
+      changeLanguage(savedLang);
+
+      // Check saved JWT session
+      const savedUserStr = localStorage.getItem('agripump_user');
+      if (authToken && savedUserStr) {
+        try {
+          const user = JSON.parse(savedUserStr);
+          currentRole = user.role;
+          document.getElementById('txtUserProfile').textContent = roleNamesMap[currentRole] || user.full_name;
+          applyRolePrivileges(currentRole);
+          document.getElementById('loginScreen').style.display = "none";
+          fetchPumpsFromApi();
+        } catch (e) {
+          handleLogout();
+        }
+      }
+    });
   </script>
 </body>
 </html>

@@ -61,7 +61,7 @@ export const App: React.FC = () => {
       <main style={{ flex: 1, padding: 16, overflow: 'hidden' }}>
         {activeTab === 'telemetry' && (
           <div style={{ height: '100%', display: 'grid', gridTemplateColumns: '360px 1fr', gap: 16 }}>
-            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-card)', borderRadius: 18, padding: 16, display: 'flex', flexDirection: 'column', justifyBetween: 'space-between' }}>
+            <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-card)', borderRadius: 18, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <h3 style={{ fontSize: 15, fontWeight: 800 }}>3-Phase Power Health Monitor</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, margin: '12px 0', textAlign: 'center' }}>
                 <div style={{ background: 'var(--bg-surface-elevated)', padding: 8, borderRadius: 12 }}><strong style={{ fontSize: 14 }}>418V</strong><br/><span style={{ fontSize: 9, color: 'var(--text-muted)' }}>Ph R-Y</span></div>

@@ -37,7 +37,7 @@ export const languagesList = [
   { code: 'kok', label: '10. Konkani (कोंकणी)' },
   { code: 'mai', label: '11. Maithili (मैथिली)' },
   { code: 'ml', label: '12. Malayalam (മലയാളം)' },
-  { code: 'mni', label: '13. Manipuri (<ctrl42>ꯩꯇꯩꯂꯣꯟ)' },
+  { code: 'mni', label: '13. Manipuri (ꯃꯩꯇꯩꯂꯣꯟ)' },
   { code: 'mr', label: '14. Marathi (मराठी)' },
   { code: 'ne', label: '15. Nepali (नेपाली)' },
   { code: 'or', label: '16. Odia (ଓଡ଼ିଆ)' },
@@ -50,7 +50,7 @@ export const languagesList = [
   { code: 'ur', label: '23. Urdu (اردو)' }
 ];
 
-export const i18nDict: Record<string, TranslationSet> = {
+export const i18nDict: Record<string, Partial<TranslationSet>> = {
   en: {
     tabTelemetry: "⚡ 1. Live Telemetry & Control",
     tabMap: "🗺️ 2. GIS Geo-Location Map",
@@ -127,70 +127,70 @@ export const i18nDict: Record<string, TranslationSet> = {
     lblFault: "फॉल्ट"
   },
   gu: {
-    tabOverview: "⚡ 1. લાઇવ ટેલિમેટ્રી",
+    tabTelemetry: "⚡ 1. લાઇવ ટેલિમેટ્રી",
     heroTitle: "લાઇવ 3-ફેઝ પાવર હેલ્થ મોનિટર",
     btnCommission: "+ નવો પંપ ઉમેરો",
     btnSettings: "⚙️ સેટિંગ્સ",
     lblRemoteSwitch: "રિમોટ સ્વિચ"
   },
   ta: {
-    tabOverview: "⚡ 1. லைவ் டெலிமெட்ரி",
+    tabTelemetry: "⚡ 1. லைவ் டெலிமெட்ரி",
     heroTitle: "லைவ் 3-பேஸ் மோட்டார் பவர் மானிட்டர்",
     btnCommission: "+ புதிய பம்ப் சேர்க்க",
     btnSettings: "⚙️ அமைப்புகள்",
     lblRemoteSwitch: "ரிமோட் ஸ்விட்ச்"
   },
   te: {
-    tabOverview: "⚡ 1. లైవ్ టెలిమెట్రీ",
-    heroTitle: "లైవ్ 3-ఫేజ్ పవర్ మానిటర్",
+    tabTelemetry: "⚡ 1. లైవ్ టెలిమెట్రీ",
+    heroTitle: "లైవ్ 3-ఫేజ్ పవర్ మానిਟਰ",
     btnCommission: "+ కొత్త పంప్ జోడించండి",
     btnSettings: "⚙️ సెట్టింగ్‌లు",
-    lblRemoteSwitch: "రిమోట్ స్విచ్"
+    lblRemoteSwitch: "రిમોట్ స్విచ్"
   },
   kn: {
-    tabOverview: "⚡ 1. ಲೈವ್ ಟೆಲಿಮೆಟ್ರಿ",
+    tabTelemetry: "⚡ 1. ಲೈವ್ ಟೆಲಿಮೆಟ್ರಿ",
     heroTitle: "ಲೈವ್ 3-ಫೇಸ್ ಮೋಟಾರ್ ಪವರ್ ಮಾನಿಟರ್",
     btnCommission: "+ ಹೊಸ ಪಂಪ್ ಸೇರಿಸಿ",
     btnSettings: "⚙️ ಸಂಯೋಜನೆಗಳು",
     lblRemoteSwitch: "ರಿಮೋಟ್ ಸ್ವಿಚ್"
   },
   bn: {
-    tabOverview: "⚡ 1. লাইভ টেলিম্যাট্রি",
+    tabTelemetry: "⚡ 1. লাইভ টেলিম্যাট্রি",
     heroTitle: "লাইভ ৩-ফেজ পাওয়ার মনিটর",
     btnCommission: "+ পাম্প যোগ করুন",
     btnSettings: "⚙️ সেটিংস",
     lblRemoteSwitch: "রিমোট সুইচ"
   },
   pa: {
-    tabOverview: "⚡ 1. ਲਾਈਵ ਟੈਲੀਮੈਟਰੀ",
+    tabTelemetry: "⚡ 1. ਲਾਈਵ ਟੈਲੀਮੈਟਰੀ",
     heroTitle: "ਲਾਈਵ 3-ਫੇਜ਼ ਮੋਟਰ ਪਾਵਰ ਮਾਨੀਟਰ",
     btnCommission: "+ ਨਵਾਂ ਪੰਪ ਜੋੜੋ",
     btnSettings: "⚙️ ਸੈਟਿੰਗਾਂ",
     lblRemoteSwitch: "ਰਿਮੋਟ ਸਵਿੱਚ"
   },
   ml: {
-    tabOverview: "⚡ 1. ലൈവ് ടെലിമെട്രി",
+    tabTelemetry: "⚡ 1. ലൈവ് ടെലിമെട്രി",
     heroTitle: "ലൈവ് 3-ഫേസ് മോട്ടോർ പവർ മോണിറ്റർ",
     btnCommission: "+ പുതിയ പമ്പ് ചേർക്കുക",
     btnSettings: "⚙️ ക്രമീകരണങ്ങൾ",
     lblRemoteSwitch: "റിമോട്ട് സ്വിച്ച്"
   },
   or: {
-    tabOverview: "⚡ 1. ଲାଇଭ୍ ଟେଲିମେଟ୍ରି",
+    tabTelemetry: "⚡ 1. ଲାଇଭ୍ ଟେଲିମେଟ୍ରି",
     heroTitle: "ଲାଇଭ୍ 3-ଫେଜ୍ ମୋଟର ପାୱାର୍ ମନିଟର",
     btnCommission: "+ ନୂତନ ପମ୍ପ ଯୋଡନ୍ତୁ",
     btnSettings: "⚙️ ସେଟିଂସମୂହ",
     lblRemoteSwitch: "ରିମୋଟ ସ୍ୱିଚ୍"
   },
   as: {
-    tabOverview: "⚡ 1. লাইভ টেলিমেট্ৰী",
+    tabTelemetry: "⚡ 1. লাইভ টেলিমেট্ৰী",
     heroTitle: "লাইভ ৩-ফেজ পাম্প পাৱাৰ মনিটৰ",
     btnCommission: "+ পাম্প পঞ্জীয়ন",
     btnSettings: "⚙️ ছেটিংছ",
     lblRemoteSwitch: "ৰিমোট ছুইচ"
   },
   ur: {
-    tabOverview: "⚡ 1. لائیو ٹیلی میٹری",
+    tabTelemetry: "⚡ 1. لائیو ٹیلی میٹری",
     heroTitle: "لائیو 3-فیز موٹر پاور مانیٹر",
     btnCommission: "+ نیا پمپ شامل کریں",
     btnSettings: "⚙️ ترتیبات",
