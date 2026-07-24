@@ -136,7 +136,7 @@ CREATE INDEX IF NOT EXISTS idx_fault_logs_pump ON agripump.fault_logs (pump_id, 
 -- ----------------------------------------------------------------------------
 INSERT INTO agripump.users (id, full_name, phone_number, role, hierarchy_path, preferred_language, password_hash)
 VALUES 
-  ('11111111-1111-1111-1111-111111111111', 'Superadmin Platform', '+919900000000', 'superadmin', '11111111-1111-1111-1111-111111111111', 'en', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'), -- admin123
+  ('11111111-1111-1111-1111-111111111111', 'Superadmin Platform', '+919900000000', 'superadmin', '11111111-1111-1111-1111-111111111111', 'en', 'c8f13a07b71946808fa75e7a912e73bd:ae52422956c4745278f3ddc8e9d72e5aa31c5c983b08bd0593fd310ef6c3c6abc0547ad6f66e604f8293890c4d8be824962270d029b6d12277bc0a96c35e51a2'), -- admin123 (scryptSync salted)
   ('22222222-2222-2222-2222-222222222222', 'Ramesh Patel (Farmer)', '+919741323830', 'customer', '11111111-1111-1111-1111-111111111111/22222222-2222-2222-2222-222222222222', 'hi', NULL)
 ON CONFLICT (id) DO UPDATE SET phone_number = EXCLUDED.phone_number, password_hash = EXCLUDED.password_hash;
 

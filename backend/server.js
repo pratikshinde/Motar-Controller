@@ -11,14 +11,16 @@ const { authenticateToken, requireRole } = require('./middleware/authMiddleware'
 
 const app = express();
 
-// CORS configuration - allow localhost in dev or explicit origins in production
+// CORS configuration - DEFAULT DENY (Strict Opt-in for Development)
 const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS 
   ? process.env.CORS_ALLOWED_ORIGINS.split(',') 
   : ['http://localhost:5000', 'http://127.0.0.1:5000'];
 
+const isDevEnvironment = process.env.NODE_ENV === 'development';
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+    if (!origin || allowedOrigins.includes(origin) || isDevEnvironment) {
       callback(null, true);
     } else {
       callback(new Error('CORS Policy Error: Origin not allowed'));
@@ -55,9 +57,28 @@ pool.connect((err, client, release) => {
   }
 });
 
-// Helper to hash passwords using SHA-256
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
+/**
+ * Standard-compliant Salted Password Hashing using Node.js native crypto.scryptSync
+ * Format: "salt_hex:hash_hex"
+ */
+function hashPassword(password, customSalt = null) {
+  const salt = customSalt || crypto.randomBytes(16).toString('hex');
+  const derivedKey = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${derivedKey}`;
+}
+
+function verifyPassword(inputPassword, storedSaltHash) {
+  if (!storedSaltHash) return false;
+  
+  // Handle migration fallback for legacy unsalted SHA-256
+  if (!storedSaltHash.includes(':')) {
+    const legacyHash = crypto.createHash('sha256').update(inputPassword).digest('hex');
+    return legacyHash === storedSaltHash;
+  }
+
+  const [salt, originalHash] = storedSaltHash.split(':');
+  const computedHash = crypto.scryptSync(inputPassword, salt, 64).toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(originalHash, 'hex'), Buffer.from(computedHash, 'hex'));
 }
 
 // ----------------------------------------------------------------------------
@@ -117,8 +138,8 @@ app.post('/api/auth/send-otp', async (req, res) => {
       message: 'OTP challenge generated and dispatched',
       phone_number: cleanPhone,
       sms: smsResult,
-      // Provide dev_otp field in sandbox mode for instant testing without cellular network wait
-      dev_otp: process.env.NODE_ENV !== 'production' ? otpCode : undefined
+      // Default-Deny: Only expose dev_otp when NODE_ENV is explicitly set to 'development'
+      dev_otp: isDevEnvironment ? otpCode : undefined
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -140,7 +161,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
     // Verify active OTP challenge in agripump.otp_challenges
     const challengeRes = await pool.query(
-      `SELECT phone_number, otp_code, expires_at FROM agripump.otp_challenges 
+      `SELECT phone_number, otp_code, expires_at, attempts FROM agripump.otp_challenges 
        WHERE phone_number = $1 AND expires_at > CURRENT_TIMESTAMP`,
       [cleanPhone]
     );
@@ -150,15 +171,25 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     }
 
     const challenge = challengeRes.rows[0];
+
+    // Enforce Maximum 5 Attempts Brute-Force Rate Limit
+    if (challenge.attempts >= 5) {
+      await pool.query(`DELETE FROM agripump.otp_challenges WHERE phone_number = $1`, [cleanPhone]);
+      return res.status(429).json({ error: 'Too Many Failed Verification Attempts: OTP challenge invalidated for security. Please request a new OTP.' });
+    }
+
     if (challenge.otp_code !== otp_code.trim()) {
       await pool.query(`UPDATE agripump.otp_challenges SET attempts = attempts + 1 WHERE phone_number = $1`, [cleanPhone]);
-      return res.status(401).json({ error: 'Authentication Failed: Invalid OTP verification code. Please check your mobile SMS.' });
+      const remainingAttempts = 4 - challenge.attempts;
+      return res.status(401).json({ 
+        error: `Authentication Failed: Invalid OTP code. ${remainingAttempts > 0 ? remainingAttempts + ' attempts remaining.' : 'Challenge locked.'}` 
+      });
     }
 
     // OTP verified successfully! Consume challenge
     await pool.query(`DELETE FROM agripump.otp_challenges WHERE phone_number = $1`, [cleanPhone]);
 
-    // STRICT USER LOOKUP BY PHONE NUMBER ALONE (Fixing OR vulnerability)
+    // STRICT USER LOOKUP BY PHONE NUMBER ALONE
     let userRecord;
     const dbUserRes = await pool.query(
       `SELECT id, full_name, phone_number, role, hierarchy_path FROM agripump.users WHERE phone_number = $1`,
@@ -211,7 +242,6 @@ app.post('/api/auth/login-password', async (req, res) => {
     }
 
     const cleanPhone = phone_number.trim().replace(/\s+/g, '');
-    const inputHash = hashPassword(password.trim());
 
     // STRICT USER LOOKUP BY PHONE NUMBER
     const dbUserRes = await pool.query(
@@ -224,7 +254,7 @@ app.post('/api/auth/login-password', async (req, res) => {
     }
 
     const userRecord = dbUserRes.rows[0];
-    if (!userRecord.password_hash || userRecord.password_hash !== inputHash) {
+    if (!userRecord.password_hash || !verifyPassword(password.trim(), userRecord.password_hash)) {
       return res.status(401).json({ error: 'Authentication Failed: Incorrect password' });
     }
 
