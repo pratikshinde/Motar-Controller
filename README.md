@@ -1,45 +1,188 @@
 # IoT Agri Pump Control and Monitoring
 
-IoT-based agricultural pump control and monitoring system.
+IoT-based monitoring and control for three-phase and single-phase agricultural
+and domestic water pumps.
 
-Farmers can remotely monitor and control irrigation/borewell pumps from an
-Android app — pump ON/OFF state, run hours, electrical health (voltage,
-current, phase), and fault conditions (dry run, overload, phase failure) —
-without walking to the pump house.
+Farmers monitor and control borewell and irrigation pumps from a phone — pump
+state, run hours, three-phase electrical health (line voltages, phase currents,
+phase sequence) and protection faults (dry run, overload, phase loss, phase
+reversal, imbalance, cable open) — without walking to the pump house. Panel
+manufacturers, distributors and dealers manage their own fleets through a
+multi-tenant web portal.
+
+The pump controller itself is an **existing, shipping product** with 300+ units
+in the field. This repository adds the IoT layer around it.
+
+---
+
+## Architecture
+
+```
+┌──────────────┐   UART2 JSON    ┌──────────────┐   MQTT/TLS   ┌──────────────┐
+│  M031 MCU    │◄───115200 8N1──►│   A7672S     │◄────────────►│ AWS IoT Core │
+│  (protection │                 │  (bridge     │              └──────┬───────┘
+│   + control) │                 │   app)       │                     │
+└──────────────┘                 └──────────────┘              IoT Rules
+     Layer A                          Layer B                         │
+                                                              ┌───────▼───────┐
+                                                              │   Backend     │
+                                                              │ Node + Postgres│
+                                                              └───┬───────┬───┘
+                                                                  │       │
+                                                        ┌─────────▼──┐ ┌──▼──────────┐
+                                                        │ Web portal │ │ Android app │
+                                                        └────────────┘ └─────────────┘
+```
+
+**Two protocol layers, deliberately separated.** The MCU never speaks MQTT — it
+exchanges line-delimited JSON with the modem over UART. The A7672S bridge is the
+MQTT/TLS gateway to AWS. Changes to Layer A are expensive (shipping firmware on
+300+ units); changes to Layer B are cheap. Complexity belongs in the bridge.
+
+**Protection never depends on connectivity.** All trip logic runs on the MCU and
+continues to work with no network, no cloud and no subscription.
+
+MQTT topics: `devices/{dev_id}/telemetry`, `/faults`, `/status`, `/diag`,
+`/commands`. `dev_id` is the MCU's 96-bit unique ID.
+
+---
 
 ## Repository layout
 
-| Directory | Contents |
+| Directory | Contents | Stack |
+|---|---|---|
+| `firmware/` | Pump controller firmware — measurement, protection, state machine, local HMI | Nuvoton M031LD2AE (Cortex-M0), C, Keil/GCC/IAR |
+| `MQTT Bridge A7672 Firmware/` | MQTT bridge application | SIMCom A7672S OpenSDK, C |
+| `backend/` | REST API, ingestion, auth, RBAC, notifications | Node.js, Express, PostgreSQL |
+| `web/` | Web portal | React, TypeScript, Vite |
+| `android/` | Mobile app | Kotlin, Jetpack Compose, MVVM |
+| `hardware/` | Schematics, PCB, BOM | — |
+| `docs/` | Specifications and plans | — |
+
+---
+
+## Hardware
+
+| Component | Part |
 |---|---|
-| `android/` | Android app (monitoring + control UI) |
-| `web/` | Web dashboard design mockup (static HTML, demo data) |
-| `firmware/` | Pump-side controller firmware (ESP32 / ESP-IDF) |
-| `hardware/` | Schematics, PCB design files, BOM |
-| `docs/` | System design, app design, protocol specs |
+| MCU | Nuvoton M031LD2AE — Cortex-M0, 64 KB flash, 8 KB SRAM |
+| Modem | SIMCom A7672S — LTE Cat-1, GNSS, BLE, OpenSDK |
+| Link | UART2 (PC.0 / PC.1) @ 115200 8N1 |
+| Display | 16×2 LCD, 5-button ADC keypad, 3 status LEDs |
+| Output | Dual relays (motor contactor + auxiliary) |
+| Sensing | Isolated three-phase voltage and current, internal panel CTs |
+| Motor range | 3 – 50 HP |
 
-## System overview
+---
+
+## Protection functions
+
+Phase loss · phase sequence / reversal · over-voltage · voltage imbalance ·
+overload · dry run · cable open (full and partial) · Y-phase fault
+
+Fault codes are numeric `0`–`9` and are the single source of truth across
+firmware, bridge, cloud, portal and app — see `docs/SRS_v7.0.md` §6.2.
+
+Control: manual start/stop (local, app, cloud), auto-restart on power restore
+with delay, cyclic timer (elapsed-time based — the MCU has no RTC), star-delta
+transition timing, dry-run auto-recovery.
+
+---
+
+## Documentation
+
+### Current
+
+| Document | Purpose |
+|---|---|
+| **`docs/SRS_v7.0.md`** | Software Requirements Specification — the authoritative reference for requirements, protocol, data model, RBAC and compliance. Appendix D is a gap analysis of the shipping firmware and bridge. |
+| **`docs/Development_Plan_FINAL.md`** | The active development plan. Priority order: web portal → Android app → bridge → MCU firmware. |
+| **`docs/Web_App_Pending_Items.md`** | Phased, item-level web portal plan (W0–W6) against FR-WEB-001…064 — architecture decisions (D-4, D-6, P-1), what's built vs. deferred, and why |
+| **`docs/Backend_Pending_Items.md`** | Backend build-out against FR-CLD-*/FR-SEC-*/1B — what's done, what's scoped but not started (observability, retention, API versioning), effort remaining |
+| `docs/Reconciliation_Report.md` | Existing implementation vs. SRS — divergences, security findings, decisions required |
+| `docs/Development_Plan_15_Day_Pilot.md` | Narrow-scope pilot plan (absorbed into the final plan as Sprint 0–1) |
+| `docs/SRS_Compliance_Roadmap.md` | Full-scope roadmap by dependency order — effort estimates and phasing |
+| `docs/aws-iot-fleet-provisioning-architecture.md` | Fleet provisioning by claim — template, pre-provisioning hook, scoped policy, batch flashing |
+| `docs/dlt-sms-whatsapp-templates.md` | India DLT-compliant SMS and WhatsApp templates |
+
+### Superseded — read against the SRS
+
+| Document | Superseded by |
+|---|---|
+| `docs/9-tier-rbac-architecture.md` | SRS §7 — the dealer tier is recursive to **6** levels, not a fixed five-role ladder |
+| `docs/telemetry-and-fault-spec.md` | SRS §6 — actual intervals are 60 s running / 300 s idle. The 45-second command cooldown in §2 remains valid and is scheduled. |
+| `docs/android-app-design.md` | SRS §9 |
+
+---
+
+## User hierarchy
 
 ```
-[Pump + sensors] ── [Controller (GSM)] ── MQTT ── [AWS IoT Core] ── [Android app]
-                                                       │
-                                    IoT Rules → Timestream (history)
-                                              → Lambda → FCM (push alerts)
+Superadmin (OEM)
+  └── Panel manufacturer
+        └── Distributor
+              └── Dealer (recursive, up to 6 levels)
+                    └── End customer
 ```
 
-- **Controller** reads pump electricals (3-phase voltages/currents, phase
-  sequence) and status, executes protection logic locally (cutoffs must not
-  depend on connectivity), publishes telemetry to
-  `pumps/<THING_NAME>/telemetry`, and follows AWS IoT Device Shadow deltas
-  for remote ON/OFF (see `android/README.md` §3 for the exact contract).
-- **Android app** (`android/`) — Kotlin + Jetpack Compose, live MQTT dashboard,
-  shadow-based pump control, Timestream-backed history charts, FCM alerts.
-  Setup instructions in `android/README.md`; AWS-side pieces (IoT policy,
-  Lambdas) in `android/aws-setup/`.
+Devices are owned by exactly one node and move down the tree as they are sold.
+Every allocation is audited. Scoping uses path enumeration — a user sees their
+own sub-tree and nothing else.
+
+---
 
 ## Status
 
-- [x] Android app — implemented (`android/`), needs AWS IDs filled into `AwsConfig.kt`
-- [x] Android app v2 — phone OTP login (Firebase Auth), multi-pump list per customer, 6 languages (en/hi/kn/mr/ta/te)
-- [ ] AWS setup — Cognito pool, IoT policy, Timestream rule, Lambdas (history/alerts/pumps), DynamoDB `PumpOwners`, Firebase project
-- [ ] Firmware — not started (must implement the telemetry/shadow contract)
-- [ ] Hardware — not started
+| Component | State |
+|---|---|
+| **MCU firmware** | ✅ In production — 300+ units. v1.0.367. |
+| **MQTT bridge** | 🟡 Working (V1.0.1) — hardening required before field use: AWS TLS mode, command validation, offline buffering |
+| **Backend** | 🟢 Feature-complete for the current scope — JWT auth + rotating refresh tokens, TOTP MFA, `hierarchy_path`-scoped RBAC, lifecycle state machine, audit log, WebSocket live-update hub, device config + reusable templates, bulk allocation, factory batch provisioning + IMEI whitelist, warranty/RMA with bridge-swap identity migration, panel binding, live service reports, and the alert engine (dedup, storm digest, subscriptions, ack/assign/resolve). SMS/WhatsApp senders exist but aren't wired into alerts yet — deferred to a paid tier. Still open: API versioning, per-key rate limits, observability, retention/partitioning — see `docs/Backend_Pending_Items.md`. |
+| **Web portal** | 🟢 Feature-complete for the current scope (React + MUI) — live telemetry, device registry and 7-tab device detail, hierarchy/multi-staff accounts, fleet dashboard, factory console, system health, support console, child-org invites, per-partner white-labelling, configuration templates, service reports, and an Alerts inbox. i18n ships with `en`/`hi` only — further locales are being done in the Android app instead, not here. See `docs/Web_App_Pending_Items.md`. |
+| **Android app** | 🟡 Built — 6 languages (en/hi/kn/mr/ta/te), OTP login, live dashboard, control. Needs migration from direct-MQTT to the backend API. |
+| **AWS setup** | 🔴 Not provisioned — IoT policy, rules, certificates, provisioning template |
+| **Hardware** | ✅ In production |
+| **OTA** | 🔴 Not started — see SRS §4.6.1 |
+
+### Before field deployment
+
+Two items remain blocking per `docs/Development_Plan_FINAL.md` §2: a
+protection-timer defect in the MCU (GAP-31), and the bridge's plain-text
+broker mode with unvalidated command forwarding. The other two originally
+tracked here — an unauthenticated telemetry endpoint and seeded credentials
+in `schema.sql` — are resolved: telemetry ingestion now requires a
+per-device `X-Device-Key` (`backend/middleware/authMiddleware.js`), and the
+seed data no longer ships a real phone number or a documented plaintext
+password.
+
+---
+
+## Building
+
+**MCU firmware** — Keil, GCC or IAR project files under `firmware/`. Flash with
+Nu-Link (`firmware/Keil/flash.bat`).
+
+**Bridge** — Ninja + ARM GCC from the SimCom OpenSDK. The output **must** be
+LZMA-compressed before packaging; a raw binary flashes successfully and then
+silently fails to boot. See `docs/SRS_v7.0.md` §5.0.35 and
+`MQTT Bridge A7672 Firmware/CompileInfo_read.me`.
+
+```
+ninja
+arm-none-eabi-objcopy -O binary customer_app.elf customer_app.bin
+lzma e customer_app.bin customer_app_lzma.bin
+crc_set customer_app_lzma.bin customer_app_crc.bin
+python pack_image.py
+```
+
+**Backend** — `npm install`, configure `backend/.env`, `node setup-db.js`, `npm start`.
+
+**Web** — `npm install`, `npm run dev`.
+
+**Android** — open `android/` in Android Studio; fill AWS and Firebase IDs.
+
+---
+
+## Licence
+
+Proprietary. © Swathi Switchgear.
