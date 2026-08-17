@@ -1,0 +1,177 @@
+version: "4.1"
+name: Template
+type: ARM
+deviceName: M031LD2AE
+packDir: null
+srcDirs: []
+virtualFolder:
+  name: <virtual_root>
+  files: []
+  folders:
+    - name: CMSIS
+      files:
+        - path: ../../../Library/Device/Nuvoton/M031/Source/system_M031Series.c
+        - path: ../../../Library/Device/Nuvoton/M031/Source/ARM/startup_M031Series.s
+      folders: []
+    - name: Library
+      files:
+        - path: ../../../Library/StdDriver/src/retarget.c
+        - path: ../../../Library/StdDriver/src/fmc.c
+      folders: []
+    - name: User
+      files:
+        - path: ../Calibration.c
+        - path: ../Init_Settings.c
+        - path: ../IoT_Comm.c
+        - path: ../LCD.c
+        - path: ../Measurement.c
+        - path: ../MotorProtection.c
+        - path: ../SettingsEEPROM.c
+        - path: ../Timer3_Int.c
+        - path: ../UI_Menu.c
+        - path: ../main.c
+      folders: []
+dependenceList: []
+outDir: build
+miscInfo:
+  uid: 77fa623a1d279bc9f7cb13c93c3d48e7
+targets:
+  Template:
+    cppPreprocessAttrs:
+      defineList: []
+      incList:
+        - ../../../Library/CMSIS/Core/Include
+        - ../../../Library/Device/Nuvoton/M031/Include
+        - ../../../Library/StdDriver/inc
+        - .cmsis/include
+        - RTE/_Template
+      libList: []
+    excludeList: []
+    settings:
+      debugger: cortex-debug
+    toolchain: AC6
+    toolchainConfigMap:
+      AC6:
+        archExtensions: ""
+        cpuType: Cortex-M0
+        floatingPointHardware: none
+        options:
+          version: 3
+          afterBuildTasks:
+            - name: "[Copy linker output for Keil User Commands]"
+              abortAfterFailed: true
+              command: mkdir ${KEIL_OUTPUT_DIR} & copy "${OutDir}\${ProjectName}.axf" "${KEIL_OUTPUT_DIR}\${KEIL_OUTPUT_NAME}.axf"
+              disable: false
+            - name: fromelf --bin ".\obj\@L.axf" --output ".\obj\@L.bin"
+              abortAfterFailed: true
+              command: fromelf --bin ".\obj\${KEIL_OUTPUT_NAME}.axf" --output ".\obj\${KEIL_OUTPUT_NAME}.bin"
+              disable: false
+            - name: fromelf --text -c ".\obj\@L.axf" --output ".\obj\@L.txt"
+              abortAfterFailed: true
+              command: fromelf --text -c ".\obj\${KEIL_OUTPUT_NAME}.axf" --output ".\obj\${KEIL_OUTPUT_NAME}.txt"
+              disable: false
+          asm-compiler:
+            $use: asm-auto
+            misc-controls: ""
+            thumb-mode: true
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            language-c: c99
+            language-cpp: c++98
+            link-time-optimization: false
+            one-elf-section-per-function: true
+            optimization: level-2
+            short-enums#wchar: true
+            warnings: unspecified
+          global:
+            output-debug-info: enable
+            use-microLIB: true
+          linker:
+            $outputTaskExcludes:
+              - .bin
+            misc-controls: --map --first='startup_M031Series.o(RESET)' --datacompressor=off --info=inline --entry Reset_Handler
+            output-format: elf
+            ro-base: "0x00000000"
+            rw-base: "0x20000000"
+            xo-base: ""
+        scatterFilePath: ""
+        storageLayout:
+          RAM:
+            - id: 1
+              isChecked: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              noInit: false
+              tag: RAM
+            - id: 2
+              isChecked: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              noInit: false
+              tag: RAM
+            - id: 3
+              isChecked: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              noInit: false
+              tag: RAM
+            - id: 1
+              isChecked: true
+              mem:
+                size: "0x2000"
+                startAddr: "0x20000000"
+              noInit: false
+              tag: IRAM
+            - id: 2
+              isChecked: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              noInit: false
+              tag: IRAM
+          ROM:
+            - id: 1
+              isChecked: false
+              isStartup: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              tag: ROM
+            - id: 2
+              isChecked: false
+              isStartup: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              tag: ROM
+            - id: 3
+              isChecked: false
+              isStartup: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              tag: ROM
+            - id: 1
+              isChecked: true
+              isStartup: true
+              mem:
+                size: "0x10000"
+                startAddr: "0x0"
+              tag: IROM
+            - id: 2
+              isChecked: false
+              isStartup: false
+              mem:
+                size: "0x0"
+                startAddr: "0x0"
+              tag: IROM
+        useCustomScatterFile: true
+    uploadConfigMap:
+      Custom:
+        bin: ${projectDir}/flash.bat
+        commandLine: ""
+        eraseChipCommand: ""
+    uploader: Custom

@@ -2,6 +2,7 @@
  * AgriPump SmartSpace - DLT SMS & WhatsApp Multi-Channel Regional Alert Engine
  * Compliant with TRAI (India) DLT Regulations & Meta WhatsApp Business API
  */
+const metrics = require('./metrics');
 
 // ----------------------------------------------------------------------------
 // 1. TRAI DLT APPROVED TEMPLATE REGISTRY (23 LANGUAGES)
@@ -42,7 +43,22 @@ const DLT_TEMPLATES = {
 // ----------------------------------------------------------------------------
 // 2. MULTI-GATEWAY SMS SENDER (MSG91 / FAST2SMS / TWILIO)
 // ----------------------------------------------------------------------------
-async function sendDltSms(phoneNumber, templateKey, vars = [], lang = 'hi') {
+// Public entry point: counts every call for FR-WEB-017's system health
+// view. "sent" here means the function returned without throwing (a real
+// gateway response or the documented mock fallback) — there is no delivery
+// receipt wired up, so this cannot and does not claim confirmed delivery.
+async function sendDltSms(...args) {
+  try {
+    const result = await _sendDltSms(...args);
+    metrics.increment('sms_sent');
+    return result;
+  } catch (err) {
+    metrics.increment('sms_failed');
+    throw err;
+  }
+}
+
+async function _sendDltSms(phoneNumber, templateKey, vars = [], lang = 'hi') {
   const template = DLT_TEMPLATES[templateKey];
   if (!template) throw new Error(`Unknown DLT template key: ${templateKey}`);
 
@@ -107,7 +123,18 @@ async function sendDltSms(phoneNumber, templateKey, vars = [], lang = 'hi') {
 // ----------------------------------------------------------------------------
 // 3. MULTI-GATEWAY WHATSAPP SENDER (META CLOUD API / TWILIO WHATSAPP)
 // ----------------------------------------------------------------------------
-async function sendWhatsAppAlert(phoneNumber, templateKey, vars = [], lang = 'hi') {
+async function sendWhatsAppAlert(...args) {
+  try {
+    const result = await _sendWhatsAppAlert(...args);
+    metrics.increment('whatsapp_sent');
+    return result;
+  } catch (err) {
+    metrics.increment('whatsapp_failed');
+    throw err;
+  }
+}
+
+async function _sendWhatsAppAlert(phoneNumber, templateKey, vars = [], lang = 'hi') {
   const template = DLT_TEMPLATES[templateKey];
   const messageText = (template[lang] || template['en']).replace('{#var#}', vars[0] || 'Borewell Pump #1');
 

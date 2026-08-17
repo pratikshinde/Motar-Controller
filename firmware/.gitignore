@@ -1,0 +1,26 @@
+# Keil Build Artifacts
+Keil/obj/
+Keil/lst/
+Keil/build/
+Keil/*.bak
+Keil/*.dep
+Keil/*.uvguix.*
+Keil/*.uvgui.*
+Keil/*.crf
+Keil/*.d
+Keil/*.o
+Keil/*.axf
+Keil/*.hex
+Keil/*.htm
+Keil/*.lnp
+Keil/*.map
+Keil/*.s19
+Keil/*.txt
+Keil/*.bin
+
+# VS Code
+.vscode/
+
+# Others
+*.tmp
+*.log

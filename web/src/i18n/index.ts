@@ -1,199 +1,139 @@
-export interface TranslationSet {
-  tabTelemetry: string;
-  tabMap: string;
-  tabDevices: string;
-  tabTree: string;
-  tabLogs: string;
+// i18n framework (Web_App_Pending_Items.md §4.1 / §11.5 W3). Structurally
+// supports the full 20-locale target (Eighth Schedule + English, less
+// Urdu/Kashmiri/Sindhi — deferred with RTL), but the picker only ever
+// offers locales whose dictionary is actually complete: shipping a
+// language option that silently falls back to English is worse than not
+// offering it (the bug this replaces — 9 offered, 4 delivered).
+//
+// CSS should prefer logical properties (marginInlineStart, not marginLeft)
+// so the eventual RTL locales are a `dir` flip plus a small hand-fix pass,
+// not a rewrite — see §4.1.
+
+export interface Dict {
+  navTelemetry: string;
+  navDevices: string;
+  navHierarchy: string;
+  navFaultLogs: string;
+  navMap: string;
+  navAudit: string;
+  navFleet: string;
+  navFactory: string;
+  navHealth: string;
+  navSupport: string;
+  navConfigTemplates: string;
+  navServiceReports: string;
+  navAlerts: string;
   heroTitle: string;
-  seqNormal: string;
-  lblVoltRY: string;
-  lblVoltYB: string;
-  lblVoltBR: string;
-  lblCurrR: string;
-  lblCurrY: string;
-  lblCurrB: string;
-  btnPhaseLoss: string;
-  btnDryRun: string;
-  btnResetFaults: string;
-  lblRemoteSwitch: string;
+  kpiTotal: string;
+  kpiRunning: string;
+  kpiFaults: string;
+  kpiStopped: string;
+  statusRunning: string;
+  statusStopped: string;
+  statusFault: string;
   btnCommission: string;
   btnSettings: string;
   btnLogout: string;
-  lblRunning: string;
-  lblStopped: string;
-  lblFault: string;
+  btnAddSubordinate: string;
+  lblRemoteSwitch: string;
+  devicesTitle: string;
+  thDeviceId: string;
+  thSupplyType: string;
+  thFirmware: string;
+  thStatus: string;
+  thActions: string;
+  hierarchyTitle: string;
+  faultLogsTitle: string;
+  settingsTitle: string;
+  loginTitle: string;
+  loginSubtitle: string;
 }
 
-export const languagesList = [
-  { code: 'as', label: '1. Assamese (অসমীয়া)' },
-  { code: 'bn', label: '2. Bengali (বাংলা)' },
-  { code: 'brx', label: '3. Bodo (बोडो)' },
-  { code: 'doi', label: '4. Dogri (डोगरी)' },
-  { code: 'en', label: '5. English (Default)' },
-  { code: 'gu', label: '6. Gujarati (ગુજરાતી)' },
-  { code: 'hi', label: '7. Hindi (हिन्दी)' },
-  { code: 'kn', label: '8. Kannada (ಕನ್ನಡ)' },
-  { code: 'ks', label: '9. Kashmiri (कश्मीरी)' },
-  { code: 'kok', label: '10. Konkani (कोंकणी)' },
-  { code: 'mai', label: '11. Maithili (मैथिली)' },
-  { code: 'ml', label: '12. Malayalam (മലയാളം)' },
-  { code: 'mni', label: '13. Manipuri (ꯃꯩꯇꯩꯂꯣꯟ)' },
-  { code: 'mr', label: '14. Marathi (मराठी)' },
-  { code: 'ne', label: '15. Nepali (नेपाली)' },
-  { code: 'or', label: '16. Odia (ଓଡ଼ିଆ)' },
-  { code: 'pa', label: '17. Punjabi (ਪੰਜਾਬੀ)' },
-  { code: 'sa', label: '18. Sanskrit (संस्कृतम्)' },
-  { code: 'sat', label: '19. Santali (ᱥᱟᱱᱛᱟᱲᱤ)' },
-  { code: 'sd', label: '20. Sindhi (सिंधी)' },
-  { code: 'ta', label: '21. Tamil (தமிழ்)' },
-  { code: 'te', label: '22. Telugu (తెలుగు)' },
-  { code: 'ur', label: '23. Urdu (اردو)' }
-];
+export const supportedLocales = ['en', 'hi'] as const;
+export type SupportedLocale = (typeof supportedLocales)[number];
 
-export const i18nDict: Record<string, Partial<TranslationSet>> = {
+export const localeLabels: Record<SupportedLocale, string> = {
+  en: 'English',
+  hi: 'हिन्दी (Hindi)'
+};
+
+export const dictionaries: Record<SupportedLocale, Dict> = {
   en: {
-    tabTelemetry: "⚡ 1. Live Telemetry & Control",
-    tabMap: "🗺️ 2. GIS Geo-Location Map",
-    tabDevices: "📱 3. Devices Registry",
-    tabTree: "👥 4. RBAC 9-Tier Hierarchy",
-    tabLogs: "🚨 5. Fault Incident Logs",
-    heroTitle: "3-Phase Power Health Monitor",
-    seqNormal: "R-Y-B NORMAL",
-    lblVoltRY: "Phase R-Y",
-    lblVoltYB: "Phase Y-B",
-    lblVoltBR: "Phase B-R",
-    lblCurrR: "Ph R",
-    lblCurrY: "Ph Y",
-    lblCurrB: "Ph B",
-    btnPhaseLoss: "⚡ Phase Loss",
-    btnDryRun: "💧 Dry Run",
-    btnResetFaults: "✅ Clear Faults",
-    lblRemoteSwitch: "Remote Switch",
-    btnCommission: "+ Commission Pump",
-    btnSettings: "⚙️ Settings",
-    btnLogout: "🚪 Logout",
-    lblRunning: "RUNNING",
-    lblStopped: "STOPPED",
-    lblFault: "FAULT"
+    navTelemetry: 'Live Telemetry',
+    navDevices: 'Devices',
+    navHierarchy: 'Hierarchy',
+    navFaultLogs: 'Fault Logs',
+    navMap: 'Map',
+    navAudit: 'Audit Log',
+    navFleet: 'Fleet Dashboard',
+    navFactory: 'Factory Console',
+    navHealth: 'System Health',
+    navSupport: 'Support Console',
+    navConfigTemplates: 'Config Templates',
+    navServiceReports: 'Service Reports',
+    navAlerts: 'Alerts',
+    heroTitle: '3-Phase Power Health Monitor',
+    kpiTotal: 'Total',
+    kpiRunning: 'Running',
+    kpiFaults: 'Faults',
+    kpiStopped: 'Idle',
+    statusRunning: 'RUNNING',
+    statusStopped: 'STOPPED',
+    statusFault: 'FAULT',
+    btnCommission: 'Commission Pump',
+    btnSettings: 'Settings',
+    btnLogout: 'Logout',
+    btnAddSubordinate: 'Add Subordinate Account',
+    lblRemoteSwitch: 'Remote Switch',
+    devicesTitle: 'Hardware Device Registry & Fleet Inventory',
+    thDeviceId: 'Device ID (Thing Name)',
+    thSupplyType: 'Supply Type',
+    thFirmware: 'Firmware',
+    thStatus: 'Status',
+    thActions: 'Actions',
+    hierarchyTitle: 'Multi-Tenant Account Hierarchy',
+    faultLogsTitle: 'Fleet Fault Incident & Protection Logs',
+    settingsTitle: 'System & Interface Settings',
+    loginTitle: 'AgriPump SmartSpace',
+    loginSubtitle: 'Sign in to continue'
   },
   hi: {
-    tabTelemetry: "⚡ 1. लाइव टेलीमेट्री और कंट्रोल",
-    tabMap: "🗺️ 2. जीआईएस मानचित्र",
-    tabDevices: "📱 3. उपकरण रजिस्ट्री",
-    tabTree: "👥 4. 9-स्तरीय यूजर ट्री",
-    tabLogs: "🚨 5. फॉल्ट लॉग्स",
-    heroTitle: "3-फेज मोटर बिजली स्वास्थ्य मॉनिटर",
-    seqNormal: "R-Y-B सामान्य",
-    lblVoltRY: "फेज R-Y",
-    lblVoltYB: "फेज Y-B",
-    lblVoltBR: "फेज B-R",
-    lblCurrR: "करंट R",
-    lblCurrY: "करंट Y",
-    lblCurrB: "करंट B",
-    btnPhaseLoss: "⚡ फेज लॉस",
-    btnDryRun: "💧 ड्राई रन",
-    btnResetFaults: "✅ फॉल्ट साफ करें",
-    lblRemoteSwitch: "रिमोट स्विच",
-    btnCommission: "+ नया पंप जोड़ें",
-    btnSettings: "⚙️ सेटिंग्स",
-    btnLogout: "🚪 लॉगआउट",
-    lblRunning: "चालू है",
-    lblStopped: "बंद है",
-    lblFault: "खराबी"
-  },
-  mr: {
-    tabTelemetry: "⚡ 1. लाइव्ह टेलिमेन्ट्री आणि कंट्रोल",
-    tabMap: "🗺️ 2. नकाशे (GIS Map)",
-    tabDevices: "📱 3. उपकरण नोंदणी",
-    tabTree: "👥 4. 9-स्तरीय खाते झाड",
-    tabLogs: "🚨 5. त्रुटी नोंदी",
-    heroTitle: "3-फेज मोटर पॉवर मॉनिटर",
-    seqNormal: "R-Y-B सामान्य",
-    lblVoltRY: "फेज R-Y",
-    lblVoltYB: "फेज Y-B",
-    lblVoltBR: "फेज B-R",
-    lblCurrR: "करंट R",
-    lblCurrY: "करंट Y",
-    lblCurrB: "करंट B",
-    btnPhaseLoss: "⚡ फेज लॉस",
-    btnDryRun: "💧 ड्राय रन",
-    btnResetFaults: "✅ त्रुटी साफ करा",
-    lblRemoteSwitch: "रिमोट स्विच",
-    btnCommission: "+ नवीन पंप जोडा",
-    btnSettings: "⚙️ सेटिंग्ज",
-    btnLogout: "🚪 बाहेर पडा",
-    lblRunning: "चालू आहे",
-    lblStopped: "बंद आहे",
-    lblFault: "फॉल्ट"
-  },
-  gu: {
-    tabTelemetry: "⚡ 1. લાઇવ ટેલિમેટ્રી",
-    heroTitle: "લાઇવ 3-ફેઝ પાવર હેલ્થ મોનિટર",
-    btnCommission: "+ નવો પંપ ઉમેરો",
-    btnSettings: "⚙️ સેટિંગ્સ",
-    lblRemoteSwitch: "રિમોટ સ્વિચ"
-  },
-  ta: {
-    tabTelemetry: "⚡ 1. லைவ் டெலிமெட்ரி",
-    heroTitle: "லைவ் 3-பேஸ் மோட்டார் பவர் மானிட்டர்",
-    btnCommission: "+ புதிய பம்ப் சேர்க்க",
-    btnSettings: "⚙️ அமைப்புகள்",
-    lblRemoteSwitch: "ரிமோட் ஸ்விட்ச்"
-  },
-  te: {
-    tabTelemetry: "⚡ 1. లైవ్ టెలిమెట్రీ",
-    heroTitle: "లైవ్ 3-ఫేజ్ పవర్ మానిਟਰ",
-    btnCommission: "+ కొత్త పంప్ జోడించండి",
-    btnSettings: "⚙️ సెట్టింగ్‌లు",
-    lblRemoteSwitch: "రిમોట్ స్విచ్"
-  },
-  kn: {
-    tabTelemetry: "⚡ 1. ಲೈವ್ ಟೆಲಿಮೆಟ್ರಿ",
-    heroTitle: "ಲೈವ್ 3-ಫೇಸ್ ಮೋಟಾರ್ ಪವರ್ ಮಾನಿಟರ್",
-    btnCommission: "+ ಹೊಸ ಪಂಪ್ ಸೇರಿಸಿ",
-    btnSettings: "⚙️ ಸಂಯೋಜನೆಗಳು",
-    lblRemoteSwitch: "ರಿಮೋಟ್ ಸ್ವಿಚ್"
-  },
-  bn: {
-    tabTelemetry: "⚡ 1. লাইভ টেলিম্যাট্রি",
-    heroTitle: "লাইভ ৩-ফেজ পাওয়ার মনিটর",
-    btnCommission: "+ পাম্প যোগ করুন",
-    btnSettings: "⚙️ সেটিংস",
-    lblRemoteSwitch: "রিমোট সুইচ"
-  },
-  pa: {
-    tabTelemetry: "⚡ 1. ਲਾਈਵ ਟੈਲੀਮੈਟਰੀ",
-    heroTitle: "ਲਾਈਵ 3-ਫੇਜ਼ ਮੋਟਰ ਪਾਵਰ ਮਾਨੀਟਰ",
-    btnCommission: "+ ਨਵਾਂ ਪੰਪ ਜੋੜੋ",
-    btnSettings: "⚙️ ਸੈਟਿੰਗਾਂ",
-    lblRemoteSwitch: "ਰਿਮੋਟ ਸਵਿੱਚ"
-  },
-  ml: {
-    tabTelemetry: "⚡ 1. ലൈവ് ടെലിമെട്രി",
-    heroTitle: "ലൈവ് 3-ഫേസ് മോട്ടോർ പവർ മോണിറ്റർ",
-    btnCommission: "+ പുതിയ പമ്പ് ചേർക്കുക",
-    btnSettings: "⚙️ ക്രമീകരണങ്ങൾ",
-    lblRemoteSwitch: "റിമോട്ട് സ്വിച്ച്"
-  },
-  or: {
-    tabTelemetry: "⚡ 1. ଲାଇଭ୍ ଟେଲିମେଟ୍ରି",
-    heroTitle: "ଲାଇଭ୍ 3-ଫେଜ୍ ମୋଟର ପାୱାର୍ ମନିଟର",
-    btnCommission: "+ ନୂତନ ପମ୍ପ ଯୋଡନ୍ତୁ",
-    btnSettings: "⚙️ ସେଟିଂସମୂହ",
-    lblRemoteSwitch: "ରିମୋଟ ସ୍ୱିଚ୍"
-  },
-  as: {
-    tabTelemetry: "⚡ 1. লাইভ টেলিমেট্ৰী",
-    heroTitle: "লাইভ ৩-ফেজ পাম্প পাৱাৰ মনিটৰ",
-    btnCommission: "+ পাম্প পঞ্জীয়ন",
-    btnSettings: "⚙️ ছেটিংছ",
-    lblRemoteSwitch: "ৰিমোট ছুইচ"
-  },
-  ur: {
-    tabTelemetry: "⚡ 1. لائیو ٹیلی میٹری",
-    heroTitle: "لائیو 3-فیز موٹر پاور مانیٹر",
-    btnCommission: "+ نیا پمپ شامل کریں",
-    btnSettings: "⚙️ ترتیبات",
-    lblRemoteSwitch: "ریموٹ سوئچ"
+    navTelemetry: 'लाइव टेलीमेट्री',
+    navDevices: 'उपकरण',
+    navHierarchy: 'हायरार्की',
+    navFaultLogs: 'फॉल्ट लॉग्स',
+    navMap: 'मानचित्र',
+    navAudit: 'ऑडिट लॉग',
+    navFleet: 'फ्लीट डैशबोर्ड',
+    navFactory: 'फैक्ट्री कंसोल',
+    navHealth: 'सिस्टम स्वास्थ्य',
+    navSupport: 'सपोर्ट कंसोल',
+    navConfigTemplates: 'कॉन्फ़िग टेम्पलेट्स',
+    navServiceReports: 'सेवा रिपोर्ट',
+    navAlerts: 'अलर्ट',
+    heroTitle: '3-फेज मोटर बिजली स्वास्थ्य मॉनिटर',
+    kpiTotal: 'कुल उपकरण',
+    kpiRunning: 'चालू',
+    kpiFaults: 'खराबी',
+    kpiStopped: 'बंद',
+    statusRunning: 'चालू है',
+    statusStopped: 'बंद है',
+    statusFault: 'खराबी',
+    btnCommission: 'नया पंप जोड़ें',
+    btnSettings: 'सेटिंग्स',
+    btnLogout: 'लॉगआउट',
+    btnAddSubordinate: 'नया सब-अकाउंट जोड़ें',
+    lblRemoteSwitch: 'रिमोट स्विच',
+    devicesTitle: 'हार्डवेयर डिवाइस रजिस्ट्री',
+    thDeviceId: 'उपकरण आईडी',
+    thSupplyType: 'बिजली आपूर्ति प्रकार',
+    thFirmware: 'फर्मवेयर',
+    thStatus: 'स्थिति',
+    thActions: 'कार्रवाई',
+    hierarchyTitle: 'बहु-किरायेदार खाता संरचना',
+    faultLogsTitle: 'फ्लीट फॉल्ट और सुरक्षा लॉग',
+    settingsTitle: 'सिस्टम और इंटरफ़ेस सेटिंग्स',
+    loginTitle: 'एग्रीपंप स्मार्टस्पेस',
+    loginSubtitle: 'जारी रखने के लिए साइन इन करें'
   }
 };

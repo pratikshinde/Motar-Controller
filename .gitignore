@@ -13,6 +13,11 @@ android/local.properties
 .env
 backend/.env
 
+# Locally-generated JWT signing secret (see backend/services/jwtAuth.js) —
+# generated on first run, never committed, unique per environment.
+.jwt-secret
+backend/.jwt-secret
+
 # Build outputs & logs
 dist/
 build/
@@ -26,3 +31,7 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+.claude/
+
+# Generated knowledge-graph analysis output (graphify), not source
+graphify-out/
