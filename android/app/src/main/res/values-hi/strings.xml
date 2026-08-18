@@ -8,63 +8,67 @@
 
     <string name="status_running">चालू</string>
     <string name="status_stopped">बंद</string>
-    <string name="status_connecting">कनेक्ट हो रहा है</string>
-    <string name="status_reconnecting">पुनः कनेक्ट हो रहा है</string>
+    <string name="status_fault">खराबी</string>
     <string name="status_disconnected">ऑफ़लाइन</string>
 
-    <string name="card_line_voltages">लाइन वोल्टेज (440V)</string>
-    <string name="volts">वोल्ट</string>
-    <string name="phase_present">उपलब्ध</string>
-    <string name="phase_missing">गायब</string>
+    <string name="pump_live_updated">● लाइव · %1$s पहले अपडेट हुआ</string>
+    <string name="pump_offline_last_seen">⚠ ऑफ़लाइन · %1$s पहले देखा गया</string>
+    <string name="pump_updated_ago">%1$s पहले तक</string>
+    <string name="card_line_voltages">लाइन वोल्टेज</string>
     <string name="card_phase_currents">फेज़ करंट</string>
-    <string name="card_phase_sequence">फेज़ क्रम</string>
-    <string name="seq_correct">✓ सही</string>
-    <string name="seq_reverse">✕ उल्टा</string>
-    <string name="seq_no_data">डेटा नहीं</string>
-    <string name="card_run_time">चलने का समय</string>
-    <string name="total_run_time">कुल चलने का समय</string>
-    <string name="last_cycle_run_time">पिछली बार चलने का समय</string>
-    <string name="hms_caption">घंटे : मिनट : सेकंड</string>
-    <string name="card_pump_control">पंप नियंत्रण</string>
-    <string name="pump_on">चालू</string>
-    <string name="pump_off">बंद</string>
-    <string name="pump_unknown">अज्ञात</string>
-    <string name="waiting_for_pump">पंप की प्रतीक्षा…</string>
-    <string name="tap_to_toggle">चालू/बंद करने के लिए दबाएँ</string>
-    <string name="start_pump">पंप चालू करें</string>
-    <string name="stop_pump">पंप बंद करें</string>
+    <string name="data_live">लाइव</string>
+    <string name="data_buffered">बफ़र्ड</string>
+    <string name="ws_reconnecting">पुनः कनेक्ट हो रहा है…</string>
+
     <string name="card_faults">पंप की खराबियाँ</string>
-    <string name="all_clear">सब ठीक है</string>
+    <string name="fault_unknown">खराबी</string>
+    <string name="fault_tap_for_action">क्या करें, देखने के लिए दबाएँ</string>
+    <string name="reset_fault">खराबी रीसेट करें</string>
+
+    <string name="tap_to_start">चालू करने के लिए दबाएँ</string>
+    <string name="tap_to_stop">बंद करने के लिए दबाएँ</string>
+    <string name="confirm_start">%1$s चालू करें?</string>
+    <string name="confirm_stop">%1$s बंद करें?</string>
+    <string name="start_pump">चालू करें</string>
+    <string name="stop_pump">बंद करें</string>
+    <string name="command_sending">भेजा जा रहा है…</string>
+    <string name="command_cooldown">%1$d सेकंड प्रतीक्षा करें</string>
+    <string name="command_offline_notice">पंप ऑफ़लाइन है — दोबारा जुड़ने तक कमांड अस्वीकार होगा</string>
 
     <string name="history_title">इतिहास</string>
     <string name="history_error">इतिहास लोड नहीं हो सका: %1$s</string>
     <string name="history_no_data">अभी कोई डेटा नहीं।</string>
 
     <string name="alerts_title">अलर्ट</string>
-    <string name="alerts_description">ऐप बंद होने पर भी सूचनाएँ मिलती हैं। ऐप खुले रहते हुए मिले हाल के अलर्ट नीचे दिखते हैं।</string>
-    <string name="alerts_empty">इस सत्र में कोई अलर्ट नहीं।</string>
+    <string name="alerts_description">ऐप खुला और साइन इन रहने पर लाइव मिलते हैं। ऐप बंद होने पर पुश सूचनाएँ आगामी अपडेट में आएँगी।</string>
+    <string name="alerts_empty">कोई अलर्ट नहीं।</string>
+    <string name="alert_occurred_count">%1$d बार हुआ</string>
+    <string name="alert_ack">स्वीकार करें</string>
+    <string name="alert_resolve">हल करें</string>
+    <string name="alert_resolved">हल हो गया</string>
 
-    <string name="login_title">साइन इन करें</string>
     <string name="login_subtitle">अपने पंप कहीं से भी चलाएँ और देखें</string>
     <string name="login_phone_label">मोबाइल नंबर</string>
     <string name="login_send_otp">OTP भेजें</string>
     <string name="login_otp_label">6 अंकों का OTP डालें</string>
     <string name="login_otp_sent">%1$s पर OTP भेजा गया</string>
+    <string name="login_dev_otp_hint">डेव मोड OTP: %1$s</string>
     <string name="login_verify">सत्यापित करें</string>
     <string name="login_resend">OTP दोबारा भेजें</string>
     <string name="login_change_number">नंबर बदलें</string>
     <string name="login_invalid_phone">सही 10 अंकों का मोबाइल नंबर डालें</string>
-    <string name="login_invalid_otp">6 अंकों का OTP डालें</string>
-    <string name="login_failed">सत्यापन विफल: %1$s</string>
-    <string name="login_demo_notice">Firebase कॉन्फ़िगर नहीं है — OTP लॉगिन उपलब्ध नहीं है।</string>
-    <string name="login_demo_continue">डेमो मोड में जारी रखें</string>
+    <string name="login_invalid_otp">6 अंकों का कोड डालें</string>
+    <string name="login_mfa_label">अपने ऑथेंटिकेटर ऐप का 6 अंकों का कोड डालें</string>
+    <string name="login_mfa_code_label">ऑथेंटिकेटर कोड</string>
 
     <string name="pumps_title">मेरे पंप</string>
     <string name="pumps_subtitle">डैशबोर्ड खोलने के लिए पंप चुनें</string>
     <string name="pumps_empty">इस खाते से अभी कोई पंप जुड़ा नहीं है। अपने इंस्टॉलर से संपर्क करें।</string>
-    <string name="pumps_error">पंप लोड नहीं हो सके: %1$s — डिफ़ॉल्ट पंप दिखाया जा रहा है।</string>
+    <string name="pumps_error">पंप लोड नहीं हो सके: %1$s</string>
     <string name="pump_device_id">डिवाइस: %1$s</string>
+    <string name="pump_switcher_title">पंप बदलें</string>
     <string name="sign_out">साइन आउट</string>
+    <string name="menu">मेनू</string>
 
     <string name="language">भाषा</string>
     <string name="language_choose">भाषा चुनें</string>

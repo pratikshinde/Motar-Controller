@@ -39,19 +39,21 @@ android {
 }
 
 dependencies {
-    // --- AWS IoT Core (MQTT over WebSockets) + Cognito credentials ---
-    implementation("com.amazonaws:aws-android-sdk-iot:2.77.0")
-    implementation("com.amazonaws:aws-android-sdk-core:2.77.0")
-
-    // --- Firebase: Cloud Messaging (push alerts) + Auth (phone OTP login) ---
+    // --- Firebase Cloud Messaging only (push alerts) — auth is now the
+    // backend's own OTP+JWT flow, not Firebase Phone Auth. FCM stays wired
+    // but inert (the google-services plugin above is still commented out)
+    // until Phase 2 (device-token endpoint + alertEngine.js FCM sender).
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-messaging")
-    implementation("com.google.firebase:firebase-auth")
 
-    // --- REST API for history (API Gateway + Lambda) ---
+    // --- REST + WebSocket client for backend/server.js ---
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // --- Encrypted on-device storage for the access/refresh token pair ---
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // --- Jetpack Compose ---
     implementation(platform("androidx.compose:compose-bom:2024.09.03"))

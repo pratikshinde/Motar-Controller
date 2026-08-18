@@ -104,6 +104,7 @@ transition timing, dry-run auto-recovery.
 | `docs/SRS_Compliance_Roadmap.md` | Full-scope roadmap by dependency order — effort estimates and phasing |
 | `docs/aws-iot-fleet-provisioning-architecture.md` | Fleet provisioning by claim — template, pre-provisioning hook, scoped policy, batch flashing |
 | `docs/dlt-sms-whatsapp-templates.md` | India DLT-compliant SMS and WhatsApp templates |
+| **`docs/Android_App_Development_Plan.md`** | The active Android app plan — source-verified code audit, UI/UX redesign (Pump screen, Command Bar), phased plan (D/0/1 implemented; 2/3/5/6 pending; Partner Console/Phase 4 explicitly deferred), effort estimate, implementation status |
 
 ### Superseded — read against the SRS
 
@@ -139,7 +140,7 @@ own sub-tree and nothing else.
 | **MQTT bridge** | 🟡 Working (V1.0.1) — hardening required before field use: AWS TLS mode, command validation, offline buffering |
 | **Backend** | 🟢 Feature-complete for the current scope — JWT auth + rotating refresh tokens, TOTP MFA, `hierarchy_path`-scoped RBAC, lifecycle state machine, audit log, WebSocket live-update hub, device config + reusable templates, bulk allocation, factory batch provisioning + IMEI whitelist, warranty/RMA with bridge-swap identity migration, panel binding, live service reports, and the alert engine (dedup, storm digest, subscriptions, ack/assign/resolve). SMS/WhatsApp senders exist but aren't wired into alerts yet — deferred to a paid tier. Still open: API versioning, per-key rate limits, observability, retention/partitioning — see `docs/Backend_Pending_Items.md`. |
 | **Web portal** | 🟢 Feature-complete for the current scope (React + MUI) — live telemetry, device registry and 7-tab device detail, hierarchy/multi-staff accounts, fleet dashboard, factory console, system health, support console, child-org invites, per-partner white-labelling, configuration templates, service reports, and an Alerts inbox. i18n ships with `en`/`hi` only — further locales are being done in the Android app instead, not here. See `docs/Web_App_Pending_Items.md`. |
-| **Android app** | 🟡 Built — 6 languages (en/hi/kn/mr/ta/te), OTP login, live dashboard, control. Needs migration from direct-MQTT to the backend API. |
+| **Android app** | 🟡 Rebuilt against the real backend API (JWT + rotating refresh tokens, TOTP MFA, `/ws` live updates, server-enforced 45s command cooldown) — the AWS IoT/Cognito/Firebase-auth stack it previously targeted is gone. Pump screen redesigned so the start/stop control can never scroll off-screen. Builds clean. Not yet field-tested; no push notifications, technician/commissioning flow, or Partner Console yet — see `docs/Android_App_Development_Plan.md`. |
 | **AWS setup** | 🔴 Not provisioned — IoT policy, rules, certificates, provisioning template |
 | **Hardware** | ✅ In production |
 | **OTA** | 🔴 Not started — see SRS §4.6.1 |
@@ -179,7 +180,7 @@ python pack_image.py
 
 **Web** — `npm install`, `npm run dev`.
 
-**Android** — open `android/` in Android Studio; fill AWS and Firebase IDs.
+**Android** — open `android/` in Android Studio and run. Talks to `backend/server.js` directly (no AWS/Firebase setup needed); edit `data/AppConfig.kt` if your backend isn't reachable at the emulator's default `10.0.2.2:5000`. `firebase-messaging` is included but inert (push notifications are a future phase) — the `google-services` plugin stays commented out in `app/build.gradle.kts` until then.
 
 ---
 

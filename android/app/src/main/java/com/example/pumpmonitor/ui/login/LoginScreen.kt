@@ -38,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -47,12 +46,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pumpmonitor.R
 import com.example.pumpmonitor.ui.common.LanguageDialog
-import com.example.pumpmonitor.ui.common.findActivity
 import com.example.pumpmonitor.ui.theme.Neon
 
 @Composable
 fun LoginScreen(vm: AuthViewModel, onSignedIn: () -> Unit) {
-    val activity = LocalContext.current.findActivity()
     val step by vm.step.collectAsState()
     val busy by vm.busy.collectAsState()
     val error by vm.error.collectAsState()
@@ -64,6 +61,7 @@ fun LoginScreen(vm: AuthViewModel, onSignedIn: () -> Unit) {
     var showLanguages by remember { mutableStateOf(false) }
 
     LaunchedEffect(signedIn) { if (signedIn) onSignedIn() }
+    LaunchedEffect(step) { code = "" }
     if (showLanguages) LanguageDialog(onDismiss = { showLanguages = false })
 
     Column(
@@ -102,21 +100,6 @@ fun LoginScreen(vm: AuthViewModel, onSignedIn: () -> Unit) {
         )
         Spacer(Modifier.height(36.dp))
 
-        if (!vm.firebaseAvailable) {
-            // google-services.json not added yet — OTP can't work.
-            Text(
-                stringResource(R.string.login_demo_notice),
-                color = Neon.Yellow, fontSize = 13.sp,
-                modifier = Modifier.padding(bottom = 16.dp),
-            )
-            NeonButton(
-                text = stringResource(R.string.login_demo_continue),
-                enabled = true, busy = false,
-                onClick = { vm.continueInDemoMode() },
-            )
-            return@Column
-        }
-
         when (val s = step) {
             is AuthStep.EnterPhone -> {
                 OutlinedTextField(
@@ -135,10 +118,10 @@ fun LoginScreen(vm: AuthViewModel, onSignedIn: () -> Unit) {
                     enabled = !busy, busy = busy,
                     onClick = {
                         val normalized = vm.normalizePhone(phone)
-                        if (normalized == null || activity == null) {
+                        if (normalized == null) {
                             localError = R.string.login_invalid_phone
                         } else {
-                            vm.sendOtp(normalized, activity)
+                            vm.sendOtp(normalized)
                         }
                     },
                 )
@@ -149,6 +132,13 @@ fun LoginScreen(vm: AuthViewModel, onSignedIn: () -> Unit) {
                     stringResource(R.string.login_otp_sent, s.phone),
                     color = Neon.TextMuted, fontSize = 13.sp,
                 )
+                if (s.devOtp != null) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        stringResource(R.string.login_dev_otp_hint, s.devOtp),
+                        color = Neon.Yellow, fontSize = 12.sp,
+                    )
+                }
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = code,
@@ -169,9 +159,7 @@ fun LoginScreen(vm: AuthViewModel, onSignedIn: () -> Unit) {
                     },
                 )
                 Row {
-                    TextButton(onClick = {
-                        activity?.let { vm.sendOtp(s.phone, it, resend = true) }
-                    }) {
+                    TextButton(onClick = { vm.resendOtp() }) {
                         Text(stringResource(R.string.login_resend), color = Neon.Cyan)
                     }
                     TextButton(onClick = { code = ""; vm.backToPhone() }) {
@@ -179,10 +167,38 @@ fun LoginScreen(vm: AuthViewModel, onSignedIn: () -> Unit) {
                     }
                 }
             }
+
+            is AuthStep.EnterMfa -> {
+                Text(
+                    stringResource(R.string.login_mfa_label),
+                    color = Neon.TextMuted, fontSize = 13.sp,
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { if (it.length <= 6) code = it; localError = null },
+                    label = { Text(stringResource(R.string.login_mfa_code_label)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    colors = neonFieldColors(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(16.dp))
+                NeonButton(
+                    text = stringResource(R.string.login_verify),
+                    enabled = !busy, busy = busy,
+                    onClick = {
+                        if (code.length != 6) localError = R.string.login_invalid_otp
+                        else vm.verifyMfaCode(code)
+                    },
+                )
+                TextButton(onClick = { code = ""; vm.backToPhone() }) {
+                    Text(stringResource(R.string.login_change_number), color = Neon.TextMuted)
+                }
+            }
         }
 
-        val errorText = localError?.let { stringResource(it) }
-            ?: error?.let { stringResource(R.string.login_failed, it) }
+        val errorText = localError?.let { stringResource(it) } ?: error
         if (errorText != null) {
             Spacer(Modifier.height(14.dp))
             Text(errorText, color = Neon.Red, fontSize = 13.sp)

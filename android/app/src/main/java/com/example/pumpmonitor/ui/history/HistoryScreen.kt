@@ -27,26 +27,26 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.pumpmonitor.R
-import com.example.pumpmonitor.data.HistoryPoint
+import com.example.pumpmonitor.data.TelemetryRow
 import com.example.pumpmonitor.ui.PumpViewModel
 
-private val metrics = listOf(
-    "vRY" to "V RY",
-    "vYB" to "V YB",
-    "vBR" to "V BR",
-    "iR" to "I R",
-    "iY" to "I Y",
-    "iB" to "I B",
+private val metrics = listOf<Pair<String, (TelemetryRow) -> Float?>>(
+    "V R-Y" to { it.vRyVolts },
+    "V Y-B" to { it.vYbVolts },
+    "V B-R" to { it.vBrVolts },
+    "I R" to { it.iRAmps },
+    "I Y" to { it.iYAmps },
+    "I B" to { it.iBAmps },
 )
 
 @Composable
 fun HistoryScreen(vm: PumpViewModel) {
     val points by vm.history.collectAsState()
     val error by vm.historyError.collectAsState()
-    var metric by remember { mutableStateOf("vRY") }
+    var metricIndex by remember { mutableStateOf(0) }
     var hours by remember { mutableStateOf(24) }
 
-    LaunchedEffect(metric, hours) { vm.loadHistory(metric, hours) }
+    LaunchedEffect(hours) { vm.loadHistory(hours) }
 
     Column(
         Modifier.fillMaxSize().padding(16.dp),
@@ -55,10 +55,10 @@ fun HistoryScreen(vm: PumpViewModel) {
         Text(stringResource(R.string.history_title), style = MaterialTheme.typography.titleLarge)
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            metrics.forEach { (key, label) ->
+            metrics.forEachIndexed { i, (label, _) ->
                 FilterChip(
-                    selected = metric == key,
-                    onClick = { metric = key },
+                    selected = metricIndex == i,
+                    onClick = { metricIndex = i },
                     label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                 )
             }
@@ -75,38 +75,38 @@ fun HistoryScreen(vm: PumpViewModel) {
 
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
+                val values = points.mapNotNull(metrics[metricIndex].second)
                 when {
                     error != null -> Text(
                         stringResource(R.string.history_error, error ?: ""),
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    points.isEmpty() -> Text(
+                    values.isEmpty() -> Text(
                         stringResource(R.string.history_no_data),
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    else -> LineChart(points, Modifier.fillMaxWidth().height(240.dp))
+                    else -> LineChart(values, Modifier.fillMaxWidth().height(240.dp))
                 }
             }
         }
     }
 }
 
-/** Minimal dependency-free line chart. Swap for Vico/MPAndroidChart if you prefer. */
+/** Minimal dependency-free line chart, x-axis by sample order (not wall-clock spacing). */
 @Composable
-private fun LineChart(points: List<HistoryPoint>, modifier: Modifier = Modifier) {
-    val min = points.minOf { it.value }
-    val max = points.maxOf { it.value }
+private fun LineChart(values: List<Float>, modifier: Modifier = Modifier) {
+    val min = values.min()
+    val max = values.max()
     val range = (max - min).takeIf { it > 0f } ?: 1f
 
     Canvas(modifier) {
-        val stepX = size.width / (points.size - 1).coerceAtLeast(1)
+        val stepX = size.width / (values.size - 1).coerceAtLeast(1)
         val path = Path()
-        points.forEachIndexed { i, p ->
+        values.forEachIndexed { i, v ->
             val x = i * stepX
-            val y = size.height - ((p.value - min) / range) * size.height
+            val y = size.height - ((v - min) / range) * size.height
             if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
-        // Baseline grid
         for (frac in listOf(0f, 0.5f, 1f)) {
             val y = size.height * frac
             drawLine(Color(0x22000000), Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)

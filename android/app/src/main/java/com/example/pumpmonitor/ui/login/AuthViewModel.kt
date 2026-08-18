@@ -1,39 +1,32 @@
 package com.example.pumpmonitor.ui.login
 
-import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseException
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.PhoneAuthCredential
-import com.google.firebase.auth.PhoneAuthOptions
-import com.google.firebase.auth.PhoneAuthProvider
+import androidx.lifecycle.viewModelScope
+import com.example.pumpmonitor.PumpApp
+import com.example.pumpmonitor.data.auth.LoginOutcome
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.launch
 
 sealed interface AuthStep {
     data object EnterPhone : AuthStep
-    data class EnterOtp(val phone: String) : AuthStep
+    data class EnterOtp(val phone: String, val devOtp: String? = null) : AuthStep
+    data class EnterMfa(val mfaToken: String) : AuthStep
 }
 
 /**
- * Phone-number OTP login via Firebase Authentication (Phone provider).
- * The Firebase session persists across app restarts, so users sign in once.
- *
- * Until google-services.json is added, [firebaseAvailable] is false and the
- * login screen offers a demo-mode bypass instead of OTP.
+ * Real backend OTP+MFA login (send-otp -> verify-otp -> [mfa/verify if the
+ * account has TOTP enabled]) via [PumpApp.authRepository]. Replaces the
+ * previous Firebase Phone Auth implementation — there is no demo-mode
+ * bypass anymore, since the real backend is always reachable in dev too.
  */
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
-    val firebaseAvailable: Boolean = FirebaseApp.getApps(app).isNotEmpty()
+    private val repo = (app as PumpApp).authRepository
 
-    private val auth: FirebaseAuth? =
-        if (firebaseAvailable) FirebaseAuth.getInstance() else null
-
-    private val _signedIn = MutableStateFlow(auth?.currentUser != null)
-    val signedIn: StateFlow<Boolean> = _signedIn
+    val signedIn: StateFlow<Boolean> = repo.signedIn
+    val currentUser = repo.currentUser
 
     private val _step = MutableStateFlow<AuthStep>(AuthStep.EnterPhone)
     val step: StateFlow<AuthStep> = _step
@@ -44,13 +37,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    private var verificationId: String? = null
-    private var resendToken: PhoneAuthProvider.ForceResendingToken? = null
     private var lastPhone: String = ""
-
-    /** Signed-in user's phone in E.164 — the pumps-API user id. */
-    val userId: String
-        get() = auth?.currentUser?.phoneNumber ?: "demo"
 
     /** "9876543210" -> "+919876543210"; full "+..." passes through. */
     fun normalizePhone(raw: String): String? {
@@ -62,67 +49,51 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-        override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-            // Instant verification / SMS auto-retrieval — no typing needed.
-            signIn(credential)
-        }
-
-        override fun onVerificationFailed(e: FirebaseException) {
-            _busy.value = false
-            _error.value = e.localizedMessage ?: e.javaClass.simpleName
-        }
-
-        override fun onCodeSent(id: String, token: PhoneAuthProvider.ForceResendingToken) {
-            _busy.value = false
-            verificationId = id
-            resendToken = token
-            _step.value = AuthStep.EnterOtp(lastPhone)
-        }
-    }
-
-    fun sendOtp(phone: String, activity: Activity, resend: Boolean = false) {
-        val fb = auth ?: return
+    fun sendOtp(phone: String) {
         _error.value = null
         _busy.value = true
         lastPhone = phone
-        val builder = PhoneAuthOptions.newBuilder(fb)
-            .setPhoneNumber(phone)
-            .setTimeout(60L, TimeUnit.SECONDS)
-            .setActivity(activity)
-            .setCallbacks(callbacks)
-        if (resend) resendToken?.let { builder.setForceResendingToken(it) }
-        PhoneAuthProvider.verifyPhoneNumber(builder.build())
+        viewModelScope.launch {
+            repo.sendOtp(phone)
+                .onSuccess { devOtp -> _step.value = AuthStep.EnterOtp(phone, devOtp) }
+                .onFailure { _error.value = it.message }
+            _busy.value = false
+        }
+    }
+
+    fun resendOtp() {
+        if (lastPhone.isNotEmpty()) sendOtp(lastPhone)
     }
 
     fun verifyOtp(code: String) {
-        val id = verificationId ?: return
-        signIn(PhoneAuthProvider.getCredential(id, code))
-    }
-
-    private fun signIn(credential: PhoneAuthCredential) {
-        val fb = auth ?: return
         _error.value = null
         _busy.value = true
-        fb.signInWithCredential(credential)
-            .addOnSuccessListener {
-                _busy.value = false
-                _signedIn.value = true
+        viewModelScope.launch {
+            when (val outcome = repo.verifyOtp(lastPhone, code)) {
+                is LoginOutcome.Success -> Unit // signedIn flips via repo.signedIn, observed by the UI
+                is LoginOutcome.MfaRequired -> _step.value = AuthStep.EnterMfa(outcome.mfaToken)
+                is LoginOutcome.Error -> _error.value = outcome.message
             }
-            .addOnFailureListener {
-                _busy.value = false
-                _error.value = it.localizedMessage ?: it.javaClass.simpleName
-            }
+            _busy.value = false
+        }
     }
 
-    /** Only offered while Firebase isn't configured (session-only). */
-    fun continueInDemoMode() {
-        _signedIn.value = true
+    fun verifyMfaCode(code: String) {
+        val mfaToken = (_step.value as? AuthStep.EnterMfa)?.mfaToken ?: return
+        _error.value = null
+        _busy.value = true
+        viewModelScope.launch {
+            when (val outcome = repo.verifyMfa(mfaToken, code)) {
+                is LoginOutcome.Success -> Unit
+                is LoginOutcome.MfaRequired -> _error.value = "Unexpected second MFA challenge"
+                is LoginOutcome.Error -> _error.value = outcome.message
+            }
+            _busy.value = false
+        }
     }
 
     fun signOut() {
-        auth?.signOut()
-        _signedIn.value = false
+        viewModelScope.launch { repo.signOut() }
         _step.value = AuthStep.EnterPhone
         _error.value = null
     }

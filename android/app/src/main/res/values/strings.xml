@@ -7,37 +7,38 @@
     <string name="tab_history">History</string>
     <string name="tab_alerts">Alerts</string>
 
-    <!-- Connection / pump status -->
+    <!-- Pump state (mirrors pumps.status RUNNING/STOPPED/FAULT, plus a client-derived OFFLINE for connectivity) -->
     <string name="status_running">RUNNING</string>
     <string name="status_stopped">STOPPED</string>
-    <string name="status_connecting">CONNECTING</string>
-    <string name="status_reconnecting">RECONNECTING</string>
+    <string name="status_fault">FAULT</string>
     <string name="status_disconnected">OFFLINE</string>
 
-    <!-- Dashboard cards -->
-    <string name="card_line_voltages">LINE VOLTAGES (440V)</string>
-    <string name="volts">Volts</string>
-    <string name="phase_present">PRESENT</string>
-    <string name="phase_missing">MISSING</string>
+    <!-- Pump screen -->
+    <string name="pump_live_updated">● Live · updated %1$s ago</string>
+    <string name="pump_offline_last_seen">⚠ Offline · last seen %1$s ago</string>
+    <string name="pump_updated_ago">as of %1$s ago</string>
+    <string name="card_line_voltages">LINE VOLTAGES</string>
     <string name="card_phase_currents">PHASE CURRENTS</string>
-    <string name="card_phase_sequence">PHASE SEQUENCE</string>
-    <string name="seq_correct">✓ CORRECT</string>
-    <string name="seq_reverse">✕ REVERSE</string>
-    <string name="seq_no_data">NO DATA</string>
-    <string name="card_run_time">RUN TIME</string>
-    <string name="total_run_time">TOTAL RUN TIME</string>
-    <string name="last_cycle_run_time">LAST CYCLE RUN TIME</string>
-    <string name="hms_caption">Hours : Minutes : Seconds</string>
-    <string name="card_pump_control">PUMP CONTROL</string>
-    <string name="pump_on">ON</string>
-    <string name="pump_off">OFF</string>
-    <string name="pump_unknown">UNKNOWN</string>
-    <string name="waiting_for_pump">WAITING FOR PUMP…</string>
-    <string name="tap_to_toggle">Tap to toggle • command goes via Device Shadow</string>
-    <string name="start_pump">Start pump</string>
-    <string name="stop_pump">Stop pump</string>
+    <string name="data_live">Live</string>
+    <string name="data_buffered">Buffered</string>
+    <string name="ws_reconnecting">Reconnecting…</string>
+
+    <!-- Faults -->
     <string name="card_faults">PUMP FAULTS</string>
-    <string name="all_clear">ALL CLEAR</string>
+    <string name="fault_unknown">Fault</string>
+    <string name="fault_tap_for_action">Tap for what to do</string>
+    <string name="reset_fault">Reset fault</string>
+
+    <!-- Command bar (docs/Android_App_Development_Plan.md §3.4) -->
+    <string name="tap_to_start">TAP TO START</string>
+    <string name="tap_to_stop">TAP TO STOP</string>
+    <string name="confirm_start">Start %1$s?</string>
+    <string name="confirm_stop">Stop %1$s?</string>
+    <string name="start_pump">Start</string>
+    <string name="stop_pump">Stop</string>
+    <string name="command_sending">Sending…</string>
+    <string name="command_cooldown">Wait %1$ds</string>
+    <string name="command_offline_notice">Pump offline — command will be rejected until it reconnects</string>
 
     <!-- History -->
     <string name="history_title">History</string>
@@ -46,32 +47,37 @@
 
     <!-- Alerts -->
     <string name="alerts_title">Alerts</string>
-    <string name="alerts_description">Push notifications arrive even when the app is closed. Recent alerts received while the app is open appear below.</string>
-    <string name="alerts_empty">No alerts in this session.</string>
+    <string name="alerts_description">Live while the app is open and signed in. Push notifications when closed are coming in a future update.</string>
+    <string name="alerts_empty">No alerts.</string>
+    <string name="alert_occurred_count">Occurred %1$d times</string>
+    <string name="alert_ack">Acknowledge</string>
+    <string name="alert_resolve">Resolve</string>
+    <string name="alert_resolved">Resolved</string>
 
-    <!-- Login (phone OTP) -->
-    <string name="login_title">Sign in</string>
+    <!-- Login (phone OTP + optional MFA) -->
     <string name="login_subtitle">Control and monitor your pumps from anywhere</string>
     <string name="login_phone_label">Mobile number</string>
     <string name="login_send_otp">SEND OTP</string>
     <string name="login_otp_label">Enter the 6-digit OTP</string>
     <string name="login_otp_sent">OTP sent to %1$s</string>
+    <string name="login_dev_otp_hint">Dev mode OTP: %1$s</string>
     <string name="login_verify">VERIFY</string>
     <string name="login_resend">Resend OTP</string>
     <string name="login_change_number">Change number</string>
     <string name="login_invalid_phone">Enter a valid 10-digit mobile number</string>
-    <string name="login_invalid_otp">Enter the 6-digit OTP</string>
-    <string name="login_failed">Verification failed: %1$s</string>
-    <string name="login_demo_notice">Firebase is not configured (google-services.json missing) — OTP login is unavailable.</string>
-    <string name="login_demo_continue">CONTINUE IN DEMO MODE</string>
+    <string name="login_invalid_otp">Enter the 6-digit code</string>
+    <string name="login_mfa_label">Enter the 6-digit code from your authenticator app</string>
+    <string name="login_mfa_code_label">Authenticator code</string>
 
-    <!-- Pump list -->
+    <!-- Pump list (only shown for >5-pump accounts) -->
     <string name="pumps_title">My Pumps</string>
     <string name="pumps_subtitle">Select a pump to open its dashboard</string>
     <string name="pumps_empty">No pumps are linked to this account yet. Contact your installer.</string>
-    <string name="pumps_error">Couldn\'t load your pumps: %1$s — showing the default pump.</string>
+    <string name="pumps_error">Couldn\'t load your pumps: %1$s</string>
     <string name="pump_device_id">Device: %1$s</string>
+    <string name="pump_switcher_title">Switch pump</string>
     <string name="sign_out">Sign out</string>
+    <string name="menu">Menu</string>
 
     <!-- Language picker -->
     <string name="language">Language</string>

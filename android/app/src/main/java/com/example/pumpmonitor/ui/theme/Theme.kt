@@ -24,6 +24,26 @@ object Neon {
     val TextMuted = Color(0xFF7A8CA5)
 }
 
+/**
+ * Per-phase colors, R/Y/B — the electrical convention SRS §6.1 and every
+ * other surface (firmware LCD, web portal) uses. Deliberately distinct from
+ * [Neon.Red] (fault/alert red) even though "R" stands for Red, so a faulted
+ * R-phase reading doesn't visually collide with the fault banner color.
+ */
+object PhaseColors {
+    val R = Color(0xFFFF7043)
+    val Y = Color(0xFFFFC107)
+    val B = Color(0xFF2E86F5)
+}
+
+/** Pump operational state colors — mirrors `pumps.status` (RUNNING/STOPPED/FAULT) plus a distinct OFFLINE (connectivity, not `status`). */
+object StatusColors {
+    val Running = Neon.Green
+    val Stopped = Neon.TextMuted
+    val Fault = Neon.Red
+    val Offline = Neon.Orange
+}
+
 private val NeonColorScheme = darkColorScheme(
     background = Neon.Background,
     surface = Neon.Card,

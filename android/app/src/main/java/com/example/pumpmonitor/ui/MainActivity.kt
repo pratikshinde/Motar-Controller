@@ -5,14 +5,16 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -22,10 +24,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -64,10 +69,12 @@ class MainActivity : ComponentActivity() {
                 val vm: PumpViewModel = viewModel()
                 val authVm: AuthViewModel = viewModel()
 
-                NavHost(
-                    navController = nav,
-                    startDestination = "pump", // Directly open DashboardScreen on app launch!
-                ) {
+                // Reflects TokenStore.hasSession synchronously at ViewModel
+                // construction — a resumed session skips straight past login,
+                // a cold/logged-out install starts there. No demo shortcut.
+                val startDestination = remember { if (authVm.signedIn.value) "pump" else "login" }
+
+                NavHost(navController = nav, startDestination = startDestination) {
                     composable("login") {
                         LoginScreen(authVm) {
                             nav.navigate("pump") { popUpTo("login") { inclusive = true } }
@@ -75,40 +82,56 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("pumps") {
                         PumpsScreen(
-                            vm, authVm,
+                            vm,
                             onOpenPump = { pump ->
-                                vm.selectPump(pump)
+                                vm.selectPump(pump.id)
                                 nav.navigate("pump")
                             },
-                            onSignOut = {
-                                vm.closePump()
-                                authVm.signOut()
-                                nav.navigate("login") { popUpTo(0) }
-                            },
+                            onSignOut = { signOut(vm, authVm, nav) },
                         )
                     }
                     composable("pump") {
-                        PumpSection(vm, onBack = {
-                            nav.popBackStack()
-                        })
+                        PumpSection(vm, nav, onSignOut = { signOut(vm, authVm, nav) })
                     }
                 }
             }
         }
     }
+
+    private fun signOut(vm: PumpViewModel, authVm: AuthViewModel, nav: NavHostController) {
+        vm.closePump()
+        authVm.signOut()
+        nav.navigate("login") { popUpTo(0) }
+    }
 }
 
 /** The per-pump area: Monitor / History / Alerts tabs for the selected pump. */
 @Composable
-private fun PumpSection(vm: PumpViewModel, onBack: () -> Unit) {
-    val pump by vm.selectedPump.collectAsState()
-    if (pump == null) {
-        LaunchedEffect(Unit) { onBack() }
+private fun PumpSection(vm: PumpViewModel, nav: NavHostController, onSignOut: () -> Unit) {
+    val pumps by vm.pumps.collectAsState()
+    val loading by vm.pumpsLoading.collectAsState()
+    val selectedPump by vm.selectedPump.collectAsState()
+
+    // >5-pump accounts need the searchable list first (plan §3.2); everyone
+    // else is auto-selected by PumpViewModel.refreshPumps() already.
+    LaunchedEffect(pumps, selectedPump) {
+        if (selectedPump == null && pumps.size > 5) {
+            nav.navigate("pumps") { popUpTo("pump") { inclusive = false } }
+        }
+    }
+
+    if (selectedPump == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (loading || pumps.size > 5) {
+                CircularProgressIndicator(color = Neon.Cyan)
+            } else {
+                Text(stringResource(R.string.pumps_empty), color = Neon.TextMuted)
+            }
+        }
         return
     }
-    BackHandler(onBack = onBack)
 
-    val nav = rememberNavController()
+    val tabsNav = rememberNavController()
     val tabs = listOf(
         Tab("dashboard", R.string.tab_monitor, Icons.Filled.Dashboard),
         Tab("history", R.string.tab_history, Icons.Filled.History),
@@ -119,13 +142,13 @@ private fun PumpSection(vm: PumpViewModel, onBack: () -> Unit) {
         containerColor = Neon.Background,
         bottomBar = {
             NavigationBar(containerColor = Neon.Card) {
-                val backStack by nav.currentBackStackEntryAsState()
+                val backStack by tabsNav.currentBackStackEntryAsState()
                 val current = backStack?.destination?.route
                 tabs.forEach { tab ->
                     NavigationBarItem(
                         selected = current == tab.route,
                         onClick = {
-                            nav.navigate(tab.route) {
+                            tabsNav.navigate(tab.route) {
                                 popUpTo("dashboard"); launchSingleTop = true
                             }
                         },
@@ -137,11 +160,11 @@ private fun PumpSection(vm: PumpViewModel, onBack: () -> Unit) {
         },
     ) { padding ->
         NavHost(
-            navController = nav,
+            navController = tabsNav,
             startDestination = "dashboard",
             modifier = Modifier.padding(padding),
         ) {
-            composable("dashboard") { DashboardScreen(vm, onBack = onBack) }
+            composable("dashboard") { DashboardScreen(vm, onSignOut = onSignOut) }
             composable("history") { HistoryScreen(vm) }
             composable("alerts") { AlertsScreen(vm) }
         }

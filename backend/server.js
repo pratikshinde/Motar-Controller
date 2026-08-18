@@ -41,6 +41,20 @@ app.use(cors({
 
 app.use(express.json());
 
+// API versioning (Android_App_Development_Plan.md Phase 0 prerequisite).
+// Every route below is still declared as /api/..., so rather than
+// duplicating each one onto a /api/v1 router, incoming /api/v1/* requests
+// are rewritten to /api/* before they reach any route handler. /api/* keeps
+// working unchanged as a deprecated alias — there's only one API version
+// today, so this is a URL-compatibility shim, not a real multi-version
+// dispatch (revisit if a genuine v2 with divergent behavior is ever needed).
+app.use((req, res, next) => {
+  if (req.url === '/api/v1' || req.url.startsWith('/api/v1/')) {
+    req.url = '/api' + req.url.slice('/api/v1'.length);
+  }
+  next();
+});
+
 // FR-WEB-017 — every response actually sent is counted here, bucketed by
 // status code. This is the only source for the request/error counts on
 // GET /api/system/health; nothing about it is estimated.

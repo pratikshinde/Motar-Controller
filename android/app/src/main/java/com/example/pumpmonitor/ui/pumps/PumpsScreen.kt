@@ -47,13 +47,13 @@ import com.example.pumpmonitor.R
 import com.example.pumpmonitor.data.Pump
 import com.example.pumpmonitor.ui.PumpViewModel
 import com.example.pumpmonitor.ui.common.LanguageDialog
-import com.example.pumpmonitor.ui.login.AuthViewModel
 import com.example.pumpmonitor.ui.theme.Neon
+import com.example.pumpmonitor.ui.theme.StatusColors
 
+/** Shown only for >5-pump accounts (see plan §3.2) — smaller fleets use the in-dashboard pump switcher instead. */
 @Composable
 fun PumpsScreen(
     vm: PumpViewModel,
-    authVm: AuthViewModel,
     onOpenPump: (Pump) -> Unit,
     onSignOut: () -> Unit,
 ) {
@@ -62,7 +62,7 @@ fun PumpsScreen(
     val error by vm.pumpsError.collectAsState()
     var showLanguages by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { vm.loadPumps(authVm.userId) }
+    LaunchedEffect(Unit) { vm.refreshPumps() }
     if (showLanguages) LanguageDialog(onDismiss = { showLanguages = false })
 
     Column(
@@ -118,7 +118,7 @@ fun PumpsScreen(
             }
 
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(pumps, key = { it.thingName }) { pump ->
+                items(pumps, key = { it.id }) { pump ->
                     PumpCard(pump, onClick = { onOpenPump(pump) })
                 }
             }
@@ -128,6 +128,11 @@ fun PumpsScreen(
 
 @Composable
 private fun PumpCard(pump: Pump, onClick: () -> Unit) {
+    val statusColor = when (pump.status) {
+        "RUNNING" -> StatusColors.Running
+        "FAULT" -> StatusColors.Fault
+        else -> StatusColors.Stopped
+    }
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = Neon.Card),
@@ -138,10 +143,10 @@ private fun PumpCard(pump: Pump, onClick: () -> Unit) {
             Box(
                 Modifier
                     .size(48.dp)
-                    .background(Neon.Green.copy(alpha = 0.12f), CircleShape),
+                    .background(statusColor.copy(alpha = 0.12f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.WaterDrop, null, tint = Neon.Green, modifier = Modifier.size(26.dp))
+                Icon(Icons.Filled.WaterDrop, null, tint = statusColor, modifier = Modifier.size(26.dp))
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
@@ -150,11 +155,12 @@ private fun PumpCard(pump: Pump, onClick: () -> Unit) {
                     fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold,
                     fontSize = 16.sp, color = Neon.TextPrimary,
                 )
-                if (pump.location.isNotBlank()) {
-                    Text(pump.location, color = Neon.TextMuted, fontSize = 12.sp)
-                }
                 Text(
-                    stringResource(R.string.pump_device_id, pump.thingName),
+                    "${pump.supplyType} · ${pump.hpRating ?: "?"} HP",
+                    color = Neon.TextMuted, fontSize = 12.sp,
+                )
+                Text(
+                    stringResource(R.string.pump_device_id, pump.id),
                     color = Neon.TextMuted, fontSize = 10.sp,
                     fontFamily = FontFamily.Monospace,
                 )
