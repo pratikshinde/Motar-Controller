@@ -62,14 +62,17 @@ push/alerts backend sender (Phase 2), i18n beyond en/hi for the strings
 introduced in this pass (Phase 5 territory — kn/mr/ta/te fall back to
 English for new keys, existing keys stay translated).
 
-**Not verified live** — no Android build toolchain (no `java`/JDK, no
-Android SDK) is available in this environment, so nothing here has been
-compiled or run. Every file was written directly against source-verified
+**Build status:** no Android build toolchain (no `java`/JDK, no Android SDK)
+was available in the environment this was written in, so it could not be
+compiled here — every file was written directly against source-verified
 backend contracts (endpoint paths, request/response JSON down to
 node-postgres's NUMERIC/BIGINT-as-string serialization quirk — see
-`data/Models.kt`'s header comment), not assumption, but "compiles" and
-"runs correctly on a device" are unconfirmed. Building and testing in
-Android Studio is the next real step before this is field-ready.
+`data/Models.kt`'s header comment), not assumption. **Confirmed 18 Aug 2026
+by the developer building it in Android Studio: compiles clean, no errors.**
+Still outstanding: live device/emulator testing (login → pump screen →
+command dispatch against a running `backend/server.js`) — compiling is not
+the same as verified-correct at runtime, and nothing here has been through
+that pass yet.
 
 ---
 
