@@ -386,7 +386,7 @@ CREATE TABLE IF NOT EXISTS agripump.commands (
     cid UUID PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     pump_id VARCHAR(50) NOT NULL REFERENCES agripump.pumps(id) ON DELETE CASCADE,
     actor_id UUID REFERENCES agripump.users(id) ON DELETE SET NULL,
-    action VARCHAR(10) NOT NULL CHECK (action IN ('START', 'STOP')),
+    action VARCHAR(30) NOT NULL CHECK (action IN ('START', 'STOP', 'SET_TIMER', 'UPDATE_CONFIG')),
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACKED', 'EXPIRED', 'REJECTED')),
     reject_reason VARCHAR(50),
     issued_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
