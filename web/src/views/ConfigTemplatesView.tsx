@@ -28,9 +28,11 @@ export const ConfigTemplatesView: React.FC = () => {
   const load = useCallback(async () => {
     try {
       const data = await fetchConfigTemplates();
-      setTemplates(data.templates);
+      const list = Array.isArray(data) ? data : (data?.templates || (data as any)?.data || []);
+      setTemplates(Array.isArray(list) ? list : []);
     } catch (err: any) {
       showToast(err.message || 'Could not load templates', true);
+      setTemplates([]);
     } finally {
       setLoading(false);
     }

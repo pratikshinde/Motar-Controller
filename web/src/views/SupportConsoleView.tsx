@@ -49,9 +49,18 @@ export const SupportConsoleView: React.FC = () => {
     setLoadingDetail(true);
     try {
       const [d, t, f] = await Promise.all([fetchPumpDetail(pumpId), fetchPumpTelemetry(pumpId, 24), fetchFaults(pumpId)]);
-      setDetail(d);
-      setTelemetry(t.telemetry);
-      setFaults(f.faults);
+      setDetail(d ? {
+        pump: d.pump || (d as any),
+        latest_telemetry: d.latest_telemetry || null,
+        config: d.config || null,
+        open_fault_count: d.open_fault_count ?? 0
+      } : null);
+
+      const tList = Array.isArray(t) ? t : (t?.telemetry || (t as any)?.data || []);
+      setTelemetry(Array.isArray(tList) ? tList : []);
+
+      const fList = Array.isArray(f) ? f : (f?.faults || (f as any)?.data || []);
+      setFaults(Array.isArray(fList) ? fList : []);
     } catch (err: any) {
       showToast(err.message || 'Could not load device diagnostics', true);
     } finally {
@@ -69,19 +78,26 @@ export const SupportConsoleView: React.FC = () => {
     }
   }, [selected, load]);
 
+  const safeTelemetry = Array.isArray(telemetry) ? telemetry : [];
+  const safeFaults = Array.isArray(faults) ? faults : [];
+  const pumpObj = detail?.pump || (detail as any) || null;
+
   async function handleCommand(action: 'START' | 'STOP') {
     if (!selected) return;
     setBusy(true);
     try {
       const result = await dispatchCommand(selected.id, action);
-      if (result.status === 202) {
-        showToast(`${action} command sent — pending device acknowledgement`);
+      if (result.status === 200 || result.status === 202) {
+        showToast(`${action} command dispatched — pending device response`);
         start(selected.id, result.cooldownSec || 45);
+      } else if (result.status === 429) {
+        showToast(result.detail || result.error || result.message || 'Command cooldown active — 45s protection window', true);
+        start(selected.id, 45);
       } else if (result.status === 409) {
         showToast(result.message || result.error || 'Command rejected', true);
         start(selected.id, result.remainingSec || 0);
       } else {
-        showToast(`Command failed: ${result.error}`, true);
+        showToast(result.detail || result.error || `Command failed (HTTP ${result.status})`, true);
       }
     } catch {
       showToast('Network error dispatching command', true);
@@ -110,7 +126,7 @@ export const SupportConsoleView: React.FC = () => {
     }
   ];
 
-  const selectedIsOn = detail?.pump.status === 'RUNNING';
+  const selectedIsOn = pumpObj?.status === 'RUNNING';
   const cooldownRemaining = selected ? remaining[selected.id] : undefined;
 
   return (
@@ -137,7 +153,7 @@ export const SupportConsoleView: React.FC = () => {
         <Box sx={{ display: 'grid', placeItems: 'center', flex: 1 }}>
           <Typography color="text.secondary">Select a device to view diagnostics.</Typography>
         </Box>
-      ) : loadingDetail || !detail ? (
+      ) : loadingDetail || !detail || !pumpObj ? (
         <Box sx={{ display: 'grid', placeItems: 'center', flex: 1 }}>
           <CircularProgress />
         </Box>
@@ -148,19 +164,19 @@ export const SupportConsoleView: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="h6">{detail.pump.name}</Typography>
-                    <Chip size="small" label={detail.pump.status} color={detail.pump.status === 'FAULT' ? 'error' : detail.pump.status === 'RUNNING' ? 'success' : 'default'} />
-                    <Chip size="small" label={detail.pump.lifecycle_state} variant="outlined" />
+                    <Typography variant="h6">{pumpObj.name}</Typography>
+                    <Chip size="small" label={pumpObj.status} color={pumpObj.status === 'FAULT' ? 'error' : pumpObj.status === 'RUNNING' ? 'success' : 'default'} />
+                    <Chip size="small" label={pumpObj.lifecycle_state} variant="outlined" />
                   </Box>
                   <Typography variant="caption" color="text.secondary" sx={{ fontFamily: monoFont, display: 'block' }}>
-                    {detail.pump.id} · firmware {detail.pump.firmware_version || 'unreported'}
+                    {pumpObj.id} · firmware {pumpObj.firmware_version || 'unreported'}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Last seen: {detail.pump.last_seen_at ? new Date(detail.pump.last_seen_at).toLocaleString() : 'never'} · Open faults: {detail.open_fault_count}
+                    Last seen: {pumpObj.last_seen_at ? new Date(pumpObj.last_seen_at).toLocaleString() : 'never'} · Open faults: {detail.open_fault_count ?? 0}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Button size="small" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => navigate(`/devices/${encodeURIComponent(detail.pump.id)}`)}>
+                  <Button size="small" startIcon={<OpenInNewIcon fontSize="small" />} onClick={() => navigate(`/devices/${encodeURIComponent(pumpObj.id)}`)}>
                     Full device detail
                   </Button>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'background.surfaceVariant', borderRadius: 2, px: 1.5, py: 0.75 }}>
@@ -184,13 +200,13 @@ export const SupportConsoleView: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Recent Faults
               </Typography>
-              {faults.length === 0 ? (
+              {safeFaults.length === 0 ? (
                 <Alert severity="success" variant="outlined">
                   No faults recorded for this device.
                 </Alert>
               ) : (
                 <Stack spacing={1}>
-                  {faults.slice(0, 5).map(f => (
+                  {safeFaults.slice(0, 5).map(f => (
                     <Alert key={f.id} severity={SEVERITY_COLOR[f.severity || ''] || 'info'} variant="outlined">
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                         <Typography variant="caption" sx={{ fontFamily: monoFont }}>
@@ -214,11 +230,11 @@ export const SupportConsoleView: React.FC = () => {
               </Typography>
             </CardContent>
             <Box sx={{ flex: 1, minHeight: 0, p: 2 }}>
-              {telemetry.length === 0 ? (
+              {safeTelemetry.length === 0 ? (
                 <Typography color="text.secondary">No telemetry received in the last 24 hours.</Typography>
               ) : (
                 <DataGrid
-                  rows={telemetry}
+                  rows={safeTelemetry}
                   columns={telemetryColumns}
                   getRowId={row => row.id ?? `${row.recorded_at}-${row.seq}`}
                   density="compact"

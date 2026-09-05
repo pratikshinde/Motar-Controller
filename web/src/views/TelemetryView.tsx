@@ -69,11 +69,11 @@ export const TelemetryView: React.FC = () => {
         slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
       />
 
-      {loading && pumps.length === 0 ? (
+      {loading && (!pumps || pumps.length === 0) ? (
         <Box sx={{ display: 'grid', placeItems: 'center', flex: 1 }}>
           <CircularProgress />
         </Box>
-      ) : pumps.length === 0 ? (
+      ) : !pumps || pumps.length === 0 ? (
         <Box sx={{ display: 'grid', placeItems: 'center', flex: 1 }}>
           <Typography color="text.secondary">No pumps in scope.</Typography>
         </Box>

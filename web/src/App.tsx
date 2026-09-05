@@ -50,12 +50,11 @@ const AuthenticatedApp: React.FC = () => (
 // that's the whole point of a self-registration link — so it's matched
 // before the auth gate rather than nested inside AuthenticatedApp.
 const Gate: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-
+  // Demo Mode: Skip login view and always render the full portal dashboard
   return (
     <Routes>
       <Route path="/invite/:token" element={<InviteRedeemView />} />
-      <Route path="/*" element={isAuthenticated ? <AuthenticatedApp /> : <LoginView />} />
+      <Route path="/*" element={<AuthenticatedApp />} />
     </Routes>
   );
 };

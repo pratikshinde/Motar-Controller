@@ -48,9 +48,11 @@ export const AlertsView: React.FC = () => {
   const load = useCallback(async () => {
     try {
       const data = await fetchAlerts({ status: status || undefined, severity: severity || undefined });
-      setAlerts(data.alerts);
+      const alertList = Array.isArray(data) ? data : (data?.alerts || (data as any)?.data || []);
+      setAlerts(alertList);
     } catch (err: any) {
       showToast(err.message || 'Could not load alerts', true);
+      setAlerts([]);
     } finally {
       setLoading(false);
     }

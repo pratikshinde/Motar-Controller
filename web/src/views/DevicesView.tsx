@@ -12,9 +12,11 @@ import { usePumps } from '../hooks/usePumps';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { deletePump } from '../api/pumps';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { CommissionDialog } from '../components/CommissionDialog';
 import { AllocateDialog } from '../components/AllocateDialog';
 import { ApplyTemplateDialog } from '../components/ApplyTemplateDialog';
+import { BulkImportModal } from '../components/BulkImportModal';
 import { monoFont } from '../theme';
 import type { PumpListItem } from '../types';
 
@@ -25,6 +27,7 @@ export const DevicesView: React.FC = () => {
   const { showToast } = useToast();
   const { pumps, loading, reload } = usePumps();
   const [commissionOpen, setCommissionOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [editingPump, setEditingPump] = useState<PumpListItem | null>(null);
   const [allocateOpen, setAllocateOpen] = useState(false);
   const [applyTemplateOpen, setApplyTemplateOpen] = useState(false);
@@ -148,16 +151,26 @@ export const DevicesView: React.FC = () => {
             </Button>
           )}
           {isSuperadmin && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setEditingPump(null);
-                setCommissionOpen(true);
-              }}
-            >
-              Register Device
-            </Button>
+            <>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<UploadFileIcon />}
+                onClick={() => setBulkImportOpen(true)}
+              >
+                Bulk Import CSV
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setEditingPump(null);
+                  setCommissionOpen(true);
+                }}
+              >
+                Register Device
+              </Button>
+            </>
           )}
         </Box>
       </Box>
@@ -180,6 +193,11 @@ export const DevicesView: React.FC = () => {
         />
       </Card>
 
+      <BulkImportModal
+        open={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        onSuccess={reload}
+      />
       <CommissionDialog
         open={commissionOpen}
         onClose={() => setCommissionOpen(false)}

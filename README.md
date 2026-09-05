@@ -24,14 +24,17 @@ in the field. This repository adds the IoT layer around it.
 │   + control) │                 │   app)       │                     │
 └──────────────┘                 └──────────────┘              IoT Rules
      Layer A                          Layer B                         │
-                                                              ┌───────▼───────┐
-                                                              │   Backend     │
-                                                              │ Node + Postgres│
-                                                              └───┬───────┬───┘
-                                                                  │       │
-                                                        ┌─────────▼──┐ ┌──▼──────────┐
-                                                        │ Web portal │ │ Android app │
-                                                        └────────────┘ └─────────────┘
+                                                               ┌───────▼───────┐
+                                                               │   Backend     │
+                                                               │Python FastAPI │
+                                                               │ SQLAlchemy +  │
+                                                               │ TimescaleDB   │
+                                                               └───┬───────┬───┘
+                                                                   │       │
+                                                         ┌─────────▼──┐ ┌──▼──────────┐
+                                                         │ React Web  │ │React Native │
+                                                         │   Portal   │ │ Mobile App  │
+                                                         └────────────┘ └─────────────┘
 ```
 
 **Two protocol layers, deliberately separated.** The MCU never speaks MQTT — it
@@ -53,9 +56,9 @@ MQTT topics: `devices/{dev_id}/telemetry`, `/faults`, `/status`, `/diag`,
 |---|---|---|
 | `firmware/` | Pump controller firmware — measurement, protection, state machine, local HMI | Nuvoton M031LD2AE (Cortex-M0), C, Keil/GCC/IAR |
 | `MQTT Bridge A7672 Firmware/` | MQTT bridge application | SIMCom A7672S OpenSDK, C |
-| `backend/` | REST API, ingestion, auth, RBAC, notifications | Node.js, Express, PostgreSQL |
+| `backend/` | REST API, ingestion, auth, RBAC, telemetry, alerts | Python, FastAPI, SQLAlchemy, TimescaleDB, PostgreSQL |
 | `web/` | Web portal | React, TypeScript, Vite |
-| `android/` | Mobile app | Kotlin, Jetpack Compose, MVVM |
+| `mobile/` | Mobile app (Android & iOS) | React Native, Expo, TypeScript |
 | `hardware/` | Schematics, PCB, BOM | — |
 | `docs/` | Specifications and plans | — |
 
@@ -105,6 +108,7 @@ transition timing, dry-run auto-recovery.
 | `docs/aws-iot-fleet-provisioning-architecture.md` | Fleet provisioning by claim — template, pre-provisioning hook, scoped policy, batch flashing |
 | `docs/dlt-sms-whatsapp-templates.md` | India DLT-compliant SMS and WhatsApp templates |
 | **`docs/Android_App_Development_Plan.md`** | The active Android app plan — source-verified code audit, UI/UX redesign (Pump screen, Command Bar), phased plan (D/0/1 implemented; 2/3/5/6 pending; Partner Console/Phase 4 explicitly deferred), effort estimate, implementation status |
+| **`docs/Firmware_and_Bridge_Development_Plan.md`** | The active MCU + A7672S bridge plan — source-verified audit (20 findings, F-1…F-20), the identity decision that gates certificate issuance, the missing AWS IoT → backend ingestion path, and a 6-phase plan (F0 safety fix → F5 OTA) |
 
 ### Superseded — read against the SRS
 

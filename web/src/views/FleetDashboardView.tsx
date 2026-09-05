@@ -59,10 +59,16 @@ export const FleetDashboardView: React.FC = () => {
   }
   if (!data) return null;
 
-  const lifecycleMap = new Map(data.lifecycle_counts.map(r => [r.lifecycle_state, Number(r.count)]));
+  const lifecycleCounts = data.lifecycle_counts || [];
+  const activeFaults = data.active_faults_by_type || [];
+  const topFaulting = data.top_faulting_devices_30d || [];
+  const warrantyExpiring = data.warranty_expiring_30d || [];
+  const firmwareDist = data.firmware_distribution || [];
+
+  const lifecycleMap = new Map(lifecycleCounts.map(r => [r.lifecycle_state, Number(r.count)]));
   const lifecycleSeries = LIFECYCLE_ORDER.map(s => lifecycleMap.get(s as any) || 0);
-  const online = Number(data.connectivity.online_count);
-  const offline = Number(data.connectivity.offline_count);
+  const online = Number(data.connectivity?.online_count || 0);
+  const offline = Number(data.connectivity?.offline_count || 0);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', overflowY: 'auto' }}>
@@ -103,7 +109,7 @@ export const FleetDashboardView: React.FC = () => {
               Open faults
             </Typography>
             <Typography variant="h3" sx={{ color: theme.palette.error.main }}>
-              {data.active_faults_by_type.reduce((sum, f) => sum + Number(f.count), 0)}
+              {activeFaults.reduce((sum, f) => sum + Number(f.count), 0)}
             </Typography>
           </CardContent>
         </Card>
@@ -113,7 +119,7 @@ export const FleetDashboardView: React.FC = () => {
               Faults today
             </Typography>
             <Typography variant="h3" sx={{ color: theme.palette.error.main }}>
-              {data.faults_today_count}
+              {data.faults_today_count || 0}
             </Typography>
           </CardContent>
         </Card>
@@ -123,7 +129,7 @@ export const FleetDashboardView: React.FC = () => {
               Warranty expiring (30d)
             </Typography>
             <Typography variant="h3" sx={{ color: theme.palette.m3.tertiary }}>
-              {data.warranty_expiring_30d.length}
+              {warrantyExpiring.length}
             </Typography>
           </CardContent>
         </Card>
@@ -152,14 +158,14 @@ export const FleetDashboardView: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Active faults by type
             </Typography>
-            {data.active_faults_by_type.length === 0 ? (
+            {activeFaults.length === 0 ? (
               <Typography color="text.secondary">No open faults.</Typography>
             ) : (
               <PieChart
                 height={280}
                 series={[
                   {
-                    data: data.active_faults_by_type.map((f, i) => ({
+                    data: activeFaults.map((f, i) => ({
                       id: i,
                       value: Number(f.count),
                       label: f.name || `Code ${f.fault_code}`,
@@ -180,11 +186,11 @@ export const FleetDashboardView: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Top faulting devices (30d)
             </Typography>
-            {data.top_faulting_devices_30d.length === 0 ? (
+            {topFaulting.length === 0 ? (
               <Typography color="text.secondary">No faults recorded in the last 30 days.</Typography>
             ) : (
               <List dense>
-                {data.top_faulting_devices_30d.map(d => (
+                {topFaulting.map(d => (
                   <ListItemButton key={d.id} onClick={() => navigate(`/devices/${encodeURIComponent(d.id)}`)}>
                     <ListItemText primary={d.name} secondary={d.id} slotProps={{ secondary: { sx: { fontFamily: monoFont } } }} />
                     <Chip size="small" label={`${d.fault_count} faults`} color="error" variant="outlined" />
@@ -203,9 +209,9 @@ export const FleetDashboardView: React.FC = () => {
             <BarChart
               height={240}
               layout="horizontal"
-              yAxis={[{ data: data.firmware_distribution.map(f => f.firmware_version), scaleType: 'band' }]}
+              yAxis={[{ data: firmwareDist.map(f => f.firmware_version), scaleType: 'band' }]}
               xAxis={[{}]}
-              series={[{ data: data.firmware_distribution.map(f => Number(f.count)), color: theme.palette.m3.tertiary }]}
+              series={[{ data: firmwareDist.map(f => Number(f.count)), color: theme.palette.m3.tertiary }]}
             />
           </CardContent>
         </Card>
@@ -216,11 +222,11 @@ export const FleetDashboardView: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Warranty expiring within 30 days (FR-WEB-033)
           </Typography>
-          {data.warranty_expiring_30d.length === 0 ? (
+          {warrantyExpiring.length === 0 ? (
             <Typography color="text.secondary">No devices with warranty expiring soon.</Typography>
           ) : (
             <List dense>
-              {data.warranty_expiring_30d.map(d => (
+              {warrantyExpiring.map(d => (
                 <ListItemButton key={d.id} onClick={() => navigate(`/devices/${encodeURIComponent(d.id)}`)}>
                   <ListItemText primary={d.name} secondary={d.id} slotProps={{ secondary: { sx: { fontFamily: monoFont } } }} />
                   <Chip size="small" label={new Date(d.warranty_end_date).toLocaleDateString()} sx={{ color: theme.palette.m3.tertiary }} variant="outlined" />

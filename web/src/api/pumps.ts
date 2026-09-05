@@ -69,12 +69,13 @@ export interface DispatchResult {
   remainingSec?: number;
   message?: string;
   error?: string;
+  detail?: string;
 }
 
 export async function dispatchCommand(pumpId: string, action: 'START' | 'STOP'): Promise<DispatchResult> {
   const res = await apiFetch(`/pumps/${encodeURIComponent(pumpId)}/command`, {
     method: 'POST',
-    body: JSON.stringify({ action })
+    body: JSON.stringify({ command: action, action })
   });
   const body = await res.json();
   return { ok: res.ok, status: res.status, ...body };

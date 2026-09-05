@@ -1,6 +1,17 @@
 /**
  * @file    app_config.h
  * @brief   Central configuration for A7672S MQTT Bridge
+ *
+ * ---------------------------------------------------------------
+ *  EDIT the AWS IoT Core block below once the account is provisioned.
+ * ---------------------------------------------------------------
+ * AWS IoT Core with mutual TLS is the only supported transport
+ * (docs/Firmware_and_Bridge_Development_Plan.md FR-CON-020). The previous
+ * plain-TCP "generic broker" mode (public HiveMQ, no TLS, no credentials)
+ * has been deleted from this tree entirely, not merely disabled — a mode
+ * that cannot be selected cannot be selected by accident. Bench testing
+ * against a local broker must use a separate short-lived branch, never a
+ * build flag on main.
  */
 #ifndef APP_CONFIG_H
 #define APP_CONFIG_H
@@ -8,38 +19,23 @@
 #include "simcom_api.h"
 
 /* ============================================================================
- * BROKER MODE — uncomment exactly ONE
+ * AWS IoT Core Settings — fill in once the account/certs are provisioned.
+ * MQTT_BROKER_HOST: "tcp://<your-ats-endpoint>.iot.<region>.amazonaws.com:8883"
+ *   (get the endpoint via `aws iot describe-endpoint --endpoint-type iot:Data-ATS`)
+ * Client ID: NOT hardcoded here — the bridge uses the MCU-asserted dev_id at
+ *   runtime (g_device_id in mqtt_bridge.c). See docs/Firmware_and_Bridge_
+ *   Development_Plan.md decision G-1 (identity: IMEI vs MCU UID) — still
+ *   open. Certificates are issued against whichever value G-1 resolves to,
+ *   so that decision must be made before certs are requested, not after.
  * ========================================================================= */
-/* #define MQTT_MODE_AWS_IOT */
-#define MQTT_MODE_GENERIC
-
-/* ============================================================================
- * AWS IoT Core Settings
- * ========================================================================= */
-#ifdef MQTT_MODE_AWS_IOT
-#define MQTT_BROKER_HOST        "tcp://your-endpoint.iot.ap-south-1.amazonaws.com:8883"
-#define MQTT_CLIENT_ID          "SwathiSwitchgear_001"
-#define MQTT_SERVER_TYPE        1    /* 1 = SSL/TLS */
+#define MQTT_BROKER_HOST        "tcp://REPLACE-ME.iot.ap-south-1.amazonaws.com:8883"
+#define MQTT_SERVER_TYPE        1    /* 1 = SSL/TLS (mutual auth via SetupSSL()) */
 #define MQTT_SSL_CTX_INDEX      0
 #define AWS_CA_CERT_PATH        "C:/cacert.pem"
 #define AWS_CLIENT_CERT_PATH    "C:/clientcert.pem"
 #define AWS_CLIENT_KEY_PATH     "C:/clientkey.pem"
 #define MQTT_USERNAME           ""
 #define MQTT_PASSWORD           ""
-#endif
-
-/* ============================================================================
- * Generic MQTT Broker Settings
- * ========================================================================= */
-#ifdef MQTT_MODE_GENERIC
-#define MQTT_BROKER_DOMAIN      "mqtt-dashboard.com"
-#define MQTT_BROKER_PORT        1883
-#define MQTT_BROKER_FALLBACK_IP "3.120.11.244"
-#define MQTT_CLIENT_ID          "SwathiSwitchgear_001"
-#define MQTT_SERVER_TYPE        0    /* 0 = plain TCP */
-#define MQTT_USERNAME           ""
-#define MQTT_PASSWORD           ""
-#endif
 
 /* Topics */
 #define TOPIC_TELEMETRY_FMT     "devices/%s/telemetry"
@@ -57,7 +53,7 @@
 
 /* App Info */
 #define APP_NAME_STR            "Swathi_Mqtt_Bridge"
-#define APP_VERSION_STR         "V1.0.1"
+#define APP_VERSION_STR         "V1.1.0"
 
 /* Buffers */
 #define UART_RX_BUF_SIZE        512

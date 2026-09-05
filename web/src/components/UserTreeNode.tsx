@@ -26,13 +26,11 @@ export const UserTreeNodeView: React.FC<Props> = ({ node, depth, onAddUnder, onA
   const depthTag = node.role === 'dealer' && node.dealer_depth !== undefined ? ` (dealer depth ${node.dealer_depth})` : '';
   const canAdd = CAN_ADD_UNDER.includes(node.role);
   const isSuperadmin = user?.role === 'superadmin';
-  // Staff logins (P-1) are an org-owner concept — an end customer has no
-  // subordinates or colleagues to add. Gated on the ROW's role, not the
-  // viewer's: a superadmin (or any privileged viewer) browsing the tree
-  // must not see "Add Staff" on a customer leaf either, not just when a
-  // customer views their own row.
   const canAddStaff = node.role !== 'customer' && (isSuperadmin || user?.id === node.id);
   const suspended = node.account_status === 'SUSPENDED';
+
+  const members = node.members || [];
+  const children = node.children || [];
 
   return (
     <Box sx={{ ml: depth * 3 }}>
@@ -60,14 +58,14 @@ export const UserTreeNodeView: React.FC<Props> = ({ node, depth, onAddUnder, onA
               {depthTag}
             </Typography>
             {suspended && <Chip size="small" label="Suspended" color="warning" variant="outlined" />}
-            {node.members.length > 1 && <Chip size="small" label={`${node.members.length} logins`} variant="outlined" />}
+            {members.length > 1 && <Chip size="small" label={`${members.length} logins`} variant="outlined" />}
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontFamily: monoFont }}>
-            {node.phone_number}
+            {node.phone_number || ''}
           </Typography>
-          {node.members.length > 1 && (
+          {members.length > 1 && (
             <Box sx={{ mt: 0.5, display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-              {node.members
+              {members
                 .filter(m => m.id !== node.id)
                 .map(m => (
                   <Typography key={m.id} variant="caption" color="text.secondary" sx={{ fontFamily: monoFont }}>
@@ -117,7 +115,7 @@ export const UserTreeNodeView: React.FC<Props> = ({ node, depth, onAddUnder, onA
           )}
         </Box>
       </Card>
-      {node.children?.map(child => (
+      {children.map(child => (
         <UserTreeNodeView
           key={child.id}
           node={child}

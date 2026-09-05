@@ -25,18 +25,23 @@ export const FaultLogsView: React.FC = () => {
   const [faults, setFaults] = useState<FaultLogEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const safePumps = Array.isArray(pumps) ? pumps : [];
+  const safeFaults = Array.isArray(faults) ? faults : [];
+
   useEffect(() => {
-    if (!selectedPumpId && pumps.length > 0) setSelectedPumpId(pumps[0].id);
-  }, [pumps, selectedPumpId]);
+    if (!selectedPumpId && safePumps.length > 0) setSelectedPumpId(safePumps[0].id);
+  }, [safePumps, selectedPumpId]);
 
   const load = useCallback(async (pumpId: string) => {
     if (!pumpId) return;
     setLoading(true);
     try {
       const data = await fetchFaults(pumpId);
-      setFaults(data.faults);
+      const list = Array.isArray(data) ? data : (data?.faults || (data as any)?.data || []);
+      setFaults(Array.isArray(list) ? list : []);
     } catch {
       showToast('Could not load fault log', true);
+      setFaults([]);
     } finally {
       setLoading(false);
     }
@@ -66,7 +71,7 @@ export const FaultLogsView: React.FC = () => {
         <FormControl size="small" sx={{ minWidth: 240 }}>
           <InputLabel id="pump-select-label">Pump</InputLabel>
           <Select labelId="pump-select-label" label="Pump" value={selectedPumpId} onChange={e => setSelectedPumpId(e.target.value)}>
-            {pumps.map(p => (
+            {safePumps.map(p => (
               <MenuItem key={p.id} value={p.id}>
                 {p.name}
               </MenuItem>
@@ -80,13 +85,13 @@ export const FaultLogsView: React.FC = () => {
           <Box sx={{ display: 'grid', placeItems: 'center', height: '100%' }}>
             <CircularProgress />
           </Box>
-        ) : faults.length === 0 ? (
+        ) : safeFaults.length === 0 ? (
           <Alert severity="success" variant="outlined">
             No fault events recorded for this pump.
           </Alert>
         ) : (
           <Stack spacing={1.5}>
-            {faults.map(f => (
+            {safeFaults.map(f => (
               <Alert
                 key={f.id}
                 severity={SEVERITY_MAP[f.severity || ''] || 'info'}

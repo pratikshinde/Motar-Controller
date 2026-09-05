@@ -4,7 +4,7 @@
 // exactly, only the transport (fetch → typed client) changed.
 import type { AuthResult } from '../types';
 
-export const API_BASE = 'http://localhost:5000/api';
+export const API_BASE = '/api';
 
 const TOKEN_KEY = 'agripump_token';
 const REFRESH_KEY = 'agripump_refresh';

@@ -15,7 +15,8 @@ interface WebSocketContextValue {
 
 const WebSocketCtx = createContext<WebSocketContextValue | null>(null);
 
-const WS_URL = 'ws://localhost:5000/ws';
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_URL = `${protocol}//${window.location.host}/ws`;
 const MAX_BACKOFF_MS = 15000;
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

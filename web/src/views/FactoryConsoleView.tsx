@@ -28,9 +28,11 @@ export const FactoryConsoleView: React.FC = () => {
   const loadBatches = useCallback(async () => {
     try {
       const data = await fetchBatches();
-      setBatches(data.batches);
+      const list = Array.isArray(data) ? data : (data?.batches || (data as any)?.data || []);
+      setBatches(Array.isArray(list) ? list : []);
     } catch (err: any) {
       showToast(err.message || 'Could not load batches', true);
+      setBatches([]);
     } finally {
       setLoading(false);
     }
@@ -41,9 +43,10 @@ export const FactoryConsoleView: React.FC = () => {
     setDetailLoading(true);
     try {
       const data = await fetchBatchDetail(id);
-      setDetail(data);
+      setDetail(data ? { batch: data.batch, imeis: Array.isArray(data.imeis) ? data.imeis : [] } : null);
     } catch (err: any) {
       showToast(err.message || 'Could not load batch detail', true);
+      setDetail(null);
     } finally {
       setDetailLoading(false);
     }
@@ -58,6 +61,9 @@ export const FactoryConsoleView: React.FC = () => {
     if (selectedId) loadDetail(selectedId);
     else setDetail(null);
   }, [selectedId, loadDetail]);
+
+  const safeBatches = Array.isArray(batches) ? batches : [];
+  const safeImeis = Array.isArray(detail?.imeis) ? detail.imeis : [];
 
   async function handleRevoke() {
     if (!detail) return;
@@ -105,13 +111,13 @@ export const FactoryConsoleView: React.FC = () => {
             <Box sx={{ display: 'grid', placeItems: 'center', p: 4 }}>
               <CircularProgress size={28} />
             </Box>
-          ) : batches.length === 0 ? (
+          ) : safeBatches.length === 0 ? (
             <Typography color="text.secondary" sx={{ p: 2 }}>
               No manufacturing batches yet.
             </Typography>
           ) : (
             <List dense disablePadding>
-              {batches.map(b => (
+              {safeBatches.map(b => (
                 <ListItemButton key={b.id} selected={b.id === selectedId} onClick={() => setSelectedId(b.id)} sx={{ alignItems: 'flex-start', py: 1.25 }}>
                   <ListItemText
                     primary={
@@ -164,8 +170,8 @@ export const FactoryConsoleView: React.FC = () => {
                       {detail.batch.manufacture_date ? ` · manufactured ${new Date(detail.batch.manufacture_date).toLocaleDateString()}` : ''}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {detail.imeis.length} imported / {detail.batch.quantity} declared ·{' '}
-                      {detail.imeis.filter(i => i.claimed).length} claimed
+                      {safeImeis.length} imported / {detail.batch.quantity} declared ·{' '}
+                      {safeImeis.filter(i => i.claimed).length} claimed
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>

@@ -32,10 +32,12 @@ export const HierarchyView: React.FC = () => {
   const load = useCallback(async () => {
     try {
       const data = await fetchUserTree();
-      setTree(data.tree);
+      const treeList = Array.isArray(data) ? data : ((data as any)?.tree || (data as any)?.data || []);
+      setTree(Array.isArray(treeList) ? treeList : []);
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Could not load hierarchy');
+      setTree([]);
     } finally {
       setLoading(false);
     }

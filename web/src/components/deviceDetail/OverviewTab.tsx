@@ -73,16 +73,20 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
     const action = checked ? 'START' : 'STOP';
     try {
       const result = await dispatchCommand(pump.id, action);
-      if (result.status === 202) {
-        showToast(`${action} command sent — pending device acknowledgement`);
+      if (result.status === 200 || result.status === 202) {
+        showToast(`${action} command dispatched — pending device acknowledgement`);
         start(pump.id, result.cooldownSec || 45);
+      } else if (result.status === 429) {
+        setOptimisticOn(!checked);
+        showToast(result.detail || result.error || result.message || 'Command cooldown active (45s protection window)', true);
+        start(pump.id, 45);
       } else if (result.status === 409) {
         setOptimisticOn(!checked);
         showToast(result.message || result.error || 'Command rejected', true);
         start(pump.id, result.remainingSec || 0);
       } else {
         setOptimisticOn(!checked);
-        showToast(`Command failed: ${result.error}`, true);
+        showToast(result.detail || result.error || `Command failed (HTTP ${result.status})`, true);
       }
     } catch {
       setOptimisticOn(!checked);

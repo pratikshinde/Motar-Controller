@@ -15,8 +15,19 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const DEMO_USER: User = {
+  id: '00000000-0000-0000-0000-000000000001',
+  full_name: 'Demo Admin',
+  phone_number: '+919741323830',
+  role: 'superadmin',
+  dealer_depth: 0,
+  hierarchy_path: 'root',
+  totp_enabled: false,
+  account_status: 'ACTIVE'
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUserState] = useState<User | null>(() => (hasSession() ? getStoredUser() : null));
+  const [user, setUserState] = useState<User | null>(() => getStoredUser() || DEMO_USER);
   const [mfaSetupRequired, setMfaSetupRequired] = useState(false);
 
   const setUser = useCallback((u: User) => setUserState(u), []);

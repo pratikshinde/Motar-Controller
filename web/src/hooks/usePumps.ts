@@ -24,8 +24,9 @@ export function usePumps(search = '') {
   const reload = useCallback(async () => {
     try {
       const data = await fetchPumps(searchRef.current);
-      setPumps(data.pumps);
-      setStats(data.meta.stats);
+      const list = data?.pumps || (data as any)?.data || [];
+      setPumps(Array.isArray(list) ? list : []);
+      setStats(data?.meta?.stats || null);
       setError(null);
       setLastUpdated(new Date());
     } catch (err: any) {

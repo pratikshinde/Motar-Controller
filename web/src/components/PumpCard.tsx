@@ -52,16 +52,20 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
     const action = checked ? 'START' : 'STOP';
     try {
       const result = await dispatchCommand(pump.id, action);
-      if (result.status === 202) {
-        showToast(`${action} command sent — pending device acknowledgement (cid ${result.command?.cid.slice(0, 8)}…)`);
+      if (result.status === 200 || result.status === 202) {
+        showToast(`${action} command dispatched — pending device acknowledgement`);
         onCooldownStart(pump.id, result.cooldownSec || 45);
+      } else if (result.status === 429) {
+        setOptimisticOn(!checked);
+        showToast(result.detail || result.error || result.message || 'Command cooldown active (45s protection window)', true);
+        onCooldownStart(pump.id, 45);
       } else if (result.status === 409) {
         setOptimisticOn(!checked);
         showToast(result.message || result.error || 'Command rejected', true);
         onCooldownStart(pump.id, result.remainingSec || 0);
       } else {
         setOptimisticOn(!checked);
-        showToast(`Command failed: ${result.error}`, true);
+        showToast(result.detail || result.error || `Command failed (HTTP ${result.status})`, true);
       }
     } catch {
       setOptimisticOn(!checked);

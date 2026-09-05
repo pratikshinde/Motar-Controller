@@ -2,36 +2,77 @@
 node_modules/
 backend/node_modules/
 web/node_modules/
+mobile/node_modules/
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+ENV/
+env/
+
+# React Native / Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.apk
+*.aab
+*.ipa
 
 # Android build cache
 android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+.gradle/
 
-# Environment files
+# Environment & Secret files
 .env
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 backend/.env
-
-# Locally-generated JWT signing secret (see backend/services/jwtAuth.js) —
-# generated on first run, never committed, unique per environment.
+web/.env
+mobile/.env
 .jwt-secret
 backend/.jwt-secret
 
 # Build outputs & logs
 dist/
+web/dist/
 build/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+
+# C/C++ & Embedded Firmware Build Cache
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.map
 
 # IDE & OS files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 .vscode/
 .idea/
 .claude/
+*.swp
+*.swo
 
-# Generated knowledge-graph analysis output (graphify), not source
+# Generated analysis output
 graphify-out/

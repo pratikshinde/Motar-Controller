@@ -117,7 +117,13 @@ if(NOT DEFINED MODULE_LIST)
         add_subdirectory(./application/topfly topfly)
     endif(PROJECT_TOPFLY)
 
-    INCLUDE_DIRECTORIES(./application/swathi_mqtt/inc)
+    # Swathi Switchgear MQTT bridge (this project's actual application —
+    # the ysznbg/topband/lytbox/topfly blocks above are unused SIMCom
+    # reference templates with no source present in this checkout). This
+    # wiring — add_subdirectory here plus the target_link_libraries call
+    # below — was missing from the committed CMakeLists.txt; the
+    # application/swathi_mqtt/ source existed but was never actually
+    # reachable from the build.
     add_subdirectory(./application/swathi_mqtt swathi_mqtt)
 
     # 外部库列表
