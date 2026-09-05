@@ -20,6 +20,9 @@ def init_db():
         db.execute(text("CREATE SCHEMA IF NOT EXISTS agripump;"))
         db.commit()
 
+        # Create all tables defined in models
+        Base.metadata.create_all(bind=engine)
+
         # Run TimescaleDB setup
         is_timescale = setup_timescaledb(db)
         if is_timescale:
