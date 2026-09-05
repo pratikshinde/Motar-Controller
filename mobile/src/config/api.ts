@@ -2,10 +2,10 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import { storage } from '../services/storage';
 
-const SERVER_IP = '192.168.68.101';
+const SERVER_IP = '13.207.68.220';
 const HOST = Platform.OS === 'web' ? 'localhost' : SERVER_IP;
-export const API_BASE_URL = `http://${HOST}:5000/api/v1`;
-export const WS_BASE_URL = `ws://${HOST}:5000/ws`;
+export const API_BASE_URL = Platform.OS === 'web' ? 'http://localhost:5000/api' : `http://${SERVER_IP}/api`;
+export const WS_BASE_URL = Platform.OS === 'web' ? 'ws://localhost:5000/ws' : `ws://${SERVER_IP}/ws`;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
