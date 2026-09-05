@@ -46,8 +46,6 @@ mobile/.env
 backend/.jwt-secret
 
 # Build outputs & logs
-dist/
-web/dist/
 build/
 *.log
 npm-debug.log*
