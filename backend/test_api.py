@@ -48,12 +48,14 @@ def run_tests():
     from app.models import Pump
     from app.services.jwt_auth import hash_secret
     db = SessionLocal()
+    db.execute(text("SET LOCAL app.bypass_rls = 'on';"))
     try:
         db.execute(text("ALTER TABLE agripump.commands ALTER COLUMN action TYPE VARCHAR(30);"))
         db.execute(text("ALTER TABLE agripump.commands DROP CONSTRAINT IF EXISTS commands_action_check;"))
         db.commit()
     except Exception as e:
         db.rollback()
+    db.execute(text("SET LOCAL app.bypass_rls = 'on';"))
     p = db.query(Pump).filter(Pump.id == "PUMP-4G-3P-8821").first()
     test_key = "test_device_key_123"
     p.device_key_hash = hash_secret(test_key)
@@ -177,9 +179,22 @@ def run_tests():
     assert r.status_code == 201, f"Failed create pump: {r.text}"
     print(f"✅ 14a. POST /api/pumps -> Created {test_pump_id}")
 
-    r = client.delete(f"/api/pumps/{test_pump_id}", headers=headers)
-    assert r.status_code == 200, f"Failed delete pump: {r.text}"
-    print(f"✅ 14b. DELETE /api/pumps/{test_pump_id} -> Deleted successfully")
+    # Non-superadmin delete must fail with 403 Forbidden
+    r_forbidden = client.delete(f"/api/pumps/{test_pump_id}", headers=headers)
+    assert r_forbidden.status_code == 403, f"Non-superadmin delete must be 403, got {r_forbidden.status_code}"
+    print(f"✅ 14b. DELETE /api/pumps/{test_pump_id} -> Blocked for customer with HTTP 403")
+
+    # Superadmin delete succeeds
+    from app.services.jwt_auth import sign_token
+    db = SessionLocal()
+    sa = db.query(User).filter(User.role == "superadmin").first()
+    admin_id = str(sa.id) if sa else str(uuid.uuid4())
+    db.close()
+    admin_token = sign_token({"sub": admin_id, "role": "superadmin", "hierarchy_path": "/SA"})
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+    r_admin = client.delete(f"/api/pumps/{test_pump_id}", headers=admin_headers)
+    assert r_admin.status_code == 200, f"Failed superadmin delete pump: {r_admin.text}"
+    print(f"✅ 14c. DELETE /api/pumps/{test_pump_id} -> Deleted successfully with superadmin role")
 
     print("\n🎉 ALL 14 TEST SUITES PASSED! Fast, reliable, and contract-compliant.")
 

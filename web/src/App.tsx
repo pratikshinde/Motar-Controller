@@ -23,11 +23,21 @@ import { InviteRedeemView } from './views/InviteRedeemView';
 import { ConfigTemplatesView } from './views/ConfigTemplatesView';
 import { ServiceReportsView } from './views/ServiceReportsView';
 import { AlertsView } from './views/AlertsView';
+import { LandingPageView } from './views/landing/LandingPageView';
+import { LoginPage } from './views/auth/LoginPage';
+import { VerifyOtpPage } from './views/auth/VerifyOtpPage';
+import { SuperAdminMfaPage } from './views/auth/SuperAdminMfaPage';
+import { RegisterRolePage } from './views/auth/RegisterRolePage';
+import { RegisterPhonePage } from './views/auth/RegisterPhonePage';
+import { RegisterVerifyOtpPage } from './views/auth/RegisterVerifyOtpPage';
+import { RegisterMfaSetupPage } from './views/auth/RegisterMfaSetupPage';
+import { RegisterSuccessPage } from './views/auth/RegisterSuccessPage';
 
 const AuthenticatedApp: React.FC = () => (
   <Routes>
     <Route element={<AppShell />}>
-      <Route path="/" element={<TelemetryView />} />
+      <Route path="/dashboard" element={<TelemetryView />} />
+      <Route path="/telemetry" element={<TelemetryView />} />
       <Route path="/fleet" element={<FleetDashboardView />} />
       <Route path="/devices" element={<DevicesView />} />
       <Route path="/devices/:id" element={<DeviceDetailView />} />
@@ -41,7 +51,7 @@ const AuthenticatedApp: React.FC = () => (
       <Route path="/factory" element={<FactoryConsoleView />} />
       <Route path="/health" element={<SystemHealthView />} />
       <Route path="/support" element={<SupportConsoleView />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Route>
   </Routes>
 );
@@ -50,11 +60,30 @@ const AuthenticatedApp: React.FC = () => (
 // that's the whole point of a self-registration link — so it's matched
 // before the auth gate rather than nested inside AuthenticatedApp.
 const Gate: React.FC = () => {
-  // Demo Mode: Skip login view and always render the full portal dashboard
+  const { isAuthenticated } = useAuth();
   return (
     <Routes>
+      <Route path="/" element={<LandingPageView />} />
+
+      {/* Authentication Flow: Mobile + WhatsApp OTP */}
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/auth/verify-otp" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <VerifyOtpPage />} />
+      <Route path="/auth/mfa" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SuperAdminMfaPage />} />
+
+      {/* Account Creation Flow: Role -> Phone -> WhatsApp OTP -> MFA (SuperAdmin only) -> Success */}
+      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterRolePage />} />
+      <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterRolePage />} />
+      <Route path="/auth/register/phone" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPhonePage />} />
+      <Route path="/auth/register/verify" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterVerifyOtpPage />} />
+      <Route path="/auth/register/mfa" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterMfaSetupPage />} />
+      <Route path="/auth/register/success" element={<RegisterSuccessPage />} />
+
+      {/* Invite Redemption Token */}
       <Route path="/invite/:token" element={<InviteRedeemView />} />
-      <Route path="/*" element={<AuthenticatedApp />} />
+
+      {/* Protected Dashboard */}
+      <Route path="/*" element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/auth/login" replace />} />
     </Routes>
   );
 };

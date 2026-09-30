@@ -35,7 +35,7 @@ export async function resolveAlert(id: string, resolutionNote?: string): Promise
 }
 
 export async function fetchAlertSubscriptions(): Promise<{ subscriptions: AlertSubscription[] }> {
-  return apiJson('/alert-subscriptions');
+  return apiJson('/alerts/subscriptions');
 }
 
 export async function createAlertSubscription(input: {
@@ -44,9 +44,9 @@ export async function createAlertSubscription(input: {
   min_severity?: string;
   muted?: boolean;
 }): Promise<{ message: string; subscription: AlertSubscription }> {
-  return apiJson('/alert-subscriptions', { method: 'POST', body: JSON.stringify(input) });
+  return apiJson('/alerts/subscriptions', { method: 'POST', body: JSON.stringify(input) });
 }
 
 export async function deleteAlertSubscription(id: string): Promise<{ message: string }> {
-  return apiJson(`/alert-subscriptions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  return apiJson(`/alerts/subscriptions/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }

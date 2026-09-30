@@ -1,0 +1,8 @@
+node_modules
+.expo
+dist
+coverage
+package-lock.json
+openapi
+src/api/generated
+src/shared/i18n/locales

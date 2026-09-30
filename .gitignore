@@ -74,3 +74,7 @@ Desktop.ini
 
 # Generated analysis output
 graphify-out/
+
+# local demo logins (never commit)
+.demo_credentials.local.txt
+backend/.demo_credentials.local.txt

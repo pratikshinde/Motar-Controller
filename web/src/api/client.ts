@@ -2,7 +2,7 @@
 // in the 17 Aug security pass — see web/ARCHITECTURE_DECISION.md). This is
 // the reference implementation of the API contract; behaviour is preserved
 // exactly, only the transport (fetch → typed client) changed.
-import type { AuthResult } from '../types';
+import type { AuthResult, User } from '../types';
 
 export const API_BASE = '/api';
 
@@ -12,6 +12,35 @@ const USER_KEY = 'agripump_user';
 
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
 let refreshTokenValue = localStorage.getItem(REFRESH_KEY) || '';
+
+/** A readable message from any error body the API produces: {detail}, {error:{message_key}}, {error}, {message}. */
+export function messageFrom(body: any, fallback = ''): string {
+  if (!body) return fallback;
+  if (typeof body.detail === 'string') return body.detail;
+  if (Array.isArray(body.detail)) return body.detail.map((d: any) => d?.msg).filter(Boolean).join('; ') || fallback;
+  if (typeof body.error === 'string') return body.error;
+  return body.error?.message || body.message || fallback;
+}
+
+/** The API's user record -> the shape the portal uses (`mfa_enabled` is `totp_enabled` here, `status` is `account_status`). */
+export function normalizeUser(u: any): User {
+  return {
+    ...u,
+    phone_number: u.phone_number ?? u.phone ?? '',
+    totp_enabled: u.totp_enabled ?? u.mfa_enabled ?? false,
+    account_status: u.account_status ?? u.status
+  } as User;
+}
+
+/** The API's login / refresh / MFA-verify body -> AuthResult (`access_token` is `token`, `refresh_token` is `refreshToken`). */
+export function toAuthResult(body: any): AuthResult {
+  return {
+    token: body.access_token ?? body.token,
+    refreshToken: body.refresh_token ?? body.refreshToken,
+    mfa_setup_required: Boolean(body.mfa_setup_required),
+    user: body.user ? normalizeUser(body.user) : undefined
+  } as AuthResult;
+}
 
 export function getStoredUser() {
   const raw = localStorage.getItem(USER_KEY);
@@ -64,7 +93,7 @@ class ApiError extends Error {
   status: number;
   body: any;
   constructor(status: number, body: any) {
-    super(body?.error || body?.message || `Request failed (${status})`);
+    super(messageFrom(body, `Request failed (${status})`));
     this.status = status;
     this.body = body;
   }
@@ -76,32 +105,43 @@ class ApiError extends Error {
  * 401/403 this tries POST /api/auth/refresh once and retries the original
  * request before giving up and clearing the session.
  */
+// Requests that are themselves part of signing in: a 401 there means "wrong credentials", not "session expired".
+const AUTH_ENTRY = ['/auth/login', '/auth/verify-otp', '/auth/send-otp', '/auth/refresh', '/auth/mfa/verify'];
+
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
   const mergedHeaders = { ...authHeaders(), ...(options.headers as Record<string, string> | undefined) };
   let response = await fetch(url, { ...options, headers: mergedHeaders });
 
-  if ((response.status === 401 || response.status === 403) && refreshTokenValue) {
-    if (!refreshInFlight) {
-      refreshInFlight = fetch(`${API_BASE}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: refreshTokenValue })
-      })
-        .then(async r => (r.ok ? ((await r.json()) as AuthResult) : null))
-        .finally(() => {
-          refreshInFlight = null;
-        });
+  // A privileged account that has not set up TOTP yet may only do that: tell the shell to show the setup step.
+  if (response.status === 403 && authToken) {
+    const body = await response.clone().json().catch(() => null);
+    if (body?.error?.code === 'MFA_SETUP_REQUIRED') window.dispatchEvent(new CustomEvent('agripump:mfa-setup-required'));
+  }
+
+  if (response.status === 401 && authToken && !AUTH_ENTRY.some(p => path.startsWith(p))) {
+    if (refreshTokenValue) {
+      if (!refreshInFlight) {
+        refreshInFlight = fetch(`${API_BASE}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshTokenValue })
+        })
+          .then(async r => (r.ok ? toAuthResult(await r.json()) : null))
+          .finally(() => {
+            refreshInFlight = null;
+          });
+      }
+      const refreshed = await refreshInFlight;
+      if (refreshed && refreshed.token) {
+        persistTokens(refreshed);
+        const retryHeaders = { ...authHeaders(), ...(options.headers as Record<string, string> | undefined) };
+        return fetch(url, { ...options, headers: retryHeaders });
+      }
     }
-    const refreshed = await refreshInFlight;
-    if (refreshed && refreshed.token) {
-      persistTokens(refreshed);
-      const retryHeaders = { ...authHeaders(), ...(options.headers as Record<string, string> | undefined) };
-      response = await fetch(url, { ...options, headers: retryHeaders });
-    } else {
-      clearSession();
-      window.dispatchEvent(new CustomEvent('agripump:session-expired'));
-    }
+    // No way to renew the session: end it, so the portal shows the sign-in screen instead of an empty dashboard.
+    clearSession();
+    window.dispatchEvent(new CustomEvent('agripump:session-expired'));
   }
   return response;
 }

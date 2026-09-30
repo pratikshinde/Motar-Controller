@@ -1,0 +1,489 @@
+{
+  "brand": {
+    "line1": "অজন্তা পাম্প",
+    "line2": "কন্ট্রোলার"
+  },
+  "common": {
+    "retry": "আবার চেষ্টা করুন",
+    "refresh": "রিফ্রেশ করুন",
+    "back": "ফিরে যান",
+    "cancel": "বাতিল করুন",
+    "continue": "এগিয়ে যান",
+    "checkAgain": "আবার দেখুন",
+    "serverUnreachableTitle": "সার্ভারের সঙ্গে যোগাযোগ হচ্ছে না",
+    "save": "সেভ করুন",
+    "loading": "লোড হচ্ছে…",
+    "more": "বাড়ান",
+    "less": "কমান"
+  },
+  "splash": {
+    "tagline": "আপনার পাম্প যেকোনো জায়গা থেকে চালান",
+    "starting": "শুরু হচ্ছে…",
+    "footer": "স্মার্ট 3-ফেজ পাম্প সুরক্ষা"
+  },
+  "language": {
+    "title": "আপনার ভাষা বেছে নিন",
+    "continue": "এগিয়ে যান",
+    "listenAll": "ভাষাগুলো শুনুন",
+    "stopListening": "থামুন",
+    "back": "সেটিংসে ফিরে যান"
+  },
+  "login": {
+    "tabLogin": "লগইন",
+    "tabRegister": "নতুন অ্যাকাউন্ট",
+    "welcomeBack": "আবার স্বাগতম",
+    "createTitle": "আপনার অ্যাকাউন্ট তৈরি করুন",
+    "nameLabel": "আপনার নাম",
+    "namePlaceholder": "পুরো নাম",
+    "mobileLabel": "মোবাইল নম্বর",
+    "mobilePlaceholder": "10 অঙ্কের মোবাইল নম্বর",
+    "passwordLabel": "পাসওয়ার্ড",
+    "passwordPlaceholder": "আপনার পাসওয়ার্ড",
+    "choosePassword": "একটি পাসওয়ার্ড বেছে নিন",
+    "choosePasswordPlaceholder": "কমপক্ষে 6টি অক্ষর",
+    "loginButton": "লগইন করুন",
+    "createButton": "অ্যাকাউন্ট তৈরি করুন",
+    "newHere": "নতুন এসেছেন?",
+    "createLink": "অ্যাকাউন্ট তৈরি করুন",
+    "haveAccount": "আগে থেকেই অ্যাকাউন্ট আছে?",
+    "loginLink": "লগইন করুন",
+    "showPassword": "পাসওয়ার্ড দেখান",
+    "hidePassword": "পাসওয়ার্ড লুকান",
+    "validationTitle": "অনুগ্রহ করে দেখুন",
+    "needName": "অনুগ্রহ করে আপনার পুরো নাম লিখুন",
+    "needPhone": "অনুগ্রহ করে আপনার মোবাইল নম্বর লিখুন",
+    "needPassword": "অনুগ্রহ করে আপনার পাসওয়ার্ড লিখুন",
+    "passwordShort": "পাসওয়ার্ড কমপক্ষে 6টি অক্ষরের হতে হবে",
+    "loginFailedTitle": "লগইন হয়নি",
+    "notFoundTitle": "অ্যাকাউন্ট পাওয়া যায়নি",
+    "notFoundMessage": "এই মোবাইল নম্বরটি এখনও নিবন্ধিত নয়। আপনি কি নতুন অ্যাকাউন্ট তৈরি করতে চান?",
+    "registerFailedTitle": "অ্যাকাউন্ট তৈরি করা যায়নি",
+    "createdTitle": "অ্যাকাউন্ট তৈরি হয়েছে",
+    "createdMessage": "স্বাগতম {{name}}। আপনার অ্যাকাউন্ট তৈরি। এগোতে লগইন করুন।",
+    "createdStatus": "অ্যাকাউন্ট তৈরি হয়েছে। আপনার মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে লগইন করুন।",
+    "welcomeBackDesc": "Login to manage your pump remotely",
+    "forgotPassword": "Forgot Password?",
+    "createDesc": "Register using your WhatsApp number",
+    "sendOtpButton": "Send OTP on WhatsApp"
+  },
+  "nav": {
+    "pumps": "আমার পাম্প",
+    "alerts": "সতর্কতা",
+    "settings": "সেটিংস"
+  },
+  "pumps": {
+    "title": "আমার পাম্প",
+    "count_one": "{{count}}টি পাম্প",
+    "count_other": "{{count}}টি পাম্প",
+    "loading": "আপনার পাম্প লোড হচ্ছে…",
+    "emptyTitle": "এখনও কোনো পাম্প নেই",
+    "emptyMessage": "আপনার মোবাইল নম্বরে এখনও কোনো পাম্প যুক্ত নেই। অনুগ্রহ করে আপনার ডিলারকে পাম্প যোগ করতে বলুন।",
+    "hp": "{{hp}} এইচপি",
+    "openPump": "{{name}}, {{status}}। পাম্প খুলুন",
+    "status": {
+      "running": "চালু",
+      "stopped": "বন্ধ",
+      "fault": "ত্রুটি",
+      "offline": "অফলাইন",
+      "online": "অনলাইন",
+      "unknown": "অজানা"
+    },
+    "ungrouped": "অন্য পাম্প",
+    "lastSeen": "শেষ খবর {{ago}}",
+    "noData": "এখনও কোনো তথ্য নেই",
+    "manage": "পাম্প সামলান",
+    "ranToday": "আজ {{time}} চলেছে"
+  },
+  "alerts": {
+    "title": "সতর্কতা",
+    "loading": "সতর্কতা দেখা হচ্ছে…",
+    "emptyTitle": "সব ঠিক আছে",
+    "emptyMessage": "এখন আপনার পাম্পে কোনো সমস্যা নেই।",
+    "serious": "গুরুতর",
+    "warning": "সতর্কতা",
+    "info": "তথ্য",
+    "needsAttention": "মনোযোগ দিন",
+    "resolved": "ঠিক হয়েছে",
+    "defaultTitle": "পাম্প সতর্কতা",
+    "tabActive": "চালু",
+    "tabFixed": "ঠিক হয়েছে",
+    "ack": "আমি দেখেছি",
+    "acked": "দেখা হয়েছে",
+    "resolve": "ঠিক হয়েছে বলে চিহ্নিত করুন",
+    "resolveTitle": "এই সতর্কতা কি ঠিক হয়েছে বলে চিহ্নিত করবেন?",
+    "resolveBody": "পাম্পের সমস্যা মিটে যাওয়ার পরেই এটি করুন।",
+    "resolveYes": "হ্যাঁ, ঠিক হয়েছে",
+    "openPump": "পাম্প খুলুন",
+    "occurrences": "{{count}} বার হয়েছে",
+    "last": "শেষবার: {{when}}",
+    "emptyFixed": "সম্প্রতি কিছু ঠিক হয়নি"
+  },
+  "settings": {
+    "title": "সেটিংস",
+    "language": "ভাষা",
+    "languageHint": "অ্যাপ, সতর্কতা ও ভয়েস উত্তরের ভাষা",
+    "account": "অ্যাকাউন্ট",
+    "logout": "লগআউট",
+    "logoutTitle": "লগআউট",
+    "logoutMessage": "আপনি কি লগআউট করতে চান?",
+    "version": "সংস্করণ {{version}}",
+    "profile": "প্রোফাইল",
+    "name": "আপনার নাম",
+    "nameSaved": "নাম সেভ হয়েছে",
+    "mobile": "মোবাইল নম্বর",
+    "managePumps": "পাম্প সামলান",
+    "managePumpsHint": "পাম্পের নাম বদলান, ক্রম ঠিক করুন এবং দল বানান",
+    "sessions": "লগইন থাকা ফোন",
+    "thisDevice": "এই ফোন",
+    "lastUsed": "শেষ ব্যবহার {{when}}",
+    "signOutDevice": "লগআউট করুন",
+    "signOutDeviceTitle": "ওই ফোন থেকে লগআউট করবেন?",
+    "signOutDeviceBody": "আবার লগইন করতে ওটার আপনার পাসওয়ার্ড লাগবে।",
+    "noOtherSessions": "আর কোনো ফোনে লগইন নেই।",
+    "data": "আপনার তথ্য",
+    "export": "আমার তথ্য ডাউনলোড করুন",
+    "exportHint": "আপনার অ্যাকাউন্ট, পাম্প ও সতর্কতার একটি কপি।",
+    "exportFailed": "আপনার তথ্য তৈরি করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "delete": "আমার তথ্য মুছে দিন",
+    "deleteHint": "আমাদের আপনার অ্যাকাউন্ট মুছতে বলুন। কিছু মোছার আগে আমরা আপনার সঙ্গে কথা বলব।",
+    "deleteTitle": "তথ্য মোছার অনুরোধ পাঠাবেন?",
+    "deleteBody": "আপনার অনুরোধ আমাদের দলের কাছে যাবে। আপনার সঙ্গে কথা না বলে কিছুই মোছা হবে না।",
+    "deleteConfirm": "অনুরোধ পাঠান",
+    "deletePending": "{{date}} তারিখে তথ্য মোছার অনুরোধ করা হয়েছে। আমরা আপনার সঙ্গে যোগাযোগ করব।"
+  },
+  "dashboard": {
+    "cantReachTitle": "পাম্পের সঙ্গে যোগাযোগ হচ্ছে না",
+    "powerOn": "পাম্প চালু",
+    "powerOff": "পাম্প বন্ধ",
+    "running": "চালু আছে",
+    "stopped": "বন্ধ আছে",
+    "signal": "সিগন্যাল",
+    "cardPower": "বিদ্যুৎ সরবরাহ (ভোল্টেজ)",
+    "cardLoad": "মোটরের লোড",
+    "cardRuntime": "চলার সময়",
+    "cardHealth": "পাম্পের অবস্থা",
+    "volts": "ভোল্ট",
+    "powerOk": "বিদ্যুৎ ঠিক",
+    "noPower": "বিদ্যুৎ নেই",
+    "rotationOk": "ঘূর্ণন ঠিক",
+    "wrongRotation": "ঘূর্ণন ভুল",
+    "offNoLoad": "পাম্প বন্ধ — কোনো লোড নেই",
+    "totalRun": "মোট চলার সময়",
+    "noFaults": "কোনো ত্রুটি নেই — পাম্প ঠিক আছে",
+    "faultBadge": "বন্ধ হয়েছে",
+    "no": "না, বাতিল করুন",
+    "yesStart": "হ্যাঁ, চালু করুন",
+    "yesStop": "হ্যাঁ, বন্ধ করুন",
+    "ampere": "অ্যাম্প",
+    "system": "SYSTEM",
+    "cardVoltages": "LINE VOLTAGES",
+    "cardCurrents": "PHASE CURRENTS",
+    "cardRuntime2": "RUN TIME",
+    "cardFaults": "PUMP FAULTS",
+    "quickActions": "QUICK ACTIONS",
+    "startPump": "Start Pump",
+    "stopPump": "Stop Pump",
+    "viewTimer": "Timer",
+    "viewHistory": "History",
+    "totalRunTime": "TOTAL RUN TIME",
+    "lastCycleRunTime": "TODAY'S RUN TIME",
+    "hoursMinutes": "HOURS : MINUTES"
+  },
+  "faults": {
+    "code1": "Y-ফেজ ত্রুটি",
+    "code2": "ফেজ নেই (সিঙ্গেল ফেজিং)",
+    "code3": "ভোল্টেজ বেশি",
+    "code4": "ফেজের ক্রম ভুল",
+    "code5": "ড্রাই রান (জল নেই)",
+    "code6": "তার খোলা (সব ফেজ)",
+    "code7": "তার আংশিক খোলা",
+    "code8": "মোটর ওভারলোড",
+    "code9": "ভোল্টেজ অসামঞ্জস্য",
+    "code10": "ভোল্টেজ কম",
+    "unknown": "ত্রুটি (কোড {{code}})",
+    "title": "ত্রুটি",
+    "current": "এখনকার ত্রুটি",
+    "cause": "কেন এমন হয়",
+    "action": "কী করবেন",
+    "history": "আগের ত্রুটি",
+    "historyEmpty": "এই পাম্পের কোনো ত্রুটি নথিভুক্ত নেই।",
+    "ack": "আমি দেখেছি",
+    "acked": "দেখা হয়েছে",
+    "fixed": "ঠিক হয়েছে",
+    "open": "খোলা",
+    "resetTitle": "ত্রুটির পর আবার চালু করা",
+    "resetIntro": "ত্রুটি পাম্পের প্যানেলে মুছতে হয়, অ্যাপে নয়।",
+    "resetStep1": "আগে ত্রুটির কারণ ঠিক করুন।",
+    "resetStep2": "প্যানেলের RESET বোতাম টিপুন।",
+    "resetStep3": "তারপর অ্যাপ থেকে পাম্প চালু করুন।",
+    "panelLabel": "পাম্প প্যানেল",
+    "resetButton": "RESET",
+    "occurred": "শুরু হয়েছে {{when}}",
+    "seenAt": "দেখা হয়েছে {{when}}"
+  },
+  "errors": {
+    "network": "সংযোগ হচ্ছে না। অনুগ্রহ করে ইন্টারনেট দেখে আবার চেষ্টা করুন।",
+    "server": "আমাদের দিকে কিছু গোলমাল হয়েছে। অনুগ্রহ করে কিছুক্ষণ পরে আবার চেষ্টা করুন।",
+    "tooMany": "অনেকবার চেষ্টা হয়ে গেছে। অনুগ্রহ করে একটু অপেক্ষা করে আবার চেষ্টা করুন।",
+    "wrongPassword": "পাসওয়ার্ড ভুল। অনুগ্রহ করে দেখে আবার চেষ্টা করুন।",
+    "suspended": "এই অ্যাকাউন্টটি বন্ধ করা হয়েছে। অনুগ্রহ করে আপনার ডিলারের সঙ্গে যোগাযোগ করুন।",
+    "alreadyRegistered": "এই মোবাইল নম্বরটি আগেই নিবন্ধিত। অনুগ্রহ করে লগইন করুন।",
+    "registrationClosed": "নতুন অ্যাকাউন্ট আপনার ডিলার যোগ করেন। অনুগ্রহ করে ডিলারকে আপনাকে যোগ করতে বলুন।",
+    "sessionExpired": "আপনার সেশন শেষ হয়েছে। অনুগ্রহ করে আবার লগইন করুন।",
+    "forbidden": "আপনার এটি করার অনুমতি নেই।",
+    "notFound": "পাওয়া যায়নি।",
+    "invalid": "অনুগ্রহ করে তথ্য দেখে আবার চেষ্টা করুন।",
+    "generic": "কিছু ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "offline": "আপনি অফলাইনে আছেন। অনুগ্রহ করে ইন্টারনেটে যুক্ত হয়ে আবার চেষ্টা করুন।",
+    "contract": "সার্ভার অ্যাপের বোঝার অযোগ্য তথ্য পাঠিয়েছে। অনুগ্রহ করে অ্যাপ আপডেট করুন।",
+    "deviceSuspended": "এই পাম্পের রিমোট কন্ট্রোল বন্ধ রাখা হয়েছে। অনুগ্রহ করে আপনার ডিলারের সঙ্গে যোগাযোগ করুন।",
+    "siteExists": "এই নামের দল আপনার আগে থেকেই আছে।",
+    "mfaUnsupported": "এই অ্যাকাউন্টে নিরাপত্তা কোড লাগে, যা এই অ্যাপ এখনও চালায় না। অনুগ্রহ করে আপনার ডিলারের সঙ্গে যোগাযোগ করুন।"
+  },
+  "time": {
+    "never": "কখনও না",
+    "justNow": "এইমাত্র",
+    "minutesAgo": "{{count}} মিনিট আগে",
+    "hoursAgo": "{{count}} ঘণ্টা আগে",
+    "daysAgo": "{{count}} দিন আগে"
+  },
+  "units": {
+    "minutes": "{{m}} মিনিট",
+    "hoursMinutes": "{{h}} ঘণ্টা {{m}} মিনিট"
+  },
+  "offline": {
+    "banner": "আপনি অফলাইনে আছেন। {{time}} পর্যন্ত সেভ করা তথ্য দেখানো হচ্ছে।",
+    "bannerNoData": "আপনি অফলাইনে আছেন। পাম্প দেখতে ইন্টারনেটে যুক্ত হন।",
+    "reconnecting": "আবার যুক্ত হচ্ছে…"
+  },
+  "boundary": {
+    "title": "কিছু একটা গোলমাল হয়েছে",
+    "message": "অ্যাপে সমস্যা হয়েছে। আপনার পাম্পের ওপর এর কোনো প্রভাব নেই।"
+  },
+  "listen": {
+    "start": "শুনুন",
+    "stop": "থামান",
+    "noVoice": "এই ফোনে এই ভাষার কণ্ঠস্বর নেই। ফোনের টেক্সট-টু-স্পিচ সেটিংসে এটি যোগ করা যায়।"
+  },
+  "pump": {
+    "tabs": {
+      "live": "লাইভ",
+      "timer": "টাইমার",
+      "history": "ইতিহাস",
+      "faults": "ত্রুটি"
+    },
+    "notFoundTitle": "পাম্প পাওয়া যায়নি",
+    "notFoundMessage": "এই পাম্প এখন আপনার তালিকায় নেই।"
+  },
+  "live": {
+    "updated": "আপডেট {{ago}}",
+    "stale": "শেষ রিডিং এসেছিল {{ago}}। তখনকার তথ্য দেখানো হচ্ছে।",
+    "noDataYet": "এই পাম্প এখনও কোনো রিডিং পাঠায়নি।",
+    "today": "আজ",
+    "total": "মোট",
+    "noReading": "রিডিং নেই",
+    "notReporting": "তথ্য আসছে না",
+    "refreshFailed": "রিফ্রেশ করা যায়নি। সেভ করা তথ্য দেখানো হচ্ছে।",
+    "hp": "{{hp}} HP"
+  },
+  "speech": {
+    "running": "{{name}} চলছে।",
+    "stopped": "{{name}} বন্ধ আছে।",
+    "fault": "{{name}} এ ত্রুটি আছে: {{fault}}।",
+    "offline": "{{name}} থেকে তথ্য আসছে না। শেষ খবর {{ago}} এর।",
+    "noData": "{{name}} এখনও কোনো রিডিং পাঠায়নি।",
+    "volts": "ভোল্টেজ {{ry}}, {{yb}} আর {{br}} ভোল্ট।",
+    "runtime": "এটি আজ {{time}} চলেছে।"
+  },
+  "command": {
+    "startTitle": "{{name}} চালু করবেন?",
+    "stopTitle": "{{name}} বন্ধ করবেন?",
+    "startBody": "{{name}} এখনই চালু হবে। চালানো নিরাপদ কি না, নিশ্চিত হয়ে নিন।",
+    "stopBody": "{{name}} বন্ধ হবে এবং জল আসা থেমে যাবে।",
+    "offlineWarn": "এই পাম্প থেকে তথ্য আসছে না, তাই নির্দেশ ওর কাছে না-ও পৌঁছাতে পারে।",
+    "step": {
+      "sent": "পাঠানো হয়েছে",
+      "delivered": "পাম্পে পৌঁছেছে",
+      "acknowledged": "পাম্প নিশ্চিত করেছে",
+      "applied": "হয়ে গেছে"
+    },
+    "titleStart": "চালু করার নির্দেশ",
+    "titleStop": "বন্ধ করার নির্দেশ",
+    "notConfirmed": "এখনও নিশ্চিত হয়নি। পাম্প সাড়া দেয়নি। পাম্প দেখুন, অথবা একটু পরে আবার চেষ্টা করুন।",
+    "rejected": "পাম্প এই নির্দেশ মানেনি।",
+    "rejectedWhy": "পাম্প মানেনি: {{reason}}",
+    "expired": "পাম্পে পৌঁছানোর আগেই নির্দেশের সময় শেষ হয়ে গেল।",
+    "notSent": "নির্দেশ পাঠানো যায়নি, তাই পাম্পকে কিছু জানানো হয়নি। একটু পরে আবার চেষ্টা করুন।",
+    "done": "পাম্প সেটা করে দিয়েছে।",
+    "tryAgain": "আবার চেষ্টা করুন",
+    "dismiss": "বন্ধ করুন",
+    "offlineBlock": "আপনি অফলাইনে আছেন। পাম্প চালাতে ইন্টারনেটে যুক্ত হন।",
+    "cooldown": "পরের নির্দেশের আগে {{seconds}} সেকেন্ড অপেক্ষা করুন",
+    "cooldownShort": "{{seconds}} সেকেন্ড অপেক্ষা"
+  },
+  "timer": {
+    "title": "চলার টাইমার",
+    "intro": "পাম্প নির্দিষ্ট সময় চালান, তারপর নিজে থেকেই বন্ধ হয়ে যাবে।",
+    "onLabel": "কতক্ষণ চলবে (মিনিট)",
+    "offLabel": "তারপর কতক্ষণ থামবে (মিনিট)",
+    "cyclesLabel": "কতবার পুনরাবৃত্তি হবে",
+    "cyclesHint": "0 মানে চলতেই থাকবে",
+    "range": "{{min}} থেকে {{max}}",
+    "errorOn": "1 থেকে 250 মিনিট লিখুন",
+    "errorOff": "0 থেকে 250 মিনিট লিখুন",
+    "errorCycles": "0 থেকে 999 লিখুন",
+    "save": "পাম্পে টাইমার পাঠান",
+    "confirmTitle": "{{name}} এ টাইমার বসাবেন?",
+    "summaryOnce": "{{on}} মিনিট চলবে, তারপর বন্ধ হবে।",
+    "summaryRepeat": "{{on}} মিনিট চলবে, {{off}} মিনিট থামবে, {{cycles}} বার পুনরাবৃত্তি করবে।",
+    "summaryForever": "{{on}} মিনিট চলবে, {{off}} মিনিট থামবে, চলতেই থাকবে।",
+    "confirmYes": "হ্যাঁ, পাঠান",
+    "sentUnconfirmed": "পাম্পে পাঠানো হয়েছে, কিন্তু এখনও নিশ্চিত হয়নি। নিশ্চিত হলে পাম্প এটি ব্যবহার করবে।",
+    "current": "আপনার পাঠানো শেষ টাইমার",
+    "none": "আপনি এখনও কোনো টাইমার পাঠাননি।",
+    "remoteBlocked": "রিমোট কন্ট্রোল বন্ধ থাকলে টাইমার পাঠানো যায় না।"
+  },
+  "history": {
+    "day": "আজ",
+    "week": "7 দিন",
+    "month": "30 দিন",
+    "hoursRun": "চলার সময়",
+    "perHour": "প্রতি ঘণ্টায় কত মিনিট চলেছে (গত 24 ঘণ্টা)",
+    "perDay": "প্রতিদিন চলার সময়",
+    "empty": "এখনও চলার ইতিহাস নেই",
+    "emptyHint": "পাম্প চলে তথ্য পাঠানোর পর দণ্ডগুলো দেখা যাবে।",
+    "total": "এই সময়ে মোট",
+    "starts": "চালু হয়েছে: {{count}} বার",
+    "faultCount": "ত্রুটি: {{count}}",
+    "export": "CSV ফাইল হিসেবে পাঠান",
+    "exportFailed": "ফাইল তৈরি করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "estimated": "পাম্পের পাঠানো তথ্য থেকে আন্দাজ।",
+    "barDetail": "{{label}}: {{time}}",
+    "noBars": "পাম্প চলেনি।"
+  },
+  "faultInfo": {
+    "code1": {
+      "cause": "একটি ফেজ (Y) ঠিকমতো পাম্পে পৌঁছাচ্ছে না।",
+      "action": "প্যানেলে Y-ফেজের ফিউজ ও তার দেখুন। বারবার হলে ডিলারকে ডাকুন।"
+    },
+    "code2": {
+      "cause": "তিনটির একটি ফেজ নেই, তাই মোটর নিরাপদে চলতে পারে না।",
+      "action": "ফিউজ ও বিদ্যুৎ সরবরাহ দেখুন। ইলেকট্রিশিয়ান বা ডিলারকে ডাকুন।"
+    },
+    "code3": {
+      "cause": "বিদ্যুতের ভোল্টেজ খুব বেশি, মোটর পুড়ে যেতে পারে।",
+      "action": "সরবরাহ স্বাভাবিক না হওয়া পর্যন্ত অপেক্ষা করুন। ভোল্টেজ বেশি থাকলে আবার চালু করবেন না।"
+    },
+    "code4": {
+      "cause": "তিন ফেজের তার ভুল ক্রমে আছে, তাই মোটর উল্টো দিকে ঘোরে।",
+      "action": "পাম্প চালাবেন না। ইলেকট্রিশিয়ান দিয়ে যেকোনো দুটি ফেজের তার অদলবদল করান।"
+    },
+    "code5": {
+      "cause": "পাম্প জল ছাড়াই চলছে।",
+      "action": "জলের স্তর ও ফুট ভালভ দেখুন। জল পেলেই শুধু আবার চালু করুন।"
+    },
+    "code6": {
+      "cause": "মোটরে যাওয়া কেবল সব ফেজে ছেঁড়া বা খুলে গেছে।",
+      "action": "প্যানেল থেকে মোটর পর্যন্ত কেবল ও জোড় দেখুন। ডিলারকে ডাকুন।"
+    },
+    "code7": {
+      "cause": "মোটরের কেবল আংশিক ছেঁড়া, বা কিছু ফেজে জোড় ঢিলে।",
+      "action": "কেবলের জোড় ও টার্মিনাল দেখুন। ডিলারকে ডাকুন।"
+    },
+    "code8": {
+      "cause": "মোটর বেশি কারেন্ট টানছে, পাম্প আটকে গেছে বা সরবরাহ দুর্বল।",
+      "action": "পাম্পে কিছু আটকেছে কি না দেখুন। একটু থেমে আবার চালু করুন। বারবার হলে ডিলারকে ডাকুন।"
+    },
+    "code9": {
+      "cause": "তিন ফেজের ভোল্টেজ একে অপরের থেকে অনেক আলাদা।",
+      "action": "সরবরাহ সমান না হওয়া পর্যন্ত অপেক্ষা করুন। চলতে থাকলে বিদ্যুৎ কোম্পানিকে জানান।"
+    },
+    "code10": {
+      "cause": "বিদ্যুতের ভোল্টেজ এত কম যে মোটর নিরাপদে চলতে পারে না।",
+      "action": "ভোল্টেজ ঠিক না হওয়া পর্যন্ত অপেক্ষা করুন, তারপর চালু করুন।"
+    },
+    "unknown": {
+      "cause": "পাম্প এমন একটি ত্রুটি পেয়েছে যার নাম সে বলতে পারেনি।",
+      "action": "আপনার ডিলারকে ডাকুন এবং ত্রুটির কোড জানান।"
+    }
+  },
+  "support": {
+    "title": "সাহায্য",
+    "dealer": "আপনার ডিলার",
+    "call": "{{name}} কে ফোন করুন",
+    "noDealer": "আপনার ডিলারের নম্বর এখনও সেভ করা নেই। অনুগ্রহ করে যিনি পাম্প বসিয়েছেন তাঁকে জিজ্ঞাসা করুন।",
+    "company": "কোম্পানির সহায়তা",
+    "loadFailed": "ডিলারের তথ্য পাওয়া যায়নি।"
+  },
+  "manage": {
+    "title": "পাম্প সামলান",
+    "pumps": "আপনার পাম্প",
+    "groups": "দল",
+    "rename": "নাম বদলান",
+    "namePlaceholder": "পাম্পের নাম",
+    "originalName": "পাম্পে থাকা নাম: {{name}}",
+    "moveUp": "উপরে নিন",
+    "moveDown": "নিচে নিন",
+    "group": "দল",
+    "noGroup": "কোনো দল নেই",
+    "newGroup": "নতুন দল",
+    "groupPlaceholder": "যেমন: উত্তরের জমি",
+    "createGroup": "দল বানান",
+    "renameGroup": "দলের নাম বদলান",
+    "deleteGroup": "দল মুছুন",
+    "deleteGroupTitle": "এই দল মুছবেন?",
+    "deleteGroupBody": "এর পাম্পগুলো দল ছাড়াই আপনার তালিকায় থাকবে।",
+    "groupPumps": "পাম্প: {{count}}",
+    "empty": "সামলানোর মতো পাম্প এখনও আপনার নেই।",
+    "nameEmpty": "অনুগ্রহ করে একটি নাম লিখুন।"
+  },
+  "plan": {
+    "expiring": "আপনার প্ল্যান {{days}} দিনে, {{date}} তারিখে শেষ হচ্ছে। অনুগ্রহ করে ডিলারকে নবায়ন করতে বলুন।",
+    "expiresToday": "আপনার প্ল্যান আজ শেষ হচ্ছে। অনুগ্রহ করে ডিলারকে নবায়ন করতে বলুন।",
+    "expired": "আপনার প্ল্যান {{date}} তারিখে শেষ হয়েছে। অনুগ্রহ করে ডিলারকে নবায়ন করতে বলুন।",
+    "suspended": "এই পাম্পের রিমোট কন্ট্রোল বন্ধ রাখা হয়েছে। অনুগ্রহ করে আপনার ডিলারের সঙ্গে যোগাযোগ করুন।"
+  },
+  "otp": {
+    "title": "Enter Verification Code",
+    "desc": "We have sent a 6-digit code to",
+    "onWhatsapp": "on WhatsApp",
+    "testOtpNotice": "Test mode - use the code below",
+    "autoFill": "Auto-fill",
+    "resendPrompt": "Didn't receive the code?",
+    "resendIn": "Resend in",
+    "resendButton": "Resend OTP",
+    "verifyButton": "Verify OTP",
+    "verifyingButton": "Verifying...",
+    "incompleteCode": "Enter all 6 digits"
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "desc": "Set a password for your account",
+    "passwordReq": "Minimum 8 characters",
+    "confirmLabel": "Confirm Password",
+    "submitButton": "Create Account",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
+  },
+  "registered": {
+    "title": "Registration Successful!",
+    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "phoneLabel": "Registered mobile number",
+    "continueButton": "Continue to App"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "desc": "Enter your mobile number to receive a reset code on WhatsApp"
+  },
+  "resetPassword": {
+    "title": "Create New Password",
+    "desc": "Set a new password for your account",
+    "newPasswordLabel": "New Password",
+    "submitButton": "Update Password"
+  },
+  "passwordUpdated": {
+    "title": "Password Updated!",
+    "desc": "Your password has been updated successfully. Please sign in with your new password.",
+    "goToLogin": "Go to Login"
+  }
+}

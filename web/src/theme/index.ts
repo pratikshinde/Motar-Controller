@@ -47,6 +47,19 @@ const displayFont = "'Space Grotesk', 'Plus Jakarta Sans', sans-serif";
 const bodyFont = "'Plus Jakarta Sans', sans-serif";
 export const monoFont = "'JetBrains Mono', ui-monospace, monospace";
 
+/**
+ * The app's ambient brand-colour wash — two soft radial gradients in the primary/secondary hues. Applied to
+ * `body` below so every themed page gets it "for free". A page that fills the viewport with its own
+ * `position: fixed` Box (the login screen, the invite sign-up page — both reached before there is any
+ * session to render the normal app shell over) sits in front of `body` and hides it, so those two screens
+ * need the same recipe applied to their own background explicitly, or the very first page a person sees
+ * looks flat next to the rest of the app.
+ */
+export function ambientBackgroundImage(mode: PaletteMode, roles: M3ColorRoles): string {
+  const strength = mode === 'dark' ? 0.08 : 0.04;
+  return `radial-gradient(circle at 10% 20%, ${alpha(roles.primary, strength)}, transparent 40%), radial-gradient(circle at 90% 80%, ${alpha(roles.secondary, strength)}, transparent 40%)`;
+}
+
 const typography: ThemeOptions['typography'] = {
   fontFamily: bodyFont,
   h1: { fontFamily: displayFont, fontSize: '2rem', lineHeight: 2.5 / 2, fontWeight: 400 }, // headlineLarge
@@ -79,7 +92,13 @@ export function buildAppTheme(mode: PaletteMode, brandRoles?: M3ColorRoles) {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
-          body: { backgroundColor: roles.background, colorScheme: mode }
+          body: { 
+            backgroundColor: roles.background, 
+            colorScheme: mode,
+            backgroundImage: ambientBackgroundImage(mode, roles),
+            backgroundAttachment: 'fixed',
+            minHeight: '100vh'
+          }
         }
       },
       // M3 tonal elevation: a primary-tinted wash over the surface, layered
@@ -108,7 +127,17 @@ export function buildAppTheme(mode: PaletteMode, brandRoles?: M3ColorRoles) {
       MuiCard: {
         defaultProps: { elevation: 1 },
         styleOverrides: {
-          root: { borderRadius: shape.medium, border: `1px solid ${roles.outlineVariant}` }
+          root: { 
+            borderRadius: shape.medium, 
+            border: `1px solid ${alpha(roles.outlineVariant, 0.4)}`,
+            backgroundColor: alpha(roles.surface, 0.8),
+            backdropFilter: 'blur(16px)',
+            transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: mode === 'dark' ? '0 8px 16px rgba(0,0,0,0.5)' : '0 8px 16px rgba(0,0,0,0.1)'
+            }
+          }
         }
       },
       MuiButton: {
@@ -144,10 +173,11 @@ export function buildAppTheme(mode: PaletteMode, brandRoles?: M3ColorRoles) {
       MuiAppBar: {
         styleOverrides: {
           root: {
-            backgroundColor: roles.surfaceContainer,
+            backgroundColor: alpha(roles.surfaceContainer, 0.8),
+            backdropFilter: 'blur(20px)',
             color: roles.onSurface,
             boxShadow: 'none',
-            borderBottom: `1px solid ${roles.outlineVariant}`
+            borderBottom: `1px solid ${alpha(roles.outlineVariant, 0.3)}`
           }
         }
       },
@@ -160,6 +190,10 @@ export function buildAppTheme(mode: PaletteMode, brandRoles?: M3ColorRoles) {
         styleOverrides: {
           root: {
             borderRadius: shape.full,
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              transform: 'translateX(4px)'
+            },
             '&.Mui-selected': {
               backgroundColor: roles.secondaryContainer,
               color: roles.onSecondaryContainer,

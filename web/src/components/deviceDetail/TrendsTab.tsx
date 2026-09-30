@@ -41,13 +41,34 @@ export const TrendsTab: React.FC<{ pumpId: string }> = ({ pumpId }) => {
   // range reload — only meaningful while viewing the window that would
   // actually contain "now" (24h); older windows are historical by
   // definition and shouldn't grow live.
+  //
+  // The FastAPI ws_hub shape: { type:"telemetry", pump_id:"...", data:{v_ry,...,recorded_at} }
   useEffect(() => {
     if (hours !== 24) return;
-    return subscribe('pump_update', msg => {
-      if (msg.pump.id !== pumpId) return;
-      const row = pumpUpdateToTelemetryRow(msg.pump);
-      if (!row) return;
-      setRows(prev => (prev.length && prev[prev.length - 1].recorded_at === row.recorded_at ? prev : [...prev, row]));
+    return subscribe('telemetry', msg => {
+      if (msg.pump_id !== pumpId) return;
+      const src = msg.data || msg.pump || msg;
+      if (!src.recorded_at) return;
+      const row: TelemetryRow = {
+        recorded_at: src.recorded_at,
+        v_ry: src.v_ry ?? null,
+        v_yb: src.v_yb ?? null,
+        v_br: src.v_br ?? null,
+        i_r: src.i_r ?? null,
+        i_y: src.i_y ?? null,
+        i_b: src.i_b ?? null,
+        pump_on: src.pump_on ?? false,
+        fault_active: src.fault_active ?? false,
+        gsm_rssi: src.gsm_rssi ?? null,
+        seq: src.seq ?? null,
+        ts_approx: src.ts_approx ?? false,
+        buffered: src.buffered ?? false,
+      };
+      setRows(prev => (
+        prev.length && prev[prev.length - 1].recorded_at === row.recorded_at
+          ? prev
+          : [...prev, row]
+      ));
     });
   }, [pumpId, hours, subscribe]);
 

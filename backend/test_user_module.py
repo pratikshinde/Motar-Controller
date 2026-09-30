@@ -1,8 +1,17 @@
 import uuid
 from fastapi.testclient import TestClient
 from app.main import app
+from app.database import SessionLocal
+from app.models import User
+from app.services.jwt_auth import sign_token
 
 client = TestClient(app)
+db = SessionLocal()
+sa = db.query(User).filter(User.role == "superadmin").first()
+if sa:
+    token = sign_token({"sub": str(sa.id), "role": "superadmin", "hierarchy_path": sa.hierarchy_path or "/SA", "session_ver": sa.session_version or 1})
+    client.headers = {"Authorization": f"Bearer {token}"}
+db.close()
 
 def test_user_module_flow():
     print("\n--- Testing User Module APIs ---")

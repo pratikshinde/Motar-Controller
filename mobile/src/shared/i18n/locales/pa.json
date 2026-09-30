@@ -1,0 +1,489 @@
+{
+  "brand": {
+    "line1": "ਅਜੰਤਾ ਪੰਪ",
+    "line2": "ਕੰਟਰੋਲਰ"
+  },
+  "common": {
+    "retry": "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
+    "refresh": "ਰਿਫ੍ਰੈਸ਼ ਕਰੋ",
+    "back": "ਵਾਪਸ",
+    "cancel": "ਰੱਦ ਕਰੋ",
+    "continue": "ਅੱਗੇ ਵਧੋ",
+    "checkAgain": "ਦੁਬਾਰਾ ਵੇਖੋ",
+    "serverUnreachableTitle": "ਸਰਵਰ ਨਾਲ ਸੰਪਰਕ ਨਹੀਂ ਹੋ ਰਿਹਾ",
+    "save": "ਸੰਭਾਲੋ",
+    "loading": "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…",
+    "more": "ਵਧਾਓ",
+    "less": "ਘਟਾਓ"
+  },
+  "splash": {
+    "tagline": "ਆਪਣਾ ਪੰਪ ਕਿਤੋਂ ਵੀ ਚਲਾਓ",
+    "starting": "ਸ਼ੁਰੂ ਹੋ ਰਿਹਾ ਹੈ…",
+    "footer": "ਸਮਾਰਟ 3-ਫੇਜ਼ ਪੰਪ ਸੁਰੱਖਿਆ"
+  },
+  "language": {
+    "title": "ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ",
+    "continue": "ਅੱਗੇ ਵਧੋ",
+    "listenAll": "ਭਾਸ਼ਾਵਾਂ ਸੁਣੋ",
+    "stopListening": "ਰੋਕੋ",
+    "back": "ਸੈਟਿੰਗਾਂ ਤੇ ਵਾਪਸ"
+  },
+  "login": {
+    "tabLogin": "ਲੌਗਇਨ",
+    "tabRegister": "ਨਵਾਂ ਖਾਤਾ",
+    "welcomeBack": "ਜੀ ਆਇਆਂ ਨੂੰ",
+    "createTitle": "ਆਪਣਾ ਖਾਤਾ ਬਣਾਓ",
+    "nameLabel": "ਤੁਹਾਡਾ ਨਾਮ",
+    "namePlaceholder": "ਪੂਰਾ ਨਾਮ",
+    "mobileLabel": "ਮੋਬਾਈਲ ਨੰਬਰ",
+    "mobilePlaceholder": "10 ਅੰਕਾਂ ਦਾ ਮੋਬਾਈਲ ਨੰਬਰ",
+    "passwordLabel": "ਪਾਸਵਰਡ",
+    "passwordPlaceholder": "ਤੁਹਾਡਾ ਪਾਸਵਰਡ",
+    "choosePassword": "ਪਾਸਵਰਡ ਚੁਣੋ",
+    "choosePasswordPlaceholder": "ਘੱਟੋ-ਘੱਟ 6 ਅੱਖਰ",
+    "loginButton": "ਲੌਗਇਨ ਕਰੋ",
+    "createButton": "ਖਾਤਾ ਬਣਾਓ",
+    "newHere": "ਨਵੇਂ ਹੋ?",
+    "createLink": "ਖਾਤਾ ਬਣਾਓ",
+    "haveAccount": "ਪਹਿਲਾਂ ਹੀ ਖਾਤਾ ਹੈ?",
+    "loginLink": "ਲੌਗਇਨ ਕਰੋ",
+    "showPassword": "ਪਾਸਵਰਡ ਦਿਖਾਓ",
+    "hidePassword": "ਪਾਸਵਰਡ ਲੁਕਾਓ",
+    "validationTitle": "ਕਿਰਪਾ ਕਰਕੇ ਜਾਂਚ ਕਰੋ",
+    "needName": "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਪੂਰਾ ਨਾਮ ਲਿਖੋ",
+    "needPhone": "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਮੋਬਾਈਲ ਨੰਬਰ ਲਿਖੋ",
+    "needPassword": "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਪਾਸਵਰਡ ਲਿਖੋ",
+    "passwordShort": "ਪਾਸਵਰਡ ਘੱਟੋ-ਘੱਟ 6 ਅੱਖਰਾਂ ਦਾ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ",
+    "loginFailedTitle": "ਲੌਗਇਨ ਨਹੀਂ ਹੋ ਸਕਿਆ",
+    "notFoundTitle": "ਖਾਤਾ ਨਹੀਂ ਮਿਲਿਆ",
+    "notFoundMessage": "ਇਹ ਮੋਬਾਈਲ ਨੰਬਰ ਅਜੇ ਰਜਿਸਟਰ ਨਹੀਂ ਹੈ। ਕੀ ਤੁਸੀਂ ਨਵਾਂ ਖਾਤਾ ਬਣਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
+    "registerFailedTitle": "ਖਾਤਾ ਨਹੀਂ ਬਣ ਸਕਿਆ",
+    "createdTitle": "ਖਾਤਾ ਬਣ ਗਿਆ",
+    "createdMessage": "ਜੀ ਆਇਆਂ ਨੂੰ {{name}}। ਤੁਹਾਡਾ ਖਾਤਾ ਤਿਆਰ ਹੈ। ਅੱਗੇ ਵਧਣ ਲਈ ਲੌਗਇਨ ਕਰੋ।",
+    "createdStatus": "ਖਾਤਾ ਬਣ ਗਿਆ। ਆਪਣੇ ਮੋਬਾਈਲ ਨੰਬਰ ਅਤੇ ਪਾਸਵਰਡ ਨਾਲ ਲੌਗਇਨ ਕਰੋ।",
+    "welcomeBackDesc": "Login to manage your pump remotely",
+    "forgotPassword": "Forgot Password?",
+    "createDesc": "Register using your WhatsApp number",
+    "sendOtpButton": "Send OTP on WhatsApp"
+  },
+  "nav": {
+    "pumps": "ਮੇਰੇ ਪੰਪ",
+    "alerts": "ਚੇਤਾਵਨੀਆਂ",
+    "settings": "ਸੈਟਿੰਗਾਂ"
+  },
+  "pumps": {
+    "title": "ਮੇਰੇ ਪੰਪ",
+    "count_one": "{{count}} ਪੰਪ",
+    "count_other": "{{count}} ਪੰਪ",
+    "loading": "ਤੁਹਾਡੇ ਪੰਪ ਲੋਡ ਹੋ ਰਹੇ ਹਨ…",
+    "emptyTitle": "ਅਜੇ ਕੋਈ ਪੰਪ ਨਹੀਂ",
+    "emptyMessage": "ਤੁਹਾਡੇ ਮੋਬਾਈਲ ਨੰਬਰ ਨਾਲ ਅਜੇ ਕੋਈ ਪੰਪ ਜੁੜਿਆ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨੂੰ ਪੰਪ ਜੋੜਨ ਲਈ ਕਹੋ।",
+    "hp": "{{hp}} ਐਚਪੀ",
+    "openPump": "{{name}}, {{status}}। ਪੰਪ ਖੋਲ੍ਹੋ",
+    "status": {
+      "running": "ਚਾਲੂ",
+      "stopped": "ਬੰਦ",
+      "fault": "ਖ਼ਰਾਬੀ",
+      "offline": "ਔਫਲਾਈਨ",
+      "online": "ਔਨਲਾਈਨ",
+      "unknown": "ਪਤਾ ਨਹੀਂ"
+    },
+    "ungrouped": "ਹੋਰ ਪੰਪ",
+    "lastSeen": "ਆਖ਼ਰੀ ਖ਼ਬਰ {{ago}}",
+    "noData": "ਅਜੇ ਕੋਈ ਜਾਣਕਾਰੀ ਨਹੀਂ",
+    "manage": "ਪੰਪ ਸੰਭਾਲੋ",
+    "ranToday": "ਅੱਜ {{time}} ਚੱਲਿਆ"
+  },
+  "alerts": {
+    "title": "ਚੇਤਾਵਨੀਆਂ",
+    "loading": "ਚੇਤਾਵਨੀਆਂ ਵੇਖੀਆਂ ਜਾ ਰਹੀਆਂ ਹਨ…",
+    "emptyTitle": "ਸਭ ਠੀਕ ਹੈ",
+    "emptyMessage": "ਹੁਣ ਤੁਹਾਡੇ ਪੰਪਾਂ ਵਿੱਚ ਕੋਈ ਸਮੱਸਿਆ ਨਹੀਂ ਹੈ।",
+    "serious": "ਗੰਭੀਰ",
+    "warning": "ਚੇਤਾਵਨੀ",
+    "info": "ਜਾਣਕਾਰੀ",
+    "needsAttention": "ਧਿਆਨ ਦਿਓ",
+    "resolved": "ਠੀਕ ਹੋ ਗਿਆ",
+    "defaultTitle": "ਪੰਪ ਚੇਤਾਵਨੀ",
+    "tabActive": "ਚਾਲੂ",
+    "tabFixed": "ਠੀਕ ਹੋਏ",
+    "ack": "ਮੈਂ ਵੇਖ ਲਿਆ",
+    "acked": "ਵੇਖਿਆ",
+    "resolve": "ਠੀਕ ਹੋ ਗਿਆ ਵਜੋਂ ਦਰਜ ਕਰੋ",
+    "resolveTitle": "ਕੀ ਇਸ ਚੇਤਾਵਨੀ ਨੂੰ ਠੀਕ ਹੋਇਆ ਦਰਜ ਕਰਨਾ ਹੈ?",
+    "resolveBody": "ਇਹ ਤਦ ਹੀ ਕਰੋ ਜਦੋਂ ਪੰਪ ਦੀ ਖ਼ਰਾਬੀ ਦੂਰ ਹੋ ਗਈ ਹੋਵੇ।",
+    "resolveYes": "ਹਾਂ, ਠੀਕ ਹੋ ਗਿਆ",
+    "openPump": "ਪੰਪ ਖੋਲ੍ਹੋ",
+    "occurrences": "{{count}} ਵਾਰ ਹੋਇਆ",
+    "last": "ਆਖ਼ਰੀ ਵਾਰ: {{when}}",
+    "emptyFixed": "ਹਾਲ ਵਿੱਚ ਕੁਝ ਠੀਕ ਨਹੀਂ ਹੋਇਆ"
+  },
+  "settings": {
+    "title": "ਸੈਟਿੰਗਾਂ",
+    "language": "ਭਾਸ਼ਾ",
+    "languageHint": "ਐਪ, ਚੇਤਾਵਨੀਆਂ ਅਤੇ ਆਵਾਜ਼ੀ ਜਵਾਬਾਂ ਦੀ ਭਾਸ਼ਾ",
+    "account": "ਖਾਤਾ",
+    "logout": "ਲੌਗਆਊਟ",
+    "logoutTitle": "ਲੌਗਆਊਟ",
+    "logoutMessage": "ਕੀ ਤੁਸੀਂ ਲੌਗਆਊਟ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?",
+    "version": "ਵਰਜਨ {{version}}",
+    "profile": "ਪ੍ਰੋਫਾਈਲ",
+    "name": "ਤੁਹਾਡਾ ਨਾਂ",
+    "nameSaved": "ਨਾਂ ਸੰਭਾਲ ਲਿਆ ਗਿਆ",
+    "mobile": "ਮੋਬਾਈਲ ਨੰਬਰ",
+    "managePumps": "ਪੰਪ ਸੰਭਾਲੋ",
+    "managePumpsHint": "ਪੰਪਾਂ ਦੇ ਨਾਂ ਬਦਲੋ, ਕ੍ਰਮ ਲਗਾਓ ਅਤੇ ਸਮੂਹ ਬਣਾਓ",
+    "sessions": "ਲੌਗਇਨ ਵਾਲੇ ਫ਼ੋਨ",
+    "thisDevice": "ਇਹ ਫ਼ੋਨ",
+    "lastUsed": "ਆਖ਼ਰੀ ਵਰਤੋਂ {{when}}",
+    "signOutDevice": "ਲੌਗਆਊਟ ਕਰੋ",
+    "signOutDeviceTitle": "ਕੀ ਉਸ ਫ਼ੋਨ ਨੂੰ ਲੌਗਆਊਟ ਕਰਨਾ ਹੈ?",
+    "signOutDeviceBody": "ਦੁਬਾਰਾ ਲੌਗਇਨ ਕਰਨ ਲਈ ਉਸਨੂੰ ਤੁਹਾਡਾ ਪਾਸਵਰਡ ਚਾਹੀਦਾ ਹੋਵੇਗਾ।",
+    "noOtherSessions": "ਕਿਸੇ ਹੋਰ ਫ਼ੋਨ ਵਿੱਚ ਲੌਗਇਨ ਨਹੀਂ ਹੈ।",
+    "data": "ਤੁਹਾਡਾ ਡੇਟਾ",
+    "export": "ਮੇਰਾ ਡੇਟਾ ਡਾਊਨਲੋਡ ਕਰੋ",
+    "exportHint": "ਤੁਹਾਡੇ ਖਾਤੇ, ਪੰਪਾਂ ਅਤੇ ਚੇਤਾਵਨੀਆਂ ਦੀ ਇੱਕ ਕਾਪੀ।",
+    "exportFailed": "ਤੁਹਾਡਾ ਡੇਟਾ ਤਿਆਰ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "delete": "ਮੇਰਾ ਡੇਟਾ ਹਟਾਓ",
+    "deleteHint": "ਸਾਨੂੰ ਆਪਣਾ ਖਾਤਾ ਹਟਾਉਣ ਲਈ ਕਹੋ। ਕੁਝ ਵੀ ਹਟਾਉਣ ਤੋਂ ਪਹਿਲਾਂ ਅਸੀਂ ਤੁਹਾਡੇ ਨਾਲ ਗੱਲ ਕਰਾਂਗੇ।",
+    "deleteTitle": "ਕੀ ਡੇਟਾ ਹਟਾਉਣ ਦੀ ਬੇਨਤੀ ਭੇਜਣੀ ਹੈ?",
+    "deleteBody": "ਤੁਹਾਡੀ ਬੇਨਤੀ ਸਾਡੀ ਟੀਮ ਕੋਲ ਜਾਵੇਗੀ। ਤੁਹਾਡੇ ਨਾਲ ਗੱਲ ਕੀਤੇ ਬਿਨਾਂ ਕੁਝ ਨਹੀਂ ਹਟਾਇਆ ਜਾਵੇਗਾ।",
+    "deleteConfirm": "ਬੇਨਤੀ ਭੇਜੋ",
+    "deletePending": "{{date}} ਨੂੰ ਡੇਟਾ ਹਟਾਉਣ ਦੀ ਬੇਨਤੀ ਕੀਤੀ ਗਈ। ਅਸੀਂ ਤੁਹਾਡੇ ਨਾਲ ਸੰਪਰਕ ਕਰਾਂਗੇ।"
+  },
+  "dashboard": {
+    "cantReachTitle": "ਪੰਪ ਨਾਲ ਸੰਪਰਕ ਨਹੀਂ ਹੋ ਰਿਹਾ",
+    "powerOn": "ਪੰਪ ਚਾਲੂ",
+    "powerOff": "ਪੰਪ ਬੰਦ",
+    "running": "ਚੱਲ ਰਿਹਾ ਹੈ",
+    "stopped": "ਬੰਦ ਹੈ",
+    "signal": "ਸਿਗਨਲ",
+    "cardPower": "ਬਿਜਲੀ ਸਪਲਾਈ (ਵੋਲਟੇਜ)",
+    "cardLoad": "ਮੋਟਰ ਲੋਡ",
+    "cardRuntime": "ਚੱਲਣ ਦਾ ਸਮਾਂ",
+    "cardHealth": "ਪੰਪ ਦੀ ਹਾਲਤ",
+    "volts": "ਵੋਲਟ",
+    "powerOk": "ਬਿਜਲੀ ਠੀਕ",
+    "noPower": "ਬਿਜਲੀ ਨਹੀਂ",
+    "rotationOk": "ਘੁੰਮਣਾ ਸਹੀ",
+    "wrongRotation": "ਘੁੰਮਣਾ ਗਲਤ",
+    "offNoLoad": "ਪੰਪ ਬੰਦ ਹੈ — ਕੋਈ ਲੋਡ ਨਹੀਂ",
+    "totalRun": "ਕੁੱਲ ਚੱਲਣ ਦਾ ਸਮਾਂ",
+    "noFaults": "ਕੋਈ ਖ਼ਰਾਬੀ ਨਹੀਂ — ਪੰਪ ਠੀਕ ਹੈ",
+    "faultBadge": "ਬੰਦ ਹੋਇਆ",
+    "no": "ਨਹੀਂ, ਰੱਦ ਕਰੋ",
+    "yesStart": "ਹਾਂ, ਚਾਲੂ ਕਰੋ",
+    "yesStop": "ਹਾਂ, ਬੰਦ ਕਰੋ",
+    "ampere": "ਐਂਪ",
+    "system": "SYSTEM",
+    "cardVoltages": "LINE VOLTAGES",
+    "cardCurrents": "PHASE CURRENTS",
+    "cardRuntime2": "RUN TIME",
+    "cardFaults": "PUMP FAULTS",
+    "quickActions": "QUICK ACTIONS",
+    "startPump": "Start Pump",
+    "stopPump": "Stop Pump",
+    "viewTimer": "Timer",
+    "viewHistory": "History",
+    "totalRunTime": "TOTAL RUN TIME",
+    "lastCycleRunTime": "TODAY'S RUN TIME",
+    "hoursMinutes": "HOURS : MINUTES"
+  },
+  "faults": {
+    "code1": "Y-ਫੇਜ਼ ਖ਼ਰਾਬੀ",
+    "code2": "ਫੇਜ਼ ਗਾਇਬ (ਸਿੰਗਲ ਫੇਜ਼ਿੰਗ)",
+    "code3": "ਵੋਲਟੇਜ ਜ਼ਿਆਦਾ",
+    "code4": "ਫੇਜ਼ ਦਾ ਕ੍ਰਮ ਗਲਤ",
+    "code5": "ਡਰਾਈ ਰਨ (ਪਾਣੀ ਨਹੀਂ)",
+    "code6": "ਕੇਬਲ ਖੁੱਲ੍ਹੀ (ਸਾਰੇ ਫੇਜ਼)",
+    "code7": "ਕੇਬਲ ਅੰਸ਼ਕ ਖੁੱਲ੍ਹੀ",
+    "code8": "ਮੋਟਰ ਓਵਰਲੋਡ",
+    "code9": "ਵੋਲਟੇਜ ਅਸੰਤੁਲਨ",
+    "code10": "ਵੋਲਟੇਜ ਘੱਟ",
+    "unknown": "ਖ਼ਰਾਬੀ (ਕੋਡ {{code}})",
+    "title": "ਖ਼ਰਾਬੀਆਂ",
+    "current": "ਹੁਣ ਦੀ ਖ਼ਰਾਬੀ",
+    "cause": "ਇਹ ਕਿਉਂ ਹੁੰਦਾ ਹੈ",
+    "action": "ਕੀ ਕਰਨਾ ਹੈ",
+    "history": "ਪਿਛਲੀਆਂ ਖ਼ਰਾਬੀਆਂ",
+    "historyEmpty": "ਇਸ ਪੰਪ ਦੀ ਕੋਈ ਖ਼ਰਾਬੀ ਦਰਜ ਨਹੀਂ ਹੈ।",
+    "ack": "ਮੈਂ ਵੇਖ ਲਿਆ",
+    "acked": "ਵੇਖਿਆ",
+    "fixed": "ਠੀਕ ਹੋ ਗਈ",
+    "open": "ਖੁੱਲ੍ਹੀ",
+    "resetTitle": "ਖ਼ਰਾਬੀ ਤੋਂ ਬਾਅਦ ਦੁਬਾਰਾ ਚਾਲੂ ਕਰਨਾ",
+    "resetIntro": "ਖ਼ਰਾਬੀ ਪੰਪ ਦੇ ਪੈਨਲ ਤੇ ਸਾਫ਼ ਹੁੰਦੀ ਹੈ, ਐਪ ਵਿੱਚ ਨਹੀਂ।",
+    "resetStep1": "ਪਹਿਲਾਂ ਖ਼ਰਾਬੀ ਦਾ ਕਾਰਨ ਠੀਕ ਕਰੋ।",
+    "resetStep2": "ਪੈਨਲ ਤੇ RESET ਬਟਨ ਦਬਾਓ।",
+    "resetStep3": "ਫਿਰ ਐਪ ਤੋਂ ਪੰਪ ਚਾਲੂ ਕਰੋ।",
+    "panelLabel": "ਪੰਪ ਪੈਨਲ",
+    "resetButton": "RESET",
+    "occurred": "ਸ਼ੁਰੂ ਹੋਈ {{when}}",
+    "seenAt": "ਵੇਖੀ {{when}}"
+  },
+  "errors": {
+    "network": "ਕਨੈਕਟ ਨਹੀਂ ਹੋ ਰਿਹਾ। ਕਿਰਪਾ ਕਰਕੇ ਇੰਟਰਨੈੱਟ ਵੇਖ ਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "server": "ਸਾਡੇ ਪਾਸਿਓਂ ਕੋਈ ਗੜਬੜ ਹੋ ਗਈ। ਕਿਰਪਾ ਕਰਕੇ ਥੋੜ੍ਹੀ ਦੇਰ ਬਾਅਦ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "tooMany": "ਬਹੁਤ ਵਾਰ ਕੋਸ਼ਿਸ਼ ਹੋ ਗਈ। ਕਿਰਪਾ ਕਰਕੇ ਥੋੜ੍ਹਾ ਰੁਕ ਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "wrongPassword": "ਪਾਸਵਰਡ ਗਲਤ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਜਾਂਚ ਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "suspended": "ਇਹ ਖਾਤਾ ਬੰਦ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।",
+    "alreadyRegistered": "ਇਹ ਮੋਬਾਈਲ ਨੰਬਰ ਪਹਿਲਾਂ ਹੀ ਰਜਿਸਟਰ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਲੌਗਇਨ ਕਰੋ।",
+    "registrationClosed": "ਨਵੇਂ ਖਾਤੇ ਤੁਹਾਡਾ ਡੀਲਰ ਜੋੜਦਾ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨੂੰ ਤੁਹਾਨੂੰ ਜੋੜਨ ਲਈ ਕਹੋ।",
+    "sessionExpired": "ਤੁਹਾਡਾ ਸੈਸ਼ਨ ਖ਼ਤਮ ਹੋ ਗਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਲੌਗਇਨ ਕਰੋ।",
+    "forbidden": "ਤੁਹਾਨੂੰ ਇਹ ਕਰਨ ਦੀ ਇਜਾਜ਼ਤ ਨਹੀਂ ਹੈ।",
+    "notFound": "ਨਹੀਂ ਮਿਲਿਆ।",
+    "invalid": "ਕਿਰਪਾ ਕਰਕੇ ਜਾਣਕਾਰੀ ਜਾਂਚ ਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "generic": "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "offline": "ਤੁਸੀਂ ਔਫਲਾਈਨ ਹੋ। ਕਿਰਪਾ ਕਰਕੇ ਇੰਟਰਨੈੱਟ ਨਾਲ ਜੁੜ ਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "contract": "ਸਰਵਰ ਨੇ ਐਪ ਨੂੰ ਨਾ ਸਮਝ ਆਉਣ ਵਾਲੀ ਜਾਣਕਾਰੀ ਭੇਜੀ। ਕਿਰਪਾ ਕਰਕੇ ਐਪ ਅੱਪਡੇਟ ਕਰੋ।",
+    "deviceSuspended": "ਇਸ ਪੰਪ ਦਾ ਰਿਮੋਟ ਕੰਟਰੋਲ ਰੋਕਿਆ ਗਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।",
+    "siteExists": "ਇਸ ਨਾਂ ਦਾ ਸਮੂਹ ਤੁਹਾਡੇ ਕੋਲ ਪਹਿਲਾਂ ਹੀ ਹੈ।",
+    "mfaUnsupported": "ਇਸ ਖਾਤੇ ਲਈ ਸੁਰੱਖਿਆ ਕੋਡ ਚਾਹੀਦਾ ਹੈ, ਜੋ ਇਹ ਐਪ ਅਜੇ ਨਹੀਂ ਚਲਾਉਂਦੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
+  },
+  "time": {
+    "never": "ਕਦੇ ਨਹੀਂ",
+    "justNow": "ਹੁਣੇ",
+    "minutesAgo": "{{count}} ਮਿੰਟ ਪਹਿਲਾਂ",
+    "hoursAgo": "{{count}} ਘੰਟੇ ਪਹਿਲਾਂ",
+    "daysAgo": "{{count}} ਦਿਨ ਪਹਿਲਾਂ"
+  },
+  "units": {
+    "minutes": "{{m}} ਮਿੰਟ",
+    "hoursMinutes": "{{h}} ਘੰਟੇ {{m}} ਮਿੰਟ"
+  },
+  "offline": {
+    "banner": "ਤੁਸੀਂ ਔਫਲਾਈਨ ਹੋ। {{time}} ਤੱਕ ਦਾ ਸੰਭਾਲਿਆ ਡੇਟਾ ਦਿਖ ਰਿਹਾ ਹੈ।",
+    "bannerNoData": "ਤੁਸੀਂ ਔਫਲਾਈਨ ਹੋ। ਪੰਪ ਵੇਖਣ ਲਈ ਇੰਟਰਨੈੱਟ ਨਾਲ ਜੁੜੋ।",
+    "reconnecting": "ਦੁਬਾਰਾ ਜੁੜ ਰਿਹਾ ਹੈ…"
+  },
+  "boundary": {
+    "title": "ਕੁਝ ਗੜਬੜ ਹੋ ਗਈ",
+    "message": "ਐਪ ਵਿੱਚ ਸਮੱਸਿਆ ਆਈ। ਤੁਹਾਡੇ ਪੰਪਾਂ ਤੇ ਇਸਦਾ ਕੋਈ ਅਸਰ ਨਹੀਂ।"
+  },
+  "listen": {
+    "start": "ਸੁਣੋ",
+    "stop": "ਰੋਕੋ",
+    "noVoice": "ਇਸ ਫ਼ੋਨ ਵਿੱਚ ਇਸ ਭਾਸ਼ਾ ਦੀ ਆਵਾਜ਼ ਨਹੀਂ ਹੈ। ਫ਼ੋਨ ਦੀ ਟੈਕਸਟ-ਟੂ-ਸਪੀਚ ਸੈਟਿੰਗ ਵਿੱਚ ਇਹ ਪਾਈ ਜਾ ਸਕਦੀ ਹੈ।"
+  },
+  "pump": {
+    "tabs": {
+      "live": "ਲਾਈਵ",
+      "timer": "ਟਾਈਮਰ",
+      "history": "ਇਤਿਹਾਸ",
+      "faults": "ਖ਼ਰਾਬੀਆਂ"
+    },
+    "notFoundTitle": "ਪੰਪ ਨਹੀਂ ਮਿਲਿਆ",
+    "notFoundMessage": "ਇਹ ਪੰਪ ਹੁਣ ਤੁਹਾਡੀ ਸੂਚੀ ਵਿੱਚ ਨਹੀਂ ਹੈ।"
+  },
+  "live": {
+    "updated": "ਅੱਪਡੇਟ {{ago}}",
+    "stale": "ਆਖ਼ਰੀ ਰੀਡਿੰਗ {{ago}} ਆਈ ਸੀ। ਉਦੋਂ ਦੀ ਜਾਣਕਾਰੀ ਦਿਖ ਰਹੀ ਹੈ।",
+    "noDataYet": "ਇਸ ਪੰਪ ਨੇ ਅਜੇ ਕੋਈ ਰੀਡਿੰਗ ਨਹੀਂ ਭੇਜੀ।",
+    "today": "ਅੱਜ",
+    "total": "ਕੁੱਲ",
+    "noReading": "ਰੀਡਿੰਗ ਨਹੀਂ",
+    "notReporting": "ਜਾਣਕਾਰੀ ਨਹੀਂ ਆ ਰਹੀ",
+    "refreshFailed": "ਤਾਜ਼ਾ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਸੰਭਾਲੀ ਹੋਈ ਜਾਣਕਾਰੀ ਦਿਖ ਰਹੀ ਹੈ।",
+    "hp": "{{hp}} HP"
+  },
+  "speech": {
+    "running": "{{name}} ਚੱਲ ਰਿਹਾ ਹੈ।",
+    "stopped": "{{name}} ਬੰਦ ਹੈ।",
+    "fault": "{{name}} ਵਿੱਚ ਖ਼ਰਾਬੀ ਹੈ: {{fault}}।",
+    "offline": "{{name}} ਤੋਂ ਜਾਣਕਾਰੀ ਨਹੀਂ ਆ ਰਹੀ। ਆਖ਼ਰੀ ਖ਼ਬਰ {{ago}} ਦੀ ਹੈ।",
+    "noData": "{{name}} ਨੇ ਅਜੇ ਕੋਈ ਰੀਡਿੰਗ ਨਹੀਂ ਭੇਜੀ।",
+    "volts": "ਵੋਲਟੇਜ {{ry}}, {{yb}} ਅਤੇ {{br}} ਵੋਲਟ ਹੈ।",
+    "runtime": "ਇਹ ਅੱਜ {{time}} ਚੱਲਿਆ।"
+  },
+  "command": {
+    "startTitle": "ਕੀ {{name}} ਚਾਲੂ ਕਰਨਾ ਹੈ?",
+    "stopTitle": "ਕੀ {{name}} ਬੰਦ ਕਰਨਾ ਹੈ?",
+    "startBody": "{{name}} ਹੁਣੇ ਚਾਲੂ ਹੋਵੇਗਾ। ਪੱਕਾ ਕਰ ਲਓ ਕਿ ਚਲਾਉਣਾ ਸੁਰੱਖਿਅਤ ਹੈ।",
+    "stopBody": "{{name}} ਬੰਦ ਹੋ ਜਾਵੇਗਾ ਅਤੇ ਪਾਣੀ ਆਉਣਾ ਰੁਕ ਜਾਵੇਗਾ।",
+    "offlineWarn": "ਇਸ ਪੰਪ ਤੋਂ ਜਾਣਕਾਰੀ ਨਹੀਂ ਆ ਰਹੀ, ਇਸ ਲਈ ਹੋ ਸਕਦਾ ਹੈ ਹੁਕਮ ਉਸ ਤੱਕ ਨਾ ਪਹੁੰਚੇ।",
+    "step": {
+      "sent": "ਭੇਜਿਆ ਗਿਆ",
+      "delivered": "ਪੰਪ ਤੱਕ ਪਹੁੰਚਿਆ",
+      "acknowledged": "ਪੰਪ ਨੇ ਪੁਸ਼ਟੀ ਕੀਤੀ",
+      "applied": "ਹੋ ਗਿਆ"
+    },
+    "titleStart": "ਚਾਲੂ ਕਰਨ ਦਾ ਹੁਕਮ",
+    "titleStop": "ਬੰਦ ਕਰਨ ਦਾ ਹੁਕਮ",
+    "notConfirmed": "ਅਜੇ ਪੁਸ਼ਟੀ ਨਹੀਂ ਹੋਈ। ਪੰਪ ਨੇ ਜਵਾਬ ਨਹੀਂ ਦਿੱਤਾ। ਪੰਪ ਵੇਖੋ, ਜਾਂ ਥੋੜ੍ਹੀ ਦੇਰ ਬਾਅਦ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "rejected": "ਪੰਪ ਨੇ ਇਹ ਹੁਕਮ ਨਹੀਂ ਮੰਨਿਆ।",
+    "rejectedWhy": "ਪੰਪ ਨੇ ਮਨ੍ਹਾ ਕੀਤਾ: {{reason}}",
+    "expired": "ਪੰਪ ਤੱਕ ਪਹੁੰਚਣ ਤੋਂ ਪਹਿਲਾਂ ਹੁਕਮ ਦਾ ਸਮਾਂ ਲੰਘ ਗਿਆ।",
+    "notSent": "ਹੁਕਮ ਭੇਜਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ, ਇਸ ਲਈ ਪੰਪ ਨੂੰ ਕੁਝ ਨਹੀਂ ਦੱਸਿਆ ਗਿਆ। ਥੋੜ੍ਹੀ ਦੇਰ ਬਾਅਦ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "done": "ਪੰਪ ਨੇ ਕਰ ਦਿੱਤਾ।",
+    "tryAgain": "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
+    "dismiss": "ਬੰਦ ਕਰੋ",
+    "offlineBlock": "ਤੁਸੀਂ ਔਫਲਾਈਨ ਹੋ। ਪੰਪ ਚਲਾਉਣ ਲਈ ਇੰਟਰਨੈੱਟ ਨਾਲ ਜੁੜੋ।",
+    "cooldown": "ਅਗਲੇ ਹੁਕਮ ਤੋਂ ਪਹਿਲਾਂ {{seconds}} ਸਕਿੰਟ ਰੁਕੋ",
+    "cooldownShort": "{{seconds}} ਸਕਿੰਟ ਰੁਕੋ"
+  },
+  "timer": {
+    "title": "ਚੱਲਣ ਦਾ ਟਾਈਮਰ",
+    "intro": "ਪੰਪ ਨੂੰ ਤੈਅ ਸਮੇਂ ਤੱਕ ਚਲਾਓ, ਫਿਰ ਉਹ ਆਪਣੇ ਆਪ ਬੰਦ ਹੋ ਜਾਵੇਗਾ।",
+    "onLabel": "ਕਿੰਨੀ ਦੇਰ ਚੱਲੇ (ਮਿੰਟ)",
+    "offLabel": "ਫਿਰ ਕਿੰਨੀ ਦੇਰ ਰੁਕੇ (ਮਿੰਟ)",
+    "cyclesLabel": "ਕਿੰਨੀ ਵਾਰ ਦੁਹਰਾਉਣਾ ਹੈ",
+    "cyclesHint": "0 ਦਾ ਮਤਲਬ ਲਗਾਤਾਰ ਚੱਲਦਾ ਰਹੇ",
+    "range": "{{min}} ਤੋਂ {{max}}",
+    "errorOn": "1 ਤੋਂ 250 ਮਿੰਟ ਲਿਖੋ",
+    "errorOff": "0 ਤੋਂ 250 ਮਿੰਟ ਲਿਖੋ",
+    "errorCycles": "0 ਤੋਂ 999 ਲਿਖੋ",
+    "save": "ਪੰਪ ਨੂੰ ਟਾਈਮਰ ਭੇਜੋ",
+    "confirmTitle": "ਕੀ {{name}} ਤੇ ਟਾਈਮਰ ਲਗਾਉਣਾ ਹੈ?",
+    "summaryOnce": "{{on}} ਮਿੰਟ ਚੱਲੇਗਾ, ਫਿਰ ਬੰਦ ਹੋਵੇਗਾ।",
+    "summaryRepeat": "{{on}} ਮਿੰਟ ਚੱਲੇਗਾ, {{off}} ਮਿੰਟ ਰੁਕੇਗਾ, {{cycles}} ਵਾਰ ਦੁਹਰਾਏਗਾ।",
+    "summaryForever": "{{on}} ਮਿੰਟ ਚੱਲੇਗਾ, {{off}} ਮਿੰਟ ਰੁਕੇਗਾ, ਲਗਾਤਾਰ ਦੁਹਰਾਉਂਦਾ ਰਹੇਗਾ।",
+    "confirmYes": "ਹਾਂ, ਭੇਜੋ",
+    "sentUnconfirmed": "ਪੰਪ ਨੂੰ ਭੇਜ ਦਿੱਤਾ, ਪਰ ਅਜੇ ਪੁਸ਼ਟੀ ਨਹੀਂ ਹੋਈ। ਪੁਸ਼ਟੀ ਹੋਣ ਤੇ ਪੰਪ ਇਸਨੂੰ ਵਰਤੇਗਾ।",
+    "current": "ਤੁਹਾਡਾ ਭੇਜਿਆ ਆਖ਼ਰੀ ਟਾਈਮਰ",
+    "none": "ਤੁਸੀਂ ਅਜੇ ਕੋਈ ਟਾਈਮਰ ਨਹੀਂ ਭੇਜਿਆ।",
+    "remoteBlocked": "ਰਿਮੋਟ ਕੰਟਰੋਲ ਰੁਕਿਆ ਹੋਣ ਤੇ ਟਾਈਮਰ ਨਹੀਂ ਭੇਜਿਆ ਜਾ ਸਕਦਾ।"
+  },
+  "history": {
+    "day": "ਅੱਜ",
+    "week": "7 ਦਿਨ",
+    "month": "30 ਦਿਨ",
+    "hoursRun": "ਚੱਲਣ ਦਾ ਸਮਾਂ",
+    "perHour": "ਹਰ ਘੰਟੇ ਵਿੱਚ ਕਿੰਨੇ ਮਿੰਟ ਚੱਲਿਆ (ਪਿਛਲੇ 24 ਘੰਟੇ)",
+    "perDay": "ਹਰ ਦਿਨ ਦਾ ਚੱਲਣ ਦਾ ਸਮਾਂ",
+    "empty": "ਅਜੇ ਚੱਲਣ ਦਾ ਇਤਿਹਾਸ ਨਹੀਂ",
+    "emptyHint": "ਪੰਪ ਚੱਲਣ ਅਤੇ ਜਾਣਕਾਰੀ ਭੇਜਣ ਤੋਂ ਬਾਅਦ ਪੱਟੀਆਂ ਦਿਖਣਗੀਆਂ।",
+    "total": "ਇਸ ਸਮੇਂ ਵਿੱਚ ਕੁੱਲ",
+    "starts": "ਚਾਲੂ ਹੋਇਆ: {{count}} ਵਾਰ",
+    "faultCount": "ਖ਼ਰਾਬੀਆਂ: {{count}}",
+    "export": "CSV ਫ਼ਾਈਲ ਵਜੋਂ ਭੇਜੋ",
+    "exportFailed": "ਫ਼ਾਈਲ ਤਿਆਰ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "estimated": "ਪੰਪ ਦੀ ਭੇਜੀ ਜਾਣਕਾਰੀ ਤੋਂ ਅੰਦਾਜ਼ਾ।",
+    "barDetail": "{{label}}: {{time}}",
+    "noBars": "ਪੰਪ ਨਹੀਂ ਚੱਲਿਆ।"
+  },
+  "faultInfo": {
+    "code1": {
+      "cause": "ਇੱਕ ਫੇਜ਼ (Y) ਪੰਪ ਤੱਕ ਠੀਕ ਤਰ੍ਹਾਂ ਨਹੀਂ ਪਹੁੰਚ ਰਿਹਾ।",
+      "action": "ਪੈਨਲ ਵਿੱਚ Y-ਫੇਜ਼ ਦਾ ਫਿਊਜ਼ ਅਤੇ ਤਾਰਾਂ ਜਾਂਚੋ। ਵਾਰ-ਵਾਰ ਹੋਵੇ ਤਾਂ ਡੀਲਰ ਨੂੰ ਬੁਲਾਓ।"
+    },
+    "code2": {
+      "cause": "ਤਿੰਨਾਂ ਵਿੱਚੋਂ ਇੱਕ ਫੇਜ਼ ਗਾਇਬ ਹੈ, ਇਸ ਲਈ ਮੋਟਰ ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਨਹੀਂ ਚੱਲ ਸਕਦੀ।",
+      "action": "ਫਿਊਜ਼ ਅਤੇ ਬਿਜਲੀ ਸਪਲਾਈ ਜਾਂਚੋ। ਇਲੈਕਟ੍ਰੀਸ਼ੀਅਨ ਜਾਂ ਡੀਲਰ ਨੂੰ ਬੁਲਾਓ।"
+    },
+    "code3": {
+      "cause": "ਬਿਜਲੀ ਦੀ ਵੋਲਟੇਜ ਬਹੁਤ ਜ਼ਿਆਦਾ ਹੈ ਅਤੇ ਮੋਟਰ ਸੜ ਸਕਦੀ ਹੈ।",
+      "action": "ਸਪਲਾਈ ਸਧਾਰਨ ਹੋਣ ਤੱਕ ਰੁਕੋ। ਵੋਲਟੇਜ ਜ਼ਿਆਦਾ ਰਹੇ ਤਾਂ ਦੁਬਾਰਾ ਚਾਲੂ ਨਾ ਕਰੋ।"
+    },
+    "code4": {
+      "cause": "ਤਿੰਨੇ ਫੇਜ਼ ਦੀਆਂ ਤਾਰਾਂ ਗ਼ਲਤ ਕ੍ਰਮ ਵਿੱਚ ਹਨ, ਇਸ ਲਈ ਮੋਟਰ ਉਲਟੀ ਘੁੰਮਦੀ ਹੈ।",
+      "action": "ਪੰਪ ਨਾ ਚਲਾਓ। ਇਲੈਕਟ੍ਰੀਸ਼ੀਅਨ ਤੋਂ ਕੋਈ ਵੀ ਦੋ ਫੇਜ਼ ਦੀਆਂ ਤਾਰਾਂ ਆਪਸ ਵਿੱਚ ਬਦਲਵਾਓ।"
+    },
+    "code5": {
+      "cause": "ਪੰਪ ਬਿਨਾਂ ਪਾਣੀ ਦੇ ਚੱਲ ਰਿਹਾ ਹੈ।",
+      "action": "ਪਾਣੀ ਦਾ ਪੱਧਰ ਅਤੇ ਫੁੱਟ ਵਾਲਵ ਜਾਂਚੋ। ਪਾਣੀ ਮਿਲਣ ਤੇ ਹੀ ਦੁਬਾਰਾ ਚਾਲੂ ਕਰੋ।"
+    },
+    "code6": {
+      "cause": "ਮੋਟਰ ਤੱਕ ਜਾਂਦੀ ਕੇਬਲ ਸਾਰੇ ਫੇਜ਼ ਤੇ ਟੁੱਟੀ ਜਾਂ ਨਿਕਲੀ ਹੋਈ ਹੈ।",
+      "action": "ਪੈਨਲ ਤੋਂ ਮੋਟਰ ਤੱਕ ਦੀ ਕੇਬਲ ਅਤੇ ਜੋੜ ਜਾਂਚੋ। ਡੀਲਰ ਨੂੰ ਬੁਲਾਓ।"
+    },
+    "code7": {
+      "cause": "ਮੋਟਰ ਦੀ ਕੇਬਲ ਅੰਸ਼ਕ ਟੁੱਟੀ ਹੈ, ਜਾਂ ਕੁਝ ਫੇਜ਼ ਤੇ ਜੋੜ ਢਿੱਲਾ ਹੈ।",
+      "action": "ਕੇਬਲ ਦੇ ਜੋੜ ਅਤੇ ਟਰਮੀਨਲ ਜਾਂਚੋ। ਡੀਲਰ ਨੂੰ ਬੁਲਾਓ।"
+    },
+    "code8": {
+      "cause": "ਮੋਟਰ ਜ਼ਿਆਦਾ ਕਰੰਟ ਖਿੱਚ ਰਹੀ ਹੈ, ਪੰਪ ਜਾਮ ਹੈ ਜਾਂ ਸਪਲਾਈ ਕਮਜ਼ੋਰ ਹੈ।",
+      "action": "ਪੰਪ ਵਿੱਚ ਰੁਕਾਵਟ ਜਾਂਚੋ। ਥੋੜ੍ਹਾ ਰੁਕ ਕੇ ਦੁਬਾਰਾ ਚਾਲੂ ਕਰੋ। ਵਾਰ-ਵਾਰ ਹੋਵੇ ਤਾਂ ਡੀਲਰ ਨੂੰ ਬੁਲਾਓ।"
+    },
+    "code9": {
+      "cause": "ਤਿੰਨਾਂ ਫੇਜ਼ ਦੀਆਂ ਵੋਲਟੇਜਾਂ ਇੱਕ-ਦੂਜੇ ਤੋਂ ਬਹੁਤ ਵੱਖਰੀਆਂ ਹਨ।",
+      "action": "ਸਪਲਾਈ ਸੰਤੁਲਿਤ ਹੋਣ ਤੱਕ ਰੁਕੋ। ਜਾਰੀ ਰਹੇ ਤਾਂ ਬਿਜਲੀ ਕੰਪਨੀ ਨੂੰ ਦੱਸੋ।"
+    },
+    "code10": {
+      "cause": "ਬਿਜਲੀ ਦੀ ਵੋਲਟੇਜ ਇੰਨੀ ਘੱਟ ਹੈ ਕਿ ਮੋਟਰ ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਨਹੀਂ ਚੱਲ ਸਕਦੀ।",
+      "action": "ਵੋਲਟੇਜ ਸੁਧਰਨ ਤੱਕ ਰੁਕੋ, ਫਿਰ ਚਾਲੂ ਕਰੋ।"
+    },
+    "unknown": {
+      "cause": "ਪੰਪ ਨੂੰ ਇੱਕ ਅਜਿਹੀ ਖ਼ਰਾਬੀ ਮਿਲੀ ਜਿਸਦਾ ਨਾਂ ਉਹ ਨਹੀਂ ਦੱਸ ਸਕਿਆ।",
+      "action": "ਆਪਣੇ ਡੀਲਰ ਨੂੰ ਬੁਲਾਓ ਅਤੇ ਖ਼ਰਾਬੀ ਦਾ ਕੋਡ ਦੱਸੋ।"
+    }
+  },
+  "support": {
+    "title": "ਮਦਦ",
+    "dealer": "ਤੁਹਾਡਾ ਡੀਲਰ",
+    "call": "{{name}} ਨੂੰ ਫ਼ੋਨ ਕਰੋ",
+    "noDealer": "ਤੁਹਾਡੇ ਡੀਲਰ ਦਾ ਨੰਬਰ ਅਜੇ ਦਰਜ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਪੰਪ ਲਗਾਉਣ ਵਾਲੇ ਤੋਂ ਪੁੱਛੋ।",
+    "company": "ਕੰਪਨੀ ਸਹਾਇਤਾ",
+    "loadFailed": "ਡੀਲਰ ਦੀ ਜਾਣਕਾਰੀ ਨਹੀਂ ਮਿਲ ਸਕੀ।"
+  },
+  "manage": {
+    "title": "ਪੰਪ ਸੰਭਾਲੋ",
+    "pumps": "ਤੁਹਾਡੇ ਪੰਪ",
+    "groups": "ਸਮੂਹ",
+    "rename": "ਨਾਂ ਬਦਲੋ",
+    "namePlaceholder": "ਪੰਪ ਦਾ ਨਾਂ",
+    "originalName": "ਪੰਪ ਤੇ ਦਰਜ ਨਾਂ: {{name}}",
+    "moveUp": "ਉੱਪਰ ਕਰੋ",
+    "moveDown": "ਥੱਲੇ ਕਰੋ",
+    "group": "ਸਮੂਹ",
+    "noGroup": "ਕੋਈ ਸਮੂਹ ਨਹੀਂ",
+    "newGroup": "ਨਵਾਂ ਸਮੂਹ",
+    "groupPlaceholder": "ਜਿਵੇਂ: ਉੱਤਰ ਵਾਲਾ ਖੇਤ",
+    "createGroup": "ਸਮੂਹ ਬਣਾਓ",
+    "renameGroup": "ਸਮੂਹ ਦਾ ਨਾਂ ਬਦਲੋ",
+    "deleteGroup": "ਸਮੂਹ ਹਟਾਓ",
+    "deleteGroupTitle": "ਕੀ ਇਹ ਸਮੂਹ ਹਟਾਉਣਾ ਹੈ?",
+    "deleteGroupBody": "ਇਸ ਵਿਚਲੇ ਪੰਪ ਬਿਨਾਂ ਸਮੂਹ ਦੇ ਤੁਹਾਡੀ ਸੂਚੀ ਵਿੱਚ ਹੀ ਰਹਿਣਗੇ।",
+    "groupPumps": "ਪੰਪ: {{count}}",
+    "empty": "ਸੰਭਾਲਣ ਲਈ ਅਜੇ ਤੁਹਾਡੇ ਕੋਲ ਕੋਈ ਪੰਪ ਨਹੀਂ।",
+    "nameEmpty": "ਕਿਰਪਾ ਕਰਕੇ ਕੋਈ ਨਾਂ ਲਿਖੋ।"
+  },
+  "plan": {
+    "expiring": "ਤੁਹਾਡਾ ਪਲਾਨ {{days}} ਦਿਨਾਂ ਵਿੱਚ, {{date}} ਨੂੰ ਖ਼ਤਮ ਹੋ ਰਿਹਾ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਡੀਲਰ ਨੂੰ ਨਵਿਆਉਣ ਲਈ ਕਹੋ।",
+    "expiresToday": "ਤੁਹਾਡਾ ਪਲਾਨ ਅੱਜ ਖ਼ਤਮ ਹੋ ਰਿਹਾ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਡੀਲਰ ਨੂੰ ਨਵਿਆਉਣ ਲਈ ਕਹੋ।",
+    "expired": "ਤੁਹਾਡਾ ਪਲਾਨ {{date}} ਨੂੰ ਖ਼ਤਮ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਡੀਲਰ ਨੂੰ ਨਵਿਆਉਣ ਲਈ ਕਹੋ।",
+    "suspended": "ਇਸ ਪੰਪ ਦਾ ਰਿਮੋਟ ਕੰਟਰੋਲ ਰੋਕਿਆ ਗਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
+  },
+  "otp": {
+    "title": "Enter Verification Code",
+    "desc": "We have sent a 6-digit code to",
+    "onWhatsapp": "on WhatsApp",
+    "testOtpNotice": "Test mode - use the code below",
+    "autoFill": "Auto-fill",
+    "resendPrompt": "Didn't receive the code?",
+    "resendIn": "Resend in",
+    "resendButton": "Resend OTP",
+    "verifyButton": "Verify OTP",
+    "verifyingButton": "Verifying...",
+    "incompleteCode": "Enter all 6 digits"
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "desc": "Set a password for your account",
+    "passwordReq": "Minimum 8 characters",
+    "confirmLabel": "Confirm Password",
+    "submitButton": "Create Account",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
+  },
+  "registered": {
+    "title": "Registration Successful!",
+    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "phoneLabel": "Registered mobile number",
+    "continueButton": "Continue to App"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "desc": "Enter your mobile number to receive a reset code on WhatsApp"
+  },
+  "resetPassword": {
+    "title": "Create New Password",
+    "desc": "Set a new password for your account",
+    "newPasswordLabel": "New Password",
+    "submitButton": "Update Password"
+  },
+  "passwordUpdated": {
+    "title": "Password Updated!",
+    "desc": "Your password has been updated successfully. Please sign in with your new password.",
+    "goToLogin": "Go to Login"
+  }
+}

@@ -12,14 +12,18 @@ def get_dedup_bucket(now_ts: Optional[float] = None) -> int:
     ts = now_ts or time.time()
     return int(ts // DEDUP_WINDOW_SECONDS)
 
-async def raise_alert(
+import asyncio
+from fastapi import BackgroundTasks
+
+def raise_alert(
     db: Session,
     pump_id: str,
     alert_type: str,
     severity: str,
     fault_code: Optional[int] = None,
     source_fault_log_id: Optional[int] = None,
-    resolution_note: Optional[str] = None
+    resolution_note: Optional[str] = None,
+    background_tasks: Optional[BackgroundTasks] = None
 ) -> Alert:
     now = datetime.utcnow()
     bucket = get_dedup_bucket()
@@ -75,23 +79,17 @@ async def raise_alert(
         "first_occurred_at": alert.first_occurred_at.isoformat() if alert.first_occurred_at else None,
         "last_occurred_at": alert.last_occurred_at.isoformat() if alert.last_occurred_at else None,
     }
-    await ws_hub.broadcast_fault(pump_id, alert_payload, h_path)
+    
+    async def _bcast():
+        await ws_hub.broadcast_fault(pump_id, alert_payload, h_path)
+        
+    if background_tasks:
+        background_tasks.add_task(_bcast)
+    else:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_bcast())
+        except RuntimeError:
+            pass
 
     return alert
-
-async def run_offline_sweep(db: Session, offline_threshold_minutes: int = 15):
-    cutoff = datetime.utcnow() - timedelta(minutes=offline_threshold_minutes)
-    offline_pumps = (
-        db.query(Pump)
-        .filter(Pump.last_seen_at < cutoff, Pump.status != "OFFLINE", Pump.lifecycle_state == "ACTIVE")
-        .all()
-    )
-    for pump in offline_pumps:
-        pump.status = "OFFLINE"
-        db.commit()
-        await raise_alert(
-            db=db,
-            pump_id=pump.id,
-            alert_type="OFFLINE",
-            severity="HIGH"
-        )

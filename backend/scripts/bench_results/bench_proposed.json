@@ -1,0 +1,535 @@
+{
+  "devices": 100000,
+  "runs": 15,
+  "indexes": "proposed",
+  "rows": {
+    "organisations": 280,
+    "pumps": 0,
+    "fault_logs": 0,
+    "alerts": 0,
+    "daily_summary": 0,
+    "telemetry_history": 0
+  },
+  "results": [
+    {
+      "scenario": "manufacturer: device states",
+      "runs": 15,
+      "p50_ms": 71.1,
+      "p95_ms": 135.4,
+      "p99_ms": 137.6,
+      "max_ms": 137.6
+    },
+    {
+      "scenario": "manufacturer: connectivity",
+      "runs": 15,
+      "p50_ms": 50.4,
+      "p95_ms": 122.1,
+      "p99_ms": 136.5,
+      "max_ms": 136.5
+    },
+    {
+      "scenario": "manufacturer: active faults by type",
+      "runs": 15,
+      "p50_ms": 47.3,
+      "p95_ms": 394.7,
+      "p99_ms": 419.9,
+      "max_ms": 419.9
+    },
+    {
+      "scenario": "manufacturer: faults today",
+      "runs": 15,
+      "p50_ms": 114.0,
+      "p95_ms": 151.4,
+      "p99_ms": 437.3,
+      "max_ms": 437.3
+    },
+    {
+      "scenario": "manufacturer: top faulting (top 10, 30 d)",
+      "runs": 15,
+      "p50_ms": 280.8,
+      "p95_ms": 352.9,
+      "p99_ms": 457.0,
+      "max_ms": 457.0
+    },
+    {
+      "scenario": "manufacturer: firmware distribution",
+      "runs": 15,
+      "p50_ms": 78.5,
+      "p95_ms": 103.4,
+      "p99_ms": 151.6,
+      "max_ms": 151.6
+    },
+    {
+      "scenario": "manufacturer: connectivity map",
+      "runs": 15,
+      "p50_ms": 75.1,
+      "p95_ms": 107.6,
+      "p99_ms": 115.7,
+      "max_ms": 115.7
+    },
+    {
+      "scenario": "manufacturer: runtime (history + live today)",
+      "runs": 15,
+      "p50_ms": 944.3,
+      "p95_ms": 1971.7,
+      "p99_ms": 3182.5,
+      "max_ms": 3182.5
+    },
+    {
+      "scenario": "manufacturer: warranty expiring",
+      "runs": 15,
+      "p50_ms": 46.2,
+      "p95_ms": 106.5,
+      "p99_ms": 152.0,
+      "max_ms": 152.0
+    },
+    {
+      "scenario": "manufacturer: subscription expiring",
+      "runs": 15,
+      "p50_ms": 42.6,
+      "p95_ms": 47.7,
+      "p99_ms": 52.6,
+      "max_ms": 52.6
+    },
+    {
+      "scenario": "manufacturer: offline list (page of 50)",
+      "runs": 15,
+      "p50_ms": 61.0,
+      "p95_ms": 79.9,
+      "p99_ms": 153.5,
+      "max_ms": 153.5
+    },
+    {
+      "scenario": "manufacturer: freshness (max last_seen)",
+      "runs": 15,
+      "p50_ms": 66.1,
+      "p95_ms": 82.4,
+      "p99_ms": 165.3,
+      "max_ms": 165.3
+    },
+    {
+      "scenario": "manufacturer: WHOLE dashboard (uncached)",
+      "runs": 5,
+      "p50_ms": 4198.3,
+      "p95_ms": 5491.4,
+      "p99_ms": 5491.4,
+      "max_ms": 5491.4
+    },
+    {
+      "scenario": "distributor: device states",
+      "runs": 15,
+      "p50_ms": 17.7,
+      "p95_ms": 19.0,
+      "p99_ms": 19.1,
+      "max_ms": 19.1
+    },
+    {
+      "scenario": "distributor: connectivity",
+      "runs": 15,
+      "p50_ms": 20.3,
+      "p95_ms": 21.3,
+      "p99_ms": 21.6,
+      "max_ms": 21.6
+    },
+    {
+      "scenario": "distributor: active faults by type",
+      "runs": 15,
+      "p50_ms": 70.8,
+      "p95_ms": 77.1,
+      "p99_ms": 87.7,
+      "max_ms": 87.7
+    },
+    {
+      "scenario": "distributor: faults today",
+      "runs": 15,
+      "p50_ms": 58.0,
+      "p95_ms": 60.8,
+      "p99_ms": 74.6,
+      "max_ms": 74.6
+    },
+    {
+      "scenario": "distributor: top faulting (top 10, 30 d)",
+      "runs": 15,
+      "p50_ms": 97.7,
+      "p95_ms": 102.4,
+      "p99_ms": 102.7,
+      "max_ms": 102.7
+    },
+    {
+      "scenario": "distributor: firmware distribution",
+      "runs": 15,
+      "p50_ms": 17.7,
+      "p95_ms": 19.3,
+      "p99_ms": 38.6,
+      "max_ms": 38.6
+    },
+    {
+      "scenario": "distributor: connectivity map",
+      "runs": 15,
+      "p50_ms": 12.6,
+      "p95_ms": 18.5,
+      "p99_ms": 19.4,
+      "max_ms": 19.4
+    },
+    {
+      "scenario": "distributor: runtime (history + live today)",
+      "runs": 15,
+      "p50_ms": 394.5,
+      "p95_ms": 644.2,
+      "p99_ms": 677.0,
+      "max_ms": 677.0
+    },
+    {
+      "scenario": "distributor: warranty expiring",
+      "runs": 15,
+      "p50_ms": 7.3,
+      "p95_ms": 33.9,
+      "p99_ms": 36.0,
+      "max_ms": 36.0
+    },
+    {
+      "scenario": "distributor: subscription expiring",
+      "runs": 15,
+      "p50_ms": 4.2,
+      "p95_ms": 14.7,
+      "p99_ms": 19.6,
+      "max_ms": 19.6
+    },
+    {
+      "scenario": "distributor: offline list (page of 50)",
+      "runs": 15,
+      "p50_ms": 18.4,
+      "p95_ms": 51.6,
+      "p99_ms": 91.6,
+      "max_ms": 91.6
+    },
+    {
+      "scenario": "distributor: freshness (max last_seen)",
+      "runs": 15,
+      "p50_ms": 22.6,
+      "p95_ms": 29.2,
+      "p99_ms": 63.3,
+      "max_ms": 63.3
+    },
+    {
+      "scenario": "distributor: WHOLE dashboard (uncached)",
+      "runs": 5,
+      "p50_ms": 1369.1,
+      "p95_ms": 2224.2,
+      "p99_ms": 2224.2,
+      "max_ms": 2224.2
+    },
+    {
+      "scenario": "dealer: device states",
+      "runs": 15,
+      "p50_ms": 2.1,
+      "p95_ms": 2.7,
+      "p99_ms": 2.7,
+      "max_ms": 2.7
+    },
+    {
+      "scenario": "dealer: connectivity",
+      "runs": 15,
+      "p50_ms": 2.8,
+      "p95_ms": 3.0,
+      "p99_ms": 3.4,
+      "max_ms": 3.4
+    },
+    {
+      "scenario": "dealer: active faults by type",
+      "runs": 15,
+      "p50_ms": 7.3,
+      "p95_ms": 7.9,
+      "p99_ms": 8.8,
+      "max_ms": 8.8
+    },
+    {
+      "scenario": "dealer: faults today",
+      "runs": 15,
+      "p50_ms": 45.0,
+      "p95_ms": 49.6,
+      "p99_ms": 50.7,
+      "max_ms": 50.7
+    },
+    {
+      "scenario": "dealer: top faulting (top 10, 30 d)",
+      "runs": 15,
+      "p50_ms": 46.5,
+      "p95_ms": 155.0,
+      "p99_ms": 163.2,
+      "max_ms": 163.2
+    },
+    {
+      "scenario": "dealer: firmware distribution",
+      "runs": 15,
+      "p50_ms": 2.0,
+      "p95_ms": 2.7,
+      "p99_ms": 3.1,
+      "max_ms": 3.1
+    },
+    {
+      "scenario": "dealer: connectivity map",
+      "runs": 15,
+      "p50_ms": 3.4,
+      "p95_ms": 3.9,
+      "p99_ms": 4.7,
+      "max_ms": 4.7
+    },
+    {
+      "scenario": "dealer: runtime (history + live today)",
+      "runs": 15,
+      "p50_ms": 66.1,
+      "p95_ms": 111.7,
+      "p99_ms": 184.9,
+      "max_ms": 184.9
+    },
+    {
+      "scenario": "dealer: warranty expiring",
+      "runs": 15,
+      "p50_ms": 1.3,
+      "p95_ms": 1.7,
+      "p99_ms": 1.8,
+      "max_ms": 1.8
+    },
+    {
+      "scenario": "dealer: subscription expiring",
+      "runs": 15,
+      "p50_ms": 1.0,
+      "p95_ms": 1.1,
+      "p99_ms": 1.3,
+      "max_ms": 1.3
+    },
+    {
+      "scenario": "dealer: offline list (page of 50)",
+      "runs": 15,
+      "p50_ms": 3.8,
+      "p95_ms": 4.5,
+      "p99_ms": 5.1,
+      "max_ms": 5.1
+    },
+    {
+      "scenario": "dealer: freshness (max last_seen)",
+      "runs": 15,
+      "p50_ms": 2.3,
+      "p95_ms": 4.3,
+      "p99_ms": 4.6,
+      "max_ms": 4.6
+    },
+    {
+      "scenario": "dealer: WHOLE dashboard (uncached)",
+      "runs": 5,
+      "p50_ms": 181.6,
+      "p95_ms": 326.4,
+      "p99_ms": 326.4,
+      "max_ms": 326.4
+    },
+    {
+      "scenario": "legacy dealer: device states",
+      "runs": 15,
+      "p50_ms": 2.4,
+      "p95_ms": 3.3,
+      "p99_ms": 3.4,
+      "max_ms": 3.4
+    },
+    {
+      "scenario": "legacy dealer: connectivity",
+      "runs": 15,
+      "p50_ms": 2.5,
+      "p95_ms": 3.2,
+      "p99_ms": 3.4,
+      "max_ms": 3.4
+    },
+    {
+      "scenario": "legacy dealer: active faults by type",
+      "runs": 15,
+      "p50_ms": 10.0,
+      "p95_ms": 11.0,
+      "p99_ms": 11.4,
+      "max_ms": 11.4
+    },
+    {
+      "scenario": "legacy dealer: faults today",
+      "runs": 15,
+      "p50_ms": 7.7,
+      "p95_ms": 9.9,
+      "p99_ms": 10.3,
+      "max_ms": 10.3
+    },
+    {
+      "scenario": "legacy dealer: top faulting (top 10, 30 d)",
+      "runs": 15,
+      "p50_ms": 20.7,
+      "p95_ms": 30.3,
+      "p99_ms": 43.6,
+      "max_ms": 43.6
+    },
+    {
+      "scenario": "legacy dealer: firmware distribution",
+      "runs": 15,
+      "p50_ms": 2.4,
+      "p95_ms": 4.1,
+      "p99_ms": 5.1,
+      "max_ms": 5.1
+    },
+    {
+      "scenario": "legacy dealer: connectivity map",
+      "runs": 15,
+      "p50_ms": 3.0,
+      "p95_ms": 3.5,
+      "p99_ms": 3.9,
+      "max_ms": 3.9
+    },
+    {
+      "scenario": "legacy dealer: runtime (history + live today)",
+      "runs": 15,
+      "p50_ms": 33.6,
+      "p95_ms": 38.8,
+      "p99_ms": 54.6,
+      "max_ms": 54.6
+    },
+    {
+      "scenario": "legacy dealer: warranty expiring",
+      "runs": 15,
+      "p50_ms": 1.5,
+      "p95_ms": 2.3,
+      "p99_ms": 2.4,
+      "max_ms": 2.4
+    },
+    {
+      "scenario": "legacy dealer: subscription expiring",
+      "runs": 15,
+      "p50_ms": 1.1,
+      "p95_ms": 1.6,
+      "p99_ms": 1.8,
+      "max_ms": 1.8
+    },
+    {
+      "scenario": "legacy dealer: offline list (page of 50)",
+      "runs": 15,
+      "p50_ms": 5.6,
+      "p95_ms": 6.4,
+      "p99_ms": 8.1,
+      "max_ms": 8.1
+    },
+    {
+      "scenario": "legacy dealer: freshness (max last_seen)",
+      "runs": 15,
+      "p50_ms": 2.0,
+      "p95_ms": 3.2,
+      "p99_ms": 3.3,
+      "max_ms": 3.3
+    },
+    {
+      "scenario": "legacy dealer: WHOLE dashboard (uncached)",
+      "runs": 5,
+      "p50_ms": 83.9,
+      "p95_ms": 105.4,
+      "p99_ms": 105.4,
+      "max_ms": 105.4
+    },
+    {
+      "scenario": "superadmin: device states",
+      "runs": 15,
+      "p50_ms": 71.4,
+      "p95_ms": 81.3,
+      "p99_ms": 84.2,
+      "max_ms": 84.2
+    },
+    {
+      "scenario": "superadmin: connectivity",
+      "runs": 15,
+      "p50_ms": 81.2,
+      "p95_ms": 104.3,
+      "p99_ms": 153.6,
+      "max_ms": 153.6
+    },
+    {
+      "scenario": "superadmin: active faults by type",
+      "runs": 15,
+      "p50_ms": 105.4,
+      "p95_ms": 165.8,
+      "p99_ms": 203.5,
+      "max_ms": 203.5
+    },
+    {
+      "scenario": "superadmin: faults today",
+      "runs": 15,
+      "p50_ms": 15.3,
+      "p95_ms": 29.3,
+      "p99_ms": 38.7,
+      "max_ms": 38.7
+    },
+    {
+      "scenario": "superadmin: top faulting (top 10, 30 d)",
+      "runs": 15,
+      "p50_ms": 582.7,
+      "p95_ms": 1596.6,
+      "p99_ms": 1915.7,
+      "max_ms": 1915.7
+    },
+    {
+      "scenario": "superadmin: firmware distribution",
+      "runs": 15,
+      "p50_ms": 107.4,
+      "p95_ms": 136.5,
+      "p99_ms": 166.0,
+      "max_ms": 166.0
+    },
+    {
+      "scenario": "superadmin: connectivity map",
+      "runs": 15,
+      "p50_ms": 248.1,
+      "p95_ms": 298.9,
+      "p99_ms": 370.0,
+      "max_ms": 370.0
+    },
+    {
+      "scenario": "superadmin: runtime (history + live today)",
+      "runs": 15,
+      "p50_ms": 126.9,
+      "p95_ms": 145.5,
+      "p99_ms": 157.5,
+      "max_ms": 157.5
+    },
+    {
+      "scenario": "superadmin: warranty expiring",
+      "runs": 15,
+      "p50_ms": 76.1,
+      "p95_ms": 158.4,
+      "p99_ms": 158.5,
+      "max_ms": 158.5
+    },
+    {
+      "scenario": "superadmin: subscription expiring",
+      "runs": 15,
+      "p50_ms": 50.1,
+      "p95_ms": 79.7,
+      "p99_ms": 89.1,
+      "max_ms": 89.1
+    },
+    {
+      "scenario": "superadmin: offline list (page of 50)",
+      "runs": 15,
+      "p50_ms": 231.3,
+      "p95_ms": 355.1,
+      "p99_ms": 409.5,
+      "max_ms": 409.5
+    },
+    {
+      "scenario": "superadmin: freshness (max last_seen)",
+      "runs": 15,
+      "p50_ms": 77.8,
+      "p95_ms": 96.3,
+      "p99_ms": 126.2,
+      "max_ms": 126.2
+    },
+    {
+      "scenario": "superadmin: WHOLE dashboard (uncached)",
+      "runs": 5,
+      "p50_ms": 2413.6,
+      "p95_ms": 3446.9,
+      "p99_ms": 3446.9,
+      "max_ms": 3446.9
+    }
+  ]
+}

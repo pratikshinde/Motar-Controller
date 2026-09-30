@@ -126,10 +126,13 @@ def apply_template(
     template_desired = tmpl.desired_json or tmpl.config_json or {}
     results = []
 
+    from app.repositories.pump_repository import PumpRepository
+    repo = PumpRepository.for_actor(actor=current_user, db=db)
+
     for pump_id in pump_ids:
-        pump = db.query(Pump).filter(Pump.id == pump_id).first()
+        pump = repo._base_query().filter(Pump.id == pump_id).first()
         if not pump:
-            results.append({"pump_id": pump_id, "success": False, "reason": "Pump not found"})
+            results.append({"pump_id": pump_id, "success": False, "reason": "Pump not found or access denied"})
             continue
 
         cfg = db.query(DeviceConfig).filter(DeviceConfig.pump_id == pump_id).first()

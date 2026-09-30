@@ -38,8 +38,15 @@ export const UserTreeNodeView: React.FC<Props> = ({ node, depth, onAddUnder, onA
         elevation={0}
         sx={{
           display: 'flex',
-          alignItems: 'center',
+          // Below md the name/role text and the row of up to 3 action buttons no longer both fit on one
+          // line — forcing them to share it (as a single non-wrapping flex row) squeezed the text down to
+          // a sliver of the card and wrapped it across several cramped lines. This has to stack well
+          // before the app's own compact/rail nav breakpoint (down('sm')): the rail already claims part
+          // of the width the row needs, so a plain `sm` switch was still too narrow — verified live.
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'stretch', md: 'center' },
           justifyContent: 'space-between',
+          gap: { xs: 1, md: 0 },
           px: 2,
           py: 1,
           mb: 1,
@@ -76,7 +83,7 @@ export const UserTreeNodeView: React.FC<Props> = ({ node, depth, onAddUnder, onA
             </Box>
           )}
         </Box>
-        <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0, flexWrap: 'wrap' }}>
           {canAddStaff && (
             <Tooltip title="Add staff login to this account">
               <Button size="small" variant="tonal" startIcon={<GroupAddIcon fontSize="small" />} onClick={() => onAddStaff(node.id)}>

@@ -1,0 +1,489 @@
+{
+  "brand": {
+    "line1": "અજંતા પંપ",
+    "line2": "કંટ્રોલર"
+  },
+  "common": {
+    "retry": "ફરી પ્રયત્ન કરો",
+    "refresh": "રિફ્રેશ કરો",
+    "back": "પાછા",
+    "cancel": "રદ કરો",
+    "continue": "આગળ વધો",
+    "checkAgain": "ફરી તપાસો",
+    "serverUnreachableTitle": "સર્વર સાથે સંપર્ક થતો નથી",
+    "save": "સાચવો",
+    "loading": "લોડ થઈ રહ્યું છે…",
+    "more": "વધારો",
+    "less": "ઘટાડો"
+  },
+  "splash": {
+    "tagline": "તમારો પંપ ગમે ત્યાંથી ચલાવો",
+    "starting": "શરૂ થઈ રહ્યું છે…",
+    "footer": "સ્માર્ટ 3-ફેઝ પંપ સુરક્ષા"
+  },
+  "language": {
+    "title": "તમારી ભાષા પસંદ કરો",
+    "continue": "આગળ વધો",
+    "listenAll": "ભાષાઓ સાંભળો",
+    "stopListening": "બંધ કરો",
+    "back": "સેટિંગ્સ પર પાછા"
+  },
+  "login": {
+    "tabLogin": "લૉગિન",
+    "tabRegister": "નવું ખાતું",
+    "welcomeBack": "ફરી સ્વાગત છે",
+    "createTitle": "તમારું ખાતું બનાવો",
+    "nameLabel": "તમારું નામ",
+    "namePlaceholder": "પૂરું નામ",
+    "mobileLabel": "મોબાઇલ નંબર",
+    "mobilePlaceholder": "10 અંકનો મોબાઇલ નંબર",
+    "passwordLabel": "પાસવર્ડ",
+    "passwordPlaceholder": "તમારો પાસવર્ડ",
+    "choosePassword": "પાસવર્ડ પસંદ કરો",
+    "choosePasswordPlaceholder": "ઓછામાં ઓછા 6 અક્ષર",
+    "loginButton": "લૉગિન કરો",
+    "createButton": "ખાતું બનાવો",
+    "newHere": "નવા છો?",
+    "createLink": "ખાતું બનાવો",
+    "haveAccount": "પહેલેથી ખાતું છે?",
+    "loginLink": "લૉગિન કરો",
+    "showPassword": "પાસવર્ડ બતાવો",
+    "hidePassword": "પાસવર્ડ છુપાવો",
+    "validationTitle": "કૃપા કરીને તપાસો",
+    "needName": "કૃપા કરીને તમારું પૂરું નામ લખો",
+    "needPhone": "કૃપા કરીને તમારો મોબાઇલ નંબર લખો",
+    "needPassword": "કૃપા કરીને તમારો પાસવર્ડ લખો",
+    "passwordShort": "પાસવર્ડ ઓછામાં ઓછા 6 અક્ષરનો હોવો જોઈએ",
+    "loginFailedTitle": "લૉગિન થઈ શક્યું નથી",
+    "notFoundTitle": "ખાતું મળ્યું નથી",
+    "notFoundMessage": "આ મોબાઇલ નંબર હજી નોંધાયેલ નથી. શું તમે નવું ખાતું બનાવવા માંગો છો?",
+    "registerFailedTitle": "ખાતું બની શક્યું નથી",
+    "createdTitle": "ખાતું બની ગયું",
+    "createdMessage": "સ્વાગત છે {{name}}. તમારું ખાતું તૈયાર છે. આગળ વધવા માટે લૉગિન કરો.",
+    "createdStatus": "ખાતું બની ગયું. તમારા મોબાઇલ નંબર અને પાસવર્ડથી લૉગિન કરો.",
+    "welcomeBackDesc": "Login to manage your pump remotely",
+    "forgotPassword": "Forgot Password?",
+    "createDesc": "Register using your WhatsApp number",
+    "sendOtpButton": "Send OTP on WhatsApp"
+  },
+  "nav": {
+    "pumps": "મારા પંપ",
+    "alerts": "ચેતવણીઓ",
+    "settings": "સેટિંગ્સ"
+  },
+  "pumps": {
+    "title": "મારા પંપ",
+    "count_one": "{{count}} પંપ",
+    "count_other": "{{count}} પંપ",
+    "loading": "તમારા પંપ લોડ થઈ રહ્યા છે…",
+    "emptyTitle": "હજી કોઈ પંપ નથી",
+    "emptyMessage": "તમારા મોબાઇલ નંબર સાથે હજી કોઈ પંપ જોડાયેલ નથી. કૃપા કરીને તમારા ડીલરને પંપ ઉમેરવા કહો.",
+    "hp": "{{hp}} એચપી",
+    "openPump": "{{name}}, {{status}}. પંપ ખોલો",
+    "status": {
+      "running": "ચાલુ",
+      "stopped": "બંધ",
+      "fault": "ખામી",
+      "offline": "ઑફલાઇન",
+      "online": "ઑનલાઇન",
+      "unknown": "અજ્ઞાત"
+    },
+    "ungrouped": "બીજા પંપ",
+    "lastSeen": "છેલ્લી ખબર {{ago}}",
+    "noData": "હજી કોઈ માહિતી નથી",
+    "manage": "પંપ સંભાળો",
+    "ranToday": "આજે {{time}} ચાલ્યો"
+  },
+  "alerts": {
+    "title": "ચેતવણીઓ",
+    "loading": "ચેતવણીઓ તપાસી રહ્યા છીએ…",
+    "emptyTitle": "બધું બરાબર છે",
+    "emptyMessage": "હાલમાં તમારા પંપમાં કોઈ સમસ્યા નથી.",
+    "serious": "ગંભીર",
+    "warning": "ચેતવણી",
+    "info": "માહિતી",
+    "needsAttention": "ધ્યાન આપો",
+    "resolved": "સુધરી ગયું",
+    "defaultTitle": "પંપ ચેતવણી",
+    "tabActive": "ચાલુ",
+    "tabFixed": "સુધારેલા",
+    "ack": "મેં જોયું",
+    "acked": "જોયું",
+    "resolve": "સુધરી ગયું એમ નોંધો",
+    "resolveTitle": "આ ચેતવણી સુધરી ગઈ એમ નોંધવી છે?",
+    "resolveBody": "પંપની ખામી દૂર થઈ ગયા પછી જ આ કરો.",
+    "resolveYes": "હા, સુધરી ગયું",
+    "openPump": "પંપ ખોલો",
+    "occurrences": "{{count}} વખત થયું",
+    "last": "છેલ્લે: {{when}}",
+    "emptyFixed": "તાજેતરમાં કંઈ સુધર્યું નથી"
+  },
+  "settings": {
+    "title": "સેટિંગ્સ",
+    "language": "ભાષા",
+    "languageHint": "એપ, ચેતવણીઓ અને અવાજના જવાબની ભાષા",
+    "account": "ખાતું",
+    "logout": "લૉગઆઉટ",
+    "logoutTitle": "લૉગઆઉટ",
+    "logoutMessage": "શું તમે લૉગઆઉટ કરવા માંગો છો?",
+    "version": "આવૃત્તિ {{version}}",
+    "profile": "પ્રોફાઇલ",
+    "name": "તમારું નામ",
+    "nameSaved": "નામ સાચવ્યું",
+    "mobile": "મોબાઇલ નંબર",
+    "managePumps": "પંપ સંભાળો",
+    "managePumpsHint": "પંપનાં નામ બદલો, ક્રમ ગોઠવો અને જૂથ બનાવો",
+    "sessions": "લૉગિન થયેલા ફોન",
+    "thisDevice": "આ ફોન",
+    "lastUsed": "છેલ્લો ઉપયોગ {{when}}",
+    "signOutDevice": "લૉગઆઉટ કરો",
+    "signOutDeviceTitle": "તે ફોનને લૉગઆઉટ કરવો છે?",
+    "signOutDeviceBody": "ફરી લૉગિન કરવા માટે તેને તમારો પાસવર્ડ જોઈશે.",
+    "noOtherSessions": "બીજા કોઈ ફોનમાં લૉગિન નથી.",
+    "data": "તમારો ડેટા",
+    "export": "મારો ડેટા ડાઉનલોડ કરો",
+    "exportHint": "તમારા ખાતા, પંપ અને ચેતવણીઓની એક નકલ.",
+    "exportFailed": "તમારો ડેટા તૈયાર થઈ શક્યો નહીં. કૃપા કરીને ફરી પ્રયત્ન કરો.",
+    "delete": "મારો ડેટા કાઢી નાખો",
+    "deleteHint": "અમને તમારું ખાતું કાઢવા કહો. કંઈ પણ કાઢતાં પહેલાં અમે તમારી સાથે વાત કરીશું.",
+    "deleteTitle": "ડેટા કાઢવાની વિનંતી મોકલવી છે?",
+    "deleteBody": "તમારી વિનંતી અમારી ટીમ પાસે જશે. તમારી સાથે વાત કર્યા વિના કંઈ કાઢવામાં આવશે નહીં.",
+    "deleteConfirm": "વિનંતી મોકલો",
+    "deletePending": "{{date}} ના રોજ ડેટા કાઢવાની વિનંતી કરી. અમે તમારો સંપર્ક કરીશું."
+  },
+  "dashboard": {
+    "cantReachTitle": "પંપ સાથે સંપર્ક થતો નથી",
+    "powerOn": "પંપ ચાલુ",
+    "powerOff": "પંપ બંધ",
+    "running": "ચાલુ છે",
+    "stopped": "બંધ છે",
+    "signal": "સિગ્નલ",
+    "cardPower": "વીજ પુરવઠો (વોલ્ટેજ)",
+    "cardLoad": "મોટર લોડ",
+    "cardRuntime": "ચાલવાનો સમય",
+    "cardHealth": "પંપની સ્થિતિ",
+    "volts": "વોલ્ટ",
+    "powerOk": "વીજળી બરાબર",
+    "noPower": "વીજળી નથી",
+    "rotationOk": "ફરવાની દિશા સાચી",
+    "wrongRotation": "ફરવાની દિશા ખોટી",
+    "offNoLoad": "પંપ બંધ છે — કોઈ લોડ નથી",
+    "totalRun": "કુલ ચાલવાનો સમય",
+    "noFaults": "કોઈ ખામી નથી — પંપ બરાબર છે",
+    "faultBadge": "બંધ થયો",
+    "no": "ના, રદ કરો",
+    "yesStart": "હા, ચાલુ કરો",
+    "yesStop": "હા, બંધ કરો",
+    "ampere": "એમ્પ",
+    "system": "SYSTEM",
+    "cardVoltages": "LINE VOLTAGES",
+    "cardCurrents": "PHASE CURRENTS",
+    "cardRuntime2": "RUN TIME",
+    "cardFaults": "PUMP FAULTS",
+    "quickActions": "QUICK ACTIONS",
+    "startPump": "Start Pump",
+    "stopPump": "Stop Pump",
+    "viewTimer": "Timer",
+    "viewHistory": "History",
+    "totalRunTime": "TOTAL RUN TIME",
+    "lastCycleRunTime": "TODAY'S RUN TIME",
+    "hoursMinutes": "HOURS : MINUTES"
+  },
+  "faults": {
+    "code1": "Y-ફેઝ ખામી",
+    "code2": "ફેઝ ગાયબ (સિંગલ ફેઝિંગ)",
+    "code3": "વોલ્ટેજ વધારે",
+    "code4": "ફેઝનો ક્રમ ખોટો",
+    "code5": "ડ્રાય રન (પાણી નથી)",
+    "code6": "કેબલ ખુલ્લો (બધા ફેઝ)",
+    "code7": "કેબલ આંશિક ખુલ્લો",
+    "code8": "મોટર ઓવરલોડ",
+    "code9": "વોલ્ટેજ અસંતુલન",
+    "code10": "વોલ્ટેજ ઓછો",
+    "unknown": "ખામી (કોડ {{code}})",
+    "title": "ખામીઓ",
+    "current": "અત્યારની ખામી",
+    "cause": "આવું કેમ થાય છે",
+    "action": "શું કરવું",
+    "history": "પહેલાંની ખામીઓ",
+    "historyEmpty": "આ પંપની કોઈ ખામી નોંધાઈ નથી.",
+    "ack": "મેં જોયું",
+    "acked": "જોયું",
+    "fixed": "સુધરી ગઈ",
+    "open": "ખુલ્લી",
+    "resetTitle": "ખામી પછી ફરી ચાલુ કરવું",
+    "resetIntro": "ખામી પંપની પેનલ પર સાફ થાય છે, એપમાં નહીં.",
+    "resetStep1": "પહેલાં ખામીનું કારણ સુધારો.",
+    "resetStep2": "પેનલ પરનું RESET બટન દબાવો.",
+    "resetStep3": "પછી એપમાંથી પંપ ચાલુ કરો.",
+    "panelLabel": "પંપ પેનલ",
+    "resetButton": "RESET",
+    "occurred": "શરૂ થઈ {{when}}",
+    "seenAt": "જોઈ {{when}}"
+  },
+  "errors": {
+    "network": "કનેક્ટ થઈ શકતું નથી. કૃપા કરીને ઇન્ટરનેટ તપાસીને ફરી પ્રયત્ન કરો.",
+    "server": "અમારી બાજુએ કંઈક ગડબડ થઈ. કૃપા કરીને થોડી વાર પછી ફરી પ્રયત્ન કરો.",
+    "tooMany": "ઘણા પ્રયત્નો થઈ ગયા. કૃપા કરીને થોડી રાહ જોઈને ફરી પ્રયત્ન કરો.",
+    "wrongPassword": "પાસવર્ડ ખોટો છે. કૃપા કરીને તપાસીને ફરી પ્રયત્ન કરો.",
+    "suspended": "આ ખાતું બંધ કરવામાં આવ્યું છે. કૃપા કરીને તમારા ડીલરનો સંપર્ક કરો.",
+    "alreadyRegistered": "આ મોબાઇલ નંબર પહેલેથી નોંધાયેલ છે. કૃપા કરીને લૉગિન કરો.",
+    "registrationClosed": "નવા ખાતા તમારા ડીલર ઉમેરે છે. કૃપા કરીને તમારા ડીલરને તમને ઉમેરવા કહો.",
+    "sessionExpired": "તમારું સેશન પૂરું થયું છે. કૃપા કરીને ફરી લૉગિન કરો.",
+    "forbidden": "તમને આ કરવાની પરવાનગી નથી.",
+    "notFound": "મળ્યું નથી.",
+    "invalid": "કૃપા કરીને વિગતો તપાસીને ફરી પ્રયત્ન કરો.",
+    "generic": "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયત્ન કરો.",
+    "offline": "તમે ઑફલાઇન છો. કૃપા કરીને ઇન્ટરનેટ સાથે જોડાઈને ફરી પ્રયત્ન કરો.",
+    "contract": "સર્વરે એપને ન સમજાય એવી માહિતી મોકલી. કૃપા કરીને એપ અપડેટ કરો.",
+    "deviceSuspended": "આ પંપનું રિમોટ કંટ્રોલ બંધ કરેલું છે. કૃપા કરીને તમારા ડીલરનો સંપર્ક કરો.",
+    "siteExists": "આ નામનું જૂથ તમારી પાસે પહેલેથી છે.",
+    "mfaUnsupported": "આ ખાતા માટે સિક્યુરિટી કોડ જોઈએ, જે આ એપ હજી ચલાવતી નથી. કૃપા કરીને તમારા ડીલરનો સંપર્ક કરો."
+  },
+  "time": {
+    "never": "ક્યારેય નહીં",
+    "justNow": "હમણાં જ",
+    "minutesAgo": "{{count}} મિનિટ પહેલાં",
+    "hoursAgo": "{{count}} કલાક પહેલાં",
+    "daysAgo": "{{count}} દિવસ પહેલાં"
+  },
+  "units": {
+    "minutes": "{{m}} મિનિટ",
+    "hoursMinutes": "{{h}} કલાક {{m}} મિનિટ"
+  },
+  "offline": {
+    "banner": "તમે ઑફલાઇન છો. {{time}} સુધીનો સાચવેલો ડેટા દેખાય છે.",
+    "bannerNoData": "તમે ઑફલાઇન છો. પંપ જોવા માટે ઇન્ટરનેટ સાથે જોડાઓ.",
+    "reconnecting": "ફરી જોડાય છે…"
+  },
+  "boundary": {
+    "title": "કંઈક ખોટું થયું",
+    "message": "એપમાં સમસ્યા આવી. તમારા પંપને તેની અસર નથી."
+  },
+  "listen": {
+    "start": "સાંભળો",
+    "stop": "રોકો",
+    "noVoice": "આ ફોનમાં આ ભાષાનો અવાજ નથી. ફોનના ટેક્સ્ટ-ટુ-સ્પીચ સેટિંગમાં તે નાખી શકાય છે."
+  },
+  "pump": {
+    "tabs": {
+      "live": "લાઇવ",
+      "timer": "ટાઇમર",
+      "history": "ઇતિહાસ",
+      "faults": "ખામીઓ"
+    },
+    "notFoundTitle": "પંપ મળ્યો નથી",
+    "notFoundMessage": "આ પંપ હવે તમારી યાદીમાં નથી."
+  },
+  "live": {
+    "updated": "અપડેટ {{ago}}",
+    "stale": "છેલ્લું રીડિંગ {{ago}} આવ્યું હતું. ત્યારની માહિતી દેખાય છે.",
+    "noDataYet": "આ પંપે હજી કોઈ રીડિંગ મોકલ્યું નથી.",
+    "today": "આજે",
+    "total": "કુલ",
+    "noReading": "રીડિંગ નથી",
+    "notReporting": "માહિતી આવતી નથી",
+    "refreshFailed": "તાજું થઈ શક્યું નહીં. સાચવેલી માહિતી દેખાય છે.",
+    "hp": "{{hp}} HP"
+  },
+  "speech": {
+    "running": "{{name}} ચાલુ છે.",
+    "stopped": "{{name}} બંધ છે.",
+    "fault": "{{name}} માં ખામી છે: {{fault}}.",
+    "offline": "{{name}} તરફથી માહિતી આવતી નથી. છેલ્લી ખબર {{ago}} ની છે.",
+    "noData": "{{name}} એ હજી કોઈ રીડિંગ મોકલ્યું નથી.",
+    "volts": "વોલ્ટેજ {{ry}}, {{yb}} અને {{br}} વોલ્ટ છે.",
+    "runtime": "તે આજે {{time}} ચાલ્યો."
+  },
+  "command": {
+    "startTitle": "{{name}} ચાલુ કરવો છે?",
+    "stopTitle": "{{name}} બંધ કરવો છે?",
+    "startBody": "{{name}} હમણાં ચાલુ થશે. ચલાવવું સુરક્ષિત છે તેની ખાતરી કરો.",
+    "stopBody": "{{name}} બંધ થશે અને પાણી આવવાનું બંધ થશે.",
+    "offlineWarn": "આ પંપ તરફથી માહિતી આવતી નથી, એટલે આદેશ તેના સુધી ન પહોંચે એવું બની શકે.",
+    "step": {
+      "sent": "મોકલ્યું",
+      "delivered": "પંપ સુધી પહોંચ્યું",
+      "acknowledged": "પંપે ખાતરી કરી",
+      "applied": "થઈ ગયું"
+    },
+    "titleStart": "ચાલુ કરવાનો આદેશ",
+    "titleStop": "બંધ કરવાનો આદેશ",
+    "notConfirmed": "હજી ખાતરી થઈ નથી. પંપે જવાબ આપ્યો નથી. પંપ તપાસો, અથવા થોડી વાર પછી ફરી પ્રયત્ન કરો.",
+    "rejected": "પંપે આ આદેશ માન્યો નહીં.",
+    "rejectedWhy": "પંપે ના પાડી: {{reason}}",
+    "expired": "પંપ સુધી પહોંચે તે પહેલાં આદેશનો સમય પૂરો થઈ ગયો.",
+    "notSent": "આદેશ મોકલી શકાયો નહીં, તેથી પંપને કંઈ જણાવાયું નહીં. થોડીવારમાં ફરી પ્રયત્ન કરો.",
+    "done": "પંપે તે કરી દીધું.",
+    "tryAgain": "ફરી પ્રયત્ન કરો",
+    "dismiss": "બંધ કરો",
+    "offlineBlock": "તમે ઑફલાઇન છો. પંપ ચલાવવા માટે ઇન્ટરનેટ સાથે જોડાઓ.",
+    "cooldown": "આગલા આદેશ પહેલાં {{seconds}} સેકન્ડ રાહ જુઓ",
+    "cooldownShort": "{{seconds}} સેકન્ડ રાહ જુઓ"
+  },
+  "timer": {
+    "title": "ચાલવાનું ટાઇમર",
+    "intro": "પંપ ચોક્કસ સમય માટે ચલાવો, પછી તે આપમેળે બંધ થશે.",
+    "onLabel": "કેટલી વાર ચાલે (મિનિટ)",
+    "offLabel": "પછી કેટલી વાર બંધ રહે (મિનિટ)",
+    "cyclesLabel": "કેટલી વાર દોહરાવવું",
+    "cyclesHint": "0 એટલે સતત ચાલતું રહે",
+    "range": "{{min}} થી {{max}}",
+    "errorOn": "1 થી 250 મિનિટ લખો",
+    "errorOff": "0 થી 250 મિનિટ લખો",
+    "errorCycles": "0 થી 999 લખો",
+    "save": "પંપને ટાઇમર મોકલો",
+    "confirmTitle": "{{name}} પર ટાઇમર મૂકવું છે?",
+    "summaryOnce": "{{on}} મિનિટ ચાલશે, પછી બંધ થશે.",
+    "summaryRepeat": "{{on}} મિનિટ ચાલશે, {{off}} મિનિટ બંધ રહેશે, {{cycles}} વખત દોહરાવશે.",
+    "summaryForever": "{{on}} મિનિટ ચાલશે, {{off}} મિનિટ બંધ રહેશે, સતત દોહરાવતું રહેશે.",
+    "confirmYes": "હા, મોકલો",
+    "sentUnconfirmed": "પંપને મોકલ્યું, પણ હજી ખાતરી થઈ નથી. ખાતરી થયા પછી પંપ તેનો ઉપયોગ કરશે.",
+    "current": "તમે મોકલેલું છેલ્લું ટાઇમર",
+    "none": "તમે હજી કોઈ ટાઇમર મોકલ્યું નથી.",
+    "remoteBlocked": "રિમોટ કંટ્રોલ બંધ હોય ત્યારે ટાઇમર મોકલી શકાતું નથી."
+  },
+  "history": {
+    "day": "આજે",
+    "week": "7 દિવસ",
+    "month": "30 દિવસ",
+    "hoursRun": "ચાલવાનો સમય",
+    "perHour": "દર કલાકમાં કેટલી મિનિટ ચાલ્યો (છેલ્લા 24 કલાક)",
+    "perDay": "દરરોજ ચાલવાનો સમય",
+    "empty": "હજી ચાલવાનો ઇતિહાસ નથી",
+    "emptyHint": "પંપ ચાલે અને માહિતી મોકલે પછી પટ્ટીઓ દેખાશે.",
+    "total": "આ સમયગાળામાં કુલ",
+    "starts": "ચાલુ થયો: {{count}} વખત",
+    "faultCount": "ખામીઓ: {{count}}",
+    "export": "CSV ફાઇલ તરીકે મોકલો",
+    "exportFailed": "ફાઇલ તૈયાર થઈ શકી નહીં. કૃપા કરીને ફરી પ્રયત્ન કરો.",
+    "estimated": "પંપે મોકલેલી માહિતી પરથી અંદાજ.",
+    "barDetail": "{{label}}: {{time}}",
+    "noBars": "પંપ ચાલ્યો નથી."
+  },
+  "faultInfo": {
+    "code1": {
+      "cause": "એક ફેઝ (Y) પંપ સુધી બરાબર પહોંચતો નથી.",
+      "action": "પેનલમાં Y-ફેઝનો ફ્યુઝ અને વાયરિંગ તપાસો. વારંવાર થાય તો ડીલરને બોલાવો."
+    },
+    "code2": {
+      "cause": "ત્રણમાંથી એક ફેઝ નથી, એટલે મોટર સુરક્ષિત રીતે ચાલી શકતી નથી.",
+      "action": "ફ્યુઝ અને વીજ પુરવઠો તપાસો. ઇલેક્ટ્રિશિયન અથવા ડીલરને બોલાવો."
+    },
+    "code3": {
+      "cause": "વીજ વોલ્ટેજ ખૂબ વધારે છે અને મોટર બળી શકે છે.",
+      "action": "પુરવઠો સામાન્ય થાય ત્યાં સુધી રાહ જુઓ. વોલ્ટેજ વધારે રહે તો ફરી ચાલુ ન કરો."
+    },
+    "code4": {
+      "cause": "ત્રણેય ફેઝના વાયર ખોટા ક્રમમાં છે, એટલે મોટર ઊલટી ફરે છે.",
+      "action": "પંપ ચલાવશો નહીં. ઇલેક્ટ્રિશિયન પાસે કોઈ પણ બે ફેઝના વાયર અદલાબદલી કરાવો."
+    },
+    "code5": {
+      "cause": "પંપ પાણી વગર ચાલી રહ્યો છે.",
+      "action": "પાણીનું સ્તર અને ફૂટ વાલ્વ તપાસો. પાણી મળે ત્યારે જ ફરી ચાલુ કરો."
+    },
+    "code6": {
+      "cause": "મોટર તરફ જતો કેબલ બધા ફેઝ પર તૂટેલો અથવા નીકળેલો છે.",
+      "action": "પેનલથી મોટર સુધીનો કેબલ અને જોડાણ તપાસો. ડીલરને બોલાવો."
+    },
+    "code7": {
+      "cause": "મોટરનો કેબલ આંશિક તૂટેલો છે, અથવા કેટલાક ફેઝ પર જોડાણ ઢીલું છે.",
+      "action": "કેબલનાં જોડાણ અને ટર્મિનલ તપાસો. ડીલરને બોલાવો."
+    },
+    "code8": {
+      "cause": "મોટર વધારે કરંટ ખેંચે છે, પંપ જામ છે અથવા પુરવઠો નબળો છે.",
+      "action": "પંપમાં અવરોધ છે કે કેમ તપાસો. થોડી વાર રાહ જોઈને ફરી ચાલુ કરો. વારંવાર થાય તો ડીલરને બોલાવો."
+    },
+    "code9": {
+      "cause": "ત્રણેય ફેઝના વોલ્ટેજ એકબીજાથી ઘણા અલગ છે.",
+      "action": "પુરવઠો સંતુલિત થાય ત્યાં સુધી રાહ જુઓ. ચાલુ રહે તો વીજ કંપનીને કહો."
+    },
+    "code10": {
+      "cause": "વીજ વોલ્ટેજ એટલો ઓછો છે કે મોટર સુરક્ષિત રીતે ચાલી શકતી નથી.",
+      "action": "વોલ્ટેજ સુધરે ત્યાં સુધી રાહ જુઓ, પછી ચાલુ કરો."
+    },
+    "unknown": {
+      "cause": "પંપને એવી ખામી મળી જેનું નામ તે કહી શક્યો નહીં.",
+      "action": "તમારા ડીલરને બોલાવો અને ખામીનો કોડ જણાવો."
+    }
+  },
+  "support": {
+    "title": "મદદ",
+    "dealer": "તમારા ડીલર",
+    "call": "{{name}} ને ફોન કરો",
+    "noDealer": "તમારા ડીલરનો નંબર હજી સાચવ્યો નથી. કૃપા કરીને પંપ લગાવનારને પૂછો.",
+    "company": "કંપની મદદ",
+    "loadFailed": "ડીલરની વિગતો મળી નહીં."
+  },
+  "manage": {
+    "title": "પંપ સંભાળો",
+    "pumps": "તમારા પંપ",
+    "groups": "જૂથો",
+    "rename": "નામ બદલો",
+    "namePlaceholder": "પંપનું નામ",
+    "originalName": "પંપ પરનું નામ: {{name}}",
+    "moveUp": "ઉપર લો",
+    "moveDown": "નીચે લો",
+    "group": "જૂથ",
+    "noGroup": "કોઈ જૂથ નથી",
+    "newGroup": "નવું જૂથ",
+    "groupPlaceholder": "દા.ત.: ઉત્તર બાજુનું ખેતર",
+    "createGroup": "જૂથ બનાવો",
+    "renameGroup": "જૂથનું નામ બદલો",
+    "deleteGroup": "જૂથ કાઢી નાખો",
+    "deleteGroupTitle": "આ જૂથ કાઢી નાખવું છે?",
+    "deleteGroupBody": "તેમાંના પંપ જૂથ વગર તમારી યાદીમાં જ રહેશે.",
+    "groupPumps": "પંપ: {{count}}",
+    "empty": "સંભાળવા માટે હજી તમારી પાસે કોઈ પંપ નથી.",
+    "nameEmpty": "કૃપા કરીને નામ લખો."
+  },
+  "plan": {
+    "expiring": "તમારો પ્લાન {{days}} દિવસમાં, {{date}} ના રોજ પૂરો થાય છે. કૃપા કરીને ડીલરને રિન્યુ કરવા કહો.",
+    "expiresToday": "તમારો પ્લાન આજે પૂરો થાય છે. કૃપા કરીને ડીલરને રિન્યુ કરવા કહો.",
+    "expired": "તમારો પ્લાન {{date}} ના રોજ પૂરો થયો. કૃપા કરીને ડીલરને રિન્યુ કરવા કહો.",
+    "suspended": "આ પંપનું રિમોટ કંટ્રોલ બંધ કરેલું છે. કૃપા કરીને તમારા ડીલરનો સંપર્ક કરો."
+  },
+  "otp": {
+    "title": "Enter Verification Code",
+    "desc": "We have sent a 6-digit code to",
+    "onWhatsapp": "on WhatsApp",
+    "testOtpNotice": "Test mode - use the code below",
+    "autoFill": "Auto-fill",
+    "resendPrompt": "Didn't receive the code?",
+    "resendIn": "Resend in",
+    "resendButton": "Resend OTP",
+    "verifyButton": "Verify OTP",
+    "verifyingButton": "Verifying...",
+    "incompleteCode": "Enter all 6 digits"
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "desc": "Set a password for your account",
+    "passwordReq": "Minimum 8 characters",
+    "confirmLabel": "Confirm Password",
+    "submitButton": "Create Account",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
+  },
+  "registered": {
+    "title": "Registration Successful!",
+    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "phoneLabel": "Registered mobile number",
+    "continueButton": "Continue to App"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "desc": "Enter your mobile number to receive a reset code on WhatsApp"
+  },
+  "resetPassword": {
+    "title": "Create New Password",
+    "desc": "Set a new password for your account",
+    "newPasswordLabel": "New Password",
+    "submitButton": "Update Password"
+  },
+  "passwordUpdated": {
+    "title": "Password Updated!",
+    "desc": "Your password has been updated successfully. Please sign in with your new password.",
+    "goToLogin": "Go to Login"
+  }
+}

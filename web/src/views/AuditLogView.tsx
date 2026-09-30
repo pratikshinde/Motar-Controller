@@ -85,7 +85,7 @@ export const AuditLogView: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2.5, overflowY: 'auto' }}>
       {/* Header Title & Subtitle */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5, flexShrink: 0 }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, background: 'linear-gradient(45deg, #00E676 30%, #00B0FF 90%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             System Audit &amp; Governance Log
@@ -102,7 +102,7 @@ export const AuditLogView: React.FC = () => {
       </Box>
 
       {/* Summary Stat Cards Grid */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, flexShrink: 0 }}>
         <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.surfaceVariant', display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'rgba(0, 230, 118, 0.15)', color: '#00E676' }}>
             <HistoryIcon fontSize="medium" />
@@ -145,7 +145,11 @@ export const AuditLogView: React.FC = () => {
       </Box>
 
       {/* Search and Filters Bar */}
-      <Card elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.surface' }}>
+      {/* The page's outer flex column has `overflowY: auto` on itself rather than only on the results list
+          below, so when everything's natural height exceeds the viewport, flex-shrink (default on every
+          flex item) squeezed this bar — with no `flexShrink: 0` to opt out — down below the height its own
+          search field needs, clipping it to a thin sliver. */}
+      <Card elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.surface', flexShrink: 0 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <TextField
             size="small"

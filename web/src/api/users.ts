@@ -5,19 +5,21 @@ import type { RoleTier, UserTreeNode, User, AccountStatus } from '../types';
 // offer a role the API would reject anyway. The server re-validates
 // regardless — this is a UX convenience, not the control.
 export const ASSIGNABLE_ROLES: Record<RoleTier, RoleTier[]> = {
-  superadmin: ['manufacturer', 'distributor', 'dealer', 'customer'],
+  superadmin: ['manufacturer', 'distributor', 'dealer', 'customer', 'support'],
   manufacturer: ['distributor', 'dealer', 'customer'],
   distributor: ['dealer', 'customer'],
   dealer: ['dealer', 'customer'],
+  support: [],
   customer: []
 };
 
 export const ROLE_NAMES: Record<RoleTier, string> = {
   customer: 'End Customer / Farmer',
-  superadmin: 'Superadmin Platform (Platform Owner)',
+  superadmin: 'Super Admin (Platform Owner)',
   manufacturer: 'Panel Manufacturer',
   distributor: 'Regional Distributor',
-  dealer: 'Dealer / Installer'
+  dealer: 'Dealer / Installer',
+  support: 'Support Engineer'
 };
 
 export async function fetchUserTree(): Promise<{ tree: UserTreeNode[] }> {

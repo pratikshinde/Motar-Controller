@@ -17,6 +17,7 @@ import { CommissionDialog } from '../components/CommissionDialog';
 import { AllocateDialog } from '../components/AllocateDialog';
 import { ApplyTemplateDialog } from '../components/ApplyTemplateDialog';
 import { BulkImportModal } from '../components/BulkImportModal';
+import { effectiveStatus, formatCoords, STATUS_LABEL } from '../utils/pumpStatus';
 import { monoFont } from '../theme';
 import type { PumpListItem } from '../types';
 
@@ -56,23 +57,32 @@ export const DevicesView: React.FC = () => {
 
   const columns: GridColDef<PumpListItem>[] = useMemo(
     () => [
-      { field: 'id', headerName: 'Device ID (Thing Name)', flex: 1.2, renderCell: p => <span style={{ fontFamily: monoFont, fontWeight: 700 }}>{p.value}</span> },
-      { field: 'supply_type', headerName: 'Supply Type', flex: 0.8 },
-      { field: 'firmware_version', headerName: 'Firmware', flex: 0.7, valueGetter: (_v, row) => row.firmware_version || '—' },
+      // `flex` alone has no floor: on a narrow screen every column (including the device's own id) would
+      // shrink to fit and ellipsize into illegibility rather than the grid scrolling horizontally. A
+      // `minWidth` per column gives DataGrid a point below which it scrolls instead of over-shrinking.
+      { field: 'id', headerName: 'Device ID (Thing Name)', flex: 1.2, minWidth: 170, renderCell: p => <span style={{ fontFamily: monoFont, fontWeight: 700 }}>{p.value}</span> },
+      { field: 'supply_type', headerName: 'Supply Type', flex: 0.8, minWidth: 110 },
+      { field: 'firmware_version', headerName: 'Firmware', flex: 0.7, minWidth: 100, valueGetter: (_v, row) => row.firmware_version || '—' },
       {
         field: 'location',
         headerName: 'GPS Location',
         flex: 1,
-        valueGetter: (_v, row) => `${Number(row.latitude).toFixed(4)}°N, ${Number(row.longitude).toFixed(4)}°E`
+        minWidth: 170,
+        valueGetter: (_v, row) => formatCoords(row.latitude, row.longitude)
       },
       {
         field: 'status',
         headerName: 'Status',
         flex: 0.8,
+        minWidth: 110,
+        valueGetter: (_v, row) => effectiveStatus(row),
         renderCell: p => {
           const color =
-            p.value === 'RUNNING' ? theme.palette.secondary.main : p.value === 'FAULT' ? theme.palette.error.main : theme.palette.text.secondary;
-          return <Chip size="small" label={p.value} sx={{ color, bgcolor: `${color}1F`, fontFamily: monoFont, fontWeight: 700 }} />;
+            p.value === 'RUNNING' ? theme.palette.secondary.main
+            : p.value === 'FAULT' ? theme.palette.error.main
+            : p.value === 'OFFLINE' ? theme.palette.warning.main
+            : theme.palette.text.secondary;
+          return <Chip size="small" label={STATUS_LABEL[p.value as keyof typeof STATUS_LABEL]} sx={{ color, bgcolor: `${color}1F`, fontFamily: monoFont, fontWeight: 700 }} />;
         }
       },
       {
@@ -84,12 +94,14 @@ export const DevicesView: React.FC = () => {
         field: 'lifecycle_state',
         headerName: 'Lifecycle',
         flex: 0.9,
+        minWidth: 130, // "MANUFACTURED" is the longest value; must not ellipsize the very thing being filtered on
         renderCell: p => <Chip size="small" label={p.value} variant="outlined" sx={{ fontFamily: monoFont }} />
       },
       {
         field: 'actions',
         headerName: 'Actions',
         flex: 1,
+        minWidth: 100,
         sortable: false,
         filterable: false,
         renderCell: p =>

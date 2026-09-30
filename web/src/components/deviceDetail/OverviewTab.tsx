@@ -1,3 +1,5 @@
+import { outcomeOf, watchCommand } from '../../api/commands';
+import { formatCoords } from '../../utils/pumpStatus';
 import React, { useState } from 'react';
 import { Box, Card, CardContent, Typography, Chip, Button, Menu, MenuItem } from '@mui/material';
 import Switch from '@mui/material/Switch';
@@ -74,8 +76,17 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
     try {
       const result = await dispatchCommand(pump.id, action);
       if (result.status === 200 || result.status === 202) {
-        showToast(`${action} command dispatched — pending device acknowledgement`);
+        showToast(`${action} sent: waiting for the pump to confirm`);
         start(pump.id, result.cooldownSec || 45);
+        if (result.command?.cid) {
+          watchCommand(pump.id, result.command.cid, cmd => {
+            const outcome = outcomeOf(cmd, action);
+            if (!outcome) return;
+            showToast(outcome.text, outcome.error);
+            if (outcome.error) setOptimisticOn(null);
+            onRefresh();
+          });
+        }
       } else if (result.status === 429) {
         setOptimisticOn(!checked);
         showToast(result.detail || result.error || result.message || 'Command cooldown active (45s protection window)', true);
@@ -205,7 +216,7 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
               GPS location
             </Typography>
             <Typography variant="body2" sx={{ fontFamily: monoFont }}>
-              {Number(pump.latitude).toFixed(4)}°N, {Number(pump.longitude).toFixed(4)}°E
+              {formatCoords(pump.latitude, pump.longitude)}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -215,8 +226,18 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
             <Typography variant="body2">{pump.supply_type}</Typography>
           </Box>
 
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Typography variant="body2" color="text.secondary">
+              Total runtime
+            </Typography>
+            <Typography variant="body2" sx={{ fontFamily: monoFont }}>
+              {typeof pump.total_runtime_min === 'number'
+                ? `${Math.floor(pump.total_runtime_min / 60)} h ${pump.total_runtime_min % 60} min`
+                : '—'}
+            </Typography>
+          </Box>
           <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1 }}>
-            Runtime hours are not yet tracked by any layer of this system — not shown rather than estimated.
+            Runtime is what the pump itself reports (cumulative). Today's runtime is not shown until the daily summary is wired in.
           </Typography>
         </CardContent>
       </Card>

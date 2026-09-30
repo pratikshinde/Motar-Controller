@@ -47,12 +47,28 @@ export function usePumps(search = '') {
   }, [reload]);
 
   useEffect(() => {
-    return subscribe('pump_update', msg => {
+    return subscribe('telemetry', msg => {
+      // FastAPI ws_hub shape: { type:"telemetry", pump_id:"...", data:{v_ry,v_yb,v_br,i_r,i_y,i_b,status,...} }
+      const pumpId = msg.pump_id ?? msg.pump?.id;
+      const src = msg.data ?? msg.pump ?? msg;
+      if (!pumpId) return;
       setPumps(prev => {
-        const idx = prev.findIndex(p => p.id === msg.pump.id);
+        const idx = prev.findIndex(p => p.id === pumpId);
         if (idx === -1) return prev; // out of the current page/scope — next poll will pick it up
         const next = [...prev];
-        next[idx] = { ...next[idx], ...msg.pump };
+        next[idx] = {
+          ...next[idx],
+          status: src.status ?? next[idx].status,
+          v_ry: src.v_ry ?? next[idx].v_ry,
+          v_yb: src.v_yb ?? next[idx].v_yb,
+          v_br: src.v_br ?? next[idx].v_br,
+          i_r: src.i_r ?? next[idx].i_r,
+          i_y: src.i_y ?? next[idx].i_y,
+          i_b: src.i_b ?? next[idx].i_b,
+          gsm_rssi: src.gsm_rssi ?? next[idx].gsm_rssi,
+          telemetry_recorded_at: src.recorded_at ?? next[idx].telemetry_recorded_at,
+          last_seen_at: src.recorded_at ?? next[idx].last_seen_at,
+        };
         return next;
       });
       setLastUpdated(new Date());

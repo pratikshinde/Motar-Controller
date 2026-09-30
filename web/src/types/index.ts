@@ -2,7 +2,7 @@
 // not a demo/aspirational model. Fields are optional where the backend
 // can genuinely return null (e.g. a pump with no telemetry yet).
 
-export type RoleTier = 'superadmin' | 'manufacturer' | 'distributor' | 'dealer' | 'customer';
+export type RoleTier = 'superadmin' | 'manufacturer' | 'distributor' | 'dealer' | 'customer' | 'support';
 
 export type LifecycleState =
   | 'MANUFACTURED' | 'ALLOCATED' | 'IN_STOCK' | 'COMMISSIONED'
@@ -44,9 +44,12 @@ export interface PumpListItem {
   name: string;
   supply_type: '3-phase' | '1-phase';
   hp_rating: string | number;
-  latitude: string | number;
-  longitude: string | number;
+  latitude: string | number | null;
+  longitude: string | number | null;
   status: PumpStatus;
+  /** ONLINE, OFFLINE (reported before, not recently) or NEVER_SEEN: judged by the server. */
+  connectivity?: 'ONLINE' | 'OFFLINE' | 'NEVER_SEEN';
+  total_runtime_min?: number | null;
   lifecycle_state: LifecycleState;
   firmware_version: string | null;
   last_seen_at: string | null;
@@ -66,16 +69,18 @@ export interface PumpListItem {
   buffered: boolean | null;
 }
 
+/** Exclusive counts over every pump in scope: a pump is in exactly one of offline, no_data, fault, running, stopped. */
 export interface FleetStats {
-  total_devices: string;
-  running_count: string;
-  fault_count: string;
-  stopped_count: string;
-  offline_count: string;
+  total: number;
+  running: number;
+  fault: number;
+  stopped: number;
+  offline: number;
+  no_data: number;
 }
 
 export interface PumpsResponse {
-  meta: { page: number; limit: number; stats: FleetStats };
+  meta: { page: number; limit: number; total?: number; stats: FleetStats };
   pumps: PumpListItem[];
 }
 
@@ -142,9 +147,25 @@ export interface AlertSubscription {
 export interface CommandRecord {
   cid: string;
   pump_id: string;
-  action: 'START' | 'STOP';
-  status: 'PENDING' | 'ACKED' | 'EXPIRED' | 'REJECTED';
+  action: 'START' | 'STOP' | 'SET_TIMER' | 'RESET_FAULT';
+  /** QUEUED -> SENT -> DELIVERED -> ACKNOWLEDGED -> APPLIED, or one of the endings below. */
+  status:
+    | 'QUEUED'
+    | 'SENT'
+    | 'DELIVERED'
+    | 'ACKNOWLEDGED'
+    | 'APPLIED'
+    | 'REJECTED'
+    | 'EXPIRED'
+    | 'FAILED'
+    | 'NOT_CONFIRMED';
+  reject_reason?: string | null;
+  failure_reason?: string | null;
   issued_at: string;
+  sent_at?: string | null;
+  delivered_at?: string | null;
+  acked_at?: string | null;
+  applied_at?: string | null;
   expires_at: string;
 }
 
@@ -267,7 +288,8 @@ export interface ServiceReportsResponse {
 // sub-tree-selector UI was needed; the new work was these two real fields).
 export interface FleetDashboard {
   lifecycle_counts: { lifecycle_state: LifecycleState; count: string }[];
-  connectivity: { online_count: string; offline_count: string };
+  summary?: { total: number; running: number; idle: number; fault: number; offline: number; no_data: number };
+  connectivity: { online_count: string | number; offline_count: string | number; never_seen_count?: number; offline_after_seconds?: number };
   active_faults_by_type: { fault_code: number; name: string | null; severity: string | null; count: string }[];
   top_faulting_devices_30d: { id: string; name: string; fault_count: string }[];
   firmware_distribution: { firmware_version: string; count: string }[];
@@ -389,7 +411,7 @@ export interface BatchImeiImportResult {
 export interface SystemHealth {
   status: 'OK' | 'DEGRADED';
   timestamp: string;
-  process: { uptime_seconds: number; node_version: string; env: string };
+  process: { uptime_seconds: number; node_version: string; env: string; version?: string; python_version?: string };
   database: {
     connected: boolean;
     latency_ms?: number;
@@ -397,16 +419,26 @@ export interface SystemHealth {
     pool_idle: number;
     pool_waiting: number;
   };
+  /** FastAPI backend uses requests_total / errors_4xx / errors_5xx.
+   *  Legacy Node backend used http_requests_total / http_errors_4xx / http_errors_5xx.
+   *  Both shapes are accepted; all keys are optional so either works. */
   metrics: {
-    http_requests_total: number;
-    http_errors_4xx: number;
-    http_errors_5xx: number;
-    telemetry_ingest_success: number;
-    telemetry_ingest_failure: number;
-    sms_sent: number;
-    sms_failed: number;
-    whatsapp_sent: number;
-    whatsapp_failed: number;
+    // FastAPI shape
+    requests_total?: number;
+    errors_4xx?: number;
+    errors_5xx?: number;
+    // Legacy Node shape
+    http_requests_total?: number;
+    http_errors_4xx?: number;
+    http_errors_5xx?: number;
+    // Common
+    telemetry_ingest_success?: number;
+    telemetry_ingest_failure?: number;
+    sms_sent?: number;
+    sms_failed?: number;
+    whatsapp_sent?: number;
+    whatsapp_failed?: number;
+    [key: string]: number | undefined;
   };
   error?: string;
 }

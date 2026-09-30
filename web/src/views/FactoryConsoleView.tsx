@@ -78,17 +78,20 @@ export const FactoryConsoleView: React.FC = () => {
     }
   }
 
+  // `minWidth` on every column: `flex` alone has no floor, so a narrow window would shrink IMEIs and
+  // timestamps to ellipsized fragments instead of the grid scrolling horizontally.
   const imeiColumns: GridColDef<BatchImei>[] = [
-    { field: 'imei', headerName: 'IMEI', flex: 1, renderCell: p => <span style={{ fontFamily: monoFont }}>{p.value}</span> },
-    { field: 'mcu_uid', headerName: 'MCU UID', flex: 1, valueGetter: (_v, row) => row.mcu_uid || '—', renderCell: p => <span style={{ fontFamily: monoFont }}>{p.value}</span> },
+    { field: 'imei', headerName: 'IMEI', flex: 1, minWidth: 150, renderCell: p => <span style={{ fontFamily: monoFont }}>{p.value}</span> },
+    { field: 'mcu_uid', headerName: 'MCU UID', flex: 1, minWidth: 150, valueGetter: (_v, row) => row.mcu_uid || '—', renderCell: p => <span style={{ fontFamily: monoFont }}>{p.value}</span> },
     {
       field: 'claimed',
       headerName: 'State',
       flex: 0.7,
+      minWidth: 110,
       renderCell: p => <Chip size="small" label={p.value ? 'Claimed' : 'Unclaimed'} color={p.value ? 'success' : 'default'} variant={p.value ? 'filled' : 'outlined'} />
     },
-    { field: 'claimed_at', headerName: 'Claimed at', flex: 1, valueGetter: (_v, row) => (row.claimed_at ? new Date(row.claimed_at).toLocaleString() : '—') },
-    { field: 'pump_id', headerName: 'Pump ID', flex: 1, valueGetter: (_v, row) => row.pump_id || '—' }
+    { field: 'claimed_at', headerName: 'Claimed at', flex: 1, minWidth: 170, valueGetter: (_v, row) => (row.claimed_at ? new Date(row.claimed_at).toLocaleString() : '—') },
+    { field: 'pump_id', headerName: 'Pump ID', flex: 1, minWidth: 150, valueGetter: (_v, row) => row.pump_id || '—' }
   ];
 
   return (

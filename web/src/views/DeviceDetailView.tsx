@@ -1,3 +1,4 @@
+import { effectiveStatus, STATUS_LABEL } from '../utils/pumpStatus';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Chip, IconButton, Tabs, Tab, CircularProgress, Tooltip } from '@mui/material';
@@ -56,20 +57,37 @@ export const DeviceDetailView: React.FC = () => {
   // into the same `detail` shape load() produces, so Overview/Configuration
   // don't need to know whether a given render came from REST or WS.
   useEffect(() => {
-    const unsubPump = subscribe('pump_update', msg => {
-      if (msg.pump.id !== id) return;
+    const unsubPump = subscribe('telemetry', msg => {
+      // FastAPI ws_hub shape: { type:"telemetry", pump_id:"...", data:{v_ry,...,status,...} }
+      if (msg.pump_id !== id) return;
+      const src = msg.data || msg.pump || msg;
       setDetail(prev => {
         if (!prev) return prev;
-        const liveTelemetry = pumpUpdateToTelemetryRow(msg.pump);
+        // Build a TelemetryRow from the live payload so Overview/TrendsTab tiles update
+        const liveTelemetry = src.recorded_at ? {
+          recorded_at: src.recorded_at,
+          v_ry: src.v_ry ?? null,
+          v_yb: src.v_yb ?? null,
+          v_br: src.v_br ?? null,
+          i_r: src.i_r ?? null,
+          i_y: src.i_y ?? null,
+          i_b: src.i_b ?? null,
+          pump_on: src.pump_on ?? false,
+          fault_active: src.fault_active ?? false,
+          gsm_rssi: src.gsm_rssi ?? null,
+          seq: src.seq ?? null,
+          ts_approx: src.ts_approx ?? false,
+          buffered: src.buffered ?? false,
+        } : null;
         return {
           ...prev,
-          pump: { ...prev.pump, ...msg.pump },
+          pump: { ...prev.pump, status: src.status ?? prev.pump.status, last_seen_at: src.recorded_at ?? prev.pump.last_seen_at },
           latest_telemetry: liveTelemetry || prev.latest_telemetry
         };
       });
       setLastUpdated(new Date());
     });
-    const unsubConfig = subscribe('config_update', msg => {
+    const unsubConfig = subscribe('config', msg => {
       if (msg.pump_id !== id) return;
       setDetail(prev => (prev ? { ...prev, config: msg.config } : prev));
       setLastUpdated(new Date());
@@ -121,8 +139,12 @@ export const DeviceDetailView: React.FC = () => {
   }
 
   const { pump } = detail;
+  const shownStatus = effectiveStatus(pump);
   const statusColor =
-    pump.status === 'RUNNING' ? theme.palette.secondary.main : pump.status === 'FAULT' ? theme.palette.error.main : theme.palette.text.secondary;
+    shownStatus === 'RUNNING' ? theme.palette.secondary.main
+    : shownStatus === 'FAULT' ? theme.palette.error.main
+    : shownStatus === 'OFFLINE' ? theme.palette.warning.main
+    : theme.palette.text.secondary;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
@@ -141,7 +163,7 @@ export const DeviceDetailView: React.FC = () => {
           </Typography>
         </Box>
         <Chip
-          label={pump.status}
+          label={STATUS_LABEL[shownStatus]}
           sx={{
             bgcolor: theme.palette.mode === 'dark' ? `${statusColor}33` : `${statusColor}1F`,
             color: statusColor,

@@ -20,8 +20,7 @@ export const EventsTab: React.FC<{ pumpId: string }> = ({ pumpId }) => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchFaults(pumpId);
-      setFaults(data.faults);
+      setFaults(await fetchFaults(pumpId));
     } catch {
       showToast('Could not load event log', true);
     } finally {

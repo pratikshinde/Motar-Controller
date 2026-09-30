@@ -1,0 +1,194 @@
+### connectivity summary
+Finalize Aggregate (actual time=112.328..113.233 rows=1.00 loops=1)
+  Buffers: shared hit=3 read=2436
+  ->  Gather (actual time=112.314..113.224 rows=2.00 loops=1)
+        Workers Planned: 1
+        Workers Launched: 1
+        Buffers: shared hit=3 read=2436
+        ->  Partial Aggregate (actual time=86.391..86.394 rows=1.00 loops=2)
+              Buffers: shared hit=3 read=2436
+              ->  Parallel Seq Scan on pumps p (actual time=86.386..86.387 rows=0.00 loops=2)
+                    Filter: ((org_id = ANY ('{1ce2ea49-96f6-4868-bc4b-e6eb6e1ef78a,88e17268-5bc6-49d9-8d51-f577dc540750,025ded6d-5d15-4463-8aca-6307543ed61d,ac7c57fa-1255-4152-8e2e-aa80f0344db3,2effbd4d-d786-4828-900b-bb7b21f55434,bc1bf714-42f3-49e9-bf55-e9a35aa8dc70,1360f18e-6f7a-49b8-937f-6a3465ef44d3,f75faf64-2929-4c46-83ea-77168e6f3c7f,c559e855-3ed5-432d-9cce-fe4c88c606ac,d7eeca61-c686-46a6-8a72-d996fd28f523,67ed9b2d-92bb-49cc-9b71-16073677b20a,b919769e-28ea-4753-a291-beba72dfa834,f727e94c-742d-48e0-ba19-be35d91b06ef,d3aab6d3-2faa-4c81-94ba-321580bb9964,26bc44a3-9136-4198-9e6b-0f5952b1bc57,0db2123a-e42b-43ad-89d6-776ac7400164,dc0e233a-0a69-4a20-9b11-c1e9d6e27206,b617c7bd-6a64-4504-9dda-96f44664de2a,edbde3c2-8a43-426c-9453-d61e20350e18,c849da33-6dd4-4124-8978-3fc4cf1d1ef5,ebda3f12-16ea-43c5-82d1-f3badd98f8db,bc01c600-e9ac-4872-bac7-37b4b6672b25,ba18df20-759a-4cca-9194-3878333f4d5c,ab20d37e-a3d9-45ef-b4eb-a84e7992edfb,7158a556-4e1d-4035-b528-38fecdfa1404,71501738-ef69-44f7-9121-834ac7d996a1,7e6deda7-eb83-4044-8046-1d53766fe406,e8b51ada-83f3-453e-b848-3be815100e7d,17dd05d1-2e45-44ca-95ac-4d70552e3ed0,6d6e6317-c838-416b-a7f5-fbb87b278a36,8f3405fa-b82d-44fc-ac89-3ca609f9b769,97607278-710c-446c-a7aa-704b167d3e42,64d26470-2c08-422e-ac94-eb05d6300839,1e2dfb07-be01-4dd4-851c-07d00a237a47,2b89848b-d2e6-4c53-9021-f9a5d84382be,103d7c2b-0b43-4531-8bfe-7df0bbf48e35,c9a849b1-6f4d-4fe8-99b7-56d3738531e5,235eaa3c-f135-481e-b73b-bf8fb79ac00c,a77fdb35-c8db-45f5-be23-9b967f25ae83,93b6f510-6cc2-4bbd-b69a-15b1d3a3e989,14c9dc73-2b75-496f-812d-c786fa5ab3cf,b1f26634-c1f4-4919-b49e-fdc5212131aa,2f3bf9bb-3020-427a-a98b-fbabf9dc2993,8d39c083-86ae-413b-9f59-13e5f4b5c3fa,dd7eb944-979d-46cb-a969-04b5674a26ab,2fa85057-fb59-4046-8061-f4167a18aaf3,9c39ed27-2c04-49c8-97a3-0ec2d95ef9aa,440ae68b-0437-48a7-9f9e-9438459918bf,c2e58b1c-364b-4287-b608-fd5380e4b4c7,dbea8dbf-cb39-4343-84ed-ebab514aa620,23a3d1eb-2182-48f9-a61c-3772539e2586,ede08d00-2ba7-41d7-bcda-12eb09110bdd,bf7d8296-6893-45d9-806f-daa73bc91e6d,d4160db9-cf66-4aea-9bb0-0de24e341563,ed883888-17f3-4f6e-95b3-fee2357d755e,b56f97af-8390-4ab4-99aa-ea2b0236837e}'::uuid[])) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (id)::text) OR ((current_setting('app.user_role'::text, true) = 'customer'::text) AND (((owner_user_id)::text = current_setting('app.user_id'::text, true)) OR (ANY ((id)::text = ((hashed SubPlan 1).col1)::text)))) OR ((current_setting('app.user_role'::text, true) = ANY ('{dealer,distributor,manufacturer,support}'::text[])) AND (((NULLIF(current_setting('app.org_path'::text, true), ''::text) IS NOT NULL) AND (ANY (org_id = (hashed SubPlan 2).col1))) OR ((NULLIF(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text), ''::text) IS NOT NULL) AND ((hierarchy_path = rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) OR ("left"(hierarchy_path, (length(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) + 1)) = (rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text) || '/'::text))))))))
+                    Rows Removed by Filter: 50000
+                    Buffers: shared hit=3 read=2436
+                    SubPlan 1
+                      ->  Seq Scan on device_access (never executed)
+                            Filter: (((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))) AND ((user_id)::text = current_setting('app.user_id'::text, true)))
+                    SubPlan 2
+                      ->  Seq Scan on organisations (actual time=0.248..0.249 rows=0.00 loops=2)
+                            Filter: (path <@ (NULLIF(current_setting('app.org_path'::text, true), ''::text))::ltree)
+                            Rows Removed by Filter: 9
+                            Buffers: shared hit=1 read=1
+Planning:
+  Buffers: shared read=1
+Planning Time: 0.277 ms
+Execution Time: 113.296 ms
+
+### faults today
+Finalize Aggregate (actual time=136.800..143.743 rows=1.00 loops=1)
+  Buffers: shared hit=2282 read=157
+  ->  Gather (actual time=136.789..143.734 rows=2.00 loops=1)
+        Workers Planned: 1
+        Workers Launched: 1
+        Buffers: shared hit=2282 read=157
+        ->  Partial Aggregate (actual time=77.534..77.537 rows=1.00 loops=2)
+              Buffers: shared hit=2282 read=157
+              ->  Nested Loop (actual time=77.530..77.533 rows=0.00 loops=2)
+                    Buffers: shared hit=2282 read=157
+                    ->  Parallel Seq Scan on pumps p (actual time=77.528..77.529 rows=0.00 loops=2)
+                          Filter: ((org_id = ANY ('{1ce2ea49-96f6-4868-bc4b-e6eb6e1ef78a,88e17268-5bc6-49d9-8d51-f577dc540750,025ded6d-5d15-4463-8aca-6307543ed61d,ac7c57fa-1255-4152-8e2e-aa80f0344db3,2effbd4d-d786-4828-900b-bb7b21f55434,bc1bf714-42f3-49e9-bf55-e9a35aa8dc70,1360f18e-6f7a-49b8-937f-6a3465ef44d3,f75faf64-2929-4c46-83ea-77168e6f3c7f,c559e855-3ed5-432d-9cce-fe4c88c606ac,d7eeca61-c686-46a6-8a72-d996fd28f523,67ed9b2d-92bb-49cc-9b71-16073677b20a,b919769e-28ea-4753-a291-beba72dfa834,f727e94c-742d-48e0-ba19-be35d91b06ef,d3aab6d3-2faa-4c81-94ba-321580bb9964,26bc44a3-9136-4198-9e6b-0f5952b1bc57,0db2123a-e42b-43ad-89d6-776ac7400164,dc0e233a-0a69-4a20-9b11-c1e9d6e27206,b617c7bd-6a64-4504-9dda-96f44664de2a,edbde3c2-8a43-426c-9453-d61e20350e18,c849da33-6dd4-4124-8978-3fc4cf1d1ef5,ebda3f12-16ea-43c5-82d1-f3badd98f8db,bc01c600-e9ac-4872-bac7-37b4b6672b25,ba18df20-759a-4cca-9194-3878333f4d5c,ab20d37e-a3d9-45ef-b4eb-a84e7992edfb,7158a556-4e1d-4035-b528-38fecdfa1404,71501738-ef69-44f7-9121-834ac7d996a1,7e6deda7-eb83-4044-8046-1d53766fe406,e8b51ada-83f3-453e-b848-3be815100e7d,17dd05d1-2e45-44ca-95ac-4d70552e3ed0,6d6e6317-c838-416b-a7f5-fbb87b278a36,8f3405fa-b82d-44fc-ac89-3ca609f9b769,97607278-710c-446c-a7aa-704b167d3e42,64d26470-2c08-422e-ac94-eb05d6300839,1e2dfb07-be01-4dd4-851c-07d00a237a47,2b89848b-d2e6-4c53-9021-f9a5d84382be,103d7c2b-0b43-4531-8bfe-7df0bbf48e35,c9a849b1-6f4d-4fe8-99b7-56d3738531e5,235eaa3c-f135-481e-b73b-bf8fb79ac00c,a77fdb35-c8db-45f5-be23-9b967f25ae83,93b6f510-6cc2-4bbd-b69a-15b1d3a3e989,14c9dc73-2b75-496f-812d-c786fa5ab3cf,b1f26634-c1f4-4919-b49e-fdc5212131aa,2f3bf9bb-3020-427a-a98b-fbabf9dc2993,8d39c083-86ae-413b-9f59-13e5f4b5c3fa,dd7eb944-979d-46cb-a969-04b5674a26ab,2fa85057-fb59-4046-8061-f4167a18aaf3,9c39ed27-2c04-49c8-97a3-0ec2d95ef9aa,440ae68b-0437-48a7-9f9e-9438459918bf,c2e58b1c-364b-4287-b608-fd5380e4b4c7,dbea8dbf-cb39-4343-84ed-ebab514aa620,23a3d1eb-2182-48f9-a61c-3772539e2586,ede08d00-2ba7-41d7-bcda-12eb09110bdd,bf7d8296-6893-45d9-806f-daa73bc91e6d,d4160db9-cf66-4aea-9bb0-0de24e341563,ed883888-17f3-4f6e-95b3-fee2357d755e,b56f97af-8390-4ab4-99aa-ea2b0236837e}'::uuid[])) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (id)::text) OR ((current_setting('app.user_role'::text, true) = 'customer'::text) AND (((owner_user_id)::text = current_setting('app.user_id'::text, true)) OR (ANY ((id)::text = ((hashed SubPlan 4).col1)::text)))) OR ((current_setting('app.user_role'::text, true) = ANY ('{dealer,distributor,manufacturer,support}'::text[])) AND (((NULLIF(current_setting('app.org_path'::text, true), ''::text) IS NOT NULL) AND (ANY (org_id = (hashed SubPlan 5).col1))) OR ((NULLIF(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text), ''::text) IS NOT NULL) AND ((hierarchy_path = rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) OR ("left"(hierarchy_path, (length(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) + 1)) = (rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text) || '/'::text))))))))
+                          Rows Removed by Filter: 50000
+                          Buffers: shared hit=2282 read=157
+                          SubPlan 4
+                            ->  Seq Scan on device_access device_access_1 (never executed)
+                                  Filter: (((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))) AND ((user_id)::text = current_setting('app.user_id'::text, true)))
+                          SubPlan 5
+                            ->  Seq Scan on organisations organisations_1 (actual time=0.027..0.028 rows=0.00 loops=2)
+                                  Filter: (path <@ (NULLIF(current_setting('app.org_path'::text, true), ''::text))::ltree)
+                                  Rows Removed by Filter: 9
+                                  Buffers: shared hit=2
+                    ->  Index Scan using fault_logs_pump_id_occurred_at_idx on fault_logs fl (never executed)
+                          Index Cond: (((pump_id)::text = (p.id)::text) AND (occurred_at >= '2026-09-29 18:30:00+00'::timestamp with time zone))
+                          Filter: ((fault_code > 0) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (pump_id)::text) OR (ANY ((pump_id)::text = ((hashed SubPlan 3).col1)::text))))
+                          Index Searches: 0
+                          SubPlan 3
+                            ->  Seq Scan on pumps (never executed)
+                                  Filter: ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (id)::text) OR ((current_setting('app.user_role'::text, true) = 'customer'::text) AND (((owner_user_id)::text = current_setting('app.user_id'::text, true)) OR (ANY ((id)::text = ((hashed SubPlan 1).col1)::text)))) OR ((current_setting('app.user_role'::text, true) = ANY ('{dealer,distributor,manufacturer,support}'::text[])) AND (((NULLIF(current_setting('app.org_path'::text, true), ''::text) IS NOT NULL) AND (ANY (org_id = (hashed SubPlan 2).col1))) OR ((NULLIF(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text), ''::text) IS NOT NULL) AND ((hierarchy_path = rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) OR ("left"(hierarchy_path, (length(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) + 1)) = (rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text) || '/'::text)))))))
+                                  SubPlan 1
+                                    ->  Seq Scan on device_access (never executed)
+                                          Filter: (((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))) AND ((user_id)::text = current_setting('app.user_id'::text, true)))
+                                  SubPlan 2
+                                    ->  Seq Scan on organisations (never executed)
+                                          Filter: (path <@ (NULLIF(current_setting('app.org_path'::text, true), ''::text))::ltree)
+Planning:
+  Buffers: shared hit=4 read=13
+Planning Time: 6.704 ms
+Execution Time: 143.955 ms
+
+### top faulting
+Limit (actual time=99.888..122.620 rows=0.00 loops=1)
+  Buffers: shared hit=2447
+  ->  Sort (actual time=99.886..122.618 rows=0.00 loops=1)
+        Sort Key: (count(*)) DESC
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=2447
+        ->  GroupAggregate (actual time=99.879..122.610 rows=0.00 loops=1)
+              Group Key: fl.pump_id
+              Buffers: shared hit=2447
+              ->  Gather Merge (actual time=99.876..122.605 rows=0.00 loops=1)
+                    Workers Planned: 1
+                    Workers Launched: 1
+                    Buffers: shared hit=2447
+                    ->  Sort (actual time=57.412..57.416 rows=0.00 loops=2)
+                          Sort Key: fl.pump_id
+                          Sort Method: quicksort  Memory: 25kB
+                          Buffers: shared hit=2447
+                          Worker 0:  Sort Method: quicksort  Memory: 25kB
+                          ->  Nested Loop (actual time=57.387..57.390 rows=0.00 loops=2)
+                                Buffers: shared hit=2439
+                                ->  Parallel Seq Scan on pumps p (actual time=57.385..57.386 rows=0.00 loops=2)
+                                      Filter: ((org_id = ANY ('{1ce2ea49-96f6-4868-bc4b-e6eb6e1ef78a,88e17268-5bc6-49d9-8d51-f577dc540750,025ded6d-5d15-4463-8aca-6307543ed61d,ac7c57fa-1255-4152-8e2e-aa80f0344db3,2effbd4d-d786-4828-900b-bb7b21f55434,bc1bf714-42f3-49e9-bf55-e9a35aa8dc70,1360f18e-6f7a-49b8-937f-6a3465ef44d3,f75faf64-2929-4c46-83ea-77168e6f3c7f,c559e855-3ed5-432d-9cce-fe4c88c606ac,d7eeca61-c686-46a6-8a72-d996fd28f523,67ed9b2d-92bb-49cc-9b71-16073677b20a,b919769e-28ea-4753-a291-beba72dfa834,f727e94c-742d-48e0-ba19-be35d91b06ef,d3aab6d3-2faa-4c81-94ba-321580bb9964,26bc44a3-9136-4198-9e6b-0f5952b1bc57,0db2123a-e42b-43ad-89d6-776ac7400164,dc0e233a-0a69-4a20-9b11-c1e9d6e27206,b617c7bd-6a64-4504-9dda-96f44664de2a,edbde3c2-8a43-426c-9453-d61e20350e18,c849da33-6dd4-4124-8978-3fc4cf1d1ef5,ebda3f12-16ea-43c5-82d1-f3badd98f8db,bc01c600-e9ac-4872-bac7-37b4b6672b25,ba18df20-759a-4cca-9194-3878333f4d5c,ab20d37e-a3d9-45ef-b4eb-a84e7992edfb,7158a556-4e1d-4035-b528-38fecdfa1404,71501738-ef69-44f7-9121-834ac7d996a1,7e6deda7-eb83-4044-8046-1d53766fe406,e8b51ada-83f3-453e-b848-3be815100e7d,17dd05d1-2e45-44ca-95ac-4d70552e3ed0,6d6e6317-c838-416b-a7f5-fbb87b278a36,8f3405fa-b82d-44fc-ac89-3ca609f9b769,97607278-710c-446c-a7aa-704b167d3e42,64d26470-2c08-422e-ac94-eb05d6300839,1e2dfb07-be01-4dd4-851c-07d00a237a47,2b89848b-d2e6-4c53-9021-f9a5d84382be,103d7c2b-0b43-4531-8bfe-7df0bbf48e35,c9a849b1-6f4d-4fe8-99b7-56d3738531e5,235eaa3c-f135-481e-b73b-bf8fb79ac00c,a77fdb35-c8db-45f5-be23-9b967f25ae83,93b6f510-6cc2-4bbd-b69a-15b1d3a3e989,14c9dc73-2b75-496f-812d-c786fa5ab3cf,b1f26634-c1f4-4919-b49e-fdc5212131aa,2f3bf9bb-3020-427a-a98b-fbabf9dc2993,8d39c083-86ae-413b-9f59-13e5f4b5c3fa,dd7eb944-979d-46cb-a969-04b5674a26ab,2fa85057-fb59-4046-8061-f4167a18aaf3,9c39ed27-2c04-49c8-97a3-0ec2d95ef9aa,440ae68b-0437-48a7-9f9e-9438459918bf,c2e58b1c-364b-4287-b608-fd5380e4b4c7,dbea8dbf-cb39-4343-84ed-ebab514aa620,23a3d1eb-2182-48f9-a61c-3772539e2586,ede08d00-2ba7-41d7-bcda-12eb09110bdd,bf7d8296-6893-45d9-806f-daa73bc91e6d,d4160db9-cf66-4aea-9bb0-0de24e341563,ed883888-17f3-4f6e-95b3-fee2357d755e,b56f97af-8390-4ab4-99aa-ea2b0236837e}'::uuid[])) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (id)::text) OR ((current_setting('app.user_role'::text, true) = 'customer'::text) AND (((owner_user_id)::text = current_setting('app.user_id'::text, true)) OR (ANY ((id)::text = ((hashed SubPlan 4).col1)::text)))) OR ((current_setting('app.user_role'::text, true) = ANY ('{dealer,distributor,manufacturer,support}'::text[])) AND (((NULLIF(current_setting('app.org_path'::text, true), ''::text) IS NOT NULL) AND (ANY (org_id = (hashed SubPlan 5).col1))) OR ((NULLIF(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text), ''::text) IS NOT NULL) AND ((hierarchy_path = rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) OR ("left"(hierarchy_path, (length(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) + 1)) = (rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text) || '/'::text))))))))
+                                      Rows Removed by Filter: 50000
+                                      Buffers: shared hit=2439
+                                      SubPlan 4
+                                        ->  Seq Scan on device_access device_access_1 (never executed)
+                                              Filter: (((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))) AND ((user_id)::text = current_setting('app.user_id'::text, true)))
+                                      SubPlan 5
+                                        ->  Seq Scan on organisations organisations_1 (actual time=0.079..0.080 rows=0.00 loops=2)
+                                              Filter: (path <@ (NULLIF(current_setting('app.org_path'::text, true), ''::text))::ltree)
+                                              Rows Removed by Filter: 9
+                                              Buffers: shared hit=2
+                                ->  Index Scan using fault_logs_pump_id_occurred_at_idx on fault_logs fl (never executed)
+                                      Index Cond: (((pump_id)::text = (p.id)::text) AND (occurred_at >= '2026-08-31 08:42:00.229342+00'::timestamp with time zone))
+                                      Filter: ((fault_code > 0) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (pump_id)::text) OR (ANY ((pump_id)::text = ((hashed SubPlan 3).col1)::text))))
+                                      Index Searches: 0
+                                      SubPlan 3
+                                        ->  Seq Scan on pumps (never executed)
+                                              Filter: ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (id)::text) OR ((current_setting('app.user_role'::text, true) = 'customer'::text) AND (((owner_user_id)::text = current_setting('app.user_id'::text, true)) OR (ANY ((id)::text = ((hashed SubPlan 1).col1)::text)))) OR ((current_setting('app.user_role'::text, true) = ANY ('{dealer,distributor,manufacturer,support}'::text[])) AND (((NULLIF(current_setting('app.org_path'::text, true), ''::text) IS NOT NULL) AND (ANY (org_id = (hashed SubPlan 2).col1))) OR ((NULLIF(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text), ''::text) IS NOT NULL) AND ((hierarchy_path = rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) OR ("left"(hierarchy_path, (length(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) + 1)) = (rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text) || '/'::text)))))))
+                                              SubPlan 1
+                                                ->  Seq Scan on device_access (never executed)
+                                                      Filter: (((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))) AND ((user_id)::text = current_setting('app.user_id'::text, true)))
+                                              SubPlan 2
+                                                ->  Seq Scan on organisations (never executed)
+                                                      Filter: (path <@ (NULLIF(current_setting('app.org_path'::text, true), ''::text))::ltree)
+Planning:
+  Buffers: shared hit=17
+Planning Time: 7.975 ms
+Execution Time: 122.890 ms
+
+### runtime live today
+Finalize Aggregate (actual time=102.656..159.520 rows=1.00 loops=1)
+  Buffers: shared hit=2440
+  ->  Gather (actual time=102.642..159.511 rows=3.00 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=2440
+        ->  Partial Aggregate (actual time=55.822..55.828 rows=1.00 loops=3)
+              Buffers: shared hit=2440
+              ->  Parallel Hash Join (actual time=55.815..55.821 rows=0.00 loops=3)
+                    Hash Cond: ((t.pump_id)::text = (p.id)::text)
+                    Buffers: shared hit=2440
+                    ->  Parallel Seq Scan on telemetry_history t (never executed)
+                          Filter: ((recorded_at >= '2026-09-29 18:30:00+00'::timestamp with time zone) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (pump_id)::text) OR (ANY ((pump_id)::text = ((hashed SubPlan 3).col1)::text))))
+                          SubPlan 3
+                            ->  Seq Scan on pumps (never executed)
+                                  Filter: ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (id)::text) OR ((current_setting('app.user_role'::text, true) = 'customer'::text) AND (((owner_user_id)::text = current_setting('app.user_id'::text, true)) OR (ANY ((id)::text = ((hashed SubPlan 1).col1)::text)))) OR ((current_setting('app.user_role'::text, true) = ANY ('{dealer,distributor,manufacturer,support}'::text[])) AND (((NULLIF(current_setting('app.org_path'::text, true), ''::text) IS NOT NULL) AND (ANY (org_id = (hashed SubPlan 2).col1))) OR ((NULLIF(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text), ''::text) IS NOT NULL) AND ((hierarchy_path = rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) OR ("left"(hierarchy_path, (length(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) + 1)) = (rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text) || '/'::text)))))))
+                                  SubPlan 1
+                                    ->  Seq Scan on device_access (never executed)
+                                          Filter: (((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))) AND ((user_id)::text = current_setting('app.user_id'::text, true)))
+                                  SubPlan 2
+                                    ->  Seq Scan on organisations (never executed)
+                                          Filter: (path <@ (NULLIF(current_setting('app.org_path'::text, true), ''::text))::ltree)
+                    ->  Parallel Hash (actual time=55.595..55.597 rows=0.00 loops=3)
+                          Buckets: 1024  Batches: 1  Memory Usage: 0kB
+                          Buffers: shared hit=2440
+                          ->  Parallel Seq Scan on pumps p (actual time=39.043..39.044 rows=0.00 loops=3)
+                                Filter: ((org_id = ANY ('{1ce2ea49-96f6-4868-bc4b-e6eb6e1ef78a,88e17268-5bc6-49d9-8d51-f577dc540750,025ded6d-5d15-4463-8aca-6307543ed61d,ac7c57fa-1255-4152-8e2e-aa80f0344db3,2effbd4d-d786-4828-900b-bb7b21f55434,bc1bf714-42f3-49e9-bf55-e9a35aa8dc70,1360f18e-6f7a-49b8-937f-6a3465ef44d3,f75faf64-2929-4c46-83ea-77168e6f3c7f,c559e855-3ed5-432d-9cce-fe4c88c606ac,d7eeca61-c686-46a6-8a72-d996fd28f523,67ed9b2d-92bb-49cc-9b71-16073677b20a,b919769e-28ea-4753-a291-beba72dfa834,f727e94c-742d-48e0-ba19-be35d91b06ef,d3aab6d3-2faa-4c81-94ba-321580bb9964,26bc44a3-9136-4198-9e6b-0f5952b1bc57,0db2123a-e42b-43ad-89d6-776ac7400164,dc0e233a-0a69-4a20-9b11-c1e9d6e27206,b617c7bd-6a64-4504-9dda-96f44664de2a,edbde3c2-8a43-426c-9453-d61e20350e18,c849da33-6dd4-4124-8978-3fc4cf1d1ef5,ebda3f12-16ea-43c5-82d1-f3badd98f8db,bc01c600-e9ac-4872-bac7-37b4b6672b25,ba18df20-759a-4cca-9194-3878333f4d5c,ab20d37e-a3d9-45ef-b4eb-a84e7992edfb,7158a556-4e1d-4035-b528-38fecdfa1404,71501738-ef69-44f7-9121-834ac7d996a1,7e6deda7-eb83-4044-8046-1d53766fe406,e8b51ada-83f3-453e-b848-3be815100e7d,17dd05d1-2e45-44ca-95ac-4d70552e3ed0,6d6e6317-c838-416b-a7f5-fbb87b278a36,8f3405fa-b82d-44fc-ac89-3ca609f9b769,97607278-710c-446c-a7aa-704b167d3e42,64d26470-2c08-422e-ac94-eb05d6300839,1e2dfb07-be01-4dd4-851c-07d00a237a47,2b89848b-d2e6-4c53-9021-f9a5d84382be,103d7c2b-0b43-4531-8bfe-7df0bbf48e35,c9a849b1-6f4d-4fe8-99b7-56d3738531e5,235eaa3c-f135-481e-b73b-bf8fb79ac00c,a77fdb35-c8db-45f5-be23-9b967f25ae83,93b6f510-6cc2-4bbd-b69a-15b1d3a3e989,14c9dc73-2b75-496f-812d-c786fa5ab3cf,b1f26634-c1f4-4919-b49e-fdc5212131aa,2f3bf9bb-3020-427a-a98b-fbabf9dc2993,8d39c083-86ae-413b-9f59-13e5f4b5c3fa,dd7eb944-979d-46cb-a969-04b5674a26ab,2fa85057-fb59-4046-8061-f4167a18aaf3,9c39ed27-2c04-49c8-97a3-0ec2d95ef9aa,440ae68b-0437-48a7-9f9e-9438459918bf,c2e58b1c-364b-4287-b608-fd5380e4b4c7,dbea8dbf-cb39-4343-84ed-ebab514aa620,23a3d1eb-2182-48f9-a61c-3772539e2586,ede08d00-2ba7-41d7-bcda-12eb09110bdd,bf7d8296-6893-45d9-806f-daa73bc91e6d,d4160db9-cf66-4aea-9bb0-0de24e341563,ed883888-17f3-4f6e-95b3-fee2357d755e,b56f97af-8390-4ab4-99aa-ea2b0236837e}'::uuid[])) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (id)::text) OR ((current_setting('app.user_role'::text, true) = 'customer'::text) AND (((owner_user_id)::text = current_setting('app.user_id'::text, true)) OR (ANY ((id)::text = ((hashed SubPlan 4).col1)::text)))) OR ((current_setting('app.user_role'::text, true) = ANY ('{dealer,distributor,manufacturer,support}'::text[])) AND (((NULLIF(current_setting('app.org_path'::text, true), ''::text) IS NOT NULL) AND (ANY (org_id = (hashed SubPlan 5).col1))) OR ((NULLIF(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text), ''::text) IS NOT NULL) AND ((hierarchy_path = rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) OR ("left"(hierarchy_path, (length(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) + 1)) = (rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text) || '/'::text))))))))
+                                Rows Removed by Filter: 33333
+                                Buffers: shared hit=2440
+                                SubPlan 4
+                                  ->  Seq Scan on device_access device_access_1 (never executed)
+                                        Filter: (((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))) AND ((user_id)::text = current_setting('app.user_id'::text, true)))
+                                SubPlan 5
+                                  ->  Seq Scan on organisations organisations_1 (actual time=0.044..0.044 rows=0.00 loops=3)
+                                        Filter: (path <@ (NULLIF(current_setting('app.org_path'::text, true), ''::text))::ltree)
+                                        Rows Removed by Filter: 9
+                                        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=11 read=7
+Planning Time: 0.621 ms
+Execution Time: 159.589 ms
+
+### runtime history
+Aggregate (actual time=46.108..52.339 rows=1.00 loops=1)
+  Buffers: shared hit=2439
+  ->  Nested Loop (actual time=46.104..52.334 rows=0.00 loops=1)
+        Buffers: shared hit=2439
+        ->  Gather (actual time=46.102..52.331 rows=0.00 loops=1)
+              Workers Planned: 1
+              Workers Launched: 1
+              Buffers: shared hit=2439
+              ->  Parallel Seq Scan on pumps p (actual time=25.619..25.621 rows=0.00 loops=2)
+                    Filter: ((org_id = ANY ('{1ce2ea49-96f6-4868-bc4b-e6eb6e1ef78a,88e17268-5bc6-49d9-8d51-f577dc540750,025ded6d-5d15-4463-8aca-6307543ed61d,ac7c57fa-1255-4152-8e2e-aa80f0344db3,2effbd4d-d786-4828-900b-bb7b21f55434,bc1bf714-42f3-49e9-bf55-e9a35aa8dc70,1360f18e-6f7a-49b8-937f-6a3465ef44d3,f75faf64-2929-4c46-83ea-77168e6f3c7f,c559e855-3ed5-432d-9cce-fe4c88c606ac,d7eeca61-c686-46a6-8a72-d996fd28f523,67ed9b2d-92bb-49cc-9b71-16073677b20a,b919769e-28ea-4753-a291-beba72dfa834,f727e94c-742d-48e0-ba19-be35d91b06ef,d3aab6d3-2faa-4c81-94ba-321580bb9964,26bc44a3-9136-4198-9e6b-0f5952b1bc57,0db2123a-e42b-43ad-89d6-776ac7400164,dc0e233a-0a69-4a20-9b11-c1e9d6e27206,b617c7bd-6a64-4504-9dda-96f44664de2a,edbde3c2-8a43-426c-9453-d61e20350e18,c849da33-6dd4-4124-8978-3fc4cf1d1ef5,ebda3f12-16ea-43c5-82d1-f3badd98f8db,bc01c600-e9ac-4872-bac7-37b4b6672b25,ba18df20-759a-4cca-9194-3878333f4d5c,ab20d37e-a3d9-45ef-b4eb-a84e7992edfb,7158a556-4e1d-4035-b528-38fecdfa1404,71501738-ef69-44f7-9121-834ac7d996a1,7e6deda7-eb83-4044-8046-1d53766fe406,e8b51ada-83f3-453e-b848-3be815100e7d,17dd05d1-2e45-44ca-95ac-4d70552e3ed0,6d6e6317-c838-416b-a7f5-fbb87b278a36,8f3405fa-b82d-44fc-ac89-3ca609f9b769,97607278-710c-446c-a7aa-704b167d3e42,64d26470-2c08-422e-ac94-eb05d6300839,1e2dfb07-be01-4dd4-851c-07d00a237a47,2b89848b-d2e6-4c53-9021-f9a5d84382be,103d7c2b-0b43-4531-8bfe-7df0bbf48e35,c9a849b1-6f4d-4fe8-99b7-56d3738531e5,235eaa3c-f135-481e-b73b-bf8fb79ac00c,a77fdb35-c8db-45f5-be23-9b967f25ae83,93b6f510-6cc2-4bbd-b69a-15b1d3a3e989,14c9dc73-2b75-496f-812d-c786fa5ab3cf,b1f26634-c1f4-4919-b49e-fdc5212131aa,2f3bf9bb-3020-427a-a98b-fbabf9dc2993,8d39c083-86ae-413b-9f59-13e5f4b5c3fa,dd7eb944-979d-46cb-a969-04b5674a26ab,2fa85057-fb59-4046-8061-f4167a18aaf3,9c39ed27-2c04-49c8-97a3-0ec2d95ef9aa,440ae68b-0437-48a7-9f9e-9438459918bf,c2e58b1c-364b-4287-b608-fd5380e4b4c7,dbea8dbf-cb39-4343-84ed-ebab514aa620,23a3d1eb-2182-48f9-a61c-3772539e2586,ede08d00-2ba7-41d7-bcda-12eb09110bdd,bf7d8296-6893-45d9-806f-daa73bc91e6d,d4160db9-cf66-4aea-9bb0-0de24e341563,ed883888-17f3-4f6e-95b3-fee2357d755e,b56f97af-8390-4ab4-99aa-ea2b0236837e}'::uuid[])) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR (current_setting('app.device_id'::text, true) = (id)::text) OR ((current_setting('app.user_role'::text, true) = 'customer'::text) AND (((owner_user_id)::text = current_setting('app.user_id'::text, true)) OR (ANY ((id)::text = ((hashed SubPlan 3).col1)::text)))) OR ((current_setting('app.user_role'::text, true) = ANY ('{dealer,distributor,manufacturer,support}'::text[])) AND (((NULLIF(current_setting('app.org_path'::text, true), ''::text) IS NOT NULL) AND (ANY (org_id = (hashed SubPlan 4).col1))) OR ((NULLIF(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text), ''::text) IS NOT NULL) AND ((hierarchy_path = rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) OR ("left"(hierarchy_path, (length(rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text)) + 1)) = (rtrim(current_setting('app.hierarchy_path'::text, true), '/'::text) || '/'::text))))))))
+                    Rows Removed by Filter: 50000
+                    Buffers: shared hit=2439
+                    SubPlan 3
+                      ->  Seq Scan on device_access (never executed)
+                            Filter: (((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))) AND ((user_id)::text = current_setting('app.user_id'::text, true)))
+                    SubPlan 4
+                      ->  Seq Scan on organisations (actual time=0.032..0.032 rows=0.00 loops=2)
+                            Filter: (path <@ (NULLIF(current_setting('app.org_path'::text, true), ''::text))::ltree)
+                            Rows Removed by Filter: 9
+                            Buffers: shared hit=2
+        ->  Index Scan using daily_summary_device_id_day_idx on daily_summary ds (never executed)
+              Index Cond: (((device_id)::text = (p.id)::text) AND (day >= (CURRENT_DATE - 29)) AND (day < CURRENT_DATE))
+              Filter: ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((device_id)::text = current_setting('app.device_id'::text, true)) OR (ANY ((device_id)::text = (hashed SubPlan 2).col1)))
+              Index Searches: 0
+              SubPlan 2
+                ->  Seq Scan on device_access da (never executed)
+                      Filter: ((user_id = (NULLIF(current_setting('app.user_id'::text, true), ''::text))::uuid) AND ((current_setting('app.bypass_rls'::text, true) = 'on'::text) OR (current_setting('app.user_role'::text, true) = 'superadmin'::text) OR ((user_id)::text = current_setting('app.user_id'::text, true))))
+Planning:
+  Buffers: shared hit=10 read=7
+Planning Time: 0.589 ms
+Execution Time: 52.406 ms
+

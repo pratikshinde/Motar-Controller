@@ -1,12 +1,16 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
-import { Activity, Zap, ShieldCheck } from 'lucide-react-native';
+import { Droplets, Sprout } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { colors, font, radius } from '../shared/theme';
+import { tracking } from '../shared/i18n/languages';
 
 interface SplashScreenProps {
   onFinish: () => void;
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
+  const { t, i18n } = useTranslation();
   useEffect(() => {
     const timer = setTimeout(() => {
       onFinish();
@@ -16,42 +20,27 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 
   return (
     <View style={styles.container}>
-      {/* Top Scan Line */}
-      <View style={styles.scanLine} />
-
       <View style={styles.centerBox}>
-        {/* Animated Glowing Logo Icon */}
-        <View style={styles.logoOuterGlow}>
-          <View style={styles.logoInnerBox}>
-            <Activity size={44} color="#00e5ff" />
+        <View style={styles.logoRing}>
+          <View style={styles.logoCore}>
+            <Droplets size={52} color={colors.water} />
+          </View>
+          <View style={styles.sprout}>
+            <Sprout size={22} color={colors.primaryDark} />
           </View>
         </View>
 
-        {/* Title */}
-        <Text style={styles.titleLine1}>AJANTA PUMP</Text>
-        <Text style={styles.titleLine2}>CONTROLLER</Text>
+        <Text style={[styles.titleLine1, tracking(i18n.language, 2)]}>{t('brand.line1')}</Text>
+        <Text style={[styles.titleLine2, tracking(i18n.language, 3)]}>{t('brand.line2')}</Text>
+        <Text style={styles.tagline}>{t('splash.tagline')}</Text>
 
-        {/* Subtitle pill */}
-        <View style={styles.tagBadge}>
-          <Zap size={12} color="#00e676" />
-          <Text style={styles.tagText}>3-PHASE 440V SMART IOT SYSTEM</Text>
-        </View>
-
-        {/* Loading Spinner & Status */}
         <View style={styles.loaderBox}>
-          <ActivityIndicator size="large" color="#00e676" />
-          <Text style={styles.loaderText}>Connecting telemetry stream...</Text>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={styles.loaderText}>{t('splash.starting')}</Text>
         </View>
       </View>
 
-      {/* Footer Branding */}
-      <View style={styles.footerBox}>
-        <View style={styles.footerSecureRow}>
-          <ShieldCheck size={14} color="#00e5ff" />
-          <Text style={styles.footerSecureText}>SECURE HARDWARE ENCLAVE ACTIVE</Text>
-        </View>
-        <Text style={styles.versionText}>AGRI-PUMP OS • v2.4.0-DEMO</Text>
-      </View>
+      <Text style={styles.footer}>{t('splash.footer')}</Text>
     </View>
   );
 };
@@ -59,111 +48,70 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#060b14',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 48,
+    paddingVertical: 40,
     paddingHorizontal: 24,
   },
-  scanLine: {
+  centerBox: { flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%' },
+  logoRing: {
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 28,
+  },
+  logoCore: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sprout: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#00e5ff',
-  },
-  centerBox: {
-    flex: 1,
+    right: 6,
+    bottom: 8,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-  },
-  logoOuterGlow: {
-    width: 96,
-    height: 96,
-    borderRadius: 24,
-    backgroundColor: '#00e5ff12',
-    borderWidth: 1.5,
-    borderColor: '#00e5ff40',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  logoInnerBox: {
-    width: 76,
-    height: 76,
-    borderRadius: 18,
-    backgroundColor: '#0c1220',
-    borderWidth: 1,
-    borderColor: '#00e5ff80',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: colors.primary,
   },
   titleLine1: {
-    color: '#e8edf5',
-    fontSize: 26,
+    color: colors.textOnPrimary,
+    fontSize: font.display,
     fontWeight: '900',
-    letterSpacing: 2.5,
-    textAlign: 'center',
-    lineHeight: 32,
-  },
-  titleLine2: {
-    color: '#00e5ff',
-    fontSize: 22,
-    fontWeight: '800',
     letterSpacing: 2,
     textAlign: 'center',
-    lineHeight: 28,
+  },
+  titleLine2: {
+    color: '#CFEBD6',
+    fontSize: font.headline,
+    fontWeight: '800',
+    letterSpacing: 3,
+    textAlign: 'center',
     marginTop: 2,
   },
-  tagBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#111a2e',
-    borderColor: '#1c2a45',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+  tagline: {
+    color: colors.textOnPrimary,
+    fontSize: font.body,
     marginTop: 14,
+    opacity: 0.92,
+    backgroundColor: 'rgba(0,0,0,0.14)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
   },
-  tagText: {
-    color: '#7a8baa',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  loaderBox: {
-    alignItems: 'center',
-    marginTop: 44,
-    gap: 12,
-  },
-  loaderText: {
-    color: '#4a5a78',
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-  },
-  footerBox: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  footerSecureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  footerSecureText: {
-    color: '#00e5ff',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  versionText: {
-    color: '#4a5a78',
-    fontSize: 10,
-    letterSpacing: 1,
-  },
+  loaderBox: { alignItems: 'center', marginTop: 48, gap: 10 },
+  loaderText: { color: '#E3F3E6', fontSize: font.body, fontWeight: '600' },
+  footer: { color: '#CFEBD6', fontSize: 13, letterSpacing: 0.5 },
 });

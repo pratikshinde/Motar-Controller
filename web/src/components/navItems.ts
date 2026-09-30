@@ -27,7 +27,7 @@ export interface NavItemDef {
 const PRIVILEGED: RoleTier[] = ['superadmin', 'manufacturer', 'distributor', 'dealer'];
 
 export const navItems: NavItemDef[] = [
-  { path: '/', labelKey: 'navTelemetry', icon: ElectricBoltIcon },
+  { path: '/dashboard', labelKey: 'navTelemetry', icon: ElectricBoltIcon },
   { path: '/fleet', labelKey: 'navFleet', icon: DashboardIcon, roles: PRIVILEGED },
   { path: '/alerts', labelKey: 'navAlerts', icon: NotificationsActiveIcon },
   { path: '/devices', labelKey: 'navDevices', icon: DevicesOtherIcon },

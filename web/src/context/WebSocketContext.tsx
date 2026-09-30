@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 
 export type WsStatus = 'connecting' | 'open' | 'closed';
 
-type MessageType = 'pump_update' | 'fault' | 'config_update' | 'alert' | 'alert_digest';
+type MessageType = 'telemetry' | 'fault' | 'config' | 'alert' | 'alert_digest';
 type Listener = (payload: any) => void;
 
 interface WebSocketContextValue {
@@ -65,12 +65,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ws.onmessage = event => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.type === 'connected') {
+          if (msg.type === 'auth_ok') {
             setStatus('open');
             setLastMessageAt(new Date());
             return;
           }
-          if (msg.type === 'pump_update' || msg.type === 'fault' || msg.type === 'config_update' || msg.type === 'alert' || msg.type === 'alert_digest') {
+          if (msg.type === 'telemetry' || msg.type === 'fault' || msg.type === 'config' || msg.type === 'alert' || msg.type === 'alert_digest') {
             setLastMessageAt(new Date());
             listenersRef.current.get(msg.type)?.forEach(cb => cb(msg));
           }

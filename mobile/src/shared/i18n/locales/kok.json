@@ -1,0 +1,489 @@
+{
+  "brand": {
+    "line1": "अजंता पंप",
+    "line2": "कंट्रोलर"
+  },
+  "common": {
+    "retry": "परत यत्न करात",
+    "refresh": "रिफ्रेश करात",
+    "back": "फाटीं",
+    "cancel": "रद्द करात",
+    "continue": "फुडें वचात",
+    "checkAgain": "परत पळयात",
+    "serverUnreachableTitle": "सर्वराकडेन संपर्क जायना",
+    "save": "जतन करात",
+    "loading": "लोड जावन आसा…",
+    "more": "वाडयात",
+    "less": "उणें करात"
+  },
+  "splash": {
+    "tagline": "तुमचो पंप खंयच्यान बी चलयात",
+    "starting": "सुरू जाता…",
+    "footer": "स्मार्ट 3-फेज पंप सुरक्षा"
+  },
+  "language": {
+    "title": "तुमची भास वेंचात",
+    "continue": "फुडें वचात",
+    "listenAll": "भासो आयकात",
+    "stopListening": "थांबयात",
+    "back": "सेटिंग्जाक फाटीं"
+  },
+  "login": {
+    "tabLogin": "लॉगिन",
+    "tabRegister": "नवें खातें",
+    "welcomeBack": "परत येवकार",
+    "createTitle": "तुमचें खातें तयार करात",
+    "nameLabel": "तुमचें नांव",
+    "namePlaceholder": "पुराय नांव",
+    "mobileLabel": "मोबायल नंबर",
+    "mobilePlaceholder": "10 अंकी मोबायल नंबर",
+    "passwordLabel": "पासवर्ड",
+    "passwordPlaceholder": "तुमचो पासवर्ड",
+    "choosePassword": "पासवर्ड वेंचात",
+    "choosePasswordPlaceholder": "उण्यांत उणीं 6 अक्षरां",
+    "loginButton": "लॉगिन करात",
+    "createButton": "खातें तयार करात",
+    "newHere": "नवे आसात?",
+    "createLink": "खातें तयार करात",
+    "haveAccount": "आदींच खातें आसा?",
+    "loginLink": "लॉगिन करात",
+    "showPassword": "पासवर्ड दाखयात",
+    "hidePassword": "पासवर्ड लिपयात",
+    "validationTitle": "उपकार करून तपासात",
+    "needName": "उपकार करून तुमचें पुराय नांव बरयात",
+    "needPhone": "उपकार करून तुमचो मोबायल नंबर बरयात",
+    "needPassword": "उपकार करून तुमचो पासवर्ड बरयात",
+    "passwordShort": "पासवर्ड उण्यांत उणो 6 अक्षरांचो आसूंक जाय",
+    "loginFailedTitle": "लॉगिन जालें ना",
+    "notFoundTitle": "खातें मेळलें ना",
+    "notFoundMessage": "हो मोबायल नंबर अजून नोंदणी जाल्लो ना. तुमकां नवें खातें तयार करचें आसा?",
+    "registerFailedTitle": "खातें तयार जालें ना",
+    "createdTitle": "खातें तयार जालें",
+    "createdMessage": "येवकार {{name}}. तुमचें खातें तयार आसा. फुडें वचपाक लॉगिन करात.",
+    "createdStatus": "खातें तयार जालें. तुमचो मोबायल नंबर आनी पासवर्ड वापरून लॉगिन करात.",
+    "welcomeBackDesc": "Login to manage your pump remotely",
+    "forgotPassword": "Forgot Password?",
+    "createDesc": "Register using your WhatsApp number",
+    "sendOtpButton": "Send OTP on WhatsApp"
+  },
+  "nav": {
+    "pumps": "म्हजे पंप",
+    "alerts": "अलर्ट",
+    "settings": "सेटिंग्ज"
+  },
+  "pumps": {
+    "title": "म्हजे पंप",
+    "count_one": "{{count}} पंप",
+    "count_other": "{{count}} पंप",
+    "loading": "तुमचे पंप लोड जाता आसात…",
+    "emptyTitle": "अजून पंप ना",
+    "emptyMessage": "तुमच्या मोबायल नंबराक अजून खंयचोच पंप जोडिल्लो ना. उपकार करून तुमच्या डीलराक पंप जोडपाक सांगात.",
+    "hp": "{{hp}} एचपी",
+    "openPump": "{{name}}, {{status}}. पंप उगडात",
+    "status": {
+      "running": "चालू",
+      "stopped": "बंद",
+      "fault": "बिघाड",
+      "offline": "ऑफलायन",
+      "online": "ऑनलायन",
+      "unknown": "खबर ना"
+    },
+    "ungrouped": "हेर पंप",
+    "lastSeen": "निमाणी खबर {{ago}}",
+    "noData": "अजून म्हायती ना",
+    "manage": "पंप सांबाळात",
+    "ranToday": "आज {{time}} चल्लो"
+  },
+  "alerts": {
+    "title": "अलर्ट",
+    "loading": "अलर्ट तपासता आसा…",
+    "emptyTitle": "सगळें बरें आसा",
+    "emptyMessage": "आतां तुमच्या पंपांनी खंयचीच समस्या ना.",
+    "serious": "गंभीर",
+    "warning": "जाणविकाय",
+    "info": "म्हायती",
+    "needsAttention": "लक्ष दियात",
+    "resolved": "बरें जालें",
+    "defaultTitle": "पंप अलर्ट",
+    "tabActive": "चालू",
+    "tabFixed": "बरे जाले",
+    "ack": "म्हवां पळयलें",
+    "acked": "पळयलें",
+    "resolve": "बरें जालें म्हणून नोंद करात",
+    "resolveTitle": "ह्या अलर्टाक बरें जालें म्हणून नोंद करचें?",
+    "resolveBody": "पंपाचो बिघाड सुटले उपरांतूच हें करात.",
+    "resolveYes": "जाय, बरें जालें",
+    "openPump": "पंप उगडात",
+    "occurrences": "{{count}} फावटी जालें",
+    "last": "निमाणें: {{when}}",
+    "emptyFixed": "हालींच कांयच बरें जाळें ना"
+  },
+  "settings": {
+    "title": "सेटिंग्ज",
+    "language": "भास",
+    "languageHint": "अ‍ॅप, अलर्ट आनी आवाजाच्या जाप्यांची भास",
+    "account": "खातें",
+    "logout": "लॉगआउट",
+    "logoutTitle": "लॉगआउट",
+    "logoutMessage": "तुमकां लॉगआउट करचें आसा?",
+    "version": "आवृत्ती {{version}}",
+    "profile": "प्रोफायल",
+    "name": "तुमचें नांव",
+    "nameSaved": "नांव जतन केलें",
+    "mobile": "मोबायल नंबर",
+    "managePumps": "पंप सांबाळात",
+    "managePumpsHint": "पंपांचीं नांवां बदलात, क्रम लायात आनी गट करात",
+    "sessions": "लॉगिन आशिल्ले फोन",
+    "thisDevice": "हो फोन",
+    "lastUsed": "निमाणो वापर {{when}}",
+    "signOutDevice": "लॉगआउट करात",
+    "signOutDeviceTitle": "तो फोन लॉगआउट करचो?",
+    "signOutDeviceBody": "परत लॉगिन करपाक ताका तुमचो पासवर्ड जाय.",
+    "noOtherSessions": "हेर खंयच्याच फोनांत लॉगिन ना.",
+    "data": "तुमचो डेटा",
+    "export": "म्हजो डेटा डाउनलोड करात",
+    "exportHint": "तुमचें खातें, पंप आनी अलर्टांची एक प्रत.",
+    "exportFailed": "तुमचो डेटा तयार जालो ना. उपकार करून परत यत्न करात.",
+    "delete": "म्हजो डेटा काडून उडयात",
+    "deleteHint": "आमकां तुमचें खातें काडपाक सांगात. कांयच काडपा आदीं आमी तुमकां उलयतले.",
+    "deleteTitle": "डेटा काडपाची विनंती धाडची?",
+    "deleteBody": "तुमची विनंती आमच्या पंगडाक वता. तुमकां उलयल्ल्याविण कांयच काडचें ना.",
+    "deleteConfirm": "विनंती धाडात",
+    "deletePending": "{{date}} दिसा डेटा काडपाची विनंती केल्या. आमी तुमकां संपर्क करतले."
+  },
+  "dashboard": {
+    "cantReachTitle": "पंपाकडेन संपर्क जायना",
+    "powerOn": "पंप चालू",
+    "powerOff": "पंप बंद",
+    "running": "चालू आसा",
+    "stopped": "बंद आसा",
+    "signal": "सिग्नल",
+    "cardPower": "वीज पुरवठो (व्होल्टेज)",
+    "cardLoad": "मोटर लोड",
+    "cardRuntime": "चल्ले वेळ",
+    "cardHealth": "पंपाची स्थिती",
+    "volts": "व्होल्ट",
+    "powerOk": "वीज बरी",
+    "noPower": "वीज ना",
+    "rotationOk": "फिरप बरोबर",
+    "wrongRotation": "फिरप चुकीचें",
+    "offNoLoad": "पंप बंद आसा — लोड ना",
+    "totalRun": "एकूण चल्ले वेळ",
+    "noFaults": "बिघाड ना — पंप बरो आसा",
+    "faultBadge": "बंद जालो",
+    "no": "ना, रद्द करात",
+    "yesStart": "जाय, चालू करात",
+    "yesStop": "जाय, बंद करात",
+    "ampere": "एम्प",
+    "system": "SYSTEM",
+    "cardVoltages": "LINE VOLTAGES",
+    "cardCurrents": "PHASE CURRENTS",
+    "cardRuntime2": "RUN TIME",
+    "cardFaults": "PUMP FAULTS",
+    "quickActions": "QUICK ACTIONS",
+    "startPump": "Start Pump",
+    "stopPump": "Stop Pump",
+    "viewTimer": "Timer",
+    "viewHistory": "History",
+    "totalRunTime": "TOTAL RUN TIME",
+    "lastCycleRunTime": "TODAY'S RUN TIME",
+    "hoursMinutes": "HOURS : MINUTES"
+  },
+  "faults": {
+    "code1": "Y-फेज बिघाड",
+    "code2": "फेज ना (सिंगल फेजिंग)",
+    "code3": "व्होल्टेज चड",
+    "code4": "फेजाचो क्रम चुकीचो",
+    "code5": "ड्राय रन (उदक ना)",
+    "code6": "केबल उगडी (सगळे फेज)",
+    "code7": "केबल अंशतः उगडी",
+    "code8": "मोटर ओव्हरलोड",
+    "code9": "व्होल्टेज असंतुलन",
+    "code10": "व्होल्टेज उणें",
+    "unknown": "बिघाड (कोड {{code}})",
+    "title": "बिघाड",
+    "current": "आताचो बिघाड",
+    "cause": "अशें कित्याक जाता",
+    "action": "कितें करचें",
+    "history": "फाटलो बिघाड",
+    "historyEmpty": "ह्या पंपाचो कोणच बिघाड नोंद जावंक ना.",
+    "ack": "म्हवां पळयलें",
+    "acked": "पळयलें",
+    "fixed": "बरो जालो",
+    "open": "उक्तो",
+    "resetTitle": "बिघाडा उपरांत परत चालू करप",
+    "resetIntro": "बिघाड पंपाच्या पॅनेलार सोडयतात, अॅपांत न्हय.",
+    "resetStep1": "पयलीं बिघाडाचें कारण बरें करात.",
+    "resetStep2": "पॅनेलावयलें RESET बटन दाबात.",
+    "resetStep3": "मागीर अॅपाक्रून पंप चालू करात.",
+    "panelLabel": "पंप पॅनेल",
+    "resetButton": "RESET",
+    "occurred": "सुरू जालो {{when}}",
+    "seenAt": "पळयलो {{when}}"
+  },
+  "errors": {
+    "network": "जोडूंक जायना. उपकार करून इंटरनेट तपासून परत यत्न करात.",
+    "server": "आमच्या वटेन कितेंय चुकलें. उपकार करून थोड्या वेळान परत यत्न करात.",
+    "tooMany": "चड खेपो यत्न जालो. उपकार करून थोडें थांबून परत यत्न करात.",
+    "wrongPassword": "पासवर्ड चुकीचो आसा. उपकार करून तपासून परत यत्न करात.",
+    "suspended": "हें खातें बंद केलां. उपकार करून तुमच्या डीलराकडेन संपर्क करात.",
+    "alreadyRegistered": "हो मोबायल नंबर आदींच नोंदणी जाल्लो आसा. उपकार करून लॉगिन करात.",
+    "registrationClosed": "नवीं खातीं तुमचो डीलर जोडटा. उपकार करून तुमच्या डीलराक तुमकां जोडपाक सांगात.",
+    "sessionExpired": "तुमचें सेशन सोंपलां. उपकार करून परत लॉगिन करात.",
+    "forbidden": "तुमकां हें करपाक परवानगी ना.",
+    "notFound": "मेळलें ना.",
+    "invalid": "उपकार करून म्हायती तपासून परत यत्न करात.",
+    "generic": "कितेंय चुकलें. उपकार करून परत यत्न करात.",
+    "offline": "तुमी ऑफलायन आसात. उपकार करून इंटरनेटाक जोडून परत यत्न करात.",
+    "contract": "सर्व्हरान अॅपाक कळना अशी म्हायती धाडली. उपकार करून अॅप अपडेट करात.",
+    "deviceSuspended": "ह्या पंपाचें रिमोट कंट्रोल थांबयलां. उपकार करून तुमच्या डीलराक संपर्क करात.",
+    "siteExists": "ह्या नांवाचो गट तुमकां आदींच आसा.",
+    "mfaUnsupported": "ह्या खात्याक सुरक्षा कोड जाय, जो हो अॅप अजून चलयना. उपकार करून तुमच्या डीलराक संपर्क करात."
+  },
+  "time": {
+    "never": "केन्नाच ना",
+    "justNow": "आतांच",
+    "minutesAgo": "{{count}} मिनिटां आदीं",
+    "hoursAgo": "{{count}} वरां आदीं",
+    "daysAgo": "{{count}} दीस आदीं"
+  },
+  "units": {
+    "minutes": "{{m}} मिनिटां",
+    "hoursMinutes": "{{h}} वरां {{m}} मिनिटां"
+  },
+  "offline": {
+    "banner": "तुमी ऑफलायन आसात. {{time}} मेरेन जतन केल्लो डेटा दिसता.",
+    "bannerNoData": "तुमी ऑफलायन आसात. पंप पळोवपाक इंटरनेटाक जोडात.",
+    "reconnecting": "परत जोडटा आसा…"
+  },
+  "boundary": {
+    "title": "कांयतरी चुकलें",
+    "message": "अॅपांत आडचण आयली. तुमच्या पंपांचेर हाचो परिणाम ना."
+  },
+  "listen": {
+    "start": "आयकात",
+    "stop": "थांबयात",
+    "noVoice": "ह्या फोनांत ह्या भाशेचो आवाज ना. फोनाच्या टेक्स्ट-टू-स्पीच सेटिंगांत तो घालूं येता."
+  },
+  "pump": {
+    "tabs": {
+      "live": "लायव",
+      "timer": "टायमर",
+      "history": "इतिहास",
+      "faults": "बिघाड"
+    },
+    "notFoundTitle": "पंप मेळ्ळो ना",
+    "notFoundMessage": "हो पंप आतां तुमच्या यादींत ना."
+  },
+  "live": {
+    "updated": "अपडेट {{ago}}",
+    "stale": "निमाणें रिडिंग {{ago}} आयिल्लें. तेन्नाची म्हायती दिसता.",
+    "noDataYet": "ह्या पंपान अजून खंयचेंच रिडिंग धाडलें ना.",
+    "today": "आज",
+    "total": "एकूण",
+    "noReading": "रिडिंग ना",
+    "notReporting": "म्हायती येना",
+    "refreshFailed": "ताजें करूंक जालें ना. जतन केल्ली म्हायती दिसता.",
+    "hp": "{{hp}} HP"
+  },
+  "speech": {
+    "running": "{{name}} चालू आसा.",
+    "stopped": "{{name}} बंद आसा.",
+    "fault": "{{name}} त बिघाड आसा: {{fault}}.",
+    "offline": "{{name}} कडल्यान म्हायती येना. निमाणी खबर {{ago}} ची.",
+    "noData": "{{name}} न अजून खंयचेंच रिडिंग धाडलें ना.",
+    "volts": "व्होल्टेज {{ry}}, {{yb}} आनी {{br}} व्होल्ट आसा.",
+    "runtime": "तो आज {{time}} चल्लो."
+  },
+  "command": {
+    "startTitle": "{{name}} चालू करचो?",
+    "stopTitle": "{{name}} बंद करचो?",
+    "startBody": "{{name}} आतांच चालू जातलो. चलोवप सुरक्षीत आसा हाची खात्री करात.",
+    "stopBody": "{{name}} बंद जातलो आनी उदक येवप थांबतलें.",
+    "offlineWarn": "ह्या पंपाकडल्यान म्हायती येना, म्हणून आदेश ताचेर पावना जावंक शकता.",
+    "step": {
+      "sent": "धाडलें",
+      "delivered": "पंपाक पावलें",
+      "acknowledged": "पंपान खात्री केली",
+      "applied": "जालें"
+    },
+    "titleStart": "चालू करपाचो आदेश",
+    "titleStop": "बंद करपाचो आदेश",
+    "notConfirmed": "अजून खात्री जाली ना. पंपान उत्तर दिलें ना. पंप पळयात, वा थोड्या वेळान परत यत्न करात.",
+    "rejected": "पंपान हो आदेश मानलो ना.",
+    "rejectedWhy": "पंपान न्हयकार दिलो: {{reason}}",
+    "expired": "पंपाक पावपाआदीं आदेशाची वेळ सोंपली.",
+    "notSent": "आदेश धाडपाक जालो ना, ताका लागून पंपाक कांयच कळयलें ना. थोड्या वेळान परत यत्न करात.",
+    "done": "पंपान तें केलें.",
+    "tryAgain": "परत यत्न करात",
+    "dismiss": "बंद करात",
+    "offlineBlock": "तुमी ऑफलायन आसात. पंप चलोवपाक इंटरनेटाक जोडात.",
+    "cooldown": "फुडल्या आदेशा आदीं {{seconds}} सेकंद थांबात",
+    "cooldownShort": "{{seconds}} सेकंद थांबात"
+  },
+  "timer": {
+    "title": "चलपाचो टायमर",
+    "intro": "पंप थारायिल्ल्या वेळा मेरेन चलोवात, मागीर तो आपसूक बंद जातलो.",
+    "onLabel": "किती वेळ चलचो (मिनिटां)",
+    "offLabel": "मागीर किती वेळ थांबचो (मिनिटां)",
+    "cyclesLabel": "किती फावटी परत करचें",
+    "cyclesHint": "0 म्हणजे चलतच रावता",
+    "range": "{{min}} ते {{max}}",
+    "errorOn": "1 ते 250 मिनिटां बरयात",
+    "errorOff": "0 ते 250 मिनिटां बरयात",
+    "errorCycles": "0 ते 999 बरयात",
+    "save": "पंपाक टायमर धाडात",
+    "confirmTitle": "{{name}} चेर टायमर घालचो?",
+    "summaryOnce": "{{on}} मिनिटां चलतलो, मागीर बंद जातलो.",
+    "summaryRepeat": "{{on}} मिनिटां चलतलो, {{off}} मिनिटां थांबतलो, {{cycles}} फावटी परत करतलो.",
+    "summaryForever": "{{on}} मिनिटां चलतलो, {{off}} मिनिटां थांबतलो, चलतच रावतलो.",
+    "confirmYes": "जाय, धाडात",
+    "sentUnconfirmed": "पंपाक धाडलो, पूण अजून खात्री जाली ना. खात्री जाल्या उपरांत पंप तो वापरतलो.",
+    "current": "तुमी धाडिल्लो निमाणो टायमर",
+    "none": "तुमी अजून खंयचोच टायमर धाडूंक ना.",
+    "remoteBlocked": "रिमोट कंट्रोल थांबिल्ल्या वेळार टायमर धाडूंक जायना."
+  },
+  "history": {
+    "day": "आज",
+    "week": "7 दीस",
+    "month": "30 दीस",
+    "hoursRun": "चल्ले वेळ",
+    "perHour": "दर वरांत किती मिनिटां चल्लो (फाटलीं 24 वरां)",
+    "perDay": "दर दिसा चल्ले वेळ",
+    "empty": "अजून चल्ल्याचो इतिहास ना",
+    "emptyHint": "पंप चलून म्हायती धाडल्या उपरांत पट्टे दिसतले.",
+    "total": "ह्या काळांत एकूण",
+    "starts": "चालू जालो: {{count}} फावटी",
+    "faultCount": "बिघाड: {{count}}",
+    "export": "CSV फायल म्हणून धाडात",
+    "exportFailed": "फायल तयार जाली ना. उपकार करून परत यत्न करात.",
+    "estimated": "पंपान धाडिल्ल्या म्हायतींतल्यान अदमास.",
+    "barDetail": "{{label}}: {{time}}",
+    "noBars": "पंप चल्लो ना."
+  },
+  "faultInfo": {
+    "code1": {
+      "cause": "एक फेज (Y) पंपाक बरे तरेन पावना.",
+      "action": "पॅनेलांतलो Y-फेजाचो फ्यूज आनी तार पळयात. परत परत जाल्यार डीलराक आपयात."
+    },
+    "code2": {
+      "cause": "तिगांतलो एक फेज ना, म्हणून मोटर सुरक्षीत चलूंक शकना.",
+      "action": "फ्यूज आनी वीज पुरवण पळयात. इलेक्ट्रिशियन वा डीलराक आपयात."
+    },
+    "code3": {
+      "cause": "विजेचो व्होल्टेज चड आसा आनी मोटर जळूंक शकता.",
+      "action": "पुरवण सामान्य जाय मेरेन थांबात. व्होल्टेज चड रावल्यार परत चालू करूं नाकात."
+    },
+    "code4": {
+      "cause": "तिन्ही फेजांच्यो तारो चुकीच्या क्रमान आसात, म्हणून मोटर उलटी फिरता.",
+      "action": "पंप चलोवं नाकात. इलेक्ट्रिशियना कडल्यान कोणय दोन फेजांच्यो तारो बदलून घेयात."
+    },
+    "code5": {
+      "cause": "पंप उदका बगर चलता.",
+      "action": "उदकाची पातळी आनी फूट वाल्व पळयात. उदक मेळ्ळ्यार चालू करात."
+    },
+    "code6": {
+      "cause": "मोटराक वतली केबल सगळ्या फेजांचेर तुटल्ली वा सुटल्ली आसा.",
+      "action": "पॅनेला थावन मोटरा मेरेनची केबल आनी जोडणी पळयात. डीलराक आपयात."
+    },
+    "code7": {
+      "cause": "मोटराची केबल अर्दी तुटल्ली आसा, वा कांय फेजांचेर जोडणी सैल आसा.",
+      "action": "केबलाच्यो जोडण्यो आनी टर्मिनल पळयात. डीलराक आपयात."
+    },
+    "code8": {
+      "cause": "मोटर चड करंट व्हरता, पंप जाम जाला वा पुरवण दुबळें आसा.",
+      "action": "पंपांत आडखळ आसा काय पळयात. थोडें थांबून परत चालू करात. परत परत जाल्यार डीलराक आपयात."
+    },
+    "code9": {
+      "cause": "तिन्ही फेजांचे व्होल्टेज एकामेकाचेर चड वेगळे आसात.",
+      "action": "पुरवण समतोल जाय मेरेन थांबात. चालूच रावल्यार वीज कंपनीक सांगात."
+    },
+    "code10": {
+      "cause": "विजेचो व्होल्टेज इतलो उणो आसा की मोटर सुरक्षीत चलूंक शकना.",
+      "action": "व्होल्टेज सुदारेस्तो थांबात, मागीर चालू करात."
+    },
+    "unknown": {
+      "cause": "पंपाक अशी एक बिघाड मेळ्ळी जिचें नांव तो सांगूंक शकलो ना.",
+      "action": "तुमच्या डीलराक आपयात आनी बिघाडाचो कोड सांगात."
+    }
+  },
+  "support": {
+    "title": "आदार",
+    "dealer": "तुमचो डीलर",
+    "call": "{{name}} क फोन करात",
+    "noDealer": "तुमच्या डीलराचो नंबर अजून जतन केल्लो ना. उपकार करून पंप बसयल्ल्याक विचारात.",
+    "company": "कंपनीचो आदार",
+    "loadFailed": "डीलराची म्हायती मेळ्ळी ना."
+  },
+  "manage": {
+    "title": "पंप सांबाळात",
+    "pumps": "तुमचे पंप",
+    "groups": "गट",
+    "rename": "नांव बदलात",
+    "namePlaceholder": "पंपाचें नांव",
+    "originalName": "पंपाचेर आशिल्लें नांव: {{name}}",
+    "moveUp": "वयर व्हरात",
+    "moveDown": "सकयल व्हरात",
+    "group": "गट",
+    "noGroup": "गट ना",
+    "newGroup": "नवो गट",
+    "groupPlaceholder": "उदा.: उत्तरेची शेती",
+    "createGroup": "गट तयार करात",
+    "renameGroup": "गटाचें नांव बदलात",
+    "deleteGroup": "गट काडून उडयात",
+    "deleteGroupTitle": "हो गट काडून उडोवचो?",
+    "deleteGroupBody": "ताचे पंप गटा बगर तुमच्या यादींतूच रावतले.",
+    "groupPumps": "पंप: {{count}}",
+    "empty": "सांबाळपाक अजून तुमकां पंप ना.",
+    "nameEmpty": "उपकार करून एक नांव बरयात."
+  },
+  "plan": {
+    "expiring": "तुमचो प्लॅन {{days}} दिसांनी, {{date}} दिसा सोंपता. उपकार करून डीलराक नवीकरण करपाक सांगात.",
+    "expiresToday": "तुमचो प्लॅन आज सोंपता. उपकार करून डीलराक नवीकरण करपाक सांगात.",
+    "expired": "तुमचो प्लॅन {{date}} दिसा सोंपलो. उपकार करून डीलराक नवीकरण करपाक सांगात.",
+    "suspended": "ह्या पंपाचें रिमोट कंट्रोल थांबयलां. उपकार करून तुमच्या डीलराक संपर्क करात."
+  },
+  "otp": {
+    "title": "Enter Verification Code",
+    "desc": "We have sent a 6-digit code to",
+    "onWhatsapp": "on WhatsApp",
+    "testOtpNotice": "Test mode - use the code below",
+    "autoFill": "Auto-fill",
+    "resendPrompt": "Didn't receive the code?",
+    "resendIn": "Resend in",
+    "resendButton": "Resend OTP",
+    "verifyButton": "Verify OTP",
+    "verifyingButton": "Verifying...",
+    "incompleteCode": "Enter all 6 digits"
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "desc": "Set a password for your account",
+    "passwordReq": "Minimum 8 characters",
+    "confirmLabel": "Confirm Password",
+    "submitButton": "Create Account",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
+  },
+  "registered": {
+    "title": "Registration Successful!",
+    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "phoneLabel": "Registered mobile number",
+    "continueButton": "Continue to App"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "desc": "Enter your mobile number to receive a reset code on WhatsApp"
+  },
+  "resetPassword": {
+    "title": "Create New Password",
+    "desc": "Set a new password for your account",
+    "newPasswordLabel": "New Password",
+    "submitButton": "Update Password"
+  },
+  "passwordUpdated": {
+    "title": "Password Updated!",
+    "desc": "Your password has been updated successfully. Please sign in with your new password.",
+    "goToLogin": "Go to Login"
+  }
+}

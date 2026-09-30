@@ -1,7 +1,7 @@
 import type { PumpListItem, TelemetryRow } from '../types';
 
 /**
- * The WS `pump_update` payload is PumpListItem-shaped (fetchPumpBroadcastRow
+ * The WS `telemetry` payload is PumpListItem-shaped (fetchPumpBroadcastRow
  * in server.js mirrors the W0 LATERAL join), which doesn't carry
  * `pump_on`/`fault_active`/`seq` the way a raw telemetry_history row does
  * — those aren't needed for the fleet list this payload was designed for.

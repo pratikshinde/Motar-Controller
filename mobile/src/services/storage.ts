@@ -44,5 +44,5 @@ export const storage = {
     await this.removeItem('agripump_token');
     await this.removeItem('agripump_refresh');
     await this.removeItem('agripump_user');
-  }
+  },
 };

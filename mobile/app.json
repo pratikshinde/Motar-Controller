@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "AgriPump",
+    "slug": "agripump-farmer",
+    "scheme": "agripump",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.agripump.farmer"
+    },
+    "ios": {
+      "bundleIdentifier": "com.agripump.farmer"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-router", "expo-localization", "expo-secure-store", "expo-status-bar"]
+  }
+}

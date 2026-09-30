@@ -7,15 +7,18 @@ import PlaceIcon from '@mui/icons-material/Place';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { dispatchCommand } from '../api/pumps';
+import { outcomeOf, watchCommand } from '../api/commands';
+import { effectiveStatus, formatCoords, STATUS_LABEL, type EffectiveStatus } from '../utils/pumpStatus';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
 import { monoFont } from '../theme';
 import type { PumpListItem } from '../types';
 
-const statusColor = (status: PumpListItem['status'], theme: any) => {
+const statusColor = (status: EffectiveStatus, theme: any) => {
   if (status === 'RUNNING') return theme.palette.secondary.main;
   if (status === 'FAULT') return theme.palette.error.main;
+  if (status === 'OFFLINE') return theme.palette.warning.main;
   return theme.palette.text.secondary;
 };
 
@@ -44,7 +47,8 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
   const [optimisticOn, setOptimisticOn] = useState<boolean | null>(null);
 
   const isSuperadmin = user?.role === 'superadmin';
-  const isOn = optimisticOn ?? pump.status === 'RUNNING';
+  const status = effectiveStatus(pump);
+  const isOn = optimisticOn ?? status === 'RUNNING';
 
   async function handleToggle(checked: boolean) {
     setOptimisticOn(checked);
@@ -53,8 +57,18 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
     try {
       const result = await dispatchCommand(pump.id, action);
       if (result.status === 200 || result.status === 202) {
-        showToast(`${action} command dispatched — pending device acknowledgement`);
+        showToast(`${action} sent: waiting for the pump to confirm`);
         onCooldownStart(pump.id, result.cooldownSec || 45);
+        // The switch follows what the pump proves, not what was asked: put it back if the command did not land.
+        if (result.command?.cid) {
+          watchCommand(pump.id, result.command.cid, cmd => {
+            const outcome = outcomeOf(cmd, action);
+            if (!outcome) return;
+            showToast(outcome.text, outcome.error);
+            if (outcome.error) setOptimisticOn(null);
+            onChanged();
+          });
+        }
       } else if (result.status === 429) {
         setOptimisticOn(!checked);
         showToast(result.detail || result.error || result.message || 'Command cooldown active (45s protection window)', true);
@@ -76,7 +90,8 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
     }
   }
 
-  const statusLabel = pump.status === 'RUNNING' ? t.statusRunning : pump.status === 'FAULT' ? t.statusFault : t.statusStopped;
+  const statusLabel =
+    status === 'RUNNING' ? t.statusRunning : status === 'FAULT' ? t.statusFault : status === 'STOPPED' ? t.statusStopped : STATUS_LABEL[status];
 
   return (
     <Card
@@ -98,8 +113,8 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
             size="small"
             label={statusLabel}
             sx={{
-              bgcolor: theme.palette.mode === 'dark' ? `${statusColor(pump.status, theme)}33` : `${statusColor(pump.status, theme)}1F`,
-              color: statusColor(pump.status, theme),
+              bgcolor: theme.palette.mode === 'dark' ? `${statusColor(status, theme)}33` : `${statusColor(status, theme)}1F`,
+              color: statusColor(status, theme),
               fontFamily: monoFont,
               fontWeight: 700
             }}
@@ -139,11 +154,28 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
           ))}
         </Box>
 
-        {!pump.telemetry_recorded_at && (
+        {!pump.telemetry_recorded_at && !pump.v_ry && !pump.i_r && (
           <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
             No telemetry received yet
           </Typography>
         )}
+
+        {/* Subscription expiry warning (FR-WEB) */}
+        {(() => {
+          const exp = (pump as any).subscription_expires_at;
+          if (!exp) return null;
+          const daysLeft = Math.ceil((new Date(exp).getTime() - Date.now()) / 86400000);
+          if (daysLeft > 30) return null;
+          return (
+            <Chip
+              size="small"
+              label={daysLeft <= 0 ? 'Subscription expired' : `Subscription expires in ${daysLeft}d`}
+              color={daysLeft <= 0 ? 'error' : 'warning'}
+              variant="outlined"
+              sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
+            />
+          );
+        })()}
 
         <Box
           onClick={e => e.stopPropagation()}
@@ -152,7 +184,7 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
             <PlaceIcon fontSize="inherit" sx={{ color: 'text.secondary' }} />
             <Typography variant="caption" sx={{ fontFamily: monoFont }} noWrap>
-              {Number(pump.latitude).toFixed(4)}°N, {Number(pump.longitude).toFixed(4)}°E
+              {formatCoords(pump.latitude, pump.longitude)}
             </Typography>
           </Box>
           {isSuperadmin && (

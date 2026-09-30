@@ -36,9 +36,7 @@ export const FaultLogsView: React.FC = () => {
     if (!pumpId) return;
     setLoading(true);
     try {
-      const data = await fetchFaults(pumpId);
-      const list = Array.isArray(data) ? data : (data?.faults || (data as any)?.data || []);
-      setFaults(Array.isArray(list) ? list : []);
+      setFaults(await fetchFaults(pumpId));
     } catch {
       showToast('Could not load fault log', true);
       setFaults([]);

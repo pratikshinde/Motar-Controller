@@ -137,7 +137,9 @@ export const ConfigTemplatesView: React.FC = () => {
                           value={current}
                           onChange={e => setField(field.key, e.target.value)}
                           slotProps={{ htmlInput: { min: field.min, max: field.max } }}
-                          sx={{ width: 140 }}
+                          // 140px clipped the "not included" placeholder itself (down to "not includec") —
+                          // this is a number field, so the up/down spinner also eats into that width.
+                          sx={{ minWidth: 168 }}
                         />
                       )}
                     </Box>

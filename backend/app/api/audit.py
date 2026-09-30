@@ -15,6 +15,10 @@ def list_audit_logs(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    from app.services.authorization_service import AuthorizationService
+    from app.core.permissions import Permission
+    AuthorizationService.authorize(current_user, Permission.VIEW_AUDIT_LOG, db=db)
+
     query = db.query(AuditLog)
     if entity_type:
         query = query.filter(AuditLog.entity_type == entity_type)

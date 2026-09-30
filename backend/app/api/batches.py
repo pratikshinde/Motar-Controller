@@ -1,10 +1,12 @@
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Body
+import hmac
+from fastapi import APIRouter, Depends, HTTPException, Body, Header
+from app.config import settings
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, text
 from app.database import get_db
-from app.models import DeviceBatch, BatchImei, User
+from app.models import DeviceBatch, BatchImei, User, Pump, DeviceConfig, AuditLog
 from app.api.deps import get_current_user
 
 router = APIRouter(tags=["Factory Batches & Provisioning"])
@@ -165,3 +167,103 @@ def revoke_batch(
     db.commit()
     db.refresh(batch)
     return {"message": "Batch revoked", "batch": serialize_batch(batch, db)}
+
+@router.post("/provisioning/pre-hook")
+def fleet_provisioning_pre_hook(
+    payload: Dict[str, Any] = Body(...),
+    x_hook_secret: Optional[str] = Header(None, alias="X-Hook-Secret"),
+    db: Session = Depends(get_db)
+):
+    """
+    AWS IoT Fleet Provisioning pre-provisioning hook (SRS §5.2.1 / P2.1).
+    Validates that the connecting device's serial exists in whitelist batch,
+    is not revoked, and has not already been claimed.
+    """
+    # Otherwise this is a public oracle for which serial numbers are valid. Outside development the hook's own
+    # secret is mandatory: the Lambda that calls it sends it in X-Hook-Secret.
+    expected = settings.PROVISIONING_HOOK_SECRET
+    if expected or settings.ENV != "development":
+        if not expected or not x_hook_secret or not hmac.compare_digest(x_hook_secret, expected):
+            raise HTTPException(status_code=401, detail="Invalid provisioning hook credentials")
+
+    params = payload.get("parameters", {})
+    serial = params.get("SerialNumber") or params.get("serial") or params.get("imei")
+
+    if not serial:
+        return {
+            "allowProvisioning": False,
+            "parameterOverrides": {},
+            "error": "Missing SerialNumber in provisioning parameters"
+        }
+
+    # Query factory whitelist
+    imei_record = db.query(BatchImei).filter(BatchImei.imei == serial).first()
+    if not imei_record:
+        return {
+            "allowProvisioning": False,
+            "parameterOverrides": {},
+            "error": f"Device serial '{serial}' is not in factory whitelist"
+        }
+
+    # Verify batch not revoked
+    batch = db.query(DeviceBatch).filter(DeviceBatch.id == imei_record.batch_id).first()
+    if not batch or batch.revoked:
+        return {
+            "allowProvisioning": False,
+            "parameterOverrides": {},
+            "error": "Device batch is revoked or invalid"
+        }
+
+    # Check if already claimed
+    if imei_record.claimed:
+        return {
+            "allowProvisioning": False,
+            "parameterOverrides": {},
+            "error": f"Device serial '{serial}' has already been claimed"
+        }
+
+    # Enable system provisioning context for RLS
+    db.execute(text("SET app.bypass_rls = 'on';"))
+
+    # Ensure pump record exists in state COMMISSIONED first to satisfy FK constraint
+    pump_id = f"PUMP-{serial}"
+    pump = db.query(Pump).filter(Pump.id == pump_id).first()
+    if not pump:
+        owner_id = batch.created_by
+        if not owner_id:
+            superadmin = db.query(User).filter(User.role == "superadmin").first()
+            owner_id = superadmin.id if superadmin else None
+
+        pump = Pump(
+            id=pump_id,
+            name=f"Pump {serial[-6:]}",
+            supply_type="3-phase",
+            hp_rating=7.5,
+            owner_user_id=owner_id,
+            hierarchy_path="/SA",
+            status="STOPPED",
+            lifecycle_state="COMMISSIONED",
+            firmware_version="1.0.367"
+        )
+        db.add(pump)
+        db.add(DeviceConfig(
+            pump_id=pump_id,
+            desired_json={"ol": 25.0, "ov": 480, "dr": 1, "dr_t": 5},
+            status="APPLIED"
+        ))
+        db.flush()
+
+    # Mark IMEI as claimed
+    imei_record.claimed = True
+    imei_record.claimed_at = datetime.utcnow()
+    imei_record.pump_id = pump_id
+
+    db.commit()
+
+    return {
+        "allowProvisioning": True,
+        "parameterOverrides": {
+            "ThingName": pump_id,
+            "ThingGroupName": "dev" if "dev" in (batch.model or "").lower() else "production"
+        }
+    }

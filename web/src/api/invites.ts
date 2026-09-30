@@ -1,4 +1,4 @@
-import { apiJson, apiFetch, persistTokens } from './client';
+import { apiJson, apiFetch, persistTokens, messageFrom } from './client';
 import { isMfaRequired } from '../types';
 import type { LoginOutcome, RoleTier } from '../types';
 
@@ -14,7 +14,23 @@ export async function redeemInvite(token: string, fullName: string, phoneNumber:
     body: JSON.stringify({ full_name: fullName, phone_number: phoneNumber, password })
   });
   const body = (await res.json()) as LoginOutcome;
-  if (!res.ok) throw new Error((body as any).error || 'Could not redeem invite');
+  if (!res.ok) throw new Error(messageFrom(body, 'Could not redeem invite'));
   if (!isMfaRequired(body)) persistTokens(body);
   return body;
+}
+
+export interface InvitePreview {
+  role: RoleTier;
+  invited_by: string;
+  expires_at: string;
+  /** Partner accounts sign in with a password; a customer may leave it blank and use an SMS code. */
+  password_required: boolean;
+}
+
+/** What the sign-up page shows before asking for anything. Needs no session; a bad link throws with the server's message. */
+export async function previewInvite(token: string): Promise<InvitePreview> {
+  const res = await apiFetch(`/invites/${encodeURIComponent(token)}`);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'This invite link is not valid.'));
+  return body as InvitePreview;
 }

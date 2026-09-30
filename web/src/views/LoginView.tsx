@@ -1,237 +1,274 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Box, Card, CardContent, Typography, TextField, Button, Link, Stack,
-  ToggleButtonGroup, ToggleButton, Alert
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  Button,
+  Menu,
+  MenuItem,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
-import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
-import ShieldIcon from '@mui/icons-material/Shield';
-import { useTheme } from '@mui/material/styles';
-import { sendSmsOtp, verifyOtp, loginWithPassword } from '../api/auth';
-import { verifyMfa } from '../api/mfa';
-import { useAuth } from '../context/AuthContext';
+import LanguageIcon from '@mui/icons-material/Language';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { AuthHeroPanel } from './auth/AuthHeroPanel';
+import { LoginForm } from './auth/LoginForm';
+import { CreateAccountForm } from './auth/CreateAccountForm';
+import { BrandLogo } from '../components/brand/BrandLogo';
 import { useLocale } from '../context/LocaleContext';
-import { useToast } from '../context/ToastContext';
-import { isMfaRequired } from '../types';
+import { supportedLocales, localeLabels, type SupportedLocale } from '../i18n';
 
-type AuthMode = 'otp' | 'password';
+interface LoginViewProps {
+  defaultTab?: 'login' | 'register';
+}
 
-export const LoginView: React.FC = () => {
+export const LoginView: React.FC<LoginViewProps> = ({ defaultTab = 'login' }) => {
   const theme = useTheme();
-  const { handleAuthResult } = useAuth();
-  const { t } = useLocale();
-  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { locale, setLocale } = useLocale();
 
-  const [mode, setMode] = useState<AuthMode>('otp');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [password, setPassword] = useState('');
-  const [otpRequested, setOtpRequested] = useState(false);
-  const [devOtpNotice, setDevOtpNotice] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'login' | 'register'>(
+    location.pathname.includes('/register') ? 'register' : defaultTab
+  );
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
-  // Set once step 1 succeeds but the account has TOTP enabled — switches
-  // the form to the MFA code step instead of finishing login.
-  const [mfaToken, setMfaToken] = useState<string | null>(null);
-  const [mfaCode, setMfaCode] = useState('');
-
-  async function handleSendOtp() {
-    if (!phone.trim()) {
-      showToast('Please enter your mobile phone number first', true);
-      return;
+  // Sync tab if URL changes
+  useEffect(() => {
+    if (location.pathname.includes('/register')) {
+      setTab('register');
+    } else if (location.pathname.includes('/login')) {
+      setTab('login');
     }
-    setBusy(true);
-    setError('');
-    try {
-      const data = await sendSmsOtp(phone.trim());
-      setOtpRequested(true);
-      if (data.dev_otp) {
-        setDevOtpNotice(`[Dev test code: ${data.dev_otp}]`);
-        setOtp(data.dev_otp);
-      } else {
-        setDevOtpNotice(`SMS OTP sent to ${phone.trim()}`);
-      }
-      showToast(`SMS OTP challenge sent to ${phone.trim()}`);
-    } catch (err: any) {
-      showToast(err.message || 'OTP request failed', true);
-    } finally {
-      setBusy(false);
-    }
-  }
+  }, [location.pathname]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setBusy(true);
-    try {
-      const result =
-        mode === 'password'
-          ? await loginWithPassword(phone.trim(), password.trim())
-          : await verifyOtp(phone.trim(), otp.trim());
-
-      if (isMfaRequired(result)) {
-        setMfaToken(result.mfa_token);
-        return;
-      }
-      handleAuthResult(result);
-      showToast(`Authenticated session active: ${result.user.full_name}`);
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed');
-    } finally {
-      setBusy(false);
+  const handleTabChange = (_: React.SyntheticEvent, newTab: 'login' | 'register') => {
+    setTab(newTab);
+    setSelectedRole(null);
+    if (newTab === 'register') {
+      window.history.replaceState(null, '', '/register');
+    } else {
+      window.history.replaceState(null, '', '/login');
     }
-  }
+  };
 
-  async function handleMfaSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!mfaToken) return;
-    setError('');
-    setBusy(true);
-    try {
-      const result = await verifyMfa(mfaToken, mfaCode.trim());
-      handleAuthResult(result);
-      showToast(`Authenticated session active: ${result.user.full_name}`);
-    } catch (err: any) {
-      setError(err.message || 'Incorrect code');
-    } finally {
-      setBusy(false);
-    }
-  }
+  const handleSelectRoleFromLogin = (roleId: string) => {
+    setSelectedRole(roleId);
+    setTab('register');
+    window.history.replaceState(null, '', '/register');
+  };
+
+  // Language Menu dropdown
+  const [langAnchor, setLangAnchor] = useState<null | HTMLElement>(null);
+  const handleLangClose = (selected?: SupportedLocale) => {
+    setLangAnchor(null);
+    if (selected) setLocale(selected);
+  };
 
   return (
     <Box
       sx={{
-        position: 'fixed',
-        inset: 0,
-        display: 'grid',
-        placeItems: 'center',
-        bgcolor: 'background.default'
+        minHeight: '100vh',
+        width: '100vw',
+        bgcolor: '#FFFFFF',
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        overflowX: 'hidden'
       }}
     >
-      <Card elevation={2} sx={{ width: '100%', maxWidth: 440, mx: 2 }}>
-        <CardContent sx={{ p: 4 }}>
-          <Box
+      {/* LEFT COLUMN: Industrial IoT & Agriculture Brand Showcase */}
+      <Box
+        sx={{
+          width: { xs: '100%', md: '48%', lg: '50%' },
+          display: { xs: 'none', md: 'block' },
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          flexShrink: 0
+        }}
+      >
+        <AuthHeroPanel />
+      </Box>
+
+      {/* MOBILE HEADER (when on phone/tablet) */}
+      <Box
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 2.5,
+          py: 2,
+          borderBottom: '1px solid #E2E8F0',
+          bgcolor: '#FFFFFF'
+        }}
+      >
+        <BrandLogo size="small" onClick={() => navigate('/')} />
+        <Button
+          size="small"
+          onClick={() => navigate('/')}
+          startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
+          sx={{ textTransform: 'none', color: '#64748B', fontWeight: 600, fontSize: '0.82rem' }}
+        >
+          Home
+        </Button>
+      </Box>
+
+      {/* RIGHT COLUMN: Authentication Container */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          p: { xs: 2.5, sm: 4, lg: 6 },
+          bgcolor: '#FFFFFF',
+          overflowY: 'auto'
+        }}
+      >
+        {/* Top Bar inside Right Column: Back link & Language picker */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: { xs: 2.5, md: 4 }
+          }}
+        >
+          {/* Back to Home link on desktop */}
+          <Button
+            size="small"
+            startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
+            onClick={() => navigate('/')}
             sx={{
-              width: 56,
-              height: 56,
-              borderRadius: 4,
-              mx: 'auto',
-              mb: 2,
-              display: 'grid',
-              placeItems: 'center',
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.m3.tertiary})`
+              display: { xs: 'none', md: 'inline-flex' },
+              color: '#64748B',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              '&:hover': { color: '#2563EB', bgcolor: 'transparent' }
             }}
           >
-            <ElectricBoltIcon sx={{ color: theme.palette.m3.onPrimary, fontSize: 28 }} />
+            Back to Home
+          </Button>
+
+          {/* Desktop Right Column Brand (Subtle) */}
+          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <BrandLogo size="small" />
           </Box>
-          <Typography variant="h3" align="center" gutterBottom>
-            {t.loginTitle}
-          </Typography>
-          <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            {t.loginSubtitle}
-          </Typography>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {/* Language Selector */}
+          <Button
+            size="small"
+            onClick={e => setLangAnchor(e.currentTarget)}
+            startIcon={<LanguageIcon sx={{ fontSize: 17, color: '#64748B' }} />}
+            endIcon={<ArrowDropDownIcon sx={{ fontSize: 18, color: '#64748B' }} />}
+            sx={{
+              color: '#334155',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              px: 1.25,
+              py: 0.5,
+              borderRadius: 2,
+              border: '1px solid #E2E8F0',
+              bgcolor: '#F8FAFC',
+              '&:hover': { bgcolor: '#F1F5F9' }
+            }}
+          >
+            {locale === 'hi' ? 'हिन्दी' : 'English'}
+          </Button>
 
-          {mfaToken ? (
-            <form onSubmit={handleMfaSubmit}>
-              <Stack spacing={2} sx={{ alignItems: 'center' }}>
-                <ShieldIcon color="primary" sx={{ fontSize: 32 }} />
-                <Typography variant="body2" color="text.secondary" align="center">
-                  Enter the 6-digit code from your authenticator app
-                </Typography>
-                <TextField
-                  label="Authenticator code"
-                  placeholder="123456"
-                  value={mfaCode}
-                  onChange={e => setMfaCode(e.target.value)}
-                  fullWidth
-                  autoFocus
-                  slotProps={{ htmlInput: { maxLength: 6, style: { letterSpacing: 4, fontWeight: 700, textAlign: 'center' } } }}
-                />
-                <Button type="submit" variant="contained" size="large" fullWidth disabled={busy || mfaCode.trim().length !== 6}>
-                  Verify
-                </Button>
-                <Link
-                  component="button"
-                  type="button"
-                  variant="body2"
-                  onClick={() => {
-                    setMfaToken(null);
-                    setMfaCode('');
-                    setError('');
-                  }}
-                >
-                  Back to sign in
-                </Link>
-              </Stack>
-            </form>
-          ) : (
-            <>
-              <ToggleButtonGroup
-                value={mode}
-                exclusive
-                fullWidth
-                size="small"
-                onChange={(_, val) => val && setMode(val)}
-                sx={{ mb: 3 }}
+          <Menu
+            anchorEl={langAnchor}
+            open={Boolean(langAnchor)}
+            onClose={() => handleLangClose()}
+            slotProps={{ paper: { sx: { borderRadius: 2, minWidth: 130 } } }}
+          >
+            {supportedLocales.map(l => (
+              <MenuItem
+                key={l}
+                selected={locale === l}
+                onClick={() => handleLangClose(l)}
+                sx={{ fontSize: '0.86rem', fontWeight: locale === l ? 700 : 500 }}
               >
-                <ToggleButton value="otp">SMS OTP</ToggleButton>
-                <ToggleButton value="password">Admin Password</ToggleButton>
-              </ToggleButtonGroup>
+                {localeLabels[l]}
+              </MenuItem>
+            ))}
+          </Menu>
+        </Box>
 
-              <form onSubmit={handleSubmit}>
-            <Stack spacing={2}>
-              <TextField
-                label="Mobile number (E.164 format)"
-                placeholder="+91 XXXXX XXXXX"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                fullWidth
-                required
-                type="tel"
-              />
+        {/* Center: Tabs & Main Form */}
+        <Box sx={{ my: 'auto', py: { xs: 1, md: 2 } }}>
+          {/* Top Tabs: [ Login ]   [ Create Account ] */}
+          <Box sx={{ maxWidth: 460, mx: 'auto', mb: 3.5 }}>
+            <Tabs
+              value={tab}
+              onChange={handleTabChange}
+              variant="fullWidth"
+              sx={{
+                bgcolor: '#F1F5F9',
+                borderRadius: 2.5,
+                p: 0.5,
+                minHeight: 46,
+                '& .MuiTabs-indicator': {
+                  bgcolor: '#FFFFFF',
+                  height: '100%',
+                  borderRadius: 2,
+                  boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)'
+                },
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  color: '#64748B',
+                  minHeight: 38,
+                  zIndex: 1,
+                  borderRadius: 2,
+                  transition: 'all 0.2s ease',
+                  '&.Mui-selected': {
+                    color: '#0F172A',
+                    fontWeight: 700
+                  }
+                }
+              }}
+            >
+              <Tab label="Login" value="login" />
+              <Tab label="Create Account" value="register" />
+            </Tabs>
+          </Box>
 
-              {mode === 'otp' && (
-                <>
-                  <TextField
-                    label="6-digit SMS OTP code"
-                    placeholder="123456"
-                    value={otp}
-                    onChange={e => setOtp(e.target.value)}
-                    fullWidth
-                    slotProps={{ htmlInput: { maxLength: 6, style: { letterSpacing: 4, fontWeight: 700, textAlign: 'center' } } }}
-                    helperText={devOtpNotice || undefined}
-                  />
-                  <Button variant="tonal" onClick={handleSendOtp} disabled={busy}>
-                    Send SMS OTP
-                  </Button>
-                </>
-              )}
-
-              {mode === 'password' && (
-                <TextField
-                  label="Password (admin accounts)"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  fullWidth
-                />
-              )}
-
-              <Button type="submit" variant="contained" size="large" disabled={busy || (mode === 'otp' && !otpRequested)}>
-                {mode === 'password' ? 'Sign in with password' : 'Verify OTP & sign in'}
-              </Button>
-            </Stack>
-              </form>
-            </>
+          {/* Form Switcher */}
+          {tab === 'login' ? (
+            <LoginForm
+              onSwitchToRegister={() => {
+                setTab('register');
+                window.history.replaceState(null, '', '/register');
+              }}
+              onSelectRole={handleSelectRoleFromLogin}
+            />
+          ) : (
+            <CreateAccountForm
+              onSwitchToLogin={() => {
+                setTab('login');
+                window.history.replaceState(null, '', '/login');
+              }}
+              initialRole={selectedRole}
+            />
           )}
-        </CardContent>
-      </Card>
+        </Box>
+
+        {/* Bottom Security / Copyright Note */}
+        <Box sx={{ textAlign: 'center', pt: 3, borderTop: '1px solid #F1F5F9' }}>
+          <Typography sx={{ fontSize: '0.78rem', color: '#94A3B8' }}>
+            &copy; {new Date().getFullYear()} AgriPump SmartSpace &bull; Enterprise Agricultural IoT &bull; Secured with TLS &amp; TOTP
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 };

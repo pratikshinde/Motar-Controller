@@ -6,6 +6,8 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
+import WifiOffIcon from '@mui/icons-material/WifiOff';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 import { useTheme } from '@mui/material/styles';
 import { usePumps } from '../hooks/usePumps';
 import { useCooldowns } from '../hooks/useCooldowns';
@@ -27,10 +29,13 @@ export const TelemetryView: React.FC = () => {
   const isSuperadmin = user?.role === 'superadmin';
 
   const kpis = [
-    { label: 'Total', value: stats?.total_devices ?? '0', icon: BoltIcon, color: theme.palette.primary.main },
-    { label: 'Running', value: stats?.running_count ?? '0', icon: CheckCircleIcon, color: theme.palette.secondary.main },
-    { label: 'Faults', value: stats?.fault_count ?? '0', icon: ErrorIcon, color: theme.palette.error.main },
-    { label: 'Idle', value: stats?.stopped_count ?? '0', icon: PauseCircleIcon, color: theme.palette.text.secondary }
+    { label: 'Total', value: stats?.total ?? 0, icon: BoltIcon, color: theme.palette.primary.main },
+    { label: 'Running', value: stats?.running ?? 0, icon: CheckCircleIcon, color: theme.palette.secondary.main },
+    { label: 'Faults', value: stats?.fault ?? 0, icon: ErrorIcon, color: theme.palette.error.main },
+    { label: 'Stopped', value: stats?.stopped ?? 0, icon: PauseCircleIcon, color: theme.palette.text.secondary },
+    // These two add up with the others to Total: every pump is counted once.
+    { label: 'Offline', value: stats?.offline ?? 0, icon: WifiOffIcon, color: theme.palette.warning.main },
+    { label: 'No data yet', value: stats?.no_data ?? 0, icon: HelpOutlineIcon, color: theme.palette.text.secondary }
   ];
 
   return (

@@ -1,3 +1,4 @@
+import { outcomeOf, watchCommand } from '../api/commands';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Card, CardContent, Autocomplete, TextField, Chip,
@@ -59,8 +60,7 @@ export const SupportConsoleView: React.FC = () => {
       const tList = Array.isArray(t) ? t : (t?.telemetry || (t as any)?.data || []);
       setTelemetry(Array.isArray(tList) ? tList : []);
 
-      const fList = Array.isArray(f) ? f : (f?.faults || (f as any)?.data || []);
-      setFaults(Array.isArray(fList) ? fList : []);
+      setFaults(f);
     } catch (err: any) {
       showToast(err.message || 'Could not load device diagnostics', true);
     } finally {
@@ -88,8 +88,15 @@ export const SupportConsoleView: React.FC = () => {
     try {
       const result = await dispatchCommand(selected.id, action);
       if (result.status === 200 || result.status === 202) {
-        showToast(`${action} command dispatched — pending device response`);
+        showToast(`${action} sent: waiting for the pump to confirm`);
         start(selected.id, result.cooldownSec || 45);
+        if (result.command?.cid) {
+          const pid = selected.id;
+          watchCommand(pid, result.command.cid, cmd => {
+            const outcome = outcomeOf(cmd, action);
+            if (outcome) showToast(outcome.text, outcome.error);
+          });
+        }
       } else if (result.status === 429) {
         showToast(result.detail || result.error || result.message || 'Command cooldown active — 45s protection window', true);
         start(selected.id, 45);
@@ -108,15 +115,16 @@ export const SupportConsoleView: React.FC = () => {
   }
 
   const telemetryColumns: GridColDef<TelemetryRow>[] = [
-    { field: 'recorded_at', headerName: 'Check-in time', flex: 1.3, valueGetter: (_v, row) => new Date(row.recorded_at).toLocaleString() },
-    { field: 'pump_on', headerName: 'Pump', flex: 0.6, renderCell: p => <Chip size="small" label={p.value ? 'ON' : 'OFF'} color={p.value ? 'success' : 'default'} /> },
-    { field: 'fault_active', headerName: 'Fault', flex: 0.6, renderCell: p => (p.value ? <Chip size="small" label="ACTIVE" color="error" /> : '—') },
-    { field: 'gsm_rssi', headerName: 'GSM RSSI', flex: 0.6, valueGetter: (_v, row) => (row.gsm_rssi != null ? `${row.gsm_rssi} dBm` : '—') },
-    { field: 'seq', headerName: 'Seq', flex: 0.5, valueGetter: (_v, row) => row.seq ?? '—' },
+    { field: 'recorded_at', headerName: 'Check-in time', flex: 1.3, minWidth: 170, valueGetter: (_v, row) => new Date(row.recorded_at).toLocaleString() },
+    { field: 'pump_on', headerName: 'Pump', flex: 0.6, minWidth: 90, renderCell: p => <Chip size="small" label={p.value ? 'ON' : 'OFF'} color={p.value ? 'success' : 'default'} /> },
+    { field: 'fault_active', headerName: 'Fault', flex: 0.6, minWidth: 100, renderCell: p => (p.value ? <Chip size="small" label="ACTIVE" color="error" /> : '—') },
+    { field: 'gsm_rssi', headerName: 'GSM RSSI', flex: 0.6, minWidth: 110, valueGetter: (_v, row) => (row.gsm_rssi != null ? `${row.gsm_rssi} dBm` : '—') },
+    { field: 'seq', headerName: 'Seq', flex: 0.5, minWidth: 80, valueGetter: (_v, row) => row.seq ?? '—' },
     {
       field: 'flags',
       headerName: 'Flags',
       flex: 0.8,
+      minWidth: 130,
       renderCell: p => (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           {p.row.buffered && <Chip size="small" label="buffered" variant="outlined" />}

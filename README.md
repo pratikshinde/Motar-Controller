@@ -154,11 +154,10 @@ own sub-tree and nothing else.
 Two items remain blocking per `docs/Development_Plan_FINAL.md` §2: a
 protection-timer defect in the MCU (GAP-31), and the bridge's plain-text
 broker mode with unvalidated command forwarding. The other two originally
-tracked here — an unauthenticated telemetry endpoint and seeded credentials
-in `schema.sql` — are resolved: telemetry ingestion now requires a
-per-device `X-Device-Key` (`backend/middleware/authMiddleware.js`), and the
-seed data no longer ships a real phone number or a documented plaintext
-password.
+tracked here are resolved: telemetry ingestion requires a per-device key
+(`X-Device-Key`), and the database no longer ships seeded accounts: the first
+superadmin is created with `backend/scripts/create_superadmin.py`. How the
+database is created and changed: `docs/runbooks/schema-management.md`.
 
 ---
 

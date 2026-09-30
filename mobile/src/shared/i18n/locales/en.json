@@ -1,0 +1,489 @@
+{
+  "brand": {
+    "line1": "AJANTA PUMP",
+    "line2": "CONTROLLER"
+  },
+  "common": {
+    "retry": "Try again",
+    "refresh": "Refresh",
+    "back": "Back",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "checkAgain": "Check again",
+    "serverUnreachableTitle": "Can't reach the server",
+    "save": "Save",
+    "loading": "Loading…",
+    "more": "More",
+    "less": "Less"
+  },
+  "splash": {
+    "tagline": "Control your pump from anywhere",
+    "starting": "Starting…",
+    "footer": "Smart 3-phase pump protection"
+  },
+  "language": {
+    "title": "Choose your language",
+    "continue": "Continue",
+    "listenAll": "Listen to the languages",
+    "stopListening": "Stop",
+    "back": "Back to settings"
+  },
+  "login": {
+    "tabLogin": "Login",
+    "tabRegister": "New account",
+    "welcomeBack": "Welcome back",
+    "createTitle": "Create your account",
+    "nameLabel": "Your name",
+    "namePlaceholder": "Full name",
+    "mobileLabel": "Mobile number",
+    "mobilePlaceholder": "10-digit mobile number",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "choosePassword": "Choose a password",
+    "choosePasswordPlaceholder": "At least 6 characters",
+    "loginButton": "Login",
+    "createButton": "Create account",
+    "newHere": "New here?",
+    "createLink": "Create an account",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Login",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "validationTitle": "Please check",
+    "needName": "Please enter your full name",
+    "needPhone": "Please enter your mobile number",
+    "needPassword": "Please enter your password",
+    "passwordShort": "Password must be at least 6 characters",
+    "loginFailedTitle": "Login failed",
+    "notFoundTitle": "Account not found",
+    "notFoundMessage": "This mobile number is not registered yet. Would you like to create a new account?",
+    "registerFailedTitle": "Could not create account",
+    "createdTitle": "Account created",
+    "createdMessage": "Welcome {{name}}. Your account is ready. Please login to continue.",
+    "createdStatus": "Account created. Please login with your mobile number and password.",
+    "welcomeBackDesc": "Login to manage your pump remotely",
+    "forgotPassword": "Forgot Password?",
+    "createDesc": "Register using your WhatsApp number",
+    "sendOtpButton": "Send OTP on WhatsApp"
+  },
+  "nav": {
+    "pumps": "My Pumps",
+    "alerts": "Alerts",
+    "settings": "Settings"
+  },
+  "pumps": {
+    "title": "My Pumps",
+    "count_one": "{{count}} pump",
+    "count_other": "{{count}} pumps",
+    "loading": "Loading your pumps…",
+    "emptyTitle": "No pumps yet",
+    "emptyMessage": "No pump is linked to your mobile number yet. Please ask your dealer to add your pump.",
+    "hp": "{{hp}} HP",
+    "openPump": "{{name}}, {{status}}. Open pump",
+    "status": {
+      "running": "Running",
+      "stopped": "Stopped",
+      "fault": "Fault",
+      "offline": "Offline",
+      "online": "Online",
+      "unknown": "Unknown"
+    },
+    "ungrouped": "Other pumps",
+    "lastSeen": "Last reported {{ago}}",
+    "noData": "No data yet",
+    "manage": "Manage pumps",
+    "ranToday": "Ran {{time}} today"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "loading": "Checking for alerts…",
+    "emptyTitle": "All good",
+    "emptyMessage": "No problems with your pumps right now.",
+    "serious": "Serious",
+    "warning": "Warning",
+    "info": "Info",
+    "needsAttention": "Needs attention",
+    "resolved": "Resolved",
+    "defaultTitle": "Pump alert",
+    "tabActive": "Active",
+    "tabFixed": "Fixed",
+    "ack": "I have seen this",
+    "acked": "Seen",
+    "resolve": "Mark as fixed",
+    "resolveTitle": "Mark this alert as fixed?",
+    "resolveBody": "Do this only after the problem on the pump is solved.",
+    "resolveYes": "Yes, it is fixed",
+    "openPump": "Open pump",
+    "occurrences": "Happened {{count}} times",
+    "last": "Last: {{when}}",
+    "emptyFixed": "Nothing fixed recently"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHint": "Language of the app, alerts and voice replies",
+    "account": "Account",
+    "logout": "Logout",
+    "logoutTitle": "Logout",
+    "logoutMessage": "Are you sure you want to logout?",
+    "version": "Version {{version}}",
+    "profile": "Profile",
+    "name": "Your name",
+    "nameSaved": "Name saved",
+    "mobile": "Mobile number",
+    "managePumps": "Manage pumps",
+    "managePumpsHint": "Rename, reorder and group your pumps",
+    "sessions": "Phones signed in",
+    "thisDevice": "This phone",
+    "lastUsed": "Last used {{when}}",
+    "signOutDevice": "Sign out",
+    "signOutDeviceTitle": "Sign out that phone?",
+    "signOutDeviceBody": "It will need your password to sign in again.",
+    "noOtherSessions": "No other phones are signed in.",
+    "data": "Your data",
+    "export": "Download my data",
+    "exportHint": "A copy of your account, pumps and alerts.",
+    "exportFailed": "Could not prepare your data. Please try again.",
+    "delete": "Delete my data",
+    "deleteHint": "Ask us to remove your account. We contact you before anything is deleted.",
+    "deleteTitle": "Ask us to delete your data?",
+    "deleteBody": "Your request goes to our team. Nothing is deleted until we speak to you.",
+    "deleteConfirm": "Send request",
+    "deletePending": "Deletion requested on {{date}}. We will contact you."
+  },
+  "dashboard": {
+    "cantReachTitle": "Can't reach the pump",
+    "powerOn": "PUMP ON",
+    "powerOff": "PUMP OFF",
+    "running": "RUNNING",
+    "stopped": "STOPPED",
+    "signal": "SIGNAL",
+    "cardPower": "Power supply (voltage)",
+    "cardLoad": "Motor load",
+    "cardRuntime": "Running time",
+    "cardHealth": "Pump health",
+    "volts": "Volts",
+    "powerOk": "Power OK",
+    "noPower": "No power",
+    "rotationOk": "Rotation OK",
+    "wrongRotation": "Wrong rotation",
+    "offNoLoad": "Pump is off — no load",
+    "totalRun": "Total running time",
+    "noFaults": "No faults — pump is healthy",
+    "faultBadge": "STOPPED",
+    "no": "No, cancel",
+    "yesStart": "Yes, start",
+    "yesStop": "Yes, stop",
+    "ampere": "A",
+    "system": "SYSTEM",
+    "cardVoltages": "LINE VOLTAGES",
+    "cardCurrents": "PHASE CURRENTS",
+    "cardRuntime2": "RUN TIME",
+    "cardFaults": "PUMP FAULTS",
+    "quickActions": "QUICK ACTIONS",
+    "startPump": "Start Pump",
+    "stopPump": "Stop Pump",
+    "viewTimer": "Timer",
+    "viewHistory": "History",
+    "totalRunTime": "TOTAL RUN TIME",
+    "lastCycleRunTime": "TODAY'S RUN TIME",
+    "hoursMinutes": "HOURS : MINUTES"
+  },
+  "faults": {
+    "code1": "Y-phase fault",
+    "code2": "Phase missing (single phasing)",
+    "code3": "High voltage",
+    "code4": "Wrong phase order",
+    "code5": "Dry run (no water)",
+    "code6": "Cable open (all phases)",
+    "code7": "Cable partly open",
+    "code8": "Motor overload",
+    "code9": "Voltage imbalance",
+    "code10": "Low voltage",
+    "unknown": "Fault (code {{code}})",
+    "title": "Problems",
+    "current": "Problem right now",
+    "cause": "Why this happens",
+    "action": "What to do",
+    "history": "Past problems",
+    "historyEmpty": "No problems recorded for this pump.",
+    "ack": "I have seen this",
+    "acked": "Seen",
+    "fixed": "Fixed",
+    "open": "Open",
+    "resetTitle": "Restarting after a problem",
+    "resetIntro": "A problem is cleared at the pump panel, not in the app.",
+    "resetStep1": "Fix the cause first.",
+    "resetStep2": "Press the RESET button on the panel.",
+    "resetStep3": "Start the pump from the app.",
+    "panelLabel": "Pump panel",
+    "resetButton": "RESET",
+    "occurred": "Started {{when}}",
+    "seenAt": "Seen {{when}}"
+  },
+  "errors": {
+    "network": "Can't connect. Please check your internet and try again.",
+    "server": "Something went wrong on our side. Please try again in a while.",
+    "tooMany": "Too many attempts. Please wait a little and try again.",
+    "wrongPassword": "Wrong password. Please check and try again.",
+    "suspended": "This account has been stopped. Please contact your dealer.",
+    "alreadyRegistered": "This mobile number is already registered. Please login.",
+    "registrationClosed": "New accounts are added by your dealer. Please ask your dealer to add you.",
+    "sessionExpired": "Your session has ended. Please login again.",
+    "forbidden": "You are not allowed to do this.",
+    "notFound": "Not found.",
+    "invalid": "Please check the details and try again.",
+    "generic": "Something went wrong. Please try again.",
+    "offline": "You are offline. Please connect to the internet and try again.",
+    "contract": "The server sent something the app does not understand. Please update the app.",
+    "deviceSuspended": "Remote control is paused for this pump. Please contact your dealer.",
+    "siteExists": "You already have a group with this name.",
+    "mfaUnsupported": "This account needs a security code, which this app does not support yet. Please contact your dealer."
+  },
+  "time": {
+    "never": "Never",
+    "justNow": "just now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}} h ago",
+    "daysAgo": "{{count}} days ago"
+  },
+  "units": {
+    "minutes": "{{m}} min",
+    "hoursMinutes": "{{h}} h {{m}} min"
+  },
+  "offline": {
+    "banner": "You are offline. Showing saved data from {{time}}.",
+    "bannerNoData": "You are offline. Connect to the internet to load your pumps.",
+    "reconnecting": "Reconnecting…"
+  },
+  "boundary": {
+    "title": "Something went wrong",
+    "message": "The app hit a problem. Your pumps are not affected."
+  },
+  "listen": {
+    "start": "Listen",
+    "stop": "Stop",
+    "noVoice": "This phone has no voice for this language. You can install one in the phone's text-to-speech settings."
+  },
+  "pump": {
+    "tabs": {
+      "live": "Live",
+      "timer": "Timer",
+      "history": "History",
+      "faults": "Problems"
+    },
+    "notFoundTitle": "Pump not found",
+    "notFoundMessage": "This pump is no longer in your list."
+  },
+  "live": {
+    "updated": "Updated {{ago}}",
+    "stale": "Last reading was {{ago}}. Showing the values it sent then.",
+    "noDataYet": "This pump has not sent any reading yet.",
+    "today": "Today",
+    "total": "Total",
+    "noReading": "No reading",
+    "notReporting": "NOT REPORTING",
+    "refreshFailed": "Could not refresh. Showing saved values.",
+    "hp": "{{hp}} HP"
+  },
+  "speech": {
+    "running": "{{name}} is running.",
+    "stopped": "{{name}} is stopped.",
+    "fault": "{{name}} has a problem: {{fault}}.",
+    "offline": "{{name}} is not reporting. The last news was {{ago}}.",
+    "noData": "{{name}} has not sent any reading yet.",
+    "volts": "Voltage is {{ry}}, {{yb}} and {{br}} volts.",
+    "runtime": "It ran {{time}} today."
+  },
+  "command": {
+    "startTitle": "Start {{name}}?",
+    "stopTitle": "Stop {{name}}?",
+    "startBody": "{{name}} will start now. Make sure it is safe to run.",
+    "stopBody": "{{name}} will stop and the water will stop flowing.",
+    "offlineWarn": "This pump is not reporting, so the command may not reach it.",
+    "step": {
+      "sent": "Sent",
+      "delivered": "Reached the pump",
+      "acknowledged": "Pump confirmed",
+      "applied": "Done"
+    },
+    "titleStart": "Start command",
+    "titleStop": "Stop command",
+    "notConfirmed": "Not confirmed yet. The pump has not answered. Check the pump, or try again in a while.",
+    "rejected": "The pump refused this command.",
+    "rejectedWhy": "The pump refused: {{reason}}",
+    "expired": "The command ran out of time before the pump received it.",
+    "notSent": "The command could not be sent, so the pump was not asked. Try again in a moment.",
+    "done": "The pump has done it.",
+    "tryAgain": "Try again",
+    "dismiss": "Dismiss",
+    "offlineBlock": "You are offline. Connect to the internet to control the pump.",
+    "cooldown": "Wait {{seconds}} s before the next command",
+    "cooldownShort": "Wait {{seconds}} s"
+  },
+  "timer": {
+    "title": "Run timer",
+    "intro": "Run the pump for a set time, then it stops by itself.",
+    "onLabel": "Run for (minutes)",
+    "offLabel": "Then rest for (minutes)",
+    "cyclesLabel": "Repeat (times)",
+    "cyclesHint": "0 means keep repeating",
+    "range": "{{min}} to {{max}}",
+    "errorOn": "Enter 1 to 250 minutes",
+    "errorOff": "Enter 0 to 250 minutes",
+    "errorCycles": "Enter 0 to 999",
+    "save": "Send timer to pump",
+    "confirmTitle": "Set the timer on {{name}}?",
+    "summaryOnce": "Run for {{on}} min, then stop.",
+    "summaryRepeat": "Run {{on}} min, rest {{off}} min, repeat {{cycles}} times.",
+    "summaryForever": "Run {{on}} min, rest {{off}} min, keep repeating.",
+    "confirmYes": "Yes, send",
+    "sentUnconfirmed": "Sent to the pump but not confirmed yet. The pump will use it once it confirms.",
+    "current": "Last timer you sent",
+    "none": "You have not sent a timer yet.",
+    "remoteBlocked": "Timers cannot be sent while remote control is paused."
+  },
+  "history": {
+    "day": "Today",
+    "week": "7 days",
+    "month": "30 days",
+    "hoursRun": "Running time",
+    "perHour": "Minutes running in each hour (last 24 hours)",
+    "perDay": "Running time each day",
+    "empty": "No running history yet",
+    "emptyHint": "Bars appear after the pump has been running and reporting.",
+    "total": "Total in this period",
+    "starts": "Starts: {{count}}",
+    "faultCount": "Problems: {{count}}",
+    "export": "Share as CSV file",
+    "exportFailed": "Could not prepare the file. Please try again.",
+    "estimated": "Estimated from the pump's reports.",
+    "barDetail": "{{label}}: {{time}}",
+    "noBars": "The pump did not run."
+  },
+  "faultInfo": {
+    "code1": {
+      "cause": "One phase (Y) is not reaching the pump properly.",
+      "action": "Check the Y-phase fuse and wiring at the panel. Call your dealer if it keeps happening."
+    },
+    "code2": {
+      "cause": "One of the three phases is missing, so the motor cannot run safely.",
+      "action": "Check the fuses and the supply. Call an electrician or your dealer."
+    },
+    "code3": {
+      "cause": "The supply voltage is too high and can burn the motor.",
+      "action": "Wait until the supply is normal. Do not restart while it stays high."
+    },
+    "code4": {
+      "cause": "The three phase wires are in the wrong order, so the motor turns backwards.",
+      "action": "Do not run the pump. Ask an electrician to swap any two phase wires."
+    },
+    "code5": {
+      "cause": "The pump is running without water.",
+      "action": "Check the water level and the foot valve. Restart only when water is available."
+    },
+    "code6": {
+      "cause": "The cable to the motor is broken or disconnected on all phases.",
+      "action": "Check the cable and joints from the panel to the motor. Call your dealer."
+    },
+    "code7": {
+      "cause": "The cable to the motor is partly broken, or a joint is loose on some phases.",
+      "action": "Check the cable joints and terminals. Call your dealer."
+    },
+    "code8": {
+      "cause": "The motor is taking too much current, from a blocked pump or a weak supply.",
+      "action": "Check the pump for a blockage. Wait, then restart. Call your dealer if it repeats."
+    },
+    "code9": {
+      "cause": "The voltages of the three phases are very different from each other.",
+      "action": "Wait for the supply to balance. Tell the power company if it continues."
+    },
+    "code10": {
+      "cause": "The supply voltage is too low for the motor to run safely.",
+      "action": "Wait until the voltage improves before starting again."
+    },
+    "unknown": {
+      "cause": "The pump found a problem it could not name.",
+      "action": "Call your dealer and tell them the problem code."
+    }
+  },
+  "support": {
+    "title": "Help",
+    "dealer": "Your dealer",
+    "call": "Call {{name}}",
+    "noDealer": "Your dealer's number is not saved yet. Please ask the person who installed your pump.",
+    "company": "Company support",
+    "loadFailed": "Could not load your dealer's details."
+  },
+  "manage": {
+    "title": "Manage pumps",
+    "pumps": "Your pumps",
+    "groups": "Groups",
+    "rename": "Rename",
+    "namePlaceholder": "Pump name",
+    "originalName": "Name on the pump: {{name}}",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "group": "Group",
+    "noGroup": "No group",
+    "newGroup": "New group",
+    "groupPlaceholder": "For example: North field",
+    "createGroup": "Create group",
+    "renameGroup": "Rename group",
+    "deleteGroup": "Delete group",
+    "deleteGroupTitle": "Delete this group?",
+    "deleteGroupBody": "The pumps in it stay in your list, without a group.",
+    "groupPumps": "Pumps: {{count}}",
+    "empty": "You have no pumps to manage yet.",
+    "nameEmpty": "Please type a name."
+  },
+  "plan": {
+    "expiring": "Your plan ends in {{days}} days, on {{date}}. Please ask your dealer to renew.",
+    "expiresToday": "Your plan ends today. Please ask your dealer to renew.",
+    "expired": "Your plan ended on {{date}}. Please ask your dealer to renew.",
+    "suspended": "Remote control is paused for this pump. Please contact your dealer."
+  },
+  "otp": {
+    "title": "Enter Verification Code",
+    "desc": "We have sent a 6-digit code to",
+    "onWhatsapp": "on WhatsApp",
+    "testOtpNotice": "Test mode - use the code below",
+    "autoFill": "Auto-fill",
+    "resendPrompt": "Didn't receive the code?",
+    "resendIn": "Resend in",
+    "resendButton": "Resend OTP",
+    "verifyButton": "Verify OTP",
+    "verifyingButton": "Verifying...",
+    "incompleteCode": "Enter all 6 digits"
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "desc": "Set a password for your account",
+    "passwordReq": "Minimum 8 characters",
+    "confirmLabel": "Confirm Password",
+    "submitButton": "Create Account",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
+  },
+  "registered": {
+    "title": "Registration Successful!",
+    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "phoneLabel": "Registered mobile number",
+    "continueButton": "Continue to App"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "desc": "Enter your mobile number to receive a reset code on WhatsApp"
+  },
+  "resetPassword": {
+    "title": "Create New Password",
+    "desc": "Set a new password for your account",
+    "newPasswordLabel": "New Password",
+    "submitButton": "Update Password"
+  },
+  "passwordUpdated": {
+    "title": "Password Updated!",
+    "desc": "Your password has been updated successfully. Please sign in with your new password.",
+    "goToLogin": "Go to Login"
+  }
+}

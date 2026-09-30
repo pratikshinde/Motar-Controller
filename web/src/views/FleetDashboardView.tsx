@@ -8,10 +8,10 @@ import { fetchFleetDashboard } from '../api/fleet';
 import { useWs } from '../context/WebSocketContext';
 import { useToast } from '../context/ToastContext';
 import { monoFont } from '../theme';
+import { categoricalColor } from '../utils/categoricalColor';
 import type { FleetDashboard } from '../types';
 
 const LIFECYCLE_ORDER = ['MANUFACTURED', 'ALLOCATED', 'IN_STOCK', 'COMMISSIONED', 'ACTIVE', 'SUSPENDED', 'RMA', 'RETIRED'];
-const SEVERITY_COLOR: Record<string, string> = { CRITICAL: '#BA1A1A', HIGH: '#E67C00', MEDIUM: '#B8860B', LOW: '#607D8B' };
 
 export const FleetDashboardView: React.FC = () => {
   const theme = useTheme();
@@ -41,8 +41,10 @@ export const FleetDashboardView: React.FC = () => {
   // aggregate — cheaper to just re-fetch than to try to reconcile every
   // slice locally, and the dashboard isn't updating fast enough for that
   // to matter.
+  // FastAPI ws_hub shape: { type:"telemetry"|"fault", pump_id:"...", data:{...} }
+  // We only use these messages as a signal to refetch — no fields read directly.
   useEffect(() => {
-    const unsubPump = subscribe('pump_update', load);
+    const unsubPump = subscribe('telemetry', load);
     const unsubFault = subscribe('fault', load);
     return () => {
       unsubPump();
@@ -69,6 +71,8 @@ export const FleetDashboardView: React.FC = () => {
   const lifecycleSeries = LIFECYCLE_ORDER.map(s => lifecycleMap.get(s as any) || 0);
   const online = Number(data.connectivity?.online_count || 0);
   const offline = Number(data.connectivity?.offline_count || 0);
+  const neverSeen = Number(data.connectivity?.never_seen_count || 0);
+  const total = Number(data.summary?.total ?? online + offline + neverSeen);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', overflowY: 'auto' }}>
@@ -80,13 +84,13 @@ export const FleetDashboardView: React.FC = () => {
             <Typography variant="caption" color="text.secondary">
               Total devices
             </Typography>
-            <Typography variant="h3">{online + offline}</Typography>
+            <Typography variant="h3">{total}</Typography>
           </CardContent>
         </Card>
         <Card elevation={1}>
           <CardContent>
             <Typography variant="caption" color="text.secondary">
-              Online (last 15m)
+              Online (reported in the last 10 min)
             </Typography>
             <Typography variant="h3" sx={{ color: theme.palette.secondary.main }}>
               {online}
@@ -100,6 +104,16 @@ export const FleetDashboardView: React.FC = () => {
             </Typography>
             <Typography variant="h3" sx={{ color: theme.palette.text.secondary }}>
               {offline}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card elevation={1}>
+          <CardContent>
+            <Typography variant="caption" color="text.secondary">
+              Never reported
+            </Typography>
+            <Typography variant="h3" sx={{ color: theme.palette.text.secondary }}>
+              {neverSeen}
             </Typography>
           </CardContent>
         </Card>
@@ -168,8 +182,11 @@ export const FleetDashboardView: React.FC = () => {
                     data: activeFaults.map((f, i) => ({
                       id: i,
                       value: Number(f.count),
-                      label: f.name || `Code ${f.fault_code}`,
-                      color: SEVERITY_COLOR[f.severity || ''] || theme.palette.text.secondary
+                      // Severity used to be the only thing distinguishing wedges (as color) and there are only 4
+                      // of them for up to 11 fault types, so two different faults often looked identical. Color
+                      // now distinguishes the type (guaranteed, one hue per row); severity rides along in the label.
+                      label: `${f.name || `Code ${f.fault_code}`} (${f.severity || 'MEDIUM'})`,
+                      color: categoricalColor(i)
                     })),
                     innerRadius: 40
                   }

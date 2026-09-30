@@ -1,0 +1,489 @@
+{
+  "brand": {
+    "line1": "अजन्ता पम्प",
+    "line2": "कन्ट्रोलर"
+  },
+  "common": {
+    "retry": "फेरि प्रयास गर्नुहोस्",
+    "refresh": "रिफ्रेस गर्नुहोस्",
+    "back": "पछाडि",
+    "cancel": "रद्द गर्नुहोस्",
+    "continue": "अगाडि बढ्नुहोस्",
+    "checkAgain": "फेरि हेर्नुहोस्",
+    "serverUnreachableTitle": "सर्भरसँग सम्पर्क हुन सकेन",
+    "save": "सुरक्षित गर्नुहोस्",
+    "loading": "लोड हुँदैछ…",
+    "more": "बढाउनुहोस्",
+    "less": "घटाउनुहोस्"
+  },
+  "splash": {
+    "tagline": "आफ्नो पम्प जहाँबाट पनि चलाउनुहोस्",
+    "starting": "सुरु हुँदैछ…",
+    "footer": "स्मार्ट 3-फेज पम्प सुरक्षा"
+  },
+  "language": {
+    "title": "आफ्नो भाषा छान्नुहोस्",
+    "continue": "अगाडि बढ्नुहोस्",
+    "listenAll": "भाषाहरू सुन्नुहोस्",
+    "stopListening": "रोक्नुहोस्",
+    "back": "सेटिङमा फर्कनुहोस्"
+  },
+  "login": {
+    "tabLogin": "लगइन",
+    "tabRegister": "नयाँ खाता",
+    "welcomeBack": "फेरि स्वागत छ",
+    "createTitle": "आफ्नो खाता बनाउनुहोस्",
+    "nameLabel": "तपाईंको नाम",
+    "namePlaceholder": "पूरा नाम",
+    "mobileLabel": "मोबाइल नम्बर",
+    "mobilePlaceholder": "10 अङ्कको मोबाइल नम्बर",
+    "passwordLabel": "पासवर्ड",
+    "passwordPlaceholder": "तपाईंको पासवर्ड",
+    "choosePassword": "पासवर्ड छान्नुहोस्",
+    "choosePasswordPlaceholder": "कम्तीमा 6 अक्षर",
+    "loginButton": "लगइन गर्नुहोस्",
+    "createButton": "खाता बनाउनुहोस्",
+    "newHere": "नयाँ हुनुहुन्छ?",
+    "createLink": "खाता बनाउनुहोस्",
+    "haveAccount": "पहिले नै खाता छ?",
+    "loginLink": "लगइन गर्नुहोस्",
+    "showPassword": "पासवर्ड देखाउनुहोस्",
+    "hidePassword": "पासवर्ड लुकाउनुहोस्",
+    "validationTitle": "कृपया जाँच गर्नुहोस्",
+    "needName": "कृपया आफ्नो पूरा नाम लेख्नुहोस्",
+    "needPhone": "कृपया आफ्नो मोबाइल नम्बर लेख्नुहोस्",
+    "needPassword": "कृपया आफ्नो पासवर्ड लेख्नुहोस्",
+    "passwordShort": "पासवर्ड कम्तीमा 6 अक्षरको हुनुपर्छ",
+    "loginFailedTitle": "लगइन हुन सकेन",
+    "notFoundTitle": "खाता फेला परेन",
+    "notFoundMessage": "यो मोबाइल नम्बर अझै दर्ता भएको छैन। के तपाईं नयाँ खाता बनाउन चाहनुहुन्छ?",
+    "registerFailedTitle": "खाता बन्न सकेन",
+    "createdTitle": "खाता बन्यो",
+    "createdMessage": "स्वागत छ {{name}}। तपाईंको खाता तयार छ। अगाडि बढ्न लगइन गर्नुहोस्।",
+    "createdStatus": "खाता बन्यो। आफ्नो मोबाइल नम्बर र पासवर्डले लगइन गर्नुहोस्।",
+    "welcomeBackDesc": "Login to manage your pump remotely",
+    "forgotPassword": "Forgot Password?",
+    "createDesc": "Register using your WhatsApp number",
+    "sendOtpButton": "Send OTP on WhatsApp"
+  },
+  "nav": {
+    "pumps": "मेरा पम्प",
+    "alerts": "अलर्ट",
+    "settings": "सेटिङ"
+  },
+  "pumps": {
+    "title": "मेरा पम्प",
+    "count_one": "{{count}} पम्प",
+    "count_other": "{{count}} पम्प",
+    "loading": "तपाईंका पम्प लोड हुँदैछन्…",
+    "emptyTitle": "अहिलेसम्म कुनै पम्प छैन",
+    "emptyMessage": "तपाईंको मोबाइल नम्बरमा अहिलेसम्म कुनै पम्प जोडिएको छैन। कृपया आफ्नो डिलरलाई पम्प जोड्न भन्नुहोस्।",
+    "hp": "{{hp}} एचपी",
+    "openPump": "{{name}}, {{status}}। पम्प खोल्नुहोस्",
+    "status": {
+      "running": "चालु",
+      "stopped": "बन्द",
+      "fault": "खराबी",
+      "offline": "अफलाइन",
+      "online": "अनलाइन",
+      "unknown": "थाहा छैन"
+    },
+    "ungrouped": "अन्य पम्प",
+    "lastSeen": "पछिल्लो खबर {{ago}}",
+    "noData": "अहिलेसम्म कुनै जानकारी छैन",
+    "manage": "पम्प व्यवस्थापन",
+    "ranToday": "आज {{time}} चल्यो"
+  },
+  "alerts": {
+    "title": "अलर्ट",
+    "loading": "अलर्ट जाँच गरिँदै छ…",
+    "emptyTitle": "सबै ठीक छ",
+    "emptyMessage": "अहिले तपाईंका पम्पमा कुनै समस्या छैन।",
+    "serious": "गम्भीर",
+    "warning": "चेतावनी",
+    "info": "जानकारी",
+    "needsAttention": "ध्यान दिनुहोस्",
+    "resolved": "ठीक भयो",
+    "defaultTitle": "पम्प अलर्ट",
+    "tabActive": "चालु",
+    "tabFixed": "ठीक भएका",
+    "ack": "मैले हेरें",
+    "acked": "हेरियो",
+    "resolve": "ठीक भयो भनेर चिनो लगाउनुहोस्",
+    "resolveTitle": "यो अलर्ट ठीक भयो भनेर चिनो लगाउने?",
+    "resolveBody": "पम्पको खराबी हटेपछि मात्र यो गर्नुहोस्।",
+    "resolveYes": "हो, ठीक भयो",
+    "openPump": "पम्प खोल्नुहोस्",
+    "occurrences": "{{count}} पटक भयो",
+    "last": "पछिल्लो पटक: {{when}}",
+    "emptyFixed": "हालसालै केही ठीक भएको छैन"
+  },
+  "settings": {
+    "title": "सेटिङ",
+    "language": "भाषा",
+    "languageHint": "एप, अलर्ट र आवाजका जवाफको भाषा",
+    "account": "खाता",
+    "logout": "लगआउट",
+    "logoutTitle": "लगआउट",
+    "logoutMessage": "के तपाईं लगआउट गर्न चाहनुहुन्छ?",
+    "version": "संस्करण {{version}}",
+    "profile": "प्रोफाइल",
+    "name": "तपाईंको नाम",
+    "nameSaved": "नाम सुरक्षित गरियो",
+    "mobile": "मोबाइल नम्बर",
+    "managePumps": "पम्प व्यवस्थापन",
+    "managePumpsHint": "पम्पको नाम बदल्नुहोस्, क्रम मिलाउनुहोस् र समूह बनाउनुहोस्",
+    "sessions": "लगइन भएका फोन",
+    "thisDevice": "यो फोन",
+    "lastUsed": "पछिल्लो प्रयोग {{when}}",
+    "signOutDevice": "लगआउट गर्नुहोस्",
+    "signOutDeviceTitle": "त्यो फोन लगआउट गर्ने?",
+    "signOutDeviceBody": "फेरि लगइन गर्न त्यसलाई तपाईंको पासवर्ड चाहिन्छ।",
+    "noOtherSessions": "अरू कुनै फोनमा लगइन छैन।",
+    "data": "तपाईंको डेटा",
+    "export": "मेरो डेटा डाउनलोड गर्नुहोस्",
+    "exportHint": "तपाईंको खाता, पम्प र अलर्टको एउटा प्रति।",
+    "exportFailed": "तपाईंको डेटा तयार गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।",
+    "delete": "मेरो डेटा हटाउनुहोस्",
+    "deleteHint": "हामीलाई तपाईंको खाता हटाउन भन्नुहोस्। केही हटाउनु अघि हामी तपाईंसँग कुरा गर्छौं।",
+    "deleteTitle": "डेटा हटाउने अनुरोध पठाउने?",
+    "deleteBody": "तपाईंको अनुरोध हाम्रो टोलीमा जान्छ। तपाईंसँग कुरा नगरी केही हटाइँदैन।",
+    "deleteConfirm": "अनुरोध पठाउनुहोस्",
+    "deletePending": "{{date}} मा डेटा हटाउने अनुरोध गरियो। हामी तपाईंलाई सम्पर्क गर्नेछौं।"
+  },
+  "dashboard": {
+    "cantReachTitle": "पम्पसँग सम्पर्क हुन सकेन",
+    "powerOn": "पम्प चालु",
+    "powerOff": "पम्प बन्द",
+    "running": "चलिरहेको छ",
+    "stopped": "बन्द छ",
+    "signal": "सिग्नल",
+    "cardPower": "बिजुली आपूर्ति (भोल्टेज)",
+    "cardLoad": "मोटर लोड",
+    "cardRuntime": "चलेको समय",
+    "cardHealth": "पम्पको अवस्था",
+    "volts": "भोल्ट",
+    "powerOk": "बिजुली ठीक",
+    "noPower": "बिजुली छैन",
+    "rotationOk": "घुमाइ ठीक",
+    "wrongRotation": "घुमाइ गलत",
+    "offNoLoad": "पम्प बन्द छ — कुनै लोड छैन",
+    "totalRun": "जम्मा चलेको समय",
+    "noFaults": "कुनै खराबी छैन — पम्प ठीक छ",
+    "faultBadge": "बन्द भयो",
+    "no": "होइन, रद्द गर्नुहोस्",
+    "yesStart": "हो, चालु गर्नुहोस्",
+    "yesStop": "हो, बन्द गर्नुहोस्",
+    "ampere": "एम्प",
+    "system": "SYSTEM",
+    "cardVoltages": "LINE VOLTAGES",
+    "cardCurrents": "PHASE CURRENTS",
+    "cardRuntime2": "RUN TIME",
+    "cardFaults": "PUMP FAULTS",
+    "quickActions": "QUICK ACTIONS",
+    "startPump": "Start Pump",
+    "stopPump": "Stop Pump",
+    "viewTimer": "Timer",
+    "viewHistory": "History",
+    "totalRunTime": "TOTAL RUN TIME",
+    "lastCycleRunTime": "TODAY'S RUN TIME",
+    "hoursMinutes": "HOURS : MINUTES"
+  },
+  "faults": {
+    "code1": "Y-फेज खराबी",
+    "code2": "फेज हरायो (सिंगल फेजिङ)",
+    "code3": "भोल्टेज धेरै",
+    "code4": "फेजको क्रम गलत",
+    "code5": "ड्राई रन (पानी छैन)",
+    "code6": "केबल खुला (सबै फेज)",
+    "code7": "केबल आंशिक खुला",
+    "code8": "मोटर ओभरलोड",
+    "code9": "भोल्टेज असन्तुलन",
+    "code10": "भोल्टेज कम",
+    "unknown": "खराबी (कोड {{code}})",
+    "title": "खराबी",
+    "current": "अहिलेको खराबी",
+    "cause": "यस्तो किन हुन्छ",
+    "action": "के गर्ने",
+    "history": "अघिल्ला खराबी",
+    "historyEmpty": "यो पम्पको कुनै खराबी दर्ता छैन।",
+    "ack": "मैले हेरें",
+    "acked": "हेरियो",
+    "fixed": "ठीक भयो",
+    "open": "खुला",
+    "resetTitle": "खराबीपछि फेरि चालु गर्ने",
+    "resetIntro": "खराबी पम्पको प्यानलमा हटाइन्छ, एपमा होइन।",
+    "resetStep1": "पहिले खराबीको कारण ठीक गर्नुहोस्।",
+    "resetStep2": "प्यानलको RESET बटन थिच्नुहोस्।",
+    "resetStep3": "त्यसपछि एपबाट पम्प चालु गर्नुहोस्।",
+    "panelLabel": "पम्प प्यानल",
+    "resetButton": "RESET",
+    "occurred": "सुरु भयो {{when}}",
+    "seenAt": "हेरियो {{when}}"
+  },
+  "errors": {
+    "network": "जोडिन सकेन। कृपया इन्टरनेट जाँचेर फेरि प्रयास गर्नुहोस्।",
+    "server": "हाम्रो तर्फबाट केही गडबड भयो। कृपया केही समयपछि फेरि प्रयास गर्नुहोस्।",
+    "tooMany": "धेरै पटक प्रयास भयो। कृपया केही पर्खेर फेरि प्रयास गर्नुहोस्।",
+    "wrongPassword": "पासवर्ड गलत छ। कृपया जाँचेर फेरि प्रयास गर्नुहोस्।",
+    "suspended": "यो खाता बन्द गरिएको छ। कृपया आफ्नो डिलरसँग सम्पर्क गर्नुहोस्।",
+    "alreadyRegistered": "यो मोबाइल नम्बर पहिले नै दर्ता भइसकेको छ। कृपया लगइन गर्नुहोस्।",
+    "registrationClosed": "नयाँ खाता तपाईंको डिलरले थप्छन्। कृपया डिलरलाई तपाईंलाई थप्न भन्नुहोस्।",
+    "sessionExpired": "तपाईंको सेसन सकियो। कृपया फेरि लगइन गर्नुहोस्।",
+    "forbidden": "तपाईंलाई यो गर्ने अनुमति छैन।",
+    "notFound": "फेला परेन।",
+    "invalid": "कृपया विवरण जाँचेर फेरि प्रयास गर्नुहोस्।",
+    "generic": "केही गडबड भयो। कृपया फेरि प्रयास गर्नुहोस्।",
+    "offline": "तपाईं अफलाइन हुनुहुन्छ। कृपया इन्टरनेटमा जोडिएर फेरि प्रयास गर्नुहोस्।",
+    "contract": "सर्भरले एपले बुझ्न नसक्ने जानकारी पठायो। कृपया एप अपडेट गर्नुहोस्।",
+    "deviceSuspended": "यो पम्पको रिमोट कन्ट्रोल रोकिएको छ। कृपया आफ्नो डिलरलाई सम्पर्क गर्नुहोस्।",
+    "siteExists": "यही नामको समूह तपाईंसँग पहिले नै छ।",
+    "mfaUnsupported": "यो खातालाई सुरक्षा कोड चाहिन्छ, जुन यो एपले अहिले चलाउँदैन। कृपया आफ्नो डिलरलाई सम्पर्क गर्नुहोस्।"
+  },
+  "time": {
+    "never": "कहिल्यै होइन",
+    "justNow": "भर्खरै",
+    "minutesAgo": "{{count}} मिनेट अघि",
+    "hoursAgo": "{{count}} घण्टा अघि",
+    "daysAgo": "{{count}} दिन अघि"
+  },
+  "units": {
+    "minutes": "{{m}} मिनेट",
+    "hoursMinutes": "{{h}} घण्टा {{m}} मिनेट"
+  },
+  "offline": {
+    "banner": "तपाईं अफलाइन हुनुहुन्छ। {{time}} सम्मको सुरक्षित डेटा देखाइएको छ।",
+    "bannerNoData": "तपाईं अफलाइन हुनुहुन्छ। पम्प हेर्न इन्टरनेटमा जोडिनुहोस्।",
+    "reconnecting": "फेरि जोडिँदैछ…"
+  },
+  "boundary": {
+    "title": "केही गडबड भयो",
+    "message": "एपमा समस्या आयो। तपाईंका पम्पमा यसको असर छैन।"
+  },
+  "listen": {
+    "start": "सुन्नुहोस्",
+    "stop": "रोक्नुहोस्",
+    "noVoice": "यो फोनमा यो भाषाको आवाज छैन। फोनको टेक्स्ट-टु-स्पीच सेटिङमा यसलाई राख्न सकिन्छ।"
+  },
+  "pump": {
+    "tabs": {
+      "live": "लाइभ",
+      "timer": "टाइमर",
+      "history": "इतिहास",
+      "faults": "खराबी"
+    },
+    "notFoundTitle": "पम्प भेटिएन",
+    "notFoundMessage": "यो पम्प अब तपाईंको सूचीमा छैन।"
+  },
+  "live": {
+    "updated": "अपडेट {{ago}}",
+    "stale": "पछिल्लो रिडिङ {{ago}} आएको थियो। त्यतिबेलाको जानकारी देखाइएको छ।",
+    "noDataYet": "यो पम्पले अहिलेसम्म कुनै रिडिङ पठाएको छैन।",
+    "today": "आज",
+    "total": "जम्मा",
+    "noReading": "रिडिङ छैन",
+    "notReporting": "जानकारी आउँदैन",
+    "refreshFailed": "रिफ्रेस गर्न सकिएन। सुरक्षित जानकारी देखाइएको छ।",
+    "hp": "{{hp}} HP"
+  },
+  "speech": {
+    "running": "{{name}} चलिरहेको छ।",
+    "stopped": "{{name}} बन्द छ।",
+    "fault": "{{name}} मा खराबी छ: {{fault}}।",
+    "offline": "{{name}} बाट जानकारी आउँदैन। पछिल्लो खबर {{ago}} को हो।",
+    "noData": "{{name}} ले अहिलेसम्म कुनै रिडिङ पठाएको छैन।",
+    "volts": "भोल्टेज {{ry}}, {{yb}} र {{br}} भोल्ट छ।",
+    "runtime": "यो आज {{time}} चल्यो।"
+  },
+  "command": {
+    "startTitle": "{{name}} चालु गर्ने?",
+    "stopTitle": "{{name}} बन्द गर्ने?",
+    "startBody": "{{name}} अहिले नै चालु हुन्छ। चलाउन सुरक्षित छ भनी निश्चित गर्नुहोस्।",
+    "stopBody": "{{name}} बन्द हुन्छ र पानी आउन रोकिन्छ।",
+    "offlineWarn": "यो पम्पबाट जानकारी आउँदैन, त्यसैले आदेश त्यसमा नपुग्न सक्छ।",
+    "step": {
+      "sent": "पठाइयो",
+      "delivered": "पम्पमा पुग्यो",
+      "acknowledged": "पम्पले पुष्टि गर्यो",
+      "applied": "भयो"
+    },
+    "titleStart": "चालु गर्ने आदेश",
+    "titleStop": "बन्द गर्ने आदेश",
+    "notConfirmed": "अहिलेसम्म पुष्टि भएन। पम्पले जवाफ दिएन। पम्प हेर्नुहोस्, वा केही बेरपछि फेरि प्रयास गर्नुहोस्।",
+    "rejected": "पम्पले यो आदेश मानेन।",
+    "rejectedWhy": "पम्पले मानेन: {{reason}}",
+    "expired": "पम्पमा पुग्नु अघि नै आदेशको समय सकियो।",
+    "notSent": "आदेश पठाउन सकिएन, त्यसैले पम्पलाई केही जानकारी दिइएन। केही बेरमा फेरि प्रयास गर्नुहोस्।",
+    "done": "पम्पले त्यो गर्यो।",
+    "tryAgain": "फेरि प्रयास गर्नुहोस्",
+    "dismiss": "बन्द गर्नुहोस्",
+    "offlineBlock": "तपाईं अफलाइन हुनुहुन्छ। पम्प चलाउन इन्टरनेटमा जोडिनुहोस्।",
+    "cooldown": "अर्को आदेश अघि {{seconds}} सेकेन्ड पर्खनुहोस्",
+    "cooldownShort": "{{seconds}} सेकेन्ड पर्खनुहोस्"
+  },
+  "timer": {
+    "title": "चल्ने टाइमर",
+    "intro": "पम्पलाई तोकिएको समयसम्म चलाउनुहोस्, त्यसपछि आफैँ बन्द हुन्छ।",
+    "onLabel": "कति बेर चल्ने (मिनेट)",
+    "offLabel": "त्यसपछि कति बेर रोकिने (मिनेट)",
+    "cyclesLabel": "कति पटक दोहोर्याउने",
+    "cyclesHint": "0 को अर्थ चलिरहन्छ",
+    "range": "{{min}} देखि {{max}}",
+    "errorOn": "1 देखि 250 मिनेट लेख्नुहोस्",
+    "errorOff": "0 देखि 250 मिनेट लेख्नुहोस्",
+    "errorCycles": "0 देखि 999 लेख्नुहोस्",
+    "save": "पम्पमा टाइमर पठाउनुहोस्",
+    "confirmTitle": "{{name}} मा टाइमर राख्ने?",
+    "summaryOnce": "{{on}} मिनेट चल्छ, त्यसपछि बन्द हुन्छ।",
+    "summaryRepeat": "{{on}} मिनेट चल्छ, {{off}} मिनेट रोकिन्छ, {{cycles}} पटक दोहोर्याउँछ।",
+    "summaryForever": "{{on}} मिनेट चल्छ, {{off}} मिनेट रोकिन्छ, चलिरहन्छ।",
+    "confirmYes": "हो, पठाउनुहोस्",
+    "sentUnconfirmed": "पम्पमा पठाइयो, तर अहिलेसम्म पुष्टि भएको छैन। पुष्टि भएपछि पम्पले यो प्रयोग गर्छ।",
+    "current": "तपाईंले पठाएको पछिल्लो टाइमर",
+    "none": "तपाईंले अहिलेसम्म कुनै टाइमर पठाउनुभएको छैन।",
+    "remoteBlocked": "रिमोट कन्ट्रोल रोकिएको बेला टाइमर पठाउन सकिँदैन।"
+  },
+  "history": {
+    "day": "आज",
+    "week": "7 दिन",
+    "month": "30 दिन",
+    "hoursRun": "चलेको समय",
+    "perHour": "हरेक घण्टामा कति मिनेट चल्यो (पछिल्ला 24 घण्टा)",
+    "perDay": "हरेक दिन चलेको समय",
+    "empty": "अहिलेसम्म चलेको इतिहास छैन",
+    "emptyHint": "पम्प चलेर जानकारी पठाएपछि पट्टीहरू देखिन्छन्।",
+    "total": "यो अवधिमा जम्मा",
+    "starts": "चालु भयो: {{count}} पटक",
+    "faultCount": "खराबी: {{count}}",
+    "export": "CSV फाइलको रूपमा पठाउनुहोस्",
+    "exportFailed": "फाइल तयार गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।",
+    "estimated": "पम्पले पठाएको जानकारीबाट अनुमान।",
+    "barDetail": "{{label}}: {{time}}",
+    "noBars": "पम्प चलेन।"
+  },
+  "faultInfo": {
+    "code1": {
+      "cause": "एउटा फेज (Y) पम्पमा ठीकसँग पुगिरहेको छैन।",
+      "action": "प्यानलमा Y-फेजको फ्युज र तार जाँच्नुहोस्। बारम्बार भए डिलरलाई बोलाउनुहोस्।"
+    },
+    "code2": {
+      "cause": "तीनमध्ये एउटा फेज छैन, त्यसैले मोटर सुरक्षित रूपमा चल्न सक्दैन।",
+      "action": "फ्युज र बिजुली आपूर्ति जाँच्नुहोस्। इलेक्ट्रिसियन वा डिलरलाई बोलाउनुहोस्।"
+    },
+    "code3": {
+      "cause": "बिजुलीको भोल्टेज धेरै बढी छ, मोटर जल्न सक्छ।",
+      "action": "आपूर्ति सामान्य नभएसम्म पर्खनुहोस्। भोल्टेज बढी भए फेरि चालु नगर्नुहोस्।"
+    },
+    "code4": {
+      "cause": "तीनै फेजका तार गलत क्रममा छन्, त्यसैले मोटर उल्टो घुम्छ।",
+      "action": "पम्प नचलाउनुहोस्। इलेक्ट्रिसियनलाई भनेर कुनै दुई फेजका तार साट्न लगाउनुहोस्।"
+    },
+    "code5": {
+      "cause": "पम्प पानी बिना चलिरहेको छ।",
+      "action": "पानीको सतह र फुट भल्भ जाँच्नुहोस्। पानी पाएपछि मात्र फेरि चालु गर्नुहोस्।"
+    },
+    "code6": {
+      "cause": "मोटरमा जाने केबल सबै फेजमा चुडिएको वा निस्किएको छ।",
+      "action": "प्यानलदेखि मोटरसम्मको केबल र जोर्नी जाँच्नुहोस्। डिलरलाई बोलाउनुहोस्।"
+    },
+    "code7": {
+      "cause": "मोटरको केबल आंशिक चुडिएको छ, वा केही फेजमा जोर्नी खुकुलो छ।",
+      "action": "केबलको जोर्नी र टर्मिनल जाँच्नुहोस्। डिलरलाई बोलाउनुहोस्।"
+    },
+    "code8": {
+      "cause": "मोटरले बढी करेन्ट तानिरहेको छ, पम्प जाम छ वा आपूर्ति कमजोर छ।",
+      "action": "पम्पमा अवरोध छ कि हेर्नुहोस्। केही पर्खेर फेरि चालु गर्नुहोस्। बारम्बार भए डिलरलाई बोलाउनुहोस्।"
+    },
+    "code9": {
+      "cause": "तीनै फेजका भोल्टेज एकअर्कासँग धेरै फरक छन्।",
+      "action": "आपूर्ति सन्तुलित नभएसम्म पर्खनुहोस्। जारी रहे बिजुली कम्पनीलाई भन्नुहोस्।"
+    },
+    "code10": {
+      "cause": "बिजुलीको भोल्टेज यति कम छ कि मोटर सुरक्षित रूपमा चल्न सक्दैन।",
+      "action": "भोल्टेज सुध्रिएसम्म पर्खनुहोस्, त्यसपछि चालु गर्नुहोस्।"
+    },
+    "unknown": {
+      "cause": "पम्पले यस्तो खराबी भेट्यो जसको नाम यसले भन्न सकेन।",
+      "action": "आफ्नो डिलरलाई बोलाउनुहोस् र खराबीको कोड भन्नुहोस्।"
+    }
+  },
+  "support": {
+    "title": "सहयोग",
+    "dealer": "तपाईंको डिलर",
+    "call": "{{name}} लाई फोन गर्नुहोस्",
+    "noDealer": "तपाईंको डिलरको नम्बर अहिलेसम्म सुरक्षित गरिएको छैन। कृपया पम्प जडान गर्ने व्यक्तिलाई सोध्नुहोस्।",
+    "company": "कम्पनी सहयोग",
+    "loadFailed": "डिलरको जानकारी पाउन सकिएन।"
+  },
+  "manage": {
+    "title": "पम्प व्यवस्थापन",
+    "pumps": "तपाईंका पम्प",
+    "groups": "समूह",
+    "rename": "नाम बदल्नुहोस्",
+    "namePlaceholder": "पम्पको नाम",
+    "originalName": "पम्पमा भएको नाम: {{name}}",
+    "moveUp": "माथि सार्नुहोस्",
+    "moveDown": "तल सार्नुहोस्",
+    "group": "समूह",
+    "noGroup": "कुनै समूह छैन",
+    "newGroup": "नयाँ समूह",
+    "groupPlaceholder": "जस्तै: उत्तरको खेत",
+    "createGroup": "समूह बनाउनुहोस्",
+    "renameGroup": "समूहको नाम बदल्नुहोस्",
+    "deleteGroup": "समूह हटाउनुहोस्",
+    "deleteGroupTitle": "यो समूह हटाउने?",
+    "deleteGroupBody": "यसका पम्प समूह बिना तपाईंको सूचीमै रहनेछन्।",
+    "groupPumps": "पम्प: {{count}}",
+    "empty": "व्यवस्थापन गर्न अहिलेसम्म तपाईंसँग पम्प छैन।",
+    "nameEmpty": "कृपया कुनै नाम लेख्नुहोस्।"
+  },
+  "plan": {
+    "expiring": "तपाईंको प्लान {{days}} दिनमा, {{date}} मा सकिँदैछ। कृपया डिलरलाई नवीकरण गर्न भन्नुहोस्।",
+    "expiresToday": "तपाईंको प्लान आज सकिँदैछ। कृपया डिलरलाई नवीकरण गर्न भन्नुहोस्।",
+    "expired": "तपाईंको प्लान {{date}} मा सकियो। कृपया डिलरलाई नवीकरण गर्न भन्नुहोस्।",
+    "suspended": "यो पम्पको रिमोट कन्ट्रोल रोकिएको छ। कृपया आफ्नो डिलरलाई सम्पर्क गर्नुहोस्।"
+  },
+  "otp": {
+    "title": "Enter Verification Code",
+    "desc": "We have sent a 6-digit code to",
+    "onWhatsapp": "on WhatsApp",
+    "testOtpNotice": "Test mode - use the code below",
+    "autoFill": "Auto-fill",
+    "resendPrompt": "Didn't receive the code?",
+    "resendIn": "Resend in",
+    "resendButton": "Resend OTP",
+    "verifyButton": "Verify OTP",
+    "verifyingButton": "Verifying...",
+    "incompleteCode": "Enter all 6 digits"
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "desc": "Set a password for your account",
+    "passwordReq": "Minimum 8 characters",
+    "confirmLabel": "Confirm Password",
+    "submitButton": "Create Account",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
+  },
+  "registered": {
+    "title": "Registration Successful!",
+    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "phoneLabel": "Registered mobile number",
+    "continueButton": "Continue to App"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "desc": "Enter your mobile number to receive a reset code on WhatsApp"
+  },
+  "resetPassword": {
+    "title": "Create New Password",
+    "desc": "Set a new password for your account",
+    "newPasswordLabel": "New Password",
+    "submitButton": "Update Password"
+  },
+  "passwordUpdated": {
+    "title": "Password Updated!",
+    "desc": "Your password has been updated successfully. Please sign in with your new password.",
+    "goToLogin": "Go to Login"
+  }
+}

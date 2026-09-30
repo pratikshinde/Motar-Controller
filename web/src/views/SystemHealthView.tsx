@@ -68,29 +68,24 @@ export const SystemHealthView: React.FC = () => {
   }
   if (!data) return null;
 
-  const m = data.metrics || {
-    http_requests_total: 0,
-    http_errors_4xx: 0,
-    http_errors_5xx: 0,
-    telemetry_ingest_success: 0,
-    telemetry_ingest_failure: 0,
-    sms_sent: 0,
-    sms_failed: 0,
-    whatsapp_sent: 0,
-    whatsapp_failed: 0
-  };
-  const proc = data.process || { uptime_seconds: (data as any)?.uptime_seconds || 0, node_version: 'Python FastAPI', env: 'production' };
-  const dbInfo = data.database && typeof data.database === 'object' ? data.database : {
-    connected: data?.database === 'connected' || (data as any)?.status === 'healthy',
-    latency_ms: 1.5,
-    pool_total: 10,
-    pool_idle: 8,
-    pool_waiting: 0
-  };
+  // The backend /health endpoint returns metrics.requests_total / errors_4xx / errors_5xx.
+  // A legacy Node backend used http_requests_total — normalise both shapes here.
+  const m = data.metrics || {};
+  const proc = data.process || { uptime_seconds: (data as any)?.uptime_seconds || 0, env: '—' };
+  // What the server measured, or nothing: no stand-in latency or pool numbers.
+  const dbInfo: any = data.database && typeof data.database === 'object' ? data.database : { connected: false, latency_ms: null, pool_total: null, pool_idle: null, pool_waiting: null };
+  const num = (v: unknown) => (typeof v === 'number' ? String(v) : '—');
 
-  const totalReqs = m.http_requests_total || 0;
-  const err4xx = m.http_errors_4xx || 0;
-  const err5xx = m.http_errors_5xx || 0;
+  // Accept both the FastAPI shape (requests_total) and the legacy Node shape (http_requests_total).
+  const totalReqs: number = m.requests_total ?? m.http_requests_total ?? 0;
+  const err4xx: number   = m.errors_4xx     ?? m.http_errors_4xx     ?? 0;
+  const err5xx: number   = m.errors_5xx     ?? m.http_errors_5xx     ?? 0;
+  const sms_sent: number    = m.sms_sent    ?? 0;
+  const sms_failed: number  = m.sms_failed  ?? 0;
+  const wa_sent: number     = m.whatsapp_sent   ?? 0;
+  const wa_failed: number   = m.whatsapp_failed ?? 0;
+  const ingest_ok: number   = m.telemetry_ingest_success ?? 0;
+  const ingest_fail: number = m.telemetry_ingest_failure ?? 0;
   const errorRate = totalReqs > 0 ? (((err4xx + err5xx) / totalReqs) * 100).toFixed(1) : '0.0';
 
   return (
@@ -126,7 +121,7 @@ export const SystemHealthView: React.FC = () => {
         />
         <StatTile
           label="DB pool"
-          value={`${dbInfo.pool_idle ?? 0}/${dbInfo.pool_total ?? 0}`}
+          value={`${num(dbInfo.pool_idle)}/${num(dbInfo.pool_total)}`}
           color={dbInfo.connected ? undefined : theme.palette.error.main}
         />
       </Box>
@@ -142,9 +137,9 @@ export const SystemHealthView: React.FC = () => {
               <Row label="5xx responses" value={err5xx} highlight={err5xx > 0} />
               <Row label="DB connected" value={dbInfo.connected ? 'Yes' : 'No'} highlight={!dbInfo.connected} />
               <Row label="DB round-trip latency" value={dbInfo.latency_ms != null ? `${dbInfo.latency_ms} ms` : '—'} />
-              <Row label="Pool: total / idle / waiting" value={`${dbInfo.pool_total ?? 0} / ${dbInfo.pool_idle ?? 0} / ${dbInfo.pool_waiting ?? 0}`} />
-              <Row label="Node version" value={proc.node_version || 'Python FastAPI'} />
-              <Row label="NODE_ENV" value={proc.env || 'production'} />
+              <Row label="Pool: total / idle / in use" value={`${num(dbInfo.pool_total)} / ${num(dbInfo.pool_idle)} / ${num(dbInfo.pool_in_use)}`} />
+              <Row label="Python version" value={(proc as any).python_version || '—'} />
+              <Row label="Environment" value={proc.env || '—'} />
             </Box>
           </CardContent>
         </Card>
@@ -155,12 +150,12 @@ export const SystemHealthView: React.FC = () => {
               Telemetry Ingestion &amp; Notifications
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Row label="Telemetry ingested (success)" value={m.telemetry_ingest_success || 0} />
-              <Row label="Telemetry ingest failures" value={m.telemetry_ingest_failure || 0} highlight={(m.telemetry_ingest_failure || 0) > 0} />
-              <Row label="SMS dispatched" value={m.sms_sent || 0} />
-              <Row label="SMS dispatch failures" value={m.sms_failed || 0} highlight={(m.sms_failed || 0) > 0} />
-              <Row label="WhatsApp dispatched" value={m.whatsapp_sent || 0} />
-              <Row label="WhatsApp dispatch failures" value={m.whatsapp_failed || 0} highlight={(m.whatsapp_failed || 0) > 0} />
+              <Row label="Telemetry ingested (success)" value={ingest_ok} />
+              <Row label="Telemetry ingest failures" value={ingest_fail} highlight={ingest_fail > 0} />
+              <Row label="SMS dispatched" value={sms_sent} />
+              <Row label="SMS dispatch failures" value={sms_failed} highlight={sms_failed > 0} />
+              <Row label="WhatsApp dispatched" value={wa_sent} />
+              <Row label="WhatsApp dispatch failures" value={wa_failed} highlight={wa_failed > 0} />
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
               "Dispatched" means the send call completed without throwing — no delivery-receipt webhook is wired up,

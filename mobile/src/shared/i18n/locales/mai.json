@@ -1,0 +1,489 @@
+{
+  "brand": {
+    "line1": "अजंता पंप",
+    "line2": "कंट्रोलर"
+  },
+  "common": {
+    "retry": "फेर सँ प्रयास करू",
+    "refresh": "रिफ्रेश करू",
+    "back": "पाछाँ",
+    "cancel": "रद्द करू",
+    "continue": "आगू बढ़ू",
+    "checkAgain": "फेर देखू",
+    "serverUnreachableTitle": "सर्वर सँ सम्पर्क नहि भ' रहल अछि",
+    "save": "सहेजू",
+    "loading": "लोड भ' रहल अछि…",
+    "more": "बढ़ाउ",
+    "less": "घटाउ"
+  },
+  "splash": {
+    "tagline": "अपन पंप कतहु सँ चलाउ",
+    "starting": "शुरू भ' रहल अछि…",
+    "footer": "स्मार्ट 3-फेज पंप सुरक्षा"
+  },
+  "language": {
+    "title": "अपन भाषा चुनू",
+    "continue": "आगू बढ़ू",
+    "listenAll": "भाषा सब सुनू",
+    "stopListening": "रोकू",
+    "back": "सेटिंग्स पर पाछाँ"
+  },
+  "login": {
+    "tabLogin": "लॉगिन",
+    "tabRegister": "नव खाता",
+    "welcomeBack": "फेर स्वागत अछि",
+    "createTitle": "अपन खाता बनाउ",
+    "nameLabel": "अहाँक नाम",
+    "namePlaceholder": "पूरा नाम",
+    "mobileLabel": "मोबाइल नंबर",
+    "mobilePlaceholder": "10 अंकक मोबाइल नंबर",
+    "passwordLabel": "पासवर्ड",
+    "passwordPlaceholder": "अहाँक पासवर्ड",
+    "choosePassword": "पासवर्ड चुनू",
+    "choosePasswordPlaceholder": "कम सँ कम 6 अक्षर",
+    "loginButton": "लॉगिन करू",
+    "createButton": "खाता बनाउ",
+    "newHere": "नव छी?",
+    "createLink": "खाता बनाउ",
+    "haveAccount": "पहिने सँ खाता अछि?",
+    "loginLink": "लॉगिन करू",
+    "showPassword": "पासवर्ड देखाउ",
+    "hidePassword": "पासवर्ड नुकाउ",
+    "validationTitle": "कृपया जाँच करू",
+    "needName": "कृपया अपन पूरा नाम लिखू",
+    "needPhone": "कृपया अपन मोबाइल नंबर लिखू",
+    "needPassword": "कृपया अपन पासवर्ड लिखू",
+    "passwordShort": "पासवर्ड कम सँ कम 6 अक्षरक हेबाक चाही",
+    "loginFailedTitle": "लॉगिन नहि भ' सकल",
+    "notFoundTitle": "खाता नहि भेटल",
+    "notFoundMessage": "ई मोबाइल नंबर एखन धरि पंजीकृत नहि अछि। की अहाँ नव खाता बनाबऽ चाहैत छी?",
+    "registerFailedTitle": "खाता नहि बनि सकल",
+    "createdTitle": "खाता बनि गेल",
+    "createdMessage": "स्वागत अछि {{name}}। अहाँक खाता तैयार अछि। आगू बढ़बाक लेल लॉगिन करू।",
+    "createdStatus": "खाता बनि गेल। अपन मोबाइल नंबर आ पासवर्ड सँ लॉगिन करू।",
+    "welcomeBackDesc": "Login to manage your pump remotely",
+    "forgotPassword": "Forgot Password?",
+    "createDesc": "Register using your WhatsApp number",
+    "sendOtpButton": "Send OTP on WhatsApp"
+  },
+  "nav": {
+    "pumps": "हमर पंप",
+    "alerts": "अलर्ट",
+    "settings": "सेटिंग्स"
+  },
+  "pumps": {
+    "title": "हमर पंप",
+    "count_one": "{{count}} पंप",
+    "count_other": "{{count}} पंप",
+    "loading": "अहाँक पंप लोड भ' रहल अछि…",
+    "emptyTitle": "एखन धरि कोनो पंप नहि",
+    "emptyMessage": "अहाँक मोबाइल नंबर सँ एखन धरि कोनो पंप जुड़ल नहि अछि। कृपया अपन डीलर सँ पंप जोड़बाक लेल कहू।",
+    "hp": "{{hp}} एचपी",
+    "openPump": "{{name}}, {{status}}। पंप खोलू",
+    "status": {
+      "running": "चालू",
+      "stopped": "बन्न",
+      "fault": "खराबी",
+      "offline": "ऑफलाइन",
+      "online": "ऑनलाइन",
+      "unknown": "अज्ञात"
+    },
+    "ungrouped": "आन पंप",
+    "lastSeen": "अंतिम खबरि {{ago}}",
+    "noData": "एखन धरि कोनो जानकारी नहि",
+    "manage": "पंप सम्हारू",
+    "ranToday": "आइ {{time}} चलल"
+  },
+  "alerts": {
+    "title": "अलर्ट",
+    "loading": "अलर्ट जाँचल जा रहल अछि…",
+    "emptyTitle": "सब ठीक अछि",
+    "emptyMessage": "एखन अहाँक पंप मे कोनो समस्या नहि अछि।",
+    "serious": "गंभीर",
+    "warning": "चेतावनी",
+    "info": "जानकारी",
+    "needsAttention": "ध्यान दिअ",
+    "resolved": "ठीक भ' गेल",
+    "defaultTitle": "पंप अलर्ट",
+    "tabActive": "चालू",
+    "tabFixed": "ठीक भेल",
+    "ack": "हम देखि लेलहुँ",
+    "acked": "देखल गेल",
+    "resolve": "ठीक भ' गेल, से चिन्हित करू",
+    "resolveTitle": "एहि अलर्टकेँ ठीक भेल मानल जाए?",
+    "resolveBody": "पंपक खराबी दूर भेलाक बादे ई करू।",
+    "resolveYes": "हँ, ठीक भ' गेल",
+    "openPump": "पंप खोलू",
+    "occurrences": "{{count}} बेर भेल",
+    "last": "अंतिम बेर: {{when}}",
+    "emptyFixed": "हालहिं किछु ठीक नहि भेल"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "language": "भाषा",
+    "languageHint": "ऐप, अलर्ट आ आवाज़क जवाबक भाषा",
+    "account": "खाता",
+    "logout": "लॉगआउट",
+    "logoutTitle": "लॉगआउट",
+    "logoutMessage": "की अहाँ लॉगआउट करऽ चाहैत छी?",
+    "version": "संस्करण {{version}}",
+    "profile": "प्रोफाइल",
+    "name": "अहाँक नाम",
+    "nameSaved": "नाम सहेजल गेल",
+    "mobile": "मोबाइल नंबर",
+    "managePumps": "पंप सम्हारू",
+    "managePumpsHint": "पंपक नाम बदलू, क्रम ठीक करू आ समूह बनाउ",
+    "sessions": "लॉगिन बला फोन",
+    "thisDevice": "ई फोन",
+    "lastUsed": "अंतिम उपयोग {{when}}",
+    "signOutDevice": "लॉगआउट करू",
+    "signOutDeviceTitle": "ओहि फोनकेँ लॉगआउट कएल जाए?",
+    "signOutDeviceBody": "फेरसँ लॉगिन करबाक लेल ओकरा अहाँक पासवर्ड चाही।",
+    "noOtherSessions": "आर कोनो फोनमे लॉगिन नहि अछि।",
+    "data": "अहाँक डेटा",
+    "export": "हमर डेटा डाउनलोड करू",
+    "exportHint": "अहाँक खाता, पंप आ अलर्टक एक प्रति।",
+    "exportFailed": "अहाँक डेटा तैयार नहि भ' सकल। कृपया फेरसँ प्रयास करू।",
+    "delete": "हमर डेटा हटाउ",
+    "deleteHint": "हमरा सभकेँ अपन खाता हटयबाक लेल कहू। किछु हटयबासँ पहिने हम अहाँसँ गप करब।",
+    "deleteTitle": "डेटा हटयबाक अनुरोध पठाओल जाए?",
+    "deleteBody": "अहाँक अनुरोध हमर टीमकेँ जायत। अहाँसँ गप कएने बिना किछु नहि हटाओल जायत।",
+    "deleteConfirm": "अनुरोध पठाउ",
+    "deletePending": "{{date}} केँ डेटा हटयबाक अनुरोध कएल गेल। हम अहाँसँ संपर्क करब।"
+  },
+  "dashboard": {
+    "cantReachTitle": "पंप सँ सम्पर्क नहि भ' रहल अछि",
+    "powerOn": "पंप चालू",
+    "powerOff": "पंप बन्न",
+    "running": "चलि रहल अछि",
+    "stopped": "बन्न अछि",
+    "signal": "सिग्नल",
+    "cardPower": "बिजली आपूर्ति (वोल्टेज)",
+    "cardLoad": "मोटर लोड",
+    "cardRuntime": "चलबाक समय",
+    "cardHealth": "पंपक स्थिति",
+    "volts": "वोल्ट",
+    "powerOk": "बिजली ठीक",
+    "noPower": "बिजली नहि",
+    "rotationOk": "घुमाव सही",
+    "wrongRotation": "घुमाव गलत",
+    "offNoLoad": "पंप बन्न अछि — कोनो लोड नहि",
+    "totalRun": "कुल चलबाक समय",
+    "noFaults": "कोनो खराबी नहि — पंप ठीक अछि",
+    "faultBadge": "बन्न भेल",
+    "no": "नहि, रद्द करू",
+    "yesStart": "हँ, चालू करू",
+    "yesStop": "हँ, बन्न करू",
+    "ampere": "एम्प",
+    "system": "SYSTEM",
+    "cardVoltages": "LINE VOLTAGES",
+    "cardCurrents": "PHASE CURRENTS",
+    "cardRuntime2": "RUN TIME",
+    "cardFaults": "PUMP FAULTS",
+    "quickActions": "QUICK ACTIONS",
+    "startPump": "Start Pump",
+    "stopPump": "Stop Pump",
+    "viewTimer": "Timer",
+    "viewHistory": "History",
+    "totalRunTime": "TOTAL RUN TIME",
+    "lastCycleRunTime": "TODAY'S RUN TIME",
+    "hoursMinutes": "HOURS : MINUTES"
+  },
+  "faults": {
+    "code1": "Y-फेज खराबी",
+    "code2": "फेज गायब (सिंगल फेजिंग)",
+    "code3": "वोल्टेज बेसी",
+    "code4": "फेजक क्रम गलत",
+    "code5": "ड्राई रन (पानि नहि)",
+    "code6": "केबल खुजल (सभ फेज)",
+    "code7": "केबल आंशिक खुजल",
+    "code8": "मोटर ओवरलोड",
+    "code9": "वोल्टेज असंतुलन",
+    "code10": "वोल्टेज कम",
+    "unknown": "खराबी (कोड {{code}})",
+    "title": "खराबी",
+    "current": "एखनुक खराबी",
+    "cause": "एहन किएक होइत अछि",
+    "action": "की करी",
+    "history": "पहिनुक खराबी",
+    "historyEmpty": "एहि पंपक कोनो खराबी दर्ज नहि अछि।",
+    "ack": "हम देखि लेलहुँ",
+    "acked": "देखल गेल",
+    "fixed": "ठीक भेल",
+    "open": "खुजल",
+    "resetTitle": "खराबीक बाद फेरसँ चालू करब",
+    "resetIntro": "खराबी पंपक पैनल पर साफ होइत अछि, ऐप मे नहि।",
+    "resetStep1": "पहिने खराबीक कारण ठीक करू।",
+    "resetStep2": "पैनल पर RESET बटन दबाउ।",
+    "resetStep3": "तखन ऐपसँ पंप चालू करू।",
+    "panelLabel": "पंप पैनल",
+    "resetButton": "RESET",
+    "occurred": "शुरू भेल {{when}}",
+    "seenAt": "देखल गेल {{when}}"
+  },
+  "errors": {
+    "network": "जुड़ि नहि पा रहल अछि। कृपया इंटरनेट जाँचि क' फेर सँ प्रयास करू।",
+    "server": "हमरा सभक तरफ सँ किछु गड़बड़ भ' गेल। कृपया किछु काल बाद फेर सँ प्रयास करू।",
+    "tooMany": "बहुत बेर प्रयास भ' गेल। कृपया किछु काल रुकि क' फेर सँ प्रयास करू।",
+    "wrongPassword": "पासवर्ड गलत अछि। कृपया जाँचि क' फेर सँ प्रयास करू।",
+    "suspended": "ई खाता बन्न क' देल गेल अछि। कृपया अपन डीलर सँ सम्पर्क करू।",
+    "alreadyRegistered": "ई मोबाइल नंबर पहिने सँ पंजीकृत अछि। कृपया लॉगिन करू।",
+    "registrationClosed": "नव खाता अहाँक डीलर जोड़ैत छथि। कृपया डीलर सँ अहाँ केँ जोड़बाक लेल कहू।",
+    "sessionExpired": "अहाँक सेशन समाप्त भ' गेल। कृपया फेर सँ लॉगिन करू।",
+    "forbidden": "अहाँ केँ ई करबाक अनुमति नहि अछि।",
+    "notFound": "नहि भेटल।",
+    "invalid": "कृपया जानकारी जाँचि क' फेर सँ प्रयास करू।",
+    "generic": "किछु गड़बड़ भ' गेल। कृपया फेर सँ प्रयास करू।",
+    "offline": "अहाँ ऑफलाइन छी। कृपया इंटरनेटसँ जुड़ि क' फेरसँ प्रयास करू।",
+    "contract": "सर्वर एहन जानकारी पठौलक जे ऐप नहि बुझि सकल। कृपया ऐप अपडेट करू।",
+    "deviceSuspended": "एहि पंपक रिमोट कंट्रोल रोकल गेल अछि। कृपया अपन डीलरसँ संपर्क करू।",
+    "siteExists": "एहि नामक समूह अहाँक लग पहिनहिं सँ अछि।",
+    "mfaUnsupported": "एहि खातामे सुरक्षा कोड चाही, जे ई ऐप एखन नहि चला सकैत अछि। कृपया अपन डीलरसँ संपर्क करू।"
+  },
+  "time": {
+    "never": "कहियो नहि",
+    "justNow": "अखने",
+    "minutesAgo": "{{count}} मिनट पहिने",
+    "hoursAgo": "{{count}} घंटा पहिने",
+    "daysAgo": "{{count}} दिन पहिने"
+  },
+  "units": {
+    "minutes": "{{m}} मिनट",
+    "hoursMinutes": "{{h}} घंटा {{m}} मिनट"
+  },
+  "offline": {
+    "banner": "अहाँ ऑफलाइन छी। {{time}} धरिक सहेजल डेटा देखा रहल अछि।",
+    "bannerNoData": "अहाँ ऑफलाइन छी। पंप देखबाक लेल इंटरनेटसँ जुड़ू।",
+    "reconnecting": "फेरसँ जुड़ि रहल अछि…"
+  },
+  "boundary": {
+    "title": "किछु गड़बड़ भ' गेल",
+    "message": "ऐप मे समस्या भेल। अहाँक पंप पर एकर कोनो असर नहि अछि।"
+  },
+  "listen": {
+    "start": "सुनू",
+    "stop": "रोकू",
+    "noVoice": "एहि फोनमे एहि भाषाक आवाज नहि अछि। फोनक टेक्स्ट-टू-स्पीच सेटिंगमे एकरा लगाओल जा सकैत अछि।"
+  },
+  "pump": {
+    "tabs": {
+      "live": "लाइव",
+      "timer": "टाइमर",
+      "history": "इतिहास",
+      "faults": "खराबी"
+    },
+    "notFoundTitle": "पंप नहि भेटल",
+    "notFoundMessage": "ई पंप आब अहाँक सूचीमे नहि अछि।"
+  },
+  "live": {
+    "updated": "अपडेट {{ago}}",
+    "stale": "अंतिम रीडिंग {{ago}} आयल छल। ओहि समयक जानकारी देखा रहल अछि।",
+    "noDataYet": "एहि पंप एखन धरि कोनो रीडिंग नहि पठौलक।",
+    "today": "आइ",
+    "total": "कुल",
+    "noReading": "रीडिंग नहि",
+    "notReporting": "जानकारी नहि आबि रहल",
+    "refreshFailed": "ताजा नहि भ' सकल। सहेजल जानकारी देखा रहल अछि।",
+    "hp": "{{hp}} HP"
+  },
+  "speech": {
+    "running": "{{name}} चलि रहल अछि।",
+    "stopped": "{{name}} बन्न अछि।",
+    "fault": "{{name}} मे खराबी अछि: {{fault}}।",
+    "offline": "{{name}} सँ जानकारी नहि आबि रहल। अंतिम खबरि {{ago}} क अछि।",
+    "noData": "{{name}} एखन धरि कोनो रीडिंग नहि पठौलक।",
+    "volts": "वोल्टेज {{ry}}, {{yb}} आ {{br}} वोल्ट अछि।",
+    "runtime": "ई आइ {{time}} चलल।"
+  },
+  "command": {
+    "startTitle": "{{name}} चालू करी?",
+    "stopTitle": "{{name}} बन्न करी?",
+    "startBody": "{{name}} अखने चालू हएत। पक्का क' लिअ जे चलायब सुरक्षित अछि।",
+    "stopBody": "{{name}} बन्न भ' जायत आ पानि अयनाइ रुकि जायत।",
+    "offlineWarn": "एहि पंपसँ जानकारी नहि आबि रहल अछि, तेँ आदेश ओकरा धरि नहि पहुँचि सकैत अछि।",
+    "step": {
+      "sent": "पठाओल गेल",
+      "delivered": "पंप धरि पहुँचल",
+      "acknowledged": "पंप पुष्टि केलक",
+      "applied": "भ' गेल"
+    },
+    "titleStart": "चालू करबाक आदेश",
+    "titleStop": "बन्न करबाक आदेश",
+    "notConfirmed": "एखन धरि पुष्टि नहि भेल। पंप जवाब नहि देलक। पंप देखू, वा किछु काल बाद फेरसँ प्रयास करू।",
+    "rejected": "पंप ई आदेश नहि मानलक।",
+    "rejectedWhy": "पंप मना केलक: {{reason}}",
+    "expired": "पंप धरि पहुँचबासँ पहिनहिं आदेशक समय खतम भ' गेल।",
+    "notSent": "आदेश पठाओल नहि जा सकल, तेँ पंपकेँ किछु नहि कहल गेल। थोड़ेक कालक बाद फेरसँ प्रयास करू।",
+    "done": "पंप ओ क' देलक।",
+    "tryAgain": "फेरसँ प्रयास करू",
+    "dismiss": "बन्न करू",
+    "offlineBlock": "अहाँ ऑफलाइन छी। पंप चलयबाक लेल इंटरनेटसँ जुड़ू।",
+    "cooldown": "अगिला आदेशसँ पहिने {{seconds}} सेकंड रुकू",
+    "cooldownShort": "{{seconds}} सेकंड रुकू"
+  },
+  "timer": {
+    "title": "चलबाक टाइमर",
+    "intro": "पंपकेँ तय समय धरि चलाउ, तखन ओ अपनहि बन्न भ' जायत।",
+    "onLabel": "कतेक काल चलत (मिनट)",
+    "offLabel": "तखन कतेक काल रुकत (मिनट)",
+    "cyclesLabel": "कतेक बेर दोहराओल जाए",
+    "cyclesHint": "0 माने चलिते रहत",
+    "range": "{{min}} सँ {{max}}",
+    "errorOn": "1 सँ 250 मिनट लिखू",
+    "errorOff": "0 सँ 250 मिनट लिखू",
+    "errorCycles": "0 सँ 999 लिखू",
+    "save": "पंपकेँ टाइमर पठाउ",
+    "confirmTitle": "{{name}} पर टाइमर लगाबी?",
+    "summaryOnce": "{{on}} मिनट चलत, तखन बन्न हएत।",
+    "summaryRepeat": "{{on}} मिनट चलत, {{off}} मिनट रुकत, {{cycles}} बेर दोहराओत।",
+    "summaryForever": "{{on}} मिनट चलत, {{off}} मिनट रुकत, चलिते रहत।",
+    "confirmYes": "हँ, पठाउ",
+    "sentUnconfirmed": "पंपकेँ पठाओल गेल, मुदा एखन धरि पुष्टि नहि भेल। पुष्टि भेला पर पंप एकरा प्रयोग करत।",
+    "current": "अहाँक पठाओल अंतिम टाइमर",
+    "none": "अहाँ एखन धरि कोनो टाइमर नहि पठौलहुँ।",
+    "remoteBlocked": "रिमोट कंट्रोल रुकल रहलापर टाइमर नहि पठाओल जा सकैत अछि।"
+  },
+  "history": {
+    "day": "आइ",
+    "week": "7 दिन",
+    "month": "30 दिन",
+    "hoursRun": "चलबाक समय",
+    "perHour": "प्रत्येक घंटामे कतेक मिनट चलल (पछिला 24 घंटा)",
+    "perDay": "प्रतिदिन चलबाक समय",
+    "empty": "एखन धरि चलबाक इतिहास नहि अछि",
+    "emptyHint": "पंप चलि क' जानकारी पठौलाक बाद पट्टी देखायत।",
+    "total": "एहि अवधिमे कुल",
+    "starts": "चालू भेल: {{count}} बेर",
+    "faultCount": "खराबी: {{count}}",
+    "export": "CSV फाइलक रूपमे पठाउ",
+    "exportFailed": "फाइल तैयार नहि भ' सकल। कृपया फेरसँ प्रयास करू।",
+    "estimated": "पंपक पठाओल जानकारीसँ अनुमान।",
+    "barDetail": "{{label}}: {{time}}",
+    "noBars": "पंप नहि चलल।"
+  },
+  "faultInfo": {
+    "code1": {
+      "cause": "एकटा फेज (Y) पंप धरि ठीकसँ नहि पहुँचि रहल अछि।",
+      "action": "पैनलमे Y-फेजक फ्यूज आ तार देखू। बेर-बेर होअय तँ डीलरकेँ बजाउ।"
+    },
+    "code2": {
+      "cause": "तीनमे सँ एकटा फेज नहि अछि, तेँ मोटर सुरक्षित रूपसँ नहि चलि सकैत अछि।",
+      "action": "फ्यूज आ बिजलीक आपूर्ति देखू। इलेक्ट्रीशियन वा डीलरकेँ बजाउ।"
+    },
+    "code3": {
+      "cause": "बिजलीक वोल्टेज बहुत बेसी अछि, मोटर जरि सकैत अछि।",
+      "action": "आपूर्ति सामान्य होएबा धरि रुकू। वोल्टेज बेसी रहय तँ फेरसँ चालू नहि करू।"
+    },
+    "code4": {
+      "cause": "तीनू फेजक तार गलत क्रममे अछि, तेँ मोटर उनटा घुमैत अछि।",
+      "action": "पंप नहि चलाउ। इलेक्ट्रीशियनसँ कोनो दू फेजक तार बदलबाउ।"
+    },
+    "code5": {
+      "cause": "पंप बिना पानिक चलि रहल अछि।",
+      "action": "पानिक स्तर आ फुट वाल्व देखू। पानि भेटलाक बादे फेरसँ चालू करू।"
+    },
+    "code6": {
+      "cause": "मोटर धरि जाइत केबल सभ फेज पर टूटल वा निकलल अछि।",
+      "action": "पैनलसँ मोटर धरिक केबल आ जोड़ देखू। डीलरकेँ बजाउ।"
+    },
+    "code7": {
+      "cause": "मोटरक केबल आंशिक टूटल अछि, वा किछु फेज पर जोड़ ढील अछि।",
+      "action": "केबलक जोड़ आ टर्मिनल देखू। डीलरकेँ बजाउ।"
+    },
+    "code8": {
+      "cause": "मोटर बेसी करंट खींचि रहल अछि, पंप जाम अछि वा आपूर्ति कमजोर अछि।",
+      "action": "पंपमे कोनो रुकावट अछि की नहि देखू। किछु काल रुकि क' फेरसँ चालू करू। बेर-बेर होअय तँ डीलरकेँ बजाउ।"
+    },
+    "code9": {
+      "cause": "तीनू फेजक वोल्टेज एक-दोसरसँ बहुत अलग अछि।",
+      "action": "आपूर्ति संतुलित होएबा धरि रुकू। जारी रहय तँ बिजली कंपनीकेँ कहू।"
+    },
+    "code10": {
+      "cause": "बिजलीक वोल्टेज एतेक कम अछि जे मोटर सुरक्षित रूपसँ नहि चलि सकैत अछि।",
+      "action": "वोल्टेज ठीक होएबा धरि रुकू, तखन चालू करू।"
+    },
+    "unknown": {
+      "cause": "पंपकेँ एहन खराबी भेटल जकर नाम ओ नहि कहि सकल।",
+      "action": "अपन डीलरकेँ बजाउ आ खराबीक कोड कहू।"
+    }
+  },
+  "support": {
+    "title": "मदति",
+    "dealer": "अहाँक डीलर",
+    "call": "{{name}} केँ फोन करू",
+    "noDealer": "अहाँक डीलरक नंबर एखन धरि सहेजल नहि अछि। कृपया पंप लगौनिहारसँ पूछू।",
+    "company": "कंपनीक मदति",
+    "loadFailed": "डीलरक जानकारी नहि भेटल।"
+  },
+  "manage": {
+    "title": "पंप सम्हारू",
+    "pumps": "अहाँक पंप",
+    "groups": "समूह",
+    "rename": "नाम बदलू",
+    "namePlaceholder": "पंपक नाम",
+    "originalName": "पंप पर दर्ज नाम: {{name}}",
+    "moveUp": "ऊपर करू",
+    "moveDown": "नीचाँ करू",
+    "group": "समूह",
+    "noGroup": "कोनो समूह नहि",
+    "newGroup": "नव समूह",
+    "groupPlaceholder": "जेना: उत्तरक खेत",
+    "createGroup": "समूह बनाउ",
+    "renameGroup": "समूहक नाम बदलू",
+    "deleteGroup": "समूह हटाउ",
+    "deleteGroupTitle": "एहि समूहकेँ हटाओल जाए?",
+    "deleteGroupBody": "एकर पंप बिना समूहक अहाँक सूचीमे रहत।",
+    "groupPumps": "पंप: {{count}}",
+    "empty": "सम्हारबाक लेल एखन अहाँक लग कोनो पंप नहि अछि।",
+    "nameEmpty": "कृपया कोनो नाम लिखू।"
+  },
+  "plan": {
+    "expiring": "अहाँक प्लान {{days}} दिनमे, {{date}} केँ खतम भ' रहल अछि। कृपया डीलरसँ नवीकरण करबाक लेल कहू।",
+    "expiresToday": "अहाँक प्लान आइ खतम भ' रहल अछि। कृपया डीलरसँ नवीकरण करबाक लेल कहू।",
+    "expired": "अहाँक प्लान {{date}} केँ खतम भ' गेल। कृपया डीलरसँ नवीकरण करबाक लेल कहू।",
+    "suspended": "एहि पंपक रिमोट कंट्रोल रोकल गेल अछि। कृपया अपन डीलरसँ संपर्क करू।"
+  },
+  "otp": {
+    "title": "Enter Verification Code",
+    "desc": "We have sent a 6-digit code to",
+    "onWhatsapp": "on WhatsApp",
+    "testOtpNotice": "Test mode - use the code below",
+    "autoFill": "Auto-fill",
+    "resendPrompt": "Didn't receive the code?",
+    "resendIn": "Resend in",
+    "resendButton": "Resend OTP",
+    "verifyButton": "Verify OTP",
+    "verifyingButton": "Verifying...",
+    "incompleteCode": "Enter all 6 digits"
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "desc": "Set a password for your account",
+    "passwordReq": "Minimum 8 characters",
+    "confirmLabel": "Confirm Password",
+    "submitButton": "Create Account",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
+  },
+  "registered": {
+    "title": "Registration Successful!",
+    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "phoneLabel": "Registered mobile number",
+    "continueButton": "Continue to App"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "desc": "Enter your mobile number to receive a reset code on WhatsApp"
+  },
+  "resetPassword": {
+    "title": "Create New Password",
+    "desc": "Set a new password for your account",
+    "newPasswordLabel": "New Password",
+    "submitButton": "Update Password"
+  },
+  "passwordUpdated": {
+    "title": "Password Updated!",
+    "desc": "Your password has been updated successfully. Please sign in with your new password.",
+    "goToLogin": "Go to Login"
+  }
+}

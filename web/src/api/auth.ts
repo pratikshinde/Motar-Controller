@@ -1,14 +1,21 @@
-import { apiFetch, apiJson, persistTokens, clearSession, getRefreshToken, getAuthToken } from './client';
-import { isMfaRequired } from '../types';
+import { apiFetch, apiJson, persistTokens, clearSession, getRefreshToken, getAuthToken, messageFrom, toAuthResult } from './client';
 import type { LoginOutcome } from '../types';
+
+/** Turns the API's login body into what the portal works with, storing the session unless a second step is needed. */
+function outcomeFrom(body: any): LoginOutcome {
+  if (body.mfa_required) return { mfa_required: true, mfa_token: body.temp_token, expiresIn: 300 };
+  const result = toAuthResult(body);
+  persistTokens(result);
+  return result;
+}
 
 export async function sendSmsOtp(phoneNumber: string) {
   const res = await apiFetch('/auth/send-otp', {
     method: 'POST',
     body: JSON.stringify({ phone_number: phoneNumber })
   });
-  const body = await res.json();
-  if (!res.ok) throw new Error(body.error || 'OTP request failed');
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'OTP request failed'));
   return body as { message: string; phone_number: string; dev_otp?: string };
 }
 
@@ -17,10 +24,9 @@ export async function verifyOtp(phoneNumber: string, otpCode: string): Promise<L
     method: 'POST',
     body: JSON.stringify({ phone_number: phoneNumber, otp_code: otpCode })
   });
-  const body = (await res.json()) as LoginOutcome;
-  if (!res.ok) throw new Error((body as any).error || 'Authentication failed');
-  if (!isMfaRequired(body)) persistTokens(body);
-  return body;
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'Authentication failed'));
+  return outcomeFrom(body);
 }
 
 export async function loginWithPassword(phoneNumber: string, password: string): Promise<LoginOutcome> {
@@ -28,10 +34,9 @@ export async function loginWithPassword(phoneNumber: string, password: string): 
     method: 'POST',
     body: JSON.stringify({ phone_number: phoneNumber, password })
   });
-  const body = (await res.json()) as LoginOutcome;
-  if (!res.ok) throw new Error((body as any).error || 'Authentication failed');
-  if (!isMfaRequired(body)) persistTokens(body);
-  return body;
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'Authentication failed'));
+  return outcomeFrom(body);
 }
 
 export async function logout() {
@@ -39,7 +44,7 @@ export async function logout() {
     if (getAuthToken()) {
       await apiFetch('/auth/logout', {
         method: 'POST',
-        body: JSON.stringify({ refreshToken: getRefreshToken() })
+        body: JSON.stringify({ refresh_token: getRefreshToken() })
       });
     }
   } catch {

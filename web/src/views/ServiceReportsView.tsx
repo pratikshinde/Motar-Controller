@@ -24,7 +24,20 @@ export const ServiceReportsView: React.FC = () => {
   const load = useCallback(async () => {
     try {
       const data = await fetchServiceReports(days);
-      setRows(data.reports);
+      // Backend returns a plain array: [{pump_id, pump_name, fault_count, last_fault_at, window_days}]
+      const raw: any[] = Array.isArray(data) ? data : (data as any).reports || [];
+      setRows(
+        raw.map((r: any) => ({
+          id: r.pump_id ?? r.id,
+          name: r.pump_name ?? r.name ?? r.pump_id,
+          fault_count: r.fault_count ?? 0,
+          last_fault_at: r.last_fault_at ?? null,
+          // runtime / MTBF / uptime need DailySummary data — not built yet
+          runtime_hours: null,
+          mtbf_hours: null,
+          uptime_pct: null,
+        } as any))
+      );
     } catch (err: any) {
       showToast(err.message || 'Could not load service reports', true);
     } finally {
@@ -38,33 +51,34 @@ export const ServiceReportsView: React.FC = () => {
     load();
   }, [load]);
 
-  const columns: GridColDef<ServiceReportRow>[] = useMemo(
+  const columns: GridColDef<any>[] = useMemo(
     () => [
-      { field: 'name', headerName: 'Device', flex: 1.2 },
-      { field: 'id', headerName: 'Device ID', flex: 1, renderCell: p => <span style={{ fontFamily: monoFont }}>{p.value}</span> },
-      { field: 'fault_count', headerName: 'Faults', flex: 0.6, type: 'number' },
+      { field: 'name', headerName: 'Device', flex: 1.5, minWidth: 160 },
+      { field: 'id', headerName: 'Device ID', flex: 1.2, minWidth: 150, renderCell: p => <span style={{ fontFamily: monoFont }}>{p.value}</span> },
+      { field: 'fault_count', headerName: 'Faults', flex: 0.6, minWidth: 90, type: 'number' },
+      {
+        field: 'last_fault_at',
+        headerName: 'Last Fault',
+        flex: 1,
+        minWidth: 170,
+        valueGetter: (_v: any, row: any) => row.last_fault_at ? new Date(row.last_fault_at).toLocaleString() : '—'
+      },
       {
         field: 'runtime_hours',
         headerName: 'Runtime (hrs)',
         flex: 0.8,
+        minWidth: 120,
         type: 'number',
-        valueGetter: (_v, row) => Number(row.runtime_hours)
+        renderCell: (p: any) => <span style={{ opacity: 0.5 }}>—</span>
       },
       {
         field: 'mtbf_hours',
         headerName: 'MTBF (hrs)',
         flex: 0.8,
+        minWidth: 120,
         type: 'number',
-        valueGetter: (_v, row) => (row.mtbf_hours === null ? null : Number(row.mtbf_hours)),
-        renderCell: p => (p.value === null ? <span style={{ opacity: 0.6 }}>insufficient data</span> : p.value)
+        renderCell: (p: any) => <span style={{ opacity: 0.5 }}>—</span>
       },
-      {
-        field: 'uptime_pct',
-        headerName: 'Uptime %',
-        flex: 0.7,
-        type: 'number',
-        valueGetter: (_v, row) => Number(row.uptime_pct)
-      }
     ],
     []
   );

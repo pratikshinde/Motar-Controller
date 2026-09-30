@@ -73,8 +73,9 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
           name: name.trim(),
           supply_type: '3-phase',
           hp_rating: 15.0,
-          latitude: parseFloat(lat) || 19.9975,
-          longitude: parseFloat(lng) || 73.7898
+          // Left blank stays unknown: no invented position.
+          latitude: Number.isFinite(parseFloat(lat)) ? parseFloat(lat) : undefined,
+          longitude: Number.isFinite(parseFloat(lng)) ? parseFloat(lng) : undefined
         });
         showToast(`Device ${name} created. Device key (save now, shown once): ${result.device_key}`);
       }

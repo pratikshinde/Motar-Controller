@@ -53,88 +53,88 @@ export interface M3ColorRoles {
 // Light scheme — derived from seed #0B5FA5 (primary) / #386A20 (secondary,
 // agri green) / #7A5900 (tertiary, amber for warnings/fault accents).
 export const lightRoles: M3ColorRoles = {
-  primary: '#0B5FA5',
+  primary: '#2563EB', // Vibrant Blue
   onPrimary: '#FFFFFF',
-  primaryContainer: '#D3E4FF',
-  onPrimaryContainer: '#001C38',
+  primaryContainer: '#DBEAFE',
+  onPrimaryContainer: '#1E3A8A',
 
-  secondary: '#3C6A2C',
+  secondary: '#059669', // Vibrant Emerald
   onSecondary: '#FFFFFF',
-  secondaryContainer: '#BCF0A2',
-  onSecondaryContainer: '#062100',
+  secondaryContainer: '#D1FAE5',
+  onSecondaryContainer: '#064E3B',
 
-  tertiary: '#8C5000',
+  tertiary: '#D97706', // Vibrant Amber
   onTertiary: '#FFFFFF',
-  tertiaryContainer: '#FFDDB6',
-  onTertiaryContainer: '#2C1600',
+  tertiaryContainer: '#FEF3C7',
+  onTertiaryContainer: '#78350F',
 
-  error: '#BA1A1A',
+  error: '#DC2626',
   onError: '#FFFFFF',
-  errorContainer: '#FFDAD6',
-  onErrorContainer: '#410002',
+  errorContainer: '#FEE2E2',
+  onErrorContainer: '#7F1D1D',
 
-  background: '#F8F9FF',
-  onBackground: '#191C20',
+  background: '#F8FAFC', // Slate 50
+  onBackground: '#0F172A', // Slate 900
 
-  surface: '#F8F9FF',
-  onSurface: '#191C20',
-  surfaceVariant: '#DFE2EB',
-  onSurfaceVariant: '#43474E',
+  surface: '#FFFFFF',
+  onSurface: '#0F172A',
+  surfaceVariant: '#E2E8F0',
+  onSurfaceVariant: '#475569',
   surfaceContainerLowest: '#FFFFFF',
-  surfaceContainerLow: '#F2F3FA',
-  surfaceContainer: '#ECEDF4',
-  surfaceContainerHigh: '#E6E8EF',
-  surfaceContainerHighest: '#E1E2E9',
+  surfaceContainerLow: '#F8FAFC',
+  surfaceContainer: '#F1F5F9',
+  surfaceContainerHigh: '#E2E8F0',
+  surfaceContainerHighest: '#CBD5E1',
 
-  outline: '#73777F',
-  outlineVariant: '#C3C6CF',
-  inverseSurface: '#2E3135',
-  inverseOnSurface: '#EFF0F7',
-  inversePrimary: '#A5C8FF',
+  outline: '#94A3B8',
+  outlineVariant: '#CBD5E1',
+  inverseSurface: '#1E293B',
+  inverseOnSurface: '#F8FAFC',
+  inversePrimary: '#93C5FD',
   scrim: '#000000',
   shadow: '#000000'
 };
 
 // Dark scheme — same seed, tonal roles inverted per M3 dark-theme rules.
 export const darkRoles: M3ColorRoles = {
-  primary: '#A5C8FF',
-  onPrimary: '#00315E',
-  primaryContainer: '#004884',
-  onPrimaryContainer: '#D3E4FF',
+  primary: '#3B82F6', // Electric Blue
+  onPrimary: '#FFFFFF',
+  primaryContainer: '#1E3A8A',
+  onPrimaryContainer: '#DBEAFE',
 
-  secondary: '#A1D386',
-  onSecondary: '#0F3900',
-  secondaryContainer: '#245113',
-  onSecondaryContainer: '#BCF0A2',
+  secondary: '#10B981', // Neon Emerald
+  onSecondary: '#FFFFFF',
+  secondaryContainer: '#064E3B',
+  onSecondaryContainer: '#D1FAE5',
 
-  tertiary: '#FFB876',
-  onTertiary: '#4A2800',
-  tertiaryContainer: '#6A3B00',
-  onTertiaryContainer: '#FFDDB6',
+  tertiary: '#F59E0B', // Glowing Amber
+  onTertiary: '#FFFFFF',
+  tertiaryContainer: '#78350F',
+  onTertiaryContainer: '#FEF3C7',
 
-  error: '#FFB4AB',
-  onError: '#690005',
-  errorContainer: '#93000A',
-  onErrorContainer: '#FFDAD6',
+  error: '#EF4444',
+  onError: '#FFFFFF',
+  errorContainer: '#7F1D1D',
+  onErrorContainer: '#FEE2E2',
 
-  background: '#111318',
-  onBackground: '#E2E2E9',
+  background: '#09090B', // Deepest Zinc
+  onBackground: '#FAFAFA',
 
-  surface: '#111318',
-  onSurface: '#E2E2E9',
-  surfaceVariant: '#43474E',
-  onSurfaceVariant: '#C3C6CF',
-  surfaceContainerLowest: '#0B0E13',
-  surfaceContainerLow: '#191C20',
-  surfaceContainer: '#1D2024',
-  surfaceContainerHigh: '#282A2F',
-  surfaceContainerHighest: '#33353A',
+  surface: '#0F172A', // Deep Slate
+  onSurface: '#F8FAFC',
+  surfaceVariant: '#334155',
+  onSurfaceVariant: '#CBD5E1',
+  surfaceContainerLowest: '#020617',
+  surfaceContainerLow: '#0F172A',
+  surfaceContainer: '#1E293B',
+  surfaceContainerHigh: '#334155',
+  surfaceContainerHighest: '#475569',
 
-  outline: '#8D9199',
-  outlineVariant: '#43474E',
-  inverseSurface: '#E2E2E9',
-  inverseOnSurface: '#2E3135',
-  inversePrimary: '#0B5FA5',
+  outline: '#64748B',
+  outlineVariant: '#334155',
+  inverseSurface: '#F8FAFC',
+  inverseOnSurface: '#0F172A',
+  inversePrimary: '#1E3A8A',
   scrim: '#000000',
   shadow: '#000000'
 };

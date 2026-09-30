@@ -184,10 +184,17 @@ export const AppShell: React.FC = () => {
           pb: isCompact ? 8 : 0,
           height: '100vh',
           overflow: 'auto',
-          bgcolor: 'background.default'
+          bgcolor: 'transparent' // Allow global gradient to show through
         }}
       >
-        <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 }, height: isCompact ? 'calc(100% - 64px)' : '100%', boxSizing: 'border-box' }}>
+        <Box sx={{ 
+          p: { xs: 2, sm: 3, md: 4, lg: 6 }, 
+          height: isCompact ? 'calc(100% - 64px)' : '100%', 
+          boxSizing: 'border-box',
+          maxWidth: 1400,
+          mx: 'auto',
+          animation: 'fadeIn 0.5s ease-out'
+        }}>
           <Outlet />
         </Box>
       </Box>

@@ -16,7 +16,7 @@ import { monoFont } from '../theme';
 // but "mandatory" should behave as mandatory rather than as a dismissable
 // suggestion.
 export const MfaSetupDialog: React.FC = () => {
-  const { mfaSetupRequired, clearMfaSetupRequired } = useAuth();
+  const { mfaSetupRequired, clearMfaSetupRequired, user, setUser } = useAuth();
   const { showToast } = useToast();
 
   const [secret, setSecret] = useState('');
@@ -44,9 +44,12 @@ export const MfaSetupDialog: React.FC = () => {
     setError('');
     setBusy(true);
     try {
-      await enableMfa(code.trim());
+      await enableMfa(secret, code.trim());
       showToast('MFA enabled — your account is now protected with a second factor');
+      if (user) setUser({ ...user, totp_enabled: true });
       clearMfaSetupRequired();
+      // Everything behind the dialog was refused while TOTP was missing: load it again now that it is on.
+      window.location.reload();
     } catch (err: any) {
       setError(err.message || 'Incorrect code');
     } finally {

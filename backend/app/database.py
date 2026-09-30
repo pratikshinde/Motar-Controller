@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Generator
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
@@ -9,14 +10,50 @@ db_url = settings.get_database_url()
 engine = create_engine(
     db_url,
     connect_args={
-        "options": f"-csearch_path={settings.PGSCHEMA},public"
+        # timezone=UTC: the code stores naive UTC datetimes (datetime.utcnow()); with any other session
+        # timezone PostgreSQL would read them as local time and every timestamp would be off by the offset.
+        "options": f"-csearch_path={settings.PGSCHEMA},public -cstatement_timeout=10000 -ctimezone=UTC"
     },
     pool_pre_ping=True,
-    pool_size=10,
+    pool_size=50,
     max_overflow=20,
+    pool_timeout=30,
+    pool_recycle=1800,
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+class PinnedSession(Session):
+    """A Session that keeps ONE pooled connection for its whole lifetime.
+
+    Row-level security keys off session variables set on the connection (app.user_id, app.bypass_rls ...).
+    A plain Session gives its connection back to the pool on every commit() and takes whichever is free
+    next, so a read after a commit (refresh(), lazy attributes) could run on a connection that carries no
+    actor context and silently find nothing, or worse, on one that still carries someone else's.
+    """
+
+    def __init__(self, **kwargs):
+        self._owned_connection = None
+        if kwargs.get("bind") is None:
+            self._owned_connection = engine.connect()
+            kwargs["bind"] = self._owned_connection
+        super().__init__(**kwargs)
+
+    def close(self):
+        super().close()
+        conn, self._owned_connection = self._owned_connection, None
+        if conn is not None:
+            try:
+                # Whatever actor context this session set (a user, or the bypass) must not travel with the
+                # connection back into the pool, whoever forgot to clear it.
+                conn.execute(text("RESET ALL"))
+                conn.commit()
+            except Exception:
+                conn.invalidate()      # cannot vouch for its state: never hand it to the next request
+            conn.close()
+
+
+SessionLocal = sessionmaker(class_=PinnedSession, autocommit=False, autoflush=False)
 
 Base = declarative_base()
 
@@ -25,39 +62,40 @@ def get_db() -> Generator[Session, None, None]:
     try:
         yield db
     finally:
+        try:
+            # Clear the actor context for good (committed), so it cannot leak to the next request.
+            db.rollback()
+            db.execute(text("RESET ALL;"))
+            db.commit()
+        except Exception:
+            pass
         db.close()
 
-def setup_timescaledb(db_session: Session) -> bool:
-    """
-    Applies schema migrations and attempts to enable TimescaleDB hypertable for telemetry_history.
-    """
-    # 1. Update commands table constraint and fault_logs schema if present
-    try:
-        db_session.execute(text("ALTER TABLE agripump.commands ALTER COLUMN action TYPE VARCHAR(30);"))
-        db_session.execute(text("ALTER TABLE agripump.commands DROP CONSTRAINT IF EXISTS commands_action_check;"))
-        db_session.execute(text("ALTER TABLE agripump.commands ADD CONSTRAINT commands_action_check CHECK (action IN ('START', 'STOP', 'SET_TIMER', 'UPDATE_CONFIG'));"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS fault_description TEXT;"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS v_ry NUMERIC(6,2);"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS v_yb NUMERIC(6,2);"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS v_br NUMERIC(6,2);"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS i_r NUMERIC(6,2);"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS i_y NUMERIC(6,2);"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS i_b NUMERIC(6,2);"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS ack_by_user_id UUID;"))
-        db_session.execute(text("ALTER TABLE agripump.fault_logs ADD COLUMN IF NOT EXISTS ack_at TIMESTAMP WITH TIME ZONE;"))
-        db_session.execute(text("ALTER TABLE agripump.config_templates ADD COLUMN IF NOT EXISTS hp_rating NUMERIC(4,1);"))
-        db_session.execute(text("ALTER TABLE agripump.config_templates ADD COLUMN IF NOT EXISTS supply_type VARCHAR(20) DEFAULT '3-phase';"))
-        db_session.execute(text("ALTER TABLE agripump.config_templates ADD COLUMN IF NOT EXISTS config_json JSONB DEFAULT '{}';"))
-        db_session.execute(text("ALTER TABLE agripump.config_templates ADD COLUMN IF NOT EXISTS description TEXT;"))
-        db_session.execute(text("ALTER TABLE agripump.config_templates ADD COLUMN IF NOT EXISTS desired_json JSONB DEFAULT '{}';"))
-        db_session.execute(text("ALTER TABLE agripump.config_templates ADD COLUMN IF NOT EXISTS owner_user_id UUID;"))
-        db_session.execute(text("ALTER TABLE agripump.config_templates ADD COLUMN IF NOT EXISTS owner_hierarchy_path TEXT;"))
-        db_session.execute(text("ALTER TABLE agripump.config_templates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;"))
-        db_session.commit()
-    except Exception as e:
-        db_session.rollback()
+@contextmanager
+def system_session() -> Generator[Session, None, None]:
+    """A session for background work that is not on behalf of any user (sweeps, dispatch, ingestion).
 
-    # 2. Check if timescaledb is an available extension
+    Row-level security is bypassed for it, and the bypass is cleared before the connection goes back to the pool.
+    """
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT set_config('app.bypass_rls', 'on', false)"))
+        yield db
+    finally:
+        try:
+            db.rollback()
+            db.execute(text("RESET ALL;"))
+            db.commit()
+        except Exception:
+            pass
+        db.close()
+
+
+def check_timescaledb_extension(db_session: Session) -> bool:
+    """
+    Checks if timescaledb extension is available and enabled.
+    DDL migrations are managed exclusively by Alembic, never at application startup.
+    """
     try:
         res = db_session.execute(text("SELECT name FROM pg_available_extensions WHERE name = 'timescaledb'")).scalar()
         if not res:

@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { fetchUserTree, ROLE_NAMES } from '../api/users';
 import { bulkAllocatePumps, type BulkAllocateResult } from '../api/pumps';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { monoFont } from '../theme';
 import type { UserTreeNode } from '../types';
@@ -13,6 +14,7 @@ import type { UserTreeNode } from '../types';
 interface FlatAccount {
   id: string;
   label: string;
+  role: string;
 }
 
 function flattenTree(nodes: UserTreeNode[]): FlatAccount[] {
@@ -20,7 +22,7 @@ function flattenTree(nodes: UserTreeNode[]): FlatAccount[] {
   function walk(list: UserTreeNode[]) {
     for (const node of list) {
       for (const member of node.members) {
-        out.push({ id: member.id, label: `${member.full_name} — ${ROLE_NAMES[member.role]} — ${member.phone_number}` });
+        out.push({ id: member.id, role: member.role, label: `${member.full_name} — ${ROLE_NAMES[member.role]} — ${member.phone_number}` });
       }
       if (node.children?.length) walk(node.children);
     }
@@ -42,8 +44,10 @@ interface Props {
 // everyone) — the backend enforces "child nodes only" for non-superadmin
 // callers regardless of what's offered here.
 export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pumpIds }) => {
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [accounts, setAccounts] = useState<FlatAccount[]>([]);
+  const [accountsLoaded, setAccountsLoaded] = useState(false);
   const [targetId, setTargetId] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -58,10 +62,13 @@ export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pu
       setTargetId('');
       setNote('');
       setResult(null);
+      setAccountsLoaded(false);
       setOpenedWithCount(pumpIds.length);
       fetchUserTree()
-        .then(data => setAccounts(flattenTree(data.tree)))
-        .catch(err => showToast(err.message || 'Could not load accounts', true));
+        // The server refuses the caller itself and the platform owner as a target, so do not offer them.
+        .then(data => setAccounts(flattenTree(data.tree).filter(a => a.id !== user?.id && a.role !== 'superadmin')))
+        .catch(err => showToast(err.message || 'Could not load accounts', true))
+        .finally(() => setAccountsLoaded(true));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -102,6 +109,12 @@ export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pu
             Reassigns ownership and hierarchy scope for every selected device to the target account. Recorded in the
             allocation history for each device.
           </Typography>
+          {accountsLoaded && accounts.length === 0 && (
+            <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
+              There are no accounts below yours to allocate to yet. Add a dealer or customer account first (Hierarchy),
+              or send an invite link.
+            </Typography>
+          )}
           <Stack spacing={2}>
             <FormControl fullWidth required>
               <InputLabel id="allocate-target-label">Target account</InputLabel>

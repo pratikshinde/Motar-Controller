@@ -1,0 +1,489 @@
+{
+  "brand": {
+    "line1": "অজন্তা পাম্প",
+    "line2": "কণ্ট্ৰোলাৰ"
+  },
+  "common": {
+    "retry": "আকৌ চেষ্টা কৰক",
+    "refresh": "ৰিফ্ৰেচ কৰক",
+    "back": "উভতি যাওক",
+    "cancel": "বাতিল কৰক",
+    "continue": "আগবাঢ়ক",
+    "checkAgain": "আকৌ চাওক",
+    "serverUnreachableTitle": "ছাৰ্ভাৰৰ লগত যোগাযোগ হোৱা নাই",
+    "save": "সংৰক্ষণ কৰক",
+    "loading": "লোড হৈ আছে…",
+    "more": "বঢ়াওক",
+    "less": "কমাওক"
+  },
+  "splash": {
+    "tagline": "আপোনাৰ পাম্প যিকোনো ঠাইৰ পৰা চলাওক",
+    "starting": "আৰম্ভ হৈ আছে…",
+    "footer": "স্মাৰ্ট 3-ফেজ পাম্প সুৰক্ষা"
+  },
+  "language": {
+    "title": "আপোনাৰ ভাষা বাছক",
+    "continue": "আগবাঢ়ক",
+    "listenAll": "ভাষাবোৰ শুনক",
+    "stopListening": "বন্ধ কৰক",
+    "back": "ছেটিংলৈ উভতি যাওক"
+  },
+  "login": {
+    "tabLogin": "লগইন",
+    "tabRegister": "নতুন একাউণ্ট",
+    "welcomeBack": "পুনৰ স্বাগতম",
+    "createTitle": "আপোনাৰ একাউণ্ট সৃষ্টি কৰক",
+    "nameLabel": "আপোনাৰ নাম",
+    "namePlaceholder": "সম্পূৰ্ণ নাম",
+    "mobileLabel": "মোবাইল নম্বৰ",
+    "mobilePlaceholder": "10 অংকৰ মোবাইল নম্বৰ",
+    "passwordLabel": "পাছৱৰ্ড",
+    "passwordPlaceholder": "আপোনাৰ পাছৱৰ্ড",
+    "choosePassword": "এটা পাছৱৰ্ড বাছক",
+    "choosePasswordPlaceholder": "কমেও 6টা আখৰ",
+    "loginButton": "লগইন কৰক",
+    "createButton": "একাউণ্ট সৃষ্টি কৰক",
+    "newHere": "নতুন নেকি?",
+    "createLink": "একাউণ্ট সৃষ্টি কৰক",
+    "haveAccount": "আগতেই একাউণ্ট আছে নেকি?",
+    "loginLink": "লগইন কৰক",
+    "showPassword": "পাছৱৰ্ড দেখুৱাওক",
+    "hidePassword": "পাছৱৰ্ড লুকুৱাওক",
+    "validationTitle": "অনুগ্ৰহ কৰি পৰীক্ষা কৰক",
+    "needName": "অনুগ্ৰহ কৰি আপোনাৰ সম্পূৰ্ণ নাম লিখক",
+    "needPhone": "অনুগ্ৰহ কৰি আপোনাৰ মোবাইল নম্বৰ লিখক",
+    "needPassword": "অনুগ্ৰহ কৰি আপোনাৰ পাছৱৰ্ড লিখক",
+    "passwordShort": "পাছৱৰ্ড কমেও 6টা আখৰৰ হ'ব লাগিব",
+    "loginFailedTitle": "লগইন হোৱা নাই",
+    "notFoundTitle": "একাউণ্ট পোৱা নগ'ল",
+    "notFoundMessage": "এই মোবাইল নম্বৰ এতিয়াও পঞ্জীয়ন কৰা হোৱা নাই। আপুনি নতুন একাউণ্ট সৃষ্টি কৰিব বিচাৰেনে?",
+    "registerFailedTitle": "একাউণ্ট সৃষ্টি কৰিব পৰা নগ'ল",
+    "createdTitle": "একাউণ্ট সৃষ্টি হ'ল",
+    "createdMessage": "স্বাগতম {{name}}। আপোনাৰ একাউণ্ট সাজু। আগবাঢ়িবলৈ লগইন কৰক।",
+    "createdStatus": "একাউণ্ট সৃষ্টি হ'ল। আপোনাৰ মোবাইল নম্বৰ আৰু পাছৱৰ্ডেৰে লগইন কৰক।",
+    "welcomeBackDesc": "Login to manage your pump remotely",
+    "forgotPassword": "Forgot Password?",
+    "createDesc": "Register using your WhatsApp number",
+    "sendOtpButton": "Send OTP on WhatsApp"
+  },
+  "nav": {
+    "pumps": "মোৰ পাম্প",
+    "alerts": "সতৰ্কবাৰ্তা",
+    "settings": "ছেটিংছ"
+  },
+  "pumps": {
+    "title": "মোৰ পাম্প",
+    "count_one": "{{count}}টা পাম্প",
+    "count_other": "{{count}}টা পাম্প",
+    "loading": "আপোনাৰ পাম্প লোড হৈ আছে…",
+    "emptyTitle": "এতিয়াও কোনো পাম্প নাই",
+    "emptyMessage": "আপোনাৰ মোবাইল নম্বৰত এতিয়াও কোনো পাম্প সংযুক্ত হোৱা নাই। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰক পাম্প যোগ কৰিবলৈ কওক।",
+    "hp": "{{hp}} এইচপি",
+    "openPump": "{{name}}, {{status}}। পাম্প খোলক",
+    "status": {
+      "running": "চলি আছে",
+      "stopped": "বন্ধ",
+      "fault": "ত্ৰুটি",
+      "offline": "অফলাইন",
+      "online": "অনলাইন",
+      "unknown": "অজ্ঞাত"
+    },
+    "ungrouped": "আন পাম্প",
+    "lastSeen": "শেষ খবৰ {{ago}}",
+    "noData": "এতিয়াও কোনো তথ্য নাই",
+    "manage": "পাম্প চম্ভালক",
+    "ranToday": "আজি {{time}} চলিল"
+  },
+  "alerts": {
+    "title": "সতৰ্কবাৰ্তা",
+    "loading": "সতৰ্কবাৰ্তা পৰীক্ষা কৰি আছে…",
+    "emptyTitle": "সকলো ঠিকেই আছে",
+    "emptyMessage": "এতিয়া আপোনাৰ পাম্পত কোনো সমস্যা নাই।",
+    "serious": "গুৰুতৰ",
+    "warning": "সতৰ্কবাণী",
+    "info": "তথ্য",
+    "needsAttention": "মনোযোগ দিয়ক",
+    "resolved": "ঠিক হ'ল",
+    "defaultTitle": "পাম্প সতৰ্কবাৰ্তা",
+    "tabActive": "চলি থকা",
+    "tabFixed": "ঠিক হোৱা",
+    "ack": "মই দেখিলোঁ",
+    "acked": "দেখা হ'ল",
+    "resolve": "ঠিক হ'ল বুলি চিহ্নিত কৰক",
+    "resolveTitle": "এই সতৰ্কবাৰ্তা ঠিক হ'ল বুলি চিহ্নিত কৰিবনে?",
+    "resolveBody": "পাম্পৰ সমস্যা আঁতৰি যোৱাৰ পিছতহে এইটো কৰক।",
+    "resolveYes": "হয়, ঠিক হ'ল",
+    "openPump": "পাম্প খোলক",
+    "occurrences": "{{count}} বাৰ হৈছে",
+    "last": "শেষবাৰ: {{when}}",
+    "emptyFixed": "সম্প্ৰতি একো ঠিক হোৱা নাই"
+  },
+  "settings": {
+    "title": "ছেটিংছ",
+    "language": "ভাষা",
+    "languageHint": "এপ, সতৰ্কবাৰ্তা আৰু ভইচ উত্তৰৰ ভাষা",
+    "account": "একাউণ্ট",
+    "logout": "লগআউট",
+    "logoutTitle": "লগআউট",
+    "logoutMessage": "আপুনি লগআউট কৰিব বিচাৰেনে?",
+    "version": "সংস্কৰণ {{version}}",
+    "profile": "প্ৰফাইল",
+    "name": "আপোনাৰ নাম",
+    "nameSaved": "নাম সংৰক্ষণ হ'ল",
+    "mobile": "মোবাইল নম্বৰ",
+    "managePumps": "পাম্প চম্ভালক",
+    "managePumpsHint": "পাম্পৰ নাম সলনি কৰক, ক্ৰম ঠিক কৰক আৰু দল বনাওক",
+    "sessions": "লগইন থকা ফোন",
+    "thisDevice": "এই ফোন",
+    "lastUsed": "শেষ ব্যৱহাৰ {{when}}",
+    "signOutDevice": "লগআউট কৰক",
+    "signOutDeviceTitle": "সেই ফোনটো লগআউট কৰিবনে?",
+    "signOutDeviceBody": "আকৌ লগইন কৰিবলৈ ইয়াক আপোনাৰ পাছৱৰ্ড লাগিব।",
+    "noOtherSessions": "আন কোনো ফোনত লগইন নাই।",
+    "data": "আপোনাৰ তথ্য",
+    "export": "মোৰ তথ্য ডাউনলোড কৰক",
+    "exportHint": "আপোনাৰ একাউণ্ট, পাম্প আৰু সতৰ্কবাৰ্তাৰ এটা প্ৰতিলিপি।",
+    "exportFailed": "আপোনাৰ তথ্য সাজু কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক।",
+    "delete": "মোৰ তথ্য মচি পেলাওক",
+    "deleteHint": "আমাক আপোনাৰ একাউণ্ট মচি পেলাবলৈ কওক। একো মচাৰ আগতে আমি আপোনাৰ সৈতে কথা পাতিম।",
+    "deleteTitle": "তথ্য মচাৰ অনুৰোধ পঠিয়াবনে?",
+    "deleteBody": "আপোনাৰ অনুৰোধ আমাৰ দলৰ ওচৰলৈ যাব। আপোনাৰ সৈতে কথা নপতাকৈ একো মচা নহয়।",
+    "deleteConfirm": "অনুৰোধ পঠিয়াওক",
+    "deletePending": "{{date}} তাৰিখে তথ্য মচাৰ অনুৰোধ কৰা হৈছে। আমি আপোনাৰ সৈতে যোগাযোগ কৰিম।"
+  },
+  "dashboard": {
+    "cantReachTitle": "পাম্পৰ সৈতে যোগাযোগ হোৱা নাই",
+    "powerOn": "পাম্প চালু",
+    "powerOff": "পাম্প বন্ধ",
+    "running": "চলি আছে",
+    "stopped": "বন্ধ হৈ আছে",
+    "signal": "চিগনেল",
+    "cardPower": "বিদ্যুৎ যোগান (ভল্টেজ)",
+    "cardLoad": "মটৰৰ লোড",
+    "cardRuntime": "চলা সময়",
+    "cardHealth": "পাম্পৰ অৱস্থা",
+    "volts": "ভল্ট",
+    "powerOk": "বিদ্যুৎ ঠিক",
+    "noPower": "বিদ্যুৎ নাই",
+    "rotationOk": "ঘূৰণ ঠিক",
+    "wrongRotation": "ঘূৰণ ভুল",
+    "offNoLoad": "পাম্প বন্ধ — কোনো লোড নাই",
+    "totalRun": "মুঠ চলা সময়",
+    "noFaults": "কোনো ত্ৰুটি নাই — পাম্প ঠিকেই আছে",
+    "faultBadge": "বন্ধ হ'ল",
+    "no": "নহয়, বাতিল কৰক",
+    "yesStart": "হয়, চালু কৰক",
+    "yesStop": "হয়, বন্ধ কৰক",
+    "ampere": "এম্প",
+    "system": "SYSTEM",
+    "cardVoltages": "LINE VOLTAGES",
+    "cardCurrents": "PHASE CURRENTS",
+    "cardRuntime2": "RUN TIME",
+    "cardFaults": "PUMP FAULTS",
+    "quickActions": "QUICK ACTIONS",
+    "startPump": "Start Pump",
+    "stopPump": "Stop Pump",
+    "viewTimer": "Timer",
+    "viewHistory": "History",
+    "totalRunTime": "TOTAL RUN TIME",
+    "lastCycleRunTime": "TODAY'S RUN TIME",
+    "hoursMinutes": "HOURS : MINUTES"
+  },
+  "faults": {
+    "code1": "Y-ফেজ ত্ৰুটি",
+    "code2": "ফেজ নাই (ছিংগল ফেজিং)",
+    "code3": "ভল্টেজ বেছি",
+    "code4": "ফেজৰ ক্ৰম ভুল",
+    "code5": "ড্ৰাই ৰান (পানী নাই)",
+    "code6": "কেবল খোলা (সকলো ফেজ)",
+    "code7": "কেবল আংশিকভাৱে খোলা",
+    "code8": "মটৰ অভাৰলোড",
+    "code9": "ভল্টেজ অসমতা",
+    "code10": "ভল্টেজ কম",
+    "unknown": "ত্ৰুটি (কোড {{code}})",
+    "title": "ত্ৰুটি",
+    "current": "এতিয়াৰ ত্ৰুটি",
+    "cause": "কিয় এনেকুৱা হয়",
+    "action": "কি কৰিব",
+    "history": "আগৰ ত্ৰুটি",
+    "historyEmpty": "এই পাম্পৰ কোনো ত্ৰুটি লিপিবদ্ধ হোৱা নাই।",
+    "ack": "মই দেখিলোঁ",
+    "acked": "দেখা হ'ল",
+    "fixed": "ঠিক হ'ল",
+    "open": "খোলা",
+    "resetTitle": "ত্ৰুটিৰ পিছত আকৌ চালু কৰা",
+    "resetIntro": "ত্ৰুটি পাম্পৰ পেনেলত আঁতৰাব লাগে, এপত নহয়।",
+    "resetStep1": "প্ৰথমে ত্ৰুটিৰ কাৰণটো ঠিক কৰক।",
+    "resetStep2": "পেনেলৰ RESET বুটামটো টিপক।",
+    "resetStep3": "তাৰ পিছত এপৰ পৰা পাম্প চালু কৰক।",
+    "panelLabel": "পাম্প পেনেল",
+    "resetButton": "RESET",
+    "occurred": "আৰম্ভ হ'ল {{when}}",
+    "seenAt": "দেখা হ'ল {{when}}"
+  },
+  "errors": {
+    "network": "সংযোগ হোৱা নাই। অনুগ্ৰহ কৰি ইণ্টাৰনেট পৰীক্ষা কৰি আকৌ চেষ্টা কৰক।",
+    "server": "আমাৰফালে কিবা ভুল হ'ল। অনুগ্ৰহ কৰি অলপ পিছত আকৌ চেষ্টা কৰক।",
+    "tooMany": "বহুবাৰ চেষ্টা কৰা হ'ল। অনুগ্ৰহ কৰি অলপ অপেক্ষা কৰি আকৌ চেষ্টা কৰক।",
+    "wrongPassword": "পাছৱৰ্ড ভুল। অনুগ্ৰহ কৰি পৰীক্ষা কৰি আকৌ চেষ্টা কৰক।",
+    "suspended": "এই একাউণ্ট বন্ধ কৰা হৈছে। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰৰ সৈতে যোগাযোগ কৰক।",
+    "alreadyRegistered": "এই মোবাইল নম্বৰ আগতেই পঞ্জীয়ন কৰা হৈছে। অনুগ্ৰহ কৰি লগইন কৰক।",
+    "registrationClosed": "নতুন একাউণ্ট আপোনাৰ ডিলাৰে যোগ কৰে। অনুগ্ৰহ কৰি আপোনাক যোগ কৰিবলৈ ডিলাৰক কওক।",
+    "sessionExpired": "আপোনাৰ ছেশ্বন শেষ হৈছে। অনুগ্ৰহ কৰি আকৌ লগইন কৰক।",
+    "forbidden": "আপোনাক এইটো কৰাৰ অনুমতি নাই।",
+    "notFound": "পোৱা নগ'ল।",
+    "invalid": "অনুগ্ৰহ কৰি তথ্য পৰীক্ষা কৰি আকৌ চেষ্টা কৰক।",
+    "generic": "কিবা ভুল হ'ল। অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক।",
+    "offline": "আপুনি অফলাইনত আছে। অনুগ্ৰহ কৰি ইণ্টাৰনেটত সংযোগ হৈ আকৌ চেষ্টা কৰক।",
+    "contract": "চাৰ্ভাৰে এপে বুজি নোপোৱা তথ্য পঠিয়াইছে। অনুগ্ৰহ কৰি এপ আপডেট কৰক।",
+    "deviceSuspended": "এই পাম্পৰ ৰিমোট নিয়ন্ত্ৰণ বন্ধ কৰি ৰখা হৈছে। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰৰ সৈতে যোগাযোগ কৰক।",
+    "siteExists": "এই নামৰ দল আপোনাৰ আগৰ পৰাই আছে।",
+    "mfaUnsupported": "এই একাউণ্টৰ বাবে সুৰক্ষা ক'ড লাগে, যিটো এই এপে এতিয়াও নচলায়। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰৰ সৈতে যোগাযোগ কৰক।"
+  },
+  "time": {
+    "never": "কেতিয়াও নহয়",
+    "justNow": "এইমাত্ৰ",
+    "minutesAgo": "{{count}} মিনিট আগতে",
+    "hoursAgo": "{{count}} ঘণ্টা আগতে",
+    "daysAgo": "{{count}} দিন আগতে"
+  },
+  "units": {
+    "minutes": "{{m}} মিনিট",
+    "hoursMinutes": "{{h}} ঘণ্টা {{m}} মিনিট"
+  },
+  "offline": {
+    "banner": "আপুনি অফলাইনত আছে। {{time}} লৈকে সংৰক্ষিত তথ্য দেখুওৱা হৈছে।",
+    "bannerNoData": "আপুনি অফলাইনত আছে। পাম্প চাবলৈ ইণ্টাৰনেটত সংযোগ হওক।",
+    "reconnecting": "আকৌ সংযোগ হৈ আছে…"
+  },
+  "boundary": {
+    "title": "কিবা ভুল হ'ল",
+    "message": "এপত সমস্যা হ'ল। আপোনাৰ পাম্পৰ ওপৰত ইয়াৰ প্ৰভাৱ নাই।"
+  },
+  "listen": {
+    "start": "শুনক",
+    "stop": "বন্ধ কৰক",
+    "noVoice": "এই ফোনত এই ভাষাৰ মাত নাই। ফোনৰ টেক্সট-টু-স্পীচ ছেটিংত সেইটো যোগ কৰিব পাৰি।"
+  },
+  "pump": {
+    "tabs": {
+      "live": "লাইভ",
+      "timer": "টাইমাৰ",
+      "history": "ইতিহাস",
+      "faults": "ত্ৰুটি"
+    },
+    "notFoundTitle": "পাম্প পোৱা নগ'ল",
+    "notFoundMessage": "এই পাম্প এতিয়া আপোনাৰ তালিকাত নাই।"
+  },
+  "live": {
+    "updated": "আপডেট {{ago}}",
+    "stale": "শেষ ৰিডিং আহিছিল {{ago}}। তেতিয়াৰ তথ্য দেখুওৱা হৈছে।",
+    "noDataYet": "এই পাম্পে এতিয়াও কোনো ৰিডিং পঠোৱা নাই।",
+    "today": "আজি",
+    "total": "মুঠ",
+    "noReading": "ৰিডিং নাই",
+    "notReporting": "তথ্য অহা নাই",
+    "refreshFailed": "ৰিফ্ৰেশ কৰিব পৰা নগ'ল। সংৰক্ষিত তথ্য দেখুওৱা হৈছে।",
+    "hp": "{{hp}} HP"
+  },
+  "speech": {
+    "running": "{{name}} চলি আছে।",
+    "stopped": "{{name}} বন্ধ হৈ আছে।",
+    "fault": "{{name}} ত ত্ৰুটি আছে: {{fault}}।",
+    "offline": "{{name}} ৰ পৰা তথ্য অহা নাই। শেষ খবৰ {{ago}} ৰ।",
+    "noData": "{{name}} এ এতিয়াও কোনো ৰিডিং পঠোৱা নাই।",
+    "volts": "ভল্টেজ {{ry}}, {{yb}} আৰু {{br}} ভল্ট।",
+    "runtime": "এইটো আজি {{time}} চলিল।"
+  },
+  "command": {
+    "startTitle": "{{name}} চালু কৰিবনে?",
+    "stopTitle": "{{name}} বন্ধ কৰিবনে?",
+    "startBody": "{{name}} এতিয়াই চালু হ'ব। চলোৱা নিৰাপদ বুলি নিশ্চিত হওক।",
+    "stopBody": "{{name}} বন্ধ হ'ব আৰু পানী অহা বন্ধ হ'ব।",
+    "offlineWarn": "এই পাম্পৰ পৰা তথ্য অহা নাই, গতিকে আদেশটো ইয়ালৈ নোপোৱাও হ'ব পাৰে।",
+    "step": {
+      "sent": "পঠোৱা হ'ল",
+      "delivered": "পাম্পত পালেগৈ",
+      "acknowledged": "পাম্পে নিশ্চিত কৰিলে",
+      "applied": "হৈ গ'ল"
+    },
+    "titleStart": "চালু কৰাৰ আদেশ",
+    "titleStop": "বন্ধ কৰাৰ আদেশ",
+    "notConfirmed": "এতিয়াও নিশ্চিত হোৱা নাই। পাম্পে উত্তৰ দিয়া নাই। পাম্প চাওক, নাইবা অলপ পিছত আকৌ চেষ্টা কৰক।",
+    "rejected": "পাম্পে এই আদেশ নামানিলে।",
+    "rejectedWhy": "পাম্পে নামানিলে: {{reason}}",
+    "expired": "পাম্পত পোৱাৰ আগতেই আদেশৰ সময় শেষ হ'ল।",
+    "notSent": "আদেশ পঠাব পৰা নগ'ল, সেয়ে পাম্পক একো জনোৱা নহ'ল। অলপ পিছত আকৌ চেষ্টা কৰক।",
+    "done": "পাম্পে সেইটো কৰিলে।",
+    "tryAgain": "আকৌ চেষ্টা কৰক",
+    "dismiss": "বন্ধ কৰক",
+    "offlineBlock": "আপুনি অফলাইনত আছে। পাম্প চলাবলৈ ইণ্টাৰনেটত সংযোগ হওক।",
+    "cooldown": "পিছৰ আদেশৰ আগতে {{seconds}} ছেকেণ্ড ৰওক",
+    "cooldownShort": "{{seconds}} ছেকেণ্ড ৰওক"
+  },
+  "timer": {
+    "title": "চলাৰ টাইমাৰ",
+    "intro": "পাম্প নিৰ্দিষ্ট সময়লৈ চলাওক, তাৰ পিছত ই নিজে বন্ধ হ'ব।",
+    "onLabel": "কিমান সময় চলিব (মিনিট)",
+    "offLabel": "তাৰ পিছত কিমান সময় ৰব (মিনিট)",
+    "cyclesLabel": "কিমান বাৰ পুনৰাবৃত্তি হ'ব",
+    "cyclesHint": "0 মানে চলি থাকিব",
+    "range": "{{min}} ৰ পৰা {{max}}",
+    "errorOn": "1 ৰ পৰা 250 মিনিট লিখক",
+    "errorOff": "0 ৰ পৰা 250 মিনিট লিখক",
+    "errorCycles": "0 ৰ পৰা 999 লিখক",
+    "save": "পাম্পলৈ টাইমাৰ পঠিয়াওক",
+    "confirmTitle": "{{name}} ত টাইমাৰ বহুৱাবনে?",
+    "summaryOnce": "{{on}} মিনিট চলিব, তাৰ পিছত বন্ধ হ'ব।",
+    "summaryRepeat": "{{on}} মিনিট চলিব, {{off}} মিনিট ৰব, {{cycles}} বাৰ পুনৰাবৃত্তি কৰিব।",
+    "summaryForever": "{{on}} মিনিট চলিব, {{off}} মিনিট ৰব, চলি থাকিব।",
+    "confirmYes": "হয়, পঠিয়াওক",
+    "sentUnconfirmed": "পাম্পলৈ পঠোৱা হ'ল, কিন্তু এতিয়াও নিশ্চিত হোৱা নাই। নিশ্চিত হ'লে পাম্পে ইয়াক ব্যৱহাৰ কৰিব।",
+    "current": "আপুনি পঠোৱা শেষ টাইমাৰ",
+    "none": "আপুনি এতিয়াও কোনো টাইমাৰ পঠোৱা নাই।",
+    "remoteBlocked": "ৰিমোট নিয়ন্ত্ৰণ বন্ধ থাকিলে টাইমাৰ পঠিয়াব নোৱাৰি।"
+  },
+  "history": {
+    "day": "আজি",
+    "week": "7 দিন",
+    "month": "30 দিন",
+    "hoursRun": "চলা সময়",
+    "perHour": "প্ৰতি ঘণ্টাত কিমান মিনিট চলিল (শেষৰ 24 ঘণ্টা)",
+    "perDay": "প্ৰতিদিনে চলা সময়",
+    "empty": "এতিয়াও চলাৰ ইতিহাস নাই",
+    "emptyHint": "পাম্প চলি তথ্য পঠোৱাৰ পিছত স্তম্ভবোৰ দেখা যাব।",
+    "total": "এই সময়ছোৱাত মুঠ",
+    "starts": "চালু হ'ল: {{count}} বাৰ",
+    "faultCount": "ত্ৰুটি: {{count}}",
+    "export": "CSV ফাইল হিচাপে পঠিয়াওক",
+    "exportFailed": "ফাইল সাজু কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক।",
+    "estimated": "পাম্পৰ পঠোৱা তথ্যৰ পৰা আন্দাজ।",
+    "barDetail": "{{label}}: {{time}}",
+    "noBars": "পাম্প চলা নাই।"
+  },
+  "faultInfo": {
+    "code1": {
+      "cause": "এটা ফেজ (Y) পাম্পত ঠিকমতে পোৱা নাই।",
+      "action": "পেনেলত Y-ফেজৰ ফিউজ আৰু তাঁৰ চাওক। বাৰে বাৰে হ'লে ডিলাৰক মাতক।"
+    },
+    "code2": {
+      "cause": "তিনিটাৰ এটা ফেজ নাই, সেয়েহে মটৰ নিৰাপদে চলিব নোৱাৰে।",
+      "action": "ফিউজ আৰু বিদ্যুৎ যোগান চাওক। ইলেক্ট্ৰিচিয়ান বা ডিলাৰক মাতক।"
+    },
+    "code3": {
+      "cause": "বিদ্যুতৰ ভল্টেজ বহুত বেছি, মটৰ পুৰি যাব পাৰে।",
+      "action": "যোগান স্বাভাৱিক নোহোৱালৈকে ৰওক। ভল্টেজ বেছি থাকিলে আকৌ চালু নকৰিব।"
+    },
+    "code4": {
+      "cause": "তিনিটা ফেজৰ তাঁৰ ভুল ক্ৰমত আছে, সেয়েহে মটৰ ওলোটা ফালে ঘূৰে।",
+      "action": "পাম্প নচলাব। ইলেক্ট্ৰিচিয়ানক দি যিকোনো দুটা ফেজৰ তাঁৰ সলনা-সলনি কৰাওক।"
+    },
+    "code5": {
+      "cause": "পাম্প পানী নোহোৱাকৈ চলি আছে।",
+      "action": "পানীৰ স্তৰ আৰু ফুট ভাল্ভ চাওক। পানী পোৱাৰ পিছতহে আকৌ চালু কৰক।"
+    },
+    "code6": {
+      "cause": "মটৰলৈ যোৱা কেব'ল সকলো ফেজত ছিঙা বা খুলি গৈছে।",
+      "action": "পেনেলৰ পৰা মটৰলৈকে কেব'ল আৰু যোৰাবোৰ চাওক। ডিলাৰক মাতক।"
+    },
+    "code7": {
+      "cause": "মটৰৰ কেব'ল আংশিকভাৱে ছিঙা, বা কিছুমান ফেজত যোৰা শিথিল।",
+      "action": "কেব'লৰ যোৰা আৰু টাৰ্মিনেল চাওক। ডিলাৰক মাতক।"
+    },
+    "code8": {
+      "cause": "মটৰে বেছি কাৰেণ্ট টানিছে, পাম্প আটকি গৈছে বা যোগান দুৰ্বল।",
+      "action": "পাম্পত কিবা আটাইছে নেকি চাওক। অলপ ৰৈ আকৌ চালু কৰক। বাৰে বাৰে হ'লে ডিলাৰক মাতক।"
+    },
+    "code9": {
+      "cause": "তিনিটা ফেজৰ ভল্টেজ ইটোৱে সিটোতকৈ বহুত বেলেগ।",
+      "action": "যোগান সমান নোহোৱালৈকে ৰওক। চলি থাকিলে বিদ্যুৎ কোম্পানীক জনাওক।"
+    },
+    "code10": {
+      "cause": "বিদ্যুতৰ ভল্টেজ ইমান কম যে মটৰ নিৰাপদে চলিব নোৱাৰে।",
+      "action": "ভল্টেজ ভাল নোহোৱালৈকে ৰওক, তাৰ পিছত চালু কৰক।"
+    },
+    "unknown": {
+      "cause": "পাম্পে এনে এটা ত্ৰুটি পালে যাৰ নাম ই ক'ব নোৱাৰিলে।",
+      "action": "আপোনাৰ ডিলাৰক মাতক আৰু ত্ৰুটিৰ ক'ড কওক।"
+    }
+  },
+  "support": {
+    "title": "সহায়",
+    "dealer": "আপোনাৰ ডিলাৰ",
+    "call": "{{name}} ক ফোন কৰক",
+    "noDealer": "আপোনাৰ ডিলাৰৰ নম্বৰ এতিয়াও সংৰক্ষিত হোৱা নাই। অনুগ্ৰহ কৰি পাম্প লগোৱা জনক সোধক।",
+    "company": "কোম্পানীৰ সহায়",
+    "loadFailed": "ডিলাৰৰ তথ্য পোৱা নগ'ল।"
+  },
+  "manage": {
+    "title": "পাম্প চম্ভালক",
+    "pumps": "আপোনাৰ পাম্প",
+    "groups": "দল",
+    "rename": "নাম সলনি কৰক",
+    "namePlaceholder": "পাম্পৰ নাম",
+    "originalName": "পাম্পত থকা নাম: {{name}}",
+    "moveUp": "ওপৰলৈ নিয়ক",
+    "moveDown": "তললৈ নিয়ক",
+    "group": "দল",
+    "noGroup": "কোনো দল নাই",
+    "newGroup": "নতুন দল",
+    "groupPlaceholder": "যেনে: উত্তৰৰ পথাৰ",
+    "createGroup": "দল বনাওক",
+    "renameGroup": "দলৰ নাম সলনি কৰক",
+    "deleteGroup": "দল মচক",
+    "deleteGroupTitle": "এই দল মচিবনে?",
+    "deleteGroupBody": "ইয়াৰ পাম্পবোৰ দল নোহোৱাকৈ আপোনাৰ তালিকাতে থাকিব।",
+    "groupPumps": "পাম্প: {{count}}",
+    "empty": "চম্ভালিবলৈ এতিয়াও আপোনাৰ কোনো পাম্প নাই।",
+    "nameEmpty": "অনুগ্ৰহ কৰি এটা নাম লিখক।"
+  },
+  "plan": {
+    "expiring": "আপোনাৰ প্ল্যান {{days}} দিনত, {{date}} তাৰিখে শেষ হ'ব। অনুগ্ৰহ কৰি ডিলাৰক নবীকৰণ কৰিবলৈ কওক।",
+    "expiresToday": "আপোনাৰ প্ল্যান আজি শেষ হ'ব। অনুগ্ৰহ কৰি ডিলাৰক নবীকৰণ কৰিবলৈ কওক।",
+    "expired": "আপোনাৰ প্ল্যান {{date}} তাৰিখে শেষ হ'ল। অনুগ্ৰহ কৰি ডিলাৰক নবীকৰণ কৰিবলৈ কওক।",
+    "suspended": "এই পাম্পৰ ৰিমোট নিয়ন্ত্ৰণ বন্ধ কৰি ৰখা হৈছে। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰৰ সৈতে যোগাযোগ কৰক।"
+  },
+  "otp": {
+    "title": "Enter Verification Code",
+    "desc": "We have sent a 6-digit code to",
+    "onWhatsapp": "on WhatsApp",
+    "testOtpNotice": "Test mode - use the code below",
+    "autoFill": "Auto-fill",
+    "resendPrompt": "Didn't receive the code?",
+    "resendIn": "Resend in",
+    "resendButton": "Resend OTP",
+    "verifyButton": "Verify OTP",
+    "verifyingButton": "Verifying...",
+    "incompleteCode": "Enter all 6 digits"
+  },
+  "createPassword": {
+    "title": "Create Password",
+    "desc": "Set a password for your account",
+    "passwordReq": "Minimum 8 characters",
+    "confirmLabel": "Confirm Password",
+    "submitButton": "Create Account",
+    "mismatch": "Passwords do not match",
+    "tooShort": "Password must be at least 8 characters"
+  },
+  "registered": {
+    "title": "Registration Successful!",
+    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "phoneLabel": "Registered mobile number",
+    "continueButton": "Continue to App"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password?",
+    "desc": "Enter your mobile number to receive a reset code on WhatsApp"
+  },
+  "resetPassword": {
+    "title": "Create New Password",
+    "desc": "Set a new password for your account",
+    "newPasswordLabel": "New Password",
+    "submitButton": "Update Password"
+  },
+  "passwordUpdated": {
+    "title": "Password Updated!",
+    "desc": "Your password has been updated successfully. Please sign in with your new password.",
+    "goToLogin": "Go to Login"
+  }
+}

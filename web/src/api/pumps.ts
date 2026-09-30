@@ -1,4 +1,4 @@
-import { apiFetch, apiJson } from './client';
+import { apiFetch, apiJson, messageFrom } from './client';
 import type {
   PumpsResponse,
   PumpListItem,
@@ -14,7 +14,13 @@ import type {
 
 export async function fetchPumps(search = ''): Promise<PumpsResponse> {
   const q = `/pumps?page=1&limit=50${search ? '&search=' + encodeURIComponent(search) : ''}`;
-  return apiJson<PumpsResponse>(q);
+  const res = await apiJson<PumpsResponse>(q);
+  // The latest reading's own timestamp is what says "this pump has reported"; the API calls it `recorded_at`.
+  const rows = (res.pumps || (res as any).data || []).map((p: any) => ({
+    ...p,
+    telemetry_recorded_at: p.telemetry_recorded_at ?? p.recorded_at ?? null
+  }));
+  return { ...res, pumps: rows };
 }
 
 export async function fetchPumpDetail(id: string): Promise<PumpDetail> {
@@ -41,8 +47,8 @@ export async function createPump(input: {
   name: string;
   supply_type: '3-phase' | '1-phase';
   hp_rating: number;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
 }): Promise<{ message: string; pump: PumpListItem; device_key: string }> {
   return apiJson('/pumps', { method: 'POST', body: JSON.stringify(input) });
 }
@@ -57,7 +63,7 @@ export async function updatePumpLocation(id: string, latitude: number, longitude
 export async function deletePump(id: string) {
   const res = await apiFetch(`/pumps/${encodeURIComponent(id)}`, { method: 'DELETE' });
   const body = await res.json();
-  if (!res.ok) throw new Error(body.error || 'Delete failed');
+  if (!res.ok) throw new Error(messageFrom(body, 'Delete failed'));
   return body;
 }
 
@@ -83,8 +89,8 @@ export async function dispatchCommand(pumpId: string, action: 'START' | 'STOP'):
 
 export async function setLifecycleState(pumpId: string, toState: LifecycleState) {
   return apiJson(`/pumps/${encodeURIComponent(pumpId)}/lifecycle`, {
-    method: 'POST',
-    body: JSON.stringify({ to_state: toState })
+    method: 'PUT',
+    body: JSON.stringify({ lifecycle_state: toState })
   });
 }
 
