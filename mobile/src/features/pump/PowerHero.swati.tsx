@@ -7,7 +7,8 @@ import { faultName } from '@/shared/i18n/faults';
 import { colors } from '@/shared/theme';
 import { MotorIcon } from '@/shared/ui/MotorIcon';
 import { PumpThumbnail } from '@/shared/ui/PumpThumbnail';
-import { heroKind } from './swatiHome';
+import { formatReading } from '@/shared/i18n/format';
+import { driveStatusKey, heroKind } from './swatiHome';
 
 export interface PowerHeroProps {
   name: string;
@@ -28,6 +29,9 @@ export interface PowerHeroProps {
   lastUpdatedText?: string;
   runtimeTodayText?: string;
   timerText?: string;
+  /** The solar drive's readings (Swati solar pumps): shown as a card of their own under the two tiles. */
+  solar?: { hz?: number | null; iOut?: number | null; vAc?: number | null; vDc?: number | null; kw?: number | null; status?: string | null } | null;
+  onOpenTechnical?: () => void;
   onPower: () => void;
   onRetry?: () => void;
   onSelectPump?: () => void;
@@ -50,6 +54,8 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
   lastUpdatedText,
   runtimeTodayText,
   timerText,
+  solar,
+  onOpenTechnical,
   onPower,
   onRetry,
   onSelectPump,
@@ -202,6 +208,32 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
           </View>
         </TouchableOpacity>
       </View>
+
+      {isSolar && solar ? (
+        <TouchableOpacity style={styles.solarCard} onPress={onOpenTechnical} activeOpacity={0.85} accessibilityRole="button">
+          <Text style={styles.solarTitle}>{t('swati.technical')}</Text>
+          <View style={styles.solarGrid}>
+            {[
+              [t('swati.frequency'), formatReading(solar.hz, 1), 'Hz'],
+              [t('swati.outputCurrent'), formatReading(solar.iOut, 1), 'A'],
+              [t('swati.outputVoltage'), formatReading(solar.vAc, 0), 'V'],
+              [t('swati.dcVoltage'), formatReading(solar.vDc, 0), 'V'],
+              [t('swati.power'), formatReading(solar.kw, 1), 'kW'],
+              [t('swati.driveStatus'), driveStatusKey(solar.status) ? t(driveStatusKey(solar.status) as string) : (solar.status ?? '—'), ''],
+            ].map(([label, value, unit]) => (
+              <View key={label} style={styles.solarCell}>
+                <Text style={styles.solarLabel} numberOfLines={2}>
+                  {label}
+                </Text>
+                <Text style={styles.solarValue}>
+                  {value}
+                  {unit && value !== '—' ? ` ${unit}` : ''}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
@@ -417,6 +449,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FECACA',
   },
+  solarCard: {
+    marginTop: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    padding: 14,
+  },
+  solarTitle: { fontSize: 15, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
+  solarGrid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 10 },
+  solarCell: { width: '50%', paddingEnd: 8 },
+  solarLabel: { fontSize: 14, fontWeight: '700', color: '#64748B' },
+  solarValue: { fontSize: 18, fontWeight: '800', color: '#0F172A', marginTop: 2, fontVariant: ['tabular-nums'] },
   checkHeading: {
     fontSize: 15,
     fontWeight: '900',

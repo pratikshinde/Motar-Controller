@@ -3,6 +3,23 @@ import type { PumpState } from '@/features/pumps/model';
 /** Fault code the Fuji drive raises when the DC (solar) voltage is too low to run the motor (backend phase6_solar_vfd). */
 export const VFD_DC_UNDER_VOLT = 101;
 
+/** The drive's own status word -> the translation key of its plain-language name, or null for a word we do not know. */
+export function driveStatusKey(status: string | null | undefined): string | null {
+  switch ((status ?? '').trim().toUpperCase()) {
+    case 'RUNNING':
+    case 'RUN':
+      return 'pumps.status.running';
+    case 'STOPPED':
+    case 'STOP':
+      return 'pumps.status.stopped';
+    case 'FAULT':
+    case 'ALARM':
+      return 'pumps.status.fault';
+    default:
+      return null;
+  }
+}
+
 export type HeroKind =
   | 'running'
   | 'stopped'

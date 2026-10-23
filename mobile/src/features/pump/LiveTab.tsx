@@ -174,6 +174,12 @@ export const LiveTab: React.FC<{
         lastUpdatedText={pump.last_seen_at ? timeAgo(t, pump.last_seen_at, now) : undefined}
         runtimeTodayText={pump.runtime_today_min != null ? formatMinutes(t, pump.runtime_today_min) : undefined}
         timerText={timerText}
+        solar={
+          isSolar
+            ? { hz: pump.vfd_hz, iOut: pump.vfd_i_out, vAc: pump.vfd_v_ac, vDc: pump.vfd_v_dc, kw: pump.vfd_kw, status: pump.vfd_status }
+            : null
+        }
+        onOpenTechnical={() => router.push('/technical')}
         onPower={askPower}
         onRetry={onRefresh}
         onSelectPump={() => router.push('/pumps')}

@@ -576,6 +576,7 @@
     "typeSolar": "સોલાર પંપ",
     "type3Phase": "3-ફેઝ પંપ",
     "filterAll": "બધા",
-    "start": "શરૂ કરો"
+    "start": "શરૂ કરો",
+    "driveStatus": "ડ્રાઇવની સ્થિતિ"
   }
 }

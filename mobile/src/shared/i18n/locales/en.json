@@ -576,6 +576,7 @@
     "typeSolar": "Solar pump",
     "type3Phase": "3-phase pump",
     "filterAll": "All",
-    "start": "Start"
+    "start": "Start",
+    "driveStatus": "Drive status"
   }
 }

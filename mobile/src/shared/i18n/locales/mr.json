@@ -576,6 +576,7 @@
     "typeSolar": "सोलर पंप",
     "type3Phase": "3-फेज पंप",
     "filterAll": "सर्व",
-    "start": "सुरू करा"
+    "start": "सुरू करा",
+    "driveStatus": "ड्राइव्हची स्थिती"
   }
 }

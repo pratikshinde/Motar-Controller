@@ -576,6 +576,7 @@
     "typeSolar": "سولر پمپ",
     "type3Phase": "تھری فیز پمپ",
     "filterAll": "سارے",
-    "start": "شروع کَرِو"
+    "start": "شروع کَرِو",
+    "driveStatus": "ڈرائیوک حالت"
   }
 }

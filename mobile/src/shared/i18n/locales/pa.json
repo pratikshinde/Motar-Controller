@@ -576,6 +576,7 @@
     "typeSolar": "ਸੋਲਰ ਪੰਪ",
     "type3Phase": "3-ਫੇਜ਼ ਪੰਪ",
     "filterAll": "ਸਾਰੇ",
-    "start": "ਸ਼ੁਰੂ ਕਰੋ"
+    "start": "ਸ਼ੁਰੂ ਕਰੋ",
+    "driveStatus": "ਡਰਾਈਵ ਦੀ ਸਥਿਤੀ"
   }
 }

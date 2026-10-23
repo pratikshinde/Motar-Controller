@@ -1,4 +1,4 @@
-import { heroKind, VFD_DC_UNDER_VOLT } from '@/features/pump/swatiHome';
+import { driveStatusKey, heroKind, VFD_DC_UNDER_VOLT } from '@/features/pump/swatiHome';
 import { dayKey, sessionMinutes, sessionsFromReadings } from '@/features/history/sessions';
 import { brand } from '@/config/brand';
 import swati from '../../../brands/swati/brand.json';
@@ -29,6 +29,16 @@ describe('home state (Swati)', () => {
 
   it('a pump that went quiet is never shown as stopped', () => {
     expect(heroKind({ ...base, state: 'offline', faultCode: VFD_DC_UNDER_VOLT, isSolar: true })).toBe('offline');
+  });
+});
+
+describe('solar drive status', () => {
+  it('names the statuses we know and leaves the rest to be shown as the drive sent them', () => {
+    expect(driveStatusKey('RUNNING')).toBe('pumps.status.running');
+    expect(driveStatusKey(' stopped ')).toBe('pumps.status.stopped');
+    expect(driveStatusKey('FAULT')).toBe('pumps.status.fault');
+    expect(driveStatusKey('STANDBY')).toBeNull();
+    expect(driveStatusKey(null)).toBeNull();
   });
 });
 

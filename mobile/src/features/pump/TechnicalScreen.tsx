@@ -11,6 +11,7 @@ import { formatReading, timeAgo } from '@/shared/i18n/format';
 import { useNow } from '@/shared/hooks/useOnline';
 import { useCurrentPump } from '@/features/pumps/useCurrentPump';
 import { pumpState } from '@/features/pumps/model';
+import { driveStatusKey } from './swatiHome';
 
 interface Row {
   label: string;
@@ -20,7 +21,7 @@ interface Row {
   dot?: string;
 }
 
-const Rows: React.FC<{ rows: Row[] }> = ({ rows }) => (
+const Rows: React.FC<{ rows: Row[]; footerLabel?: string; footerValue?: string }> = ({ rows, footerLabel, footerValue }) => (
   <View style={styles.card}>
     {rows.map((r, i) => (
       <View key={r.label}>
@@ -38,6 +39,15 @@ const Rows: React.FC<{ rows: Row[] }> = ({ rows }) => (
         </View>
       </View>
     ))}
+    {footerLabel ? (
+      <View>
+        <View style={styles.divider} />
+        <View style={styles.metricRow}>
+          <Text style={styles.metricLabel}>{footerLabel}</Text>
+          <Text style={styles.metricValue}>{footerValue}</Text>
+        </View>
+      </View>
+    ) : null}
   </View>
 );
 
@@ -67,6 +77,8 @@ export const TechnicalScreen: React.FC = () => {
                 { label: t('swati.dcVoltage'), value: pump.vfd_v_dc, unit: 'V', digits: 0 },
                 { label: t('swati.power'), value: pump.vfd_kw, unit: 'kW', digits: 1 },
               ]}
+              footerLabel={t('swati.driveStatus')}
+              footerValue={driveStatusKey(pump.vfd_status) ? t(driveStatusKey(pump.vfd_status) as string) : (pump.vfd_status ?? '—')}
             />
           ) : (
             <>
