@@ -1,0 +1,24 @@
+{
+  "key": "swati",
+  "appName": "Swati Pump Controller",
+  "shortName": "SWATI",
+  "titleLine1": "SWATI PUMP",
+  "titleLine2": "CONTROLLER",
+  "colors": {
+    "primary": "#1B4FB8",
+    "primaryDark": "#143C8E",
+    "primarySoft": "#E8EFFC",
+    "primaryBorder": "#BFD0F5"
+  },
+  "build": {
+    "slug": "swati-pump-controller",
+    "scheme": "swati",
+    "androidPackage": "com.swati.pumpcontroller",
+    "iosBundleId": "com.swati.pumpcontroller",
+    "easProjectId": null,
+    "icon": null,
+    "adaptiveIconForeground": null,
+    "adaptiveIconBackground": null,
+    "splashImage": null
+  }
+}

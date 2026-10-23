@@ -19,11 +19,27 @@
     },
     "ajanta-preview": {
       "extends": "preview",
-      "env": { "BRAND": "ajanta" }
+      "env": {
+        "BRAND": "ajanta"
+      }
     },
     "ajanta-production": {
       "extends": "production",
-      "env": { "BRAND": "ajanta" }
+      "env": {
+        "BRAND": "ajanta"
+      }
+    },
+    "swati-preview": {
+      "extends": "preview",
+      "env": {
+        "BRAND": "swati"
+      }
+    },
+    "swati-production": {
+      "extends": "production",
+      "env": {
+        "BRAND": "swati"
+      }
     }
   },
   "submit": {

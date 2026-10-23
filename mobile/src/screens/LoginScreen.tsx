@@ -45,6 +45,8 @@ const DEMO_ACCOUNTS = __DEV__
       { label: 'Support', role: 'Engineer', phone: '9999900005', pass: 'Admin@123', icon: '🛡️' },
       { label: 'Manufacturer', role: 'OEM', phone: '9999900002', pass: 'Admin@123', icon: '🏭' },
       { label: 'Super Admin', role: 'Admin (MFA)', phone: '9999900001', pass: 'Admin@123', icon: '👑' },
+      { label: 'Swati Dealer', role: 'Other brand', phone: '9999900014', pass: 'Admin@123', icon: '🏬' },
+      { label: 'Two brands', role: 'Farmer', phone: '9999900019', pass: 'Admin@123', icon: '🌾' },
     ]
   : [];
 
