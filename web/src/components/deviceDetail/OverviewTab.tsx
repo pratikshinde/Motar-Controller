@@ -115,19 +115,44 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
       <Card elevation={1}>
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           <Typography variant="h6">Live Telemetry</Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-            <Tile label="Volt R-Y" value={fmt(latest_telemetry?.v_ry ?? null, 'V')} />
-            <Tile label="Volt Y-B" value={fmt(latest_telemetry?.v_yb ?? null, 'V')} />
-            <Tile label="Volt B-R" value={fmt(latest_telemetry?.v_br ?? null, 'V')} />
-          </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-            <Tile label="Current R" value={fmt(latest_telemetry?.i_r ?? null, 'A')} />
-            <Tile label="Current Y" value={fmt(latest_telemetry?.i_y ?? null, 'A')} />
-            <Tile label="Current B" value={fmt(latest_telemetry?.i_b ?? null, 'A')} />
-          </Box>
-          {!latest_telemetry && (
+          {pump.device_type === 'SOLAR_VFD' ? (
+            <>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+                <Tile label="Frequency" value={fmt(latest_telemetry?.vfd?.hz ?? latest_telemetry?.vfd_hz, 'Hz')} />
+                <Tile label="Motor Power" value={fmt(latest_telemetry?.vfd?.kw ?? latest_telemetry?.vfd_kw, 'kW')} />
+                <Tile label="DC Bus Voltage" value={fmt(latest_telemetry?.vfd?.v_dc ?? latest_telemetry?.vfd_v_dc, 'V')} />
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
+                <Tile label="Output A" value={fmt(latest_telemetry?.vfd?.i_out ?? latest_telemetry?.vfd_i_out, 'A')} />
+                <Tile label="AC Out V" value={fmt(latest_telemetry?.vfd?.v_ac ?? latest_telemetry?.vfd_v_ac, 'V')} />
+                <Tile label="VFD Status" value={(latest_telemetry?.vfd?.status ?? latest_telemetry?.vfd_status) || '—'} />
+                <Tile
+                  label="VFD Fault"
+                  value={
+                    (latest_telemetry?.vfd?.fault_code ?? latest_telemetry?.vfd_fault_code)
+                      ? `Fault ${latest_telemetry?.vfd?.fault_code ?? latest_telemetry?.vfd_fault_code}`
+                      : ((latest_telemetry?.vfd?.fault_code ?? latest_telemetry?.vfd_fault_code) === 0 ? 'None' : '—')
+                  }
+                />
+              </Box>
+            </>
+          ) : (
+            <>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+                <Tile label="Volt R-Y" value={fmt(latest_telemetry?.v_ry ?? null, 'V')} />
+                <Tile label="Volt Y-B" value={fmt(latest_telemetry?.v_yb ?? null, 'V')} />
+                <Tile label="Volt B-R" value={fmt(latest_telemetry?.v_br ?? null, 'V')} />
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+                <Tile label="Current R" value={fmt(latest_telemetry?.i_r ?? null, 'A')} />
+                <Tile label="Current Y" value={fmt(latest_telemetry?.i_y ?? null, 'A')} />
+                <Tile label="Current B" value={fmt(latest_telemetry?.i_b ?? null, 'A')} />
+              </Box>
+            </>
+          )}
+          {!latest_telemetry && !pump.v_ry && !pump.vfd_hz && (
             <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-              No telemetry received yet
+              No reading
             </Typography>
           )}
           {latest_telemetry?.ts_approx && (

@@ -38,10 +38,23 @@ export interface UserTreeNode extends User {
   children: UserTreeNode[];
 }
 
+export type DeviceType = 'AC_3PH' | 'SOLAR_VFD';
+
+export interface VfdTelemetry {
+  hz?: number | null;
+  i_out?: number | null;
+  v_ac?: number | null;
+  v_dc?: number | null;
+  kw?: number | null;
+  status?: string | null;
+  fault_code?: number | null;
+}
+
 // GET /api/pumps row shape, after the W0 LATERAL join onto latest telemetry.
 export interface PumpListItem {
   id: string;
   name: string;
+  device_type?: DeviceType;
   supply_type: '3-phase' | '1-phase';
   hp_rating: string | number;
   latitude: string | number | null;
@@ -67,6 +80,16 @@ export interface PumpListItem {
   telemetry_recorded_at: string | null;
   ts_approx: boolean | null;
   buffered: boolean | null;
+
+  // SOLAR_VFD telemetry fields
+  vfd_hz?: string | number | null;
+  vfd_i_out?: string | number | null;
+  vfd_v_ac?: string | number | null;
+  vfd_v_dc?: string | number | null;
+  vfd_kw?: string | number | null;
+  vfd_status?: string | null;
+  vfd_fault_code?: number | null;
+  vfd?: VfdTelemetry | null;
 }
 
 /** Exclusive counts over every pump in scope: a pump is in exactly one of offline, no_data, fault, running, stopped. */
@@ -174,6 +197,7 @@ export interface TelemetryRow {
   id?: number;
   pump_id?: string;
   recorded_at: string;
+  device_type?: DeviceType;
   v_ry: string | null;
   v_yb: string | null;
   v_br: string | null;
@@ -186,6 +210,15 @@ export interface TelemetryRow {
   seq: number | null;
   ts_approx: boolean;
   buffered: boolean;
+  // SOLAR_VFD telemetry fields
+  vfd_hz?: string | number | null;
+  vfd_i_out?: string | number | null;
+  vfd_v_ac?: string | number | null;
+  vfd_v_dc?: string | number | null;
+  vfd_kw?: string | number | null;
+  vfd_status?: string | null;
+  vfd_fault_code?: number | null;
+  vfd?: VfdTelemetry | null;
 }
 
 // FR-WEB-031 panel binding — direct columns on `pumps` (see schema.sql

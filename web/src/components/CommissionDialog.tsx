@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
-  Stack, Box
+  Stack, Box, MenuItem
 } from '@mui/material';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import { createPump, updatePumpLocation } from '../api/pumps';
@@ -20,6 +20,7 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
   const { showToast } = useToast();
   const [id, setId] = useState('');
   const [name, setName] = useState('');
+  const [deviceType, setDeviceType] = useState<'AC_3PH' | 'SOLAR_VFD'>('AC_3PH');
   // Blank means "position unknown" - never a stand-in coordinate that would put a pump in some other place on the map.
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
@@ -30,11 +31,13 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
       if (editingPump) {
         setId(editingPump.id);
         setName(editingPump.name);
+        setDeviceType(editingPump.device_type || 'AC_3PH');
         setLat(editingPump.latitude === null || editingPump.latitude === '' ? '' : String(editingPump.latitude));
         setLng(editingPump.longitude === null || editingPump.longitude === '' ? '' : String(editingPump.longitude));
       } else {
         setId('');
         setName('');
+        setDeviceType('AC_3PH');
         setLat('');
         setLng('');
       }
@@ -87,8 +90,9 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
         const result = await createPump({
           id: newId,
           name: name.trim(),
+          device_type: deviceType,
           supply_type: '3-phase',
-          hp_rating: 15.0,
+          hp_rating: deviceType === 'SOLAR_VFD' ? 7.5 : 15.0,
           // Left blank stays unknown: no invented position.
           latitude,
           longitude
@@ -119,6 +123,17 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
               fullWidth
             />
             <TextField
+              select
+              label="Device Type"
+              value={deviceType}
+              onChange={e => setDeviceType(e.target.value as 'AC_3PH' | 'SOLAR_VFD')}
+              disabled={Boolean(editingPump)}
+              fullWidth
+            >
+              <MenuItem value="AC_3PH">AC 3-Phase Pump</MenuItem>
+              <MenuItem value="SOLAR_VFD">Solar VFD Pump (Fuji FRENIC-Ace)</MenuItem>
+            </TextField>
+            <TextField
               label="Pump name / designation"
               placeholder="e.g. Borewell Pump #1"
               value={name}
@@ -139,7 +154,7 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="contained" disabled={busy}>
-            Save device
+            {busy ? 'Saving…' : editingPump ? 'Update Location' : 'Register Device'}
           </Button>
         </DialogActions>
       </form>

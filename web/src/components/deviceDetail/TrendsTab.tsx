@@ -4,8 +4,7 @@ import { LineChart } from '@mui/x-charts/LineChart';
 import { fetchPumpTelemetry } from '../../api/pumps';
 import { useToast } from '../../context/ToastContext';
 import { useWs } from '../../context/WebSocketContext';
-import { pumpUpdateToTelemetryRow } from '../../utils/wsMerge';
-import type { TelemetryRow } from '../../types';
+import type { TelemetryRow, DeviceType } from '../../types';
 
 const RANGES = [
   { label: '24h', hours: 24 },
@@ -13,7 +12,7 @@ const RANGES = [
   { label: '30d', hours: 24 * 30 }
 ];
 
-export const TrendsTab: React.FC<{ pumpId: string }> = ({ pumpId }) => {
+export const TrendsTab: React.FC<{ pumpId: string; deviceType?: DeviceType }> = ({ pumpId, deviceType }) => {
   const { showToast } = useToast();
   const { subscribe } = useWs();
   const [hours, setHours] = useState(24);
@@ -41,8 +40,6 @@ export const TrendsTab: React.FC<{ pumpId: string }> = ({ pumpId }) => {
   // range reload — only meaningful while viewing the window that would
   // actually contain "now" (24h); older windows are historical by
   // definition and shouldn't grow live.
-  //
-  // The FastAPI ws_hub shape: { type:"telemetry", pump_id:"...", data:{v_ry,...,recorded_at} }
   useEffect(() => {
     if (hours !== 24) return;
     return subscribe('telemetry', msg => {
@@ -51,12 +48,21 @@ export const TrendsTab: React.FC<{ pumpId: string }> = ({ pumpId }) => {
       if (!src.recorded_at) return;
       const row: TelemetryRow = {
         recorded_at: src.recorded_at,
+        device_type: src.device_type,
         v_ry: src.v_ry ?? null,
         v_yb: src.v_yb ?? null,
         v_br: src.v_br ?? null,
         i_r: src.i_r ?? null,
         i_y: src.i_y ?? null,
         i_b: src.i_b ?? null,
+        vfd_hz: src.vfd_hz ?? src.vfd?.hz ?? null,
+        vfd_i_out: src.vfd_i_out ?? src.vfd?.i_out ?? null,
+        vfd_v_ac: src.vfd_v_ac ?? src.vfd?.v_ac ?? null,
+        vfd_v_dc: src.vfd_v_dc ?? src.vfd?.v_dc ?? null,
+        vfd_kw: src.vfd_kw ?? src.vfd?.kw ?? null,
+        vfd_status: src.vfd_status ?? src.vfd?.status ?? null,
+        vfd_fault_code: src.vfd_fault_code ?? src.vfd?.fault_code ?? null,
+        vfd: src.vfd ?? null,
         pump_on: src.pump_on ?? false,
         fault_active: src.fault_active ?? false,
         gsm_rssi: src.gsm_rssi ?? null,
@@ -76,7 +82,13 @@ export const TrendsTab: React.FC<{ pumpId: string }> = ({ pumpId }) => {
   const bufferedCount = useMemo(() => rows.filter(r => r.buffered).length, [rows]);
   const approxCount = useMemo(() => rows.filter(r => r.ts_approx).length, [rows]);
 
-  const num = (v: string | null) => (v === null ? null : Number(v));
+  const num = (v: string | number | null | undefined) => {
+    if (v === null || v === undefined || v === '') return null;
+    const n = Number(v);
+    return isNaN(n) ? null : n;
+  };
+
+  const isSolar = deviceType === 'SOLAR_VFD' || rows.some(r => r.device_type === 'SOLAR_VFD' || r.vfd_hz != null || r.vfd?.hz != null);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -100,6 +112,55 @@ export const TrendsTab: React.FC<{ pumpId: string }> = ({ pumpId }) => {
         </Box>
       ) : rows.length === 0 ? (
         <Typography color="text.secondary">No telemetry recorded in this window.</Typography>
+      ) : isSolar ? (
+        <>
+          <Card elevation={1}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Frequency (Hz) &amp; Motor Power (kW)
+              </Typography>
+              <LineChart
+                height={260}
+                xAxis={[{ data: xAxisData, scaleType: 'time' }]}
+                series={[
+                  { data: rows.map(r => num(r.vfd?.hz ?? r.vfd_hz)), label: 'Output Hz', showMark: false, color: '#0288d1' },
+                  { data: rows.map(r => num(r.vfd?.kw ?? r.vfd_kw)), label: 'Power (kW)', showMark: false, color: '#ed6c02' }
+                ]}
+              />
+            </CardContent>
+          </Card>
+
+          <Card elevation={1}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Solar DC Bus &amp; AC Output Voltage (V)
+              </Typography>
+              <LineChart
+                height={260}
+                xAxis={[{ data: xAxisData, scaleType: 'time' }]}
+                series={[
+                  { data: rows.map(r => num(r.vfd?.v_dc ?? r.vfd_v_dc)), label: 'DC Bus (V)', showMark: false, color: '#d32f2f' },
+                  { data: rows.map(r => num(r.vfd?.v_ac ?? r.vfd_v_ac)), label: 'AC Output (V)', showMark: false, color: '#2e7d32' }
+                ]}
+              />
+            </CardContent>
+          </Card>
+
+          <Card elevation={1}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Output Current (A)
+              </Typography>
+              <LineChart
+                height={260}
+                xAxis={[{ data: xAxisData, scaleType: 'time' }]}
+                series={[
+                  { data: rows.map(r => num(r.vfd?.i_out ?? r.vfd_i_out)), label: 'Output Current (A)', showMark: false, color: '#9c27b0' }
+                ]}
+              />
+            </CardContent>
+          </Card>
+        </>
       ) : (
         <>
           <Card elevation={1}>

@@ -40,6 +40,17 @@ export interface Dict {
   devicesTitle: string;
   thDeviceId: string;
   thSupplyType: string;
+  thDeviceType: string;
+  deviceTypeAc3ph: string;
+  deviceTypeSolarVfd: string;
+  vfdFrequency: string;
+  vfdPower: string;
+  vfdDcBus: string;
+  vfdOutputCurrent: string;
+  vfdAcVoltage: string;
+  vfdStatus: string;
+  vfdFault: string;
+  noReading: string;
   thFirmware: string;
   thStatus: string;
   thActions: string;
@@ -90,6 +101,17 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     devicesTitle: 'Hardware Device Registry & Fleet Inventory',
     thDeviceId: 'Device ID (Thing Name)',
     thSupplyType: 'Supply Type',
+    thDeviceType: 'Device Type',
+    deviceTypeAc3ph: 'AC 3-Phase',
+    deviceTypeSolarVfd: 'Solar VFD',
+    vfdFrequency: 'Output Frequency',
+    vfdPower: 'Motor Power',
+    vfdDcBus: 'DC Bus Voltage',
+    vfdOutputCurrent: 'Output Current',
+    vfdAcVoltage: 'AC Output Voltage',
+    vfdStatus: 'VFD Status',
+    vfdFault: 'VFD Fault',
+    noReading: 'No reading',
     thFirmware: 'Firmware',
     thStatus: 'Status',
     thActions: 'Actions',
@@ -130,6 +152,17 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     devicesTitle: 'हार्डवेयर डिवाइस रजिस्ट्री',
     thDeviceId: 'उपकरण आईडी',
     thSupplyType: 'बिजली आपूर्ति प्रकार',
+    thDeviceType: 'उपकरण का प्रकार',
+    deviceTypeAc3ph: 'एसी 3-फेज़',
+    deviceTypeSolarVfd: 'सोलर वीएफडी',
+    vfdFrequency: 'आउटपुट फ्रीक्वेंसी',
+    vfdPower: 'मोटर पावर',
+    vfdDcBus: 'डीसी बस वोल्टेज',
+    vfdOutputCurrent: 'आउटपुट करंट',
+    vfdAcVoltage: 'एसी आउटपुट वोल्टेज',
+    vfdStatus: 'वीएफडी स्थिति',
+    vfdFault: 'वीएफडी खराबी',
+    noReading: 'कोई रीडिंग नहीं',
     thFirmware: 'फर्मवेयर',
     thStatus: 'स्थिति',
     thActions: 'कार्रवाई',

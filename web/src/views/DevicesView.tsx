@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Typography, Chip, IconButton, Tooltip, Card, Button } from '@mui/material';
+import { Box, Typography, Chip, IconButton, Tooltip, Card, Button, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/EditLocationAlt';
 import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
@@ -27,6 +27,7 @@ export const DevicesView: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { pumps, loading, reload } = usePumps();
+  const [deviceTypeFilter, setDeviceTypeFilter] = useState<'ALL' | 'AC_3PH' | 'SOLAR_VFD'>('ALL');
   const [commissionOpen, setCommissionOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [editingPump, setEditingPump] = useState<PumpListItem | null>(null);
@@ -61,6 +62,22 @@ export const DevicesView: React.FC = () => {
       // shrink to fit and ellipsize into illegibility rather than the grid scrolling horizontally. A
       // `minWidth` per column gives DataGrid a point below which it scrolls instead of over-shrinking.
       { field: 'id', headerName: 'Device ID (Thing Name)', flex: 1.2, minWidth: 170, renderCell: p => <span style={{ fontFamily: monoFont, fontWeight: 700 }}>{p.value}</span> },
+      {
+        field: 'device_type',
+        headerName: 'Device Type',
+        flex: 0.9,
+        minWidth: 130,
+        valueGetter: (_v, row) => row.device_type || 'AC_3PH',
+        renderCell: p => (
+          <Chip
+            size="small"
+            label={p.value === 'SOLAR_VFD' ? 'Solar VFD' : 'AC 3-Phase'}
+            color={p.value === 'SOLAR_VFD' ? 'warning' : 'default'}
+            variant="outlined"
+            sx={{ fontFamily: monoFont, fontWeight: 600 }}
+          />
+        )
+      },
       { field: 'supply_type', headerName: 'Supply Type', flex: 0.8, minWidth: 110 },
       { field: 'firmware_version', headerName: 'Firmware', flex: 0.7, minWidth: 100, valueGetter: (_v, row) => row.firmware_version || '—' },
       {
@@ -187,9 +204,26 @@ export const DevicesView: React.FC = () => {
         </Box>
       </Box>
 
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+        <ToggleButtonGroup
+          value={deviceTypeFilter}
+          exclusive
+          size="small"
+          onChange={(_, val) => val && setDeviceTypeFilter(val)}
+        >
+          <ToggleButton value="ALL">All ({pumps.length})</ToggleButton>
+          <ToggleButton value="AC_3PH">
+            AC 3-Phase ({pumps.filter(p => (p.device_type || 'AC_3PH') === 'AC_3PH').length})
+          </ToggleButton>
+          <ToggleButton value="SOLAR_VFD">
+            Solar VFD ({pumps.filter(p => p.device_type === 'SOLAR_VFD').length})
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
       <Card elevation={1} sx={{ flex: 1, overflow: 'hidden' }}>
         <DataGrid
-          rows={pumps}
+          rows={deviceTypeFilter === 'ALL' ? pumps : pumps.filter(p => (p.device_type || 'AC_3PH') === deviceTypeFilter)}
           columns={columns}
           loading={loading}
           density="comfortable"

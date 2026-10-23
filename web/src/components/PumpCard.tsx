@@ -121,42 +121,82 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
           />
         </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-          {[
-            ['R-Y', pump.v_ry, 'V'],
-            ['Y-B', pump.v_yb, 'V'],
-            ['B-R', pump.v_br, 'V']
-          ].map(([label, value, unit]) => (
-            <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                {label}
-              </Typography>
-              <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
-                {fmt(value as string | null, unit as string)}
-              </Typography>
+        {pump.device_type === 'SOLAR_VFD' ? (
+          <>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+              {[
+                ['Frequency', pump.vfd_hz ?? pump.vfd?.hz, 'Hz'],
+                ['Power', pump.vfd_kw ?? pump.vfd?.kw, 'kW'],
+                ['DC Bus', pump.vfd_v_dc ?? pump.vfd?.v_dc, 'V']
+              ].map(([label, value, unit]) => (
+                <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {label}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
+                    {fmt(value as string | number | null, unit as string)}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
-          ))}
-        </Box>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-          {[
-            ['I·R', pump.i_r, 'A'],
-            ['I·Y', pump.i_y, 'A'],
-            ['I·B', pump.i_b, 'A']
-          ].map(([label, value, unit]) => (
-            <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                {label}
-              </Typography>
-              <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
-                {fmt(value as string | null, unit as string)}
-              </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
+              {[
+                ['Output A', pump.vfd_i_out ?? pump.vfd?.i_out, 'A'],
+                ['AC Out', pump.vfd_v_ac ?? pump.vfd?.v_ac, 'V'],
+                ['VFD Status', pump.vfd_status ?? pump.vfd?.status, ''],
+                ['VFD Fault', (pump.vfd_fault_code ?? pump.vfd?.fault_code) ? `#${pump.vfd_fault_code ?? pump.vfd?.fault_code}` : ((pump.vfd_fault_code ?? pump.vfd?.fault_code) === 0 ? 'None' : null), '']
+              ].map(([label, value, unit]) => (
+                <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
+                    {label}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: '0.8rem' }} noWrap>
+                    {unit ? fmt(value as string | number | null, unit as string) : (value ? String(value) : '—')}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
-          ))}
-        </Box>
+          </>
+        ) : (
+          <>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+              {[
+                ['R-Y', pump.v_ry, 'V'],
+                ['Y-B', pump.v_yb, 'V'],
+                ['B-R', pump.v_br, 'V']
+              ].map(([label, value, unit]) => (
+                <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {label}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
+                    {fmt(value as string | null, unit as string)}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+              {[
+                ['I·R', pump.i_r, 'A'],
+                ['I·Y', pump.i_y, 'A'],
+                ['I·B', pump.i_b, 'A']
+              ].map(([label, value, unit]) => (
+                <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {label}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
+                    {fmt(value as string | null, unit as string)}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </>
+        )}
 
-        {!pump.telemetry_recorded_at && !pump.v_ry && !pump.i_r && (
+        {!pump.telemetry_recorded_at && !pump.v_ry && !pump.i_r && !pump.vfd_hz && !pump.vfd?.hz && (
           <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            No telemetry received yet
+            No reading
           </Typography>
         )}
 

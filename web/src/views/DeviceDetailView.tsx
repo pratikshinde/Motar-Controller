@@ -186,13 +186,19 @@ export const DeviceDetailView: React.FC = () => {
 
       <Box sx={{ flex: 1, overflowY: 'auto', pt: 1 }}>
         {tab === 'overview' && <OverviewTab detail={detail} onRefresh={load} />}
-        {tab === 'trends' && <TrendsTab pumpId={id} />}
+        {tab === 'trends' && <TrendsTab pumpId={id} deviceType={pump.device_type} />}
         {tab === 'configuration' && <ConfigurationTab pumpId={id} initialConfig={detail.config} onSaved={load} />}
         {tab === 'schedule' && <ScheduleTab pumpId={id} initialConfig={detail.config} onSaved={load} />}
         {tab === 'events' && <EventsTab pumpId={id} />}
         {tab === 'ownership' && <OwnershipTab pumpId={id} />}
         {tab === 'diagnostics' && (
-          <DiagnosticsTab pumpId={id} firmwareVersion={pump.firmware_version} panel={panelBinding} onPanelSaved={load} />
+          <DiagnosticsTab
+            pumpId={id}
+            firmwareVersion={pump.firmware_version}
+            panel={panelBinding}
+            onPanelSaved={load}
+            deviceType={pump.device_type}
+          />
         )}
       </Box>
     </Box>

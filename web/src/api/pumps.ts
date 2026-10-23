@@ -45,6 +45,7 @@ export async function fetchPumpTelemetry(id: string, hours = 24): Promise<{ pump
 export async function createPump(input: {
   id?: string;
   name: string;
+  device_type?: 'AC_3PH' | 'SOLAR_VFD';
   supply_type: '3-phase' | '1-phase';
   hp_rating: number;
   latitude?: number;

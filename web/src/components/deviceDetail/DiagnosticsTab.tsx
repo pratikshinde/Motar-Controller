@@ -5,25 +5,22 @@ import { fetchPumpProvenance, fetchPumpTelemetry, setPumpPanel, fetchMcuSwapHist
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { monoFont } from '../../theme';
-import type { PumpProvenance, TelemetryRow, PanelBinding, McuSwapHistory } from '../../types';
+import type { PumpProvenance, TelemetryRow, PanelBinding, McuSwapHistory, DeviceType } from '../../types';
 
 const CAN_EDIT_INSTALL_FIELDS = new Set(['superadmin', 'manufacturer', 'distributor', 'dealer']);
 
-// §8.4 Diagnostics tab (Web_App_Pending_Items.md §6) calls for firmware/
-// hardware versions, signal history, raw messages and OTA history. Only
-// the first two have real backing data in this system: firmware version
-// is a reported pump field, hardware/MCU/IMEI come from the manufacturing
-// batch this device was claimed from (if any). "Raw messages" has no
-// store — telemetry is parsed into telemetry_history at ingest, nothing
-// keeps the wire bytes — and OTA history is blocked on Stream 4 (no OTA
-// mechanism exists yet). Both are called out explicitly below instead of
-// being silently omitted or faked.
+function fmt(value: string | number | null | undefined, unit: string) {
+  if (value === null || value === undefined || value === '') return '—';
+  return `${Number(value).toFixed(1)} ${unit}`;
+}
+
 export const DiagnosticsTab: React.FC<{
   pumpId: string;
   firmwareVersion: string | null;
   panel: PanelBinding;
   onPanelSaved: () => void;
-}> = ({ pumpId, firmwareVersion, panel, onPanelSaved }) => {
+  deviceType?: DeviceType;
+}> = ({ pumpId, firmwareVersion, panel, onPanelSaved, deviceType }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [provenance, setProvenance] = useState<PumpProvenance | null>(null);
@@ -112,6 +109,8 @@ export const DiagnosticsTab: React.FC<{
 
   const xAxisData = useMemo(() => telemetry.map(r => new Date(r.recorded_at)), [telemetry]);
   const rssiData = useMemo(() => telemetry.map(r => (r.gsm_rssi == null ? null : r.gsm_rssi)), [telemetry]);
+  const latest = telemetry.length > 0 ? telemetry[telemetry.length - 1] : null;
+  const isSolar = deviceType === 'SOLAR_VFD' || telemetry.some(t => t.device_type === 'SOLAR_VFD' || t.vfd_hz != null || t.vfd?.hz != null);
 
   if (loading) {
     return (
@@ -123,6 +122,37 @@ export const DiagnosticsTab: React.FC<{
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {isSolar && (
+        <Card elevation={1}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Solar VFD Diagnostics (Fuji FRENIC-Ace)
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+              Modbus RTU over Port 2 (DX+/DX-), Inverter parameter H30 = 6. Real-time controller registers.
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 1.5 }}>
+              <Row label="Drive Make / Model" value="Fuji FRENIC-Ace" />
+              <Row label="Inverter Comm Port" value="Port 2 (DX+/DX-) RTU" />
+              <Row label="Output Frequency" value={fmt(latest?.vfd?.hz ?? latest?.vfd_hz, 'Hz')} />
+              <Row label="Output Current" value={fmt(latest?.vfd?.i_out ?? latest?.vfd_i_out, 'A')} />
+              <Row label="AC Output Voltage" value={fmt(latest?.vfd?.v_ac ?? latest?.vfd_v_ac, 'V')} />
+              <Row label="DC Bus Voltage" value={fmt(latest?.vfd?.v_dc ?? latest?.vfd_v_dc, 'V')} />
+              <Row label="Motor Output Power" value={fmt(latest?.vfd?.kw ?? latest?.vfd_kw, 'kW')} />
+              <Row label="VFD Operating Status" value={(latest?.vfd?.status ?? latest?.vfd_status) || '—'} />
+              <Row
+                label="Latest VFD Alarm"
+                value={
+                  (latest?.vfd?.fault_code ?? latest?.vfd_fault_code)
+                    ? `Code ${latest?.vfd?.fault_code ?? latest?.vfd_fault_code}`
+                    : ((latest?.vfd?.fault_code ?? latest?.vfd_fault_code) === 0 ? 'No fault' : '—')
+                }
+              />
+            </Box>
+          </CardContent>
+        </Card>
+      )}
+
       <Card elevation={1}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
