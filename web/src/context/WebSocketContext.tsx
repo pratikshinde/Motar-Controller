@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { getAuthToken } from '../api/client';
 import { useAuth } from './AuthContext';
+import { useViewing } from '../api/viewing';
 
 export type WsStatus = 'connecting' | 'open' | 'closed';
 
@@ -21,6 +22,7 @@ const MAX_BACKOFF_MS = 15000;
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  const viewingKey = useViewing()?.key ?? '';
   const [status, setStatus] = useState<WsStatus>('closed');
   const [lastMessageAt, setLastMessageAt] = useState<Date | null>(null);
 
@@ -55,7 +57,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (!token) return;
 
       setStatus('connecting');
-      const ws = new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}`);
+      const view = viewingKey ? `&view=${encodeURIComponent(viewingKey)}` : '';
+      const ws = new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}${view}`);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -100,7 +103,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       wsRef.current?.close();
       wsRef.current = null;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, viewingKey]);
 
   return <WebSocketCtx.Provider value={{ status, lastMessageAt, subscribe }}>{children}</WebSocketCtx.Provider>;
 };

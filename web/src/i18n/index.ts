@@ -23,6 +23,7 @@ export interface Dict {
   navConfigTemplates: string;
   navServiceReports: string;
   navAlerts: string;
+  navManufacturers: string;
   heroTitle: string;
   kpiTotal: string;
   kpiRunning: string;
@@ -72,6 +73,7 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     navConfigTemplates: 'Config Templates',
     navServiceReports: 'Service Reports',
     navAlerts: 'Alerts',
+    navManufacturers: 'Manufacturers',
     heroTitle: '3-Phase Power Health Monitor',
     kpiTotal: 'Total',
     kpiRunning: 'Running',
@@ -111,6 +113,7 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     navConfigTemplates: 'कॉन्फ़िग टेम्पलेट्स',
     navServiceReports: 'सेवा रिपोर्ट',
     navAlerts: 'अलर्ट',
+    navManufacturers: 'निर्माता',
     heroTitle: '3-फेज मोटर बिजली स्वास्थ्य मॉनिटर',
     kpiTotal: 'कुल उपकरण',
     kpiRunning: 'चालू',

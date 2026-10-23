@@ -8,6 +8,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import BusinessIcon from '@mui/icons-material/Business';
 import TuneIcon from '@mui/icons-material/Tune';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
@@ -18,15 +19,18 @@ export interface NavItemDef {
   path: string;
   labelKey:
     | 'navTelemetry' | 'navDevices' | 'navHierarchy' | 'navFaultLogs' | 'navMap' | 'navAudit'
-    | 'navFleet' | 'navFactory' | 'navHealth' | 'navSupport' | 'navConfigTemplates' | 'navServiceReports' | 'navAlerts';
+    | 'navFleet' | 'navFactory' | 'navHealth' | 'navSupport' | 'navConfigTemplates' | 'navServiceReports' | 'navAlerts' | 'navManufacturers';
   icon: SvgIconComponent;
   /** Omit to show for every role; the backing endpoint itself 403s outside this set. */
   roles?: RoleTier[];
+  /** The platform owner's own screens: hidden while looking at one manufacturer's portal. */
+  platformOnly?: boolean;
 }
 
 const PRIVILEGED: RoleTier[] = ['superadmin', 'manufacturer', 'distributor', 'dealer'];
 
 export const navItems: NavItemDef[] = [
+  { path: '/manufacturers', labelKey: 'navManufacturers', icon: BusinessIcon, roles: ['superadmin'], platformOnly: true },
   { path: '/dashboard', labelKey: 'navTelemetry', icon: ElectricBoltIcon },
   { path: '/fleet', labelKey: 'navFleet', icon: DashboardIcon, roles: PRIVILEGED },
   { path: '/alerts', labelKey: 'navAlerts', icon: NotificationsActiveIcon },
@@ -37,7 +41,7 @@ export const navItems: NavItemDef[] = [
   { path: '/config-templates', labelKey: 'navConfigTemplates', icon: TuneIcon, roles: PRIVILEGED },
   { path: '/service-reports', labelKey: 'navServiceReports', icon: AssignmentIcon, roles: PRIVILEGED },
   { path: '/audit', labelKey: 'navAudit', icon: HistoryIcon, roles: PRIVILEGED },
-  { path: '/factory', labelKey: 'navFactory', icon: PrecisionManufacturingIcon, roles: ['superadmin'] },
-  { path: '/health', labelKey: 'navHealth', icon: MonitorHeartIcon, roles: ['superadmin'] },
-  { path: '/support', labelKey: 'navSupport', icon: SupportAgentIcon, roles: ['superadmin'] }
+  { path: '/factory', labelKey: 'navFactory', icon: PrecisionManufacturingIcon, roles: ['superadmin'], platformOnly: true },
+  { path: '/health', labelKey: 'navHealth', icon: MonitorHeartIcon, roles: ['superadmin'], platformOnly: true },
+  { path: '/support', labelKey: 'navSupport', icon: SupportAgentIcon, roles: ['superadmin'], platformOnly: true }
 ];

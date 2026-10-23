@@ -5,7 +5,9 @@ import type { RoleTier, UserTreeNode, User, AccountStatus } from '../types';
 // offer a role the API would reject anyway. The server re-validates
 // regardless — this is a UX convenience, not the control.
 export const ASSIGNABLE_ROLES: Record<RoleTier, RoleTier[]> = {
-  superadmin: ['manufacturer', 'distributor', 'dealer', 'customer', 'support'],
+  // A manufacturer is a business with its own app and dashboard: it is added from the Manufacturers page, which creates it
+  // together with its brand. (The API still accepts role 'manufacturer' but requires the brand.)
+  superadmin: ['distributor', 'dealer', 'customer', 'support'],
   manufacturer: ['distributor', 'dealer', 'customer'],
   distributor: ['dealer', 'customer'],
   dealer: ['dealer', 'customer'],

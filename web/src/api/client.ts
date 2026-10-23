@@ -3,6 +3,7 @@
 // the reference implementation of the API contract; behaviour is preserved
 // exactly, only the transport (fetch → typed client) changed.
 import type { AuthResult, User } from '../types';
+import { getViewing, setViewing } from './viewing';
 
 export const API_BASE = '/api';
 
@@ -79,11 +80,15 @@ export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(USER_KEY);
+  setViewing(null);
 }
 
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  // The platform owner looking at one manufacturer's portal: every request is answered as that manufacturer, read-only.
+  const viewing = getViewing();
+  if (viewing) headers['X-View-Manufacturer'] = viewing.key;
   return headers;
 }
 

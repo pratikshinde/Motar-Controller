@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  AppBar, Toolbar, Box, Typography, IconButton, Chip, Drawer, List,
+  AppBar, Toolbar, Box, Typography, IconButton, Chip, Button, Drawer, List,
   ListItemButton, ListItemIcon, ListItemText, BottomNavigation,
   BottomNavigationAction, useMediaQuery, useTheme, Tooltip, Avatar
 } from '@mui/material';
@@ -21,6 +21,8 @@ import { navItems } from './navItems';
 import { SettingsDialog } from './SettingsDialog';
 import { MfaSetupDialog } from './MfaSetupDialog';
 import { BrandLogo } from './brand/BrandLogo';
+import { ManufacturerSwitcher } from './ManufacturerSwitcher';
+import { setViewing, useViewing } from '../api/viewing';
 
 const RAIL_WIDTH = 88;
 const DRAWER_WIDTH = 260;
@@ -40,6 +42,9 @@ export const AppShell: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // The platform owner looking at one manufacturer's portal (api/viewing.ts): read-only, and nothing of any other one.
+  const viewing = useViewing();
+  const viewingBannerHeight = viewing ? 4.5 : 0; // theme spacing units (36px)
 
   // App-wide alert notification (FR-WEB-060/062), independent of which
   // page is open. Rides the alert engine's `alert`/`alert_digest` WS
@@ -64,7 +69,9 @@ export const AppShell: React.FC = () => {
 
   const roleName = user ? ROLE_NAMES[user.role] : '';
   const railOrDrawerWidth = isExpanded ? DRAWER_WIDTH : RAIL_WIDTH;
-  const visibleNavItems = navItems.filter(item => !item.roles || (user && item.roles.includes(user.role)));
+  const visibleNavItems = navItems.filter(
+    item => (!item.roles || (user && item.roles.includes(user.role))) && !(viewing && item.platformOnly)
+  );
 
   const navList = (
     <List sx={{ pt: 1, px: isExpanded ? 1.5 : 1 }}>
@@ -122,6 +129,8 @@ export const AppShell: React.FC = () => {
           )}
           <Box sx={{ flexGrow: 1 }} />
 
+          {user?.role === 'superadmin' && <ManufacturerSwitcher />}
+
           {user && (
             <Chip
               avatar={<Avatar sx={{ bgcolor: theme.palette.m3.secondaryContainer, color: theme.palette.m3.onSecondaryContainer }}>{user.full_name.charAt(0)}</Avatar>}
@@ -147,6 +156,30 @@ export const AppShell: React.FC = () => {
             </IconButton>
           </Tooltip>
         </Toolbar>
+        {viewing && (
+          <Box
+            role="status"
+            sx={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, height: 36, px: 2,
+              bgcolor: theme.palette.m3.tertiaryContainer, color: theme.palette.m3.onTertiaryContainer
+            }}
+          >
+            <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+              Viewing {viewing.name} as the platform owner · read-only
+            </Typography>
+            <Button
+              size="small"
+              color="inherit"
+              sx={{ textTransform: 'none', textDecoration: 'underline', minWidth: 0 }}
+              onClick={() => {
+                setViewing(null);
+                navigate('/manufacturers');
+              }}
+            >
+              Back to platform
+            </Button>
+          </Box>
+        )}
       </AppBar>
 
       {!isCompact && (
@@ -155,7 +188,7 @@ export const AppShell: React.FC = () => {
           sx={{
             width: railOrDrawerWidth,
             flexShrink: 0,
-            [`& .MuiDrawer-paper`]: { width: railOrDrawerWidth, boxSizing: 'border-box', pt: 8 }
+            [`& .MuiDrawer-paper`]: { width: railOrDrawerWidth, boxSizing: 'border-box', pt: 8 + viewingBannerHeight }
           }}
         >
           {navList}
@@ -166,7 +199,7 @@ export const AppShell: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          pt: 8,
+          pt: 8 + viewingBannerHeight,
           pb: isCompact ? 8 : 0,
           height: '100vh',
           overflow: 'auto',
@@ -181,7 +214,8 @@ export const AppShell: React.FC = () => {
           mx: 'auto',
           animation: 'fadeIn 0.5s ease-out'
         }}>
-          <Outlet />
+          {/* A different manufacturer is a different set of data: remount so every page loads it afresh. */}
+          <Outlet key={viewing?.key ?? 'platform'} />
         </Box>
       </Box>
 

@@ -23,15 +23,22 @@ import { InviteRedeemView } from './views/InviteRedeemView';
 import { ConfigTemplatesView } from './views/ConfigTemplatesView';
 import { ServiceReportsView } from './views/ServiceReportsView';
 import { AlertsView } from './views/AlertsView';
+import { ManufacturersView } from './views/ManufacturersView';
 import { LandingPageView } from './views/landing/LandingPageView';
 import { LightScope } from './theme/LightScope';
 
 // The public pages are drawn on a fixed light palette, so they always render with the light theme.
 const publicPage = (page: React.ReactElement) => <LightScope>{page}</LightScope>;
 
-const AuthenticatedApp: React.FC = () => (
+// Where a signed-in person lands: the platform owner on the list of manufacturers, everyone else on their own pumps.
+const homePath = (role: string | null) => (role === 'superadmin' ? '/manufacturers' : '/dashboard');
+
+const AuthenticatedApp: React.FC = () => {
+  const { role } = useAuth();
+  return (
   <Routes>
     <Route element={<AppShell />}>
+      <Route path="/manufacturers" element={role === 'superadmin' ? <ManufacturersView /> : <Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={<TelemetryView />} />
       <Route path="/telemetry" element={<TelemetryView />} />
       <Route path="/fleet" element={<FleetDashboardView />} />
@@ -47,28 +54,29 @@ const AuthenticatedApp: React.FC = () => (
       <Route path="/factory" element={<FactoryConsoleView />} />
       <Route path="/health" element={<SystemHealthView />} />
       <Route path="/support" element={<SupportConsoleView />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to={homePath(role)} replace />} />
     </Route>
   </Routes>
-);
+  );
+};
 
 // /invite/:token (FR-WEB-035) must be reachable with no session at all —
 // that's the whole point of a self-registration link — so it's matched
 // before the auth gate rather than nested inside AuthenticatedApp.
 const Gate: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role } = useAuth();
   return (
     <Routes>
       <Route path="/" element={publicPage(<LandingPageView />)} />
 
       {/* Authentication & Onboarding Portal */}
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="login" />)} />
-      <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="login" />)} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="register" />)} />
-      <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="register" />)} />
-      <Route path="/auth/register/*" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="register" />)} />
-      <Route path="/auth/verify-otp" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="login" />)} />
-      <Route path="/auth/mfa" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/login" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/auth/login" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="register" />)} />
+      <Route path="/auth/register" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="register" />)} />
+      <Route path="/auth/register/*" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="register" />)} />
+      <Route path="/auth/verify-otp" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/auth/mfa" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
 
       {/* Invite Redemption Token */}
       <Route path="/invite/:token" element={<InviteRedeemView />} />
