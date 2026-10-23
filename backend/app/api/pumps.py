@@ -88,6 +88,7 @@ def format_pump(pump: Pump, latest_telem: Optional[dict] = None) -> dict:
     res = {
         "id": pump.id,
         "name": pump.name,
+        "device_type": getattr(pump, "device_type", "AC_3PH") or "AC_3PH",
         "supply_type": pump.supply_type,
         "hp_rating": float(pump.hp_rating) if pump.hp_rating is not None else None,
         "owner_user_id": str(pump.owner_user_id) if pump.owner_user_id else None,
@@ -250,9 +251,14 @@ def create_pump(
         elif s_type in ["1P"]:
             s_type = "1-phase"
 
+        d_type = (req.device_type or "AC_3PH").strip().upper()
+        if d_type not in ("AC_3PH", "SOLAR_VFD"):
+            raise HTTPException(status_code=400, detail="device_type must be 'AC_3PH' or 'SOLAR_VFD'")
+
         pump = Pump(
             id=req.id,
             name=req.name,
+            device_type=d_type,
             supply_type=s_type,
             hp_rating=req.hp_rating or 5.0,
             owner_user_id=u_id,
@@ -609,6 +615,13 @@ def get_pump_history(
                 "gsm_rssi": r.gsm_rssi,
                 "recorded_at": r.recorded_at.isoformat() if r.recorded_at else None,
                 "source": "raw",
+                "vfd_hz": float(r.vfd_hz) if r.vfd_hz is not None else None,
+                "vfd_i_out": float(r.vfd_i_out) if r.vfd_i_out is not None else None,
+                "vfd_v_ac": float(r.vfd_v_ac) if r.vfd_v_ac is not None else None,
+                "vfd_v_dc": float(r.vfd_v_dc) if r.vfd_v_dc is not None else None,
+                "vfd_kw": float(r.vfd_kw) if r.vfd_kw is not None else None,
+                "vfd_status": r.vfd_status,
+                "vfd_fault_code": r.vfd_fault_code,
             }
             for r in records
         ]
@@ -694,14 +707,15 @@ def export_pump_history_csv(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["id", "recorded_at", "v_ry", "v_yb", "v_br", "i_r", "i_y", "i_b", "pump_on", "fault_active", "gsm_rssi"])
+    writer.writerow(["id", "recorded_at", "v_ry", "v_yb", "v_br", "i_r", "i_y", "i_b", "pump_on", "fault_active", "gsm_rssi", "vfd_hz", "vfd_i_out", "vfd_v_ac", "vfd_v_dc", "vfd_kw", "vfd_status", "vfd_fault_code"])
     for r in records:
         writer.writerow([
             r.id,
             r.recorded_at.isoformat() if r.recorded_at else "",
             r.v_ry, r.v_yb, r.v_br,
             r.i_r, r.i_y, r.i_b,
-            r.pump_on, r.fault_active, r.gsm_rssi
+            r.pump_on, r.fault_active, r.gsm_rssi,
+            r.vfd_hz, r.vfd_i_out, r.vfd_v_ac, r.vfd_v_dc, r.vfd_kw, r.vfd_status, r.vfd_fault_code
         ])
 
     csv_data = output.getvalue()
@@ -1352,7 +1366,7 @@ def download_sample_csv():
 def bulk_import_pumps(
     file: UploadFile = File(...),
     brand: Optional[str] = None,
-    current_user: User = Depends(require_roles(["superadmin"])),
+    current_user: User = Depends(require_roles(["superadmin", "manufacturer"])),
     db: Session = Depends(get_db)
 ):
     if not (file.filename or "").lower().endswith('.csv'):
@@ -1391,6 +1405,8 @@ def bulk_import_pumps(
 
         raw_st = (row.get("supply_type") or "3-phase").strip()
         supply_type = "3-phase" if raw_st in ["3P", "3-phase"] else "1-phase"
+        raw_dt = (row.get("device_type") or "AC_3PH").strip().upper()
+        device_type = "SOLAR_VFD" if raw_dt in ["SOLAR_VFD", "SOLAR", "VFD"] else "AC_3PH"
         try:
             hp = float(row.get("hp_rating") or "5.0")
         except ValueError:
@@ -1401,6 +1417,7 @@ def bulk_import_pumps(
         new_pump = Pump(
             id=serial,
             name=f"Pump {serial}",
+            device_type=device_type,
             supply_type=supply_type,
             hp_rating=hp,
             owner_user_id=current_user.id,

@@ -63,7 +63,8 @@ class TelemetryRepository:
         stmt = text("""
             WITH latest AS (
                 SELECT DISTINCT ON (pump_id)
-                    pump_id, v_ry, v_yb, v_br, i_r, i_y, i_b, pump_on, fault_active, gsm_rssi, recorded_at
+                    pump_id, v_ry, v_yb, v_br, i_r, i_y, i_b, pump_on, fault_active, gsm_rssi, recorded_at,
+                    vfd_hz, vfd_i_out, vfd_v_ac, vfd_v_dc, vfd_kw, vfd_status, vfd_fault_code
                 FROM agripump.telemetry_history
                 WHERE pump_id = ANY(:p_ids)
                 ORDER BY pump_id, recorded_at DESC
@@ -90,7 +91,8 @@ class TelemetryRepository:
             SELECT l.pump_id, l.v_ry, l.v_yb, l.v_br, l.i_r, l.i_y, l.i_b,
                    l.pump_on, l.fault_active, l.gsm_rssi, l.recorded_at,
                    COALESCE(t.on_rows, 0) AS on_rows,
-                   CASE WHEN l.fault_active THEN COALESCE(f.fault_code, a.fault_code) END AS fault_code
+                   CASE WHEN l.fault_active THEN COALESCE(f.fault_code, a.fault_code, l.vfd_fault_code) END AS fault_code,
+                   l.vfd_hz, l.vfd_i_out, l.vfd_v_ac, l.vfd_v_dc, l.vfd_kw, l.vfd_status, l.vfd_fault_code
             FROM latest l
             LEFT JOIN today t      ON t.pump_id = l.pump_id
             LEFT JOIN open_fault f ON f.pump_id = l.pump_id
@@ -103,6 +105,25 @@ class TelemetryRepository:
 
         result = {}
         for r in rows:
+            vfd_hz = num(r[13])
+            vfd_i_out = num(r[14])
+            vfd_v_ac = num(r[15])
+            vfd_v_dc = num(r[16])
+            vfd_kw = num(r[17])
+            vfd_status = r[18]
+            vfd_fault_code = int(r[19]) if r[19] is not None else None
+            vfd_dict = None
+            if any(x is not None for x in [vfd_hz, vfd_i_out, vfd_v_ac, vfd_v_dc, vfd_kw, vfd_status, vfd_fault_code]):
+                vfd_dict = {
+                    "hz": vfd_hz,
+                    "i_out": vfd_i_out,
+                    "v_ac": vfd_v_ac,
+                    "v_dc": vfd_v_dc,
+                    "kw": vfd_kw,
+                    "status": vfd_status,
+                    "fault_code": vfd_fault_code,
+                }
+
             result[r[0]] = {
                 "v_ry": num(r[1]), "v_yb": num(r[2]), "v_br": num(r[3]),
                 "i_r": num(r[4]), "i_y": num(r[5]), "i_b": num(r[6]),
@@ -113,5 +134,13 @@ class TelemetryRepository:
                 "recorded_at": r[10].isoformat() if r[10] else None,
                 "runtime_today_min": int(r[11] or 0),
                 "fault_code": int(r[12]) if r[12] is not None else None,
+                "vfd": vfd_dict,
+                "vfd_hz": vfd_hz,
+                "vfd_i_out": vfd_i_out,
+                "vfd_v_ac": vfd_v_ac,
+                "vfd_v_dc": vfd_v_dc,
+                "vfd_kw": vfd_kw,
+                "vfd_status": vfd_status,
+                "vfd_fault_code": vfd_fault_code,
             }
         return result

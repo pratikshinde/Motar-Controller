@@ -96,11 +96,13 @@ class Pump(Base):
         # A panel serial names one physical panel. Checked by the database, not by a query, because a partner's
         # queries only see their own pumps and must not learn (or miss) what sits in another partner's tree.
         Index("uq_pumps_panel_serial", "panel_serial", unique=True, postgresql_where=text("panel_serial IS NOT NULL")),
+        CheckConstraint("device_type IN ('AC_3PH', 'SOLAR_VFD')", name="pumps_device_type_check"),
         {"schema": SCHEMA},
     )
 
     id = Column(String(50), primary_key=True)
     name = Column(String(100), nullable=False)
+    device_type = Column(String(20), nullable=False, default="AC_3PH", server_default=text("'AC_3PH'"))
     supply_type = Column(String(10), nullable=False, default="3-phase")
     hp_rating = Column(Numeric(4, 1), default=7.5)
     owner_user_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="CASCADE"), nullable=False)
@@ -202,6 +204,13 @@ class TelemetryHistory(Base):
     seq = Column(BigInteger, nullable=True)
     ts_approx = Column(Boolean, default=False)
     buffered = Column(Boolean, default=False)
+    vfd_hz = Column(Numeric(5, 2), nullable=True)
+    vfd_i_out = Column(Numeric(5, 2), nullable=True)
+    vfd_v_ac = Column(Numeric(5, 1), nullable=True)
+    vfd_v_dc = Column(Numeric(5, 1), nullable=True)
+    vfd_kw = Column(Numeric(5, 2), nullable=True)
+    vfd_status = Column(String(30), nullable=True)
+    vfd_fault_code = Column(SmallInteger, nullable=True)
     recorded_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
 
 class FaultCodeCatalog(Base):
@@ -365,10 +374,14 @@ class Invite(Base):
 
 class DeviceBatch(Base):
     __tablename__ = "device_batches"
-    __table_args__ = {"schema": SCHEMA}
+    __table_args__ = (
+        CheckConstraint("device_type IN ('AC_3PH', 'SOLAR_VFD')", name="device_batches_device_type_check"),
+        {"schema": SCHEMA},
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     batch_code = Column(String(50), nullable=False, unique=True)
+    device_type = Column(String(20), nullable=False, default="AC_3PH", server_default=text("'AC_3PH'"))
     model = Column(String(100), nullable=False)
     hw_rev = Column(String(20), nullable=True)
     quantity = Column(Integer, nullable=False, default=0)

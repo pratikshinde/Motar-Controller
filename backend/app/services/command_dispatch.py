@@ -3,6 +3,13 @@
 `dispatch_command` runs after the HTTP response (FastAPI background task): it publishes the command and
 moves it QUEUED -> SENT, or QUEUED -> FAILED if the broker did not take it. Every state change, from here or
 from an ack / reading / sweep, is announced to WebSocket subscribers as a `command` message.
+
+Device-side command contract:
+- AC_3PH: START / STOP activates/deactivates the pump contactor.
+- SOLAR_VFD: START = write 0001h to Fuji FRENIC-Ace S06 (run command FWD).
+             STOP  = write 0000h to Fuji FRENIC-Ace S06 (stop command).
+  Device firmware carries out the Modbus RTU communication over Port 2 (DX+/DX-) with H30=6.
+  The platform uses the exact same command types ("START", "STOP") and lifecycle.
 """
 from __future__ import annotations
 

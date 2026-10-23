@@ -36,5 +36,6 @@ def build_user_views(db: Session, user: User, pumps: Iterable[Pump]) -> Dict[str
             "site_name": sites.get(a.site_id) if (a and a.site_id) else None,
             "sort_order": a.sort_order if a else 0,
             "access_role": role,
+            "device_type": getattr(p, "device_type", "AC_3PH") or "AC_3PH",
         }
     return views

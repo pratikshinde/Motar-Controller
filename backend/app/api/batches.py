@@ -18,6 +18,7 @@ def serialize_batch(b: DeviceBatch, db: Session) -> Dict[str, Any]:
     return {
         "id": str(b.id),
         "batch_code": b.batch_code,
+        "device_type": getattr(b, "device_type", "AC_3PH") or "AC_3PH",
         "model": b.model,
         "hw_rev": b.hw_rev,
         "quantity": b.quantity,
@@ -88,8 +89,13 @@ def create_batch(
         except ValueError:
             pass
 
+    d_type = (payload.get("device_type") or "AC_3PH").strip().upper()
+    if d_type not in ("AC_3PH", "SOLAR_VFD"):
+        raise HTTPException(status_code=400, detail="device_type must be 'AC_3PH' or 'SOLAR_VFD'")
+
     batch = DeviceBatch(
         batch_code=batch_code.strip(),
+        device_type=d_type,
         model=model,
         hw_rev=payload.get("hw_rev"),
         quantity=int(payload.get("quantity") or payload.get("total_devices") or 0),
@@ -239,6 +245,7 @@ def fleet_provisioning_pre_hook(
         pump = Pump(
             id=pump_id,
             name=f"Pump {serial[-6:]}",
+            device_type=getattr(batch, "device_type", "AC_3PH") or "AC_3PH",
             supply_type="3-phase",
             hp_rating=7.5,
             owner_user_id=owner_id,

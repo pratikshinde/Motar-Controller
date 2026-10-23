@@ -19,10 +19,20 @@ class TelemetrySnapshot(BaseModel):
     fault_code: Optional[int] = None
     # Estimated from telemetry rows (one running row ~ one minute) since local midnight (IST).
     runtime_today_min: Optional[int] = None
+    # VFD metrics for SOLAR_VFD pumps
+    vfd: Optional[Dict[str, Any]] = None
+    vfd_hz: Optional[float] = None
+    vfd_i_out: Optional[float] = None
+    vfd_v_ac: Optional[float] = None
+    vfd_v_dc: Optional[float] = None
+    vfd_kw: Optional[float] = None
+    vfd_status: Optional[str] = None
+    vfd_fault_code: Optional[int] = None
 
 class PumpResponse(BaseModel):
     id: str
     name: str
+    device_type: Optional[str] = "AC_3PH"
     supply_type: str
     hp_rating: Optional[float] = None
     owner_user_id: Optional[str] = None
@@ -54,6 +64,15 @@ class PumpResponse(BaseModel):
     signal_dbm: Optional[int] = None
     runtime_today_min: Optional[int] = None
     total_runtime_min: Optional[int] = None
+    # VFD metrics for SOLAR_VFD pumps
+    vfd: Optional[Dict[str, Any]] = None
+    vfd_hz: Optional[float] = None
+    vfd_i_out: Optional[float] = None
+    vfd_v_ac: Optional[float] = None
+    vfd_v_dc: Optional[float] = None
+    vfd_kw: Optional[float] = None
+    vfd_status: Optional[str] = None
+    vfd_fault_code: Optional[int] = None
     # This user's own view of the pump (device_access): nickname, group, order, role
     display_name: Optional[str] = None
     nickname: Optional[str] = None
@@ -206,6 +225,14 @@ class HistoryPoint(BaseModel):
     i_max: Optional[float] = None
     i_mean: Optional[float] = None
     sample_count: Optional[int] = None
+    # VFD metrics
+    vfd_hz: Optional[float] = None
+    vfd_i_out: Optional[float] = None
+    vfd_v_ac: Optional[float] = None
+    vfd_v_dc: Optional[float] = None
+    vfd_kw: Optional[float] = None
+    vfd_status: Optional[str] = None
+    vfd_fault_code: Optional[int] = None
 
     class Config:
         extra = "allow"

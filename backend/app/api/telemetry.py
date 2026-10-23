@@ -51,6 +51,30 @@ def ingest_telemetry(
     ).first():
         return {"message": "Duplicate reading ignored", "status": pump.status}
 
+    device_type = getattr(pump, "device_type", "AC_3PH") or "AC_3PH"
+
+    # Reject or accept vfd object based on device_type
+    if req.vfd is not None:
+        if device_type != "SOLAR_VFD":
+            raise HTTPException(
+                status_code=400,
+                detail=f"VFD telemetry is only accepted for SOLAR_VFD pumps (pump '{pump_id}' is {device_type})"
+            )
+        # Validate ranges
+        v = req.vfd
+        if v.hz is not None and (v.hz < 0.0 or v.hz > 500.0):
+            raise HTTPException(status_code=400, detail="vfd.hz out of range [0.0, 500.0]")
+        if v.i_out is not None and (v.i_out < 0.0 or v.i_out > 500.0):
+            raise HTTPException(status_code=400, detail="vfd.i_out out of range [0.0, 500.0]")
+        if v.v_ac is not None and (v.v_ac < 0.0 or v.v_ac > 1000.0):
+            raise HTTPException(status_code=400, detail="vfd.v_ac out of range [0.0, 1000.0]")
+        if v.v_dc is not None and (v.v_dc < 0.0 or v.v_dc > 1500.0):
+            raise HTTPException(status_code=400, detail="vfd.v_dc out of range [0.0, 1500.0]")
+        if v.kw is not None and (v.kw < 0.0 or v.kw > 500.0):
+            raise HTTPException(status_code=400, detail="vfd.kw out of range [0.0, 500.0]")
+        if v.fault_code is not None and (v.fault_code < 0 or v.fault_code > 9999):
+            raise HTTPException(status_code=400, detail="vfd.fault_code out of range [0, 9999]")
+
     # Timezone-aware: a naive UTC value would be read as local time by a database whose timezone is not UTC.
     now = datetime.now(timezone.utc)
     vl = req.vl or [0.0, 0.0, 0.0]
@@ -62,20 +86,64 @@ def ingest_telemetry(
     i_y = float(i[1]) if len(i) > 1 else 0.0
     i_b = float(i[2]) if len(i) > 2 else 0.0
 
-    pump_on = bool(req.mot == 1) if req.mot is not None else False
-    fault_active = bool(req.flt and req.flt > 0)
+    vfd_dict = None
+    vfd_hz = None
+    vfd_i_out = None
+    vfd_v_ac = None
+    vfd_v_dc = None
+    vfd_kw = None
+    vfd_status = None
+    vfd_fault_code = None
+
+    if device_type == "SOLAR_VFD" and req.vfd is not None:
+        vfd_hz = req.vfd.hz
+        vfd_i_out = req.vfd.i_out
+        vfd_v_ac = req.vfd.v_ac
+        vfd_v_dc = req.vfd.v_dc
+        vfd_kw = req.vfd.kw
+        vfd_status = req.vfd.status
+        vfd_fault_code = req.vfd.fault_code
+        vfd_dict = {
+            "hz": vfd_hz,
+            "i_out": vfd_i_out,
+            "v_ac": vfd_v_ac,
+            "v_dc": vfd_v_dc,
+            "kw": vfd_kw,
+            "status": vfd_status,
+            "fault_code": vfd_fault_code,
+        }
+
+    # Determine motor and fault state
+    if req.mot is not None:
+        pump_on = bool(req.mot == 1)
+    elif vfd_status:
+        pump_on = (vfd_status.upper() == "RUNNING")
+    elif vfd_hz is not None:
+        pump_on = bool(vfd_hz > 0.5)
+    else:
+        pump_on = False
+
+    effective_fault_code = vfd_fault_code if (vfd_fault_code is not None and vfd_fault_code > 0) else (req.flt if req.flt and req.flt > 0 else None)
+    fault_active = bool(effective_fault_code and effective_fault_code > 0)
     # pumps.status only allows RUNNING / STOPPED / FAULT (same rule as the SQS ingestion worker)
     current_status = "FAULT" if fault_active else ("RUNNING" if pump_on else "STOPPED")
 
     # 1. Insert into telemetry_history (TimescaleDB hypertable)
     telem = TelemetryHistory(
         pump_id=pump_id,
-        v_ry=v_ry,
-        v_yb=v_yb,
-        v_br=v_br,
-        i_r=i_r,
-        i_y=i_y,
-        i_b=i_b,
+        v_ry=v_ry if (device_type != "SOLAR_VFD" or req.vl) else None,
+        v_yb=v_yb if (device_type != "SOLAR_VFD" or req.vl) else None,
+        v_br=v_br if (device_type != "SOLAR_VFD" or req.vl) else None,
+        i_r=i_r if (device_type != "SOLAR_VFD" or req.i) else None,
+        i_y=i_y if (device_type != "SOLAR_VFD" or req.i) else None,
+        i_b=i_b if (device_type != "SOLAR_VFD" or req.i) else None,
+        vfd_hz=vfd_hz,
+        vfd_i_out=vfd_i_out,
+        vfd_v_ac=vfd_v_ac,
+        vfd_v_dc=vfd_v_dc,
+        vfd_kw=vfd_kw,
+        vfd_status=vfd_status,
+        vfd_fault_code=vfd_fault_code,
         pump_on=pump_on,
         fault_active=fault_active,
         gsm_rssi=req.rssi,
@@ -100,9 +168,18 @@ def ingest_telemetry(
         "fault_active": fault_active,
         "gsm_rssi": req.rssi,
         "signal_dbm": req.rssi,
-        "fault_code": req.flt if fault_active else None,
+        "fault_code": effective_fault_code,
         "total_runtime_min": req.rt,
         "status": current_status,
+        "device_type": device_type,
+        "vfd": vfd_dict,
+        "vfd_hz": vfd_hz,
+        "vfd_i_out": vfd_i_out,
+        "vfd_v_ac": vfd_v_ac,
+        "vfd_v_dc": vfd_v_dc,
+        "vfd_kw": vfd_kw,
+        "vfd_status": vfd_status,
+        "vfd_fault_code": vfd_fault_code,
         "recorded_at": now.isoformat()
     }
     if hasattr(Pump, "last_telemetry"):
@@ -111,13 +188,13 @@ def ingest_telemetry(
     # 3. Handle fault condition
     fault_log_id = None
     if fault_active:
-        fault_info = db.query(FaultCodeCatalog).filter(FaultCodeCatalog.code == req.flt).first()
-        f_name = fault_info.name if fault_info else f"Fault {req.flt}"
+        fault_info = db.query(FaultCodeCatalog).filter(FaultCodeCatalog.code == effective_fault_code).first()
+        f_name = fault_info.name if fault_info else f"Fault {effective_fault_code}"
         f_sev = fault_info.severity if fault_info else "HIGH"
 
         f_log = FaultLog(
             pump_id=pump_id,
-            fault_code=req.flt,
+            fault_code=effective_fault_code,
             description=f_name,        # NOT NULL column
             fault_description=f_name,
             v_ry=v_ry,
@@ -139,13 +216,13 @@ def ingest_telemetry(
             pump_id=pump_id,
             alert_type="FAULT",
             severity=f_sev,
-            fault_code=req.flt,
+            fault_code=effective_fault_code,
             source_fault_log_id=fault_log_id,
             background_tasks=background_tasks
         )
 
     # A reading that shows the requested motor state settles the START / STOP that asked for it.
-    moved_commands = cs.observe_reading(db, pump_id, pump_on if req.mot is not None else None, now)
+    moved_commands = cs.observe_reading(db, pump_id, pump_on if (req.mot is not None or vfd_status or vfd_hz is not None) else None, now)
 
     h_path = pump.hierarchy_path
     db.commit()

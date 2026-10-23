@@ -56,7 +56,14 @@ COMMAND_COOLDOWN_SECONDS = 45
 # Layer A (MCU) names for what a bare `ack` frame is answering (SRS §6.1).
 _ACK_REF = {"START": "motor_cmd", "STOP": "motor_cmd", "SET_TIMER": "settings", "SET_CONFIG": "settings"}
 # Motor state a START / STOP asks for; the only commands whose effect a reading can prove.
+# Command Contract:
+# - AC_3PH: START / STOP controls the physical starter contactor (SRS §6.1).
+# - SOLAR_VFD: START = write 0001h to Fuji FRENIC-Ace S06 (run command FWD).
+#              STOP  = write 0000h to Fuji FRENIC-Ace S06 (stop command).
+#   Firmware translates the cloud command to Modbus RTU over Port 2 (DX+/DX-) with H30=6.
+#   Cloud contract is strictly identical: command types remain "START" and "STOP".
 _EXPECTED_MOTOR = {"START": True, "STOP": False}
+
 
 
 class IllegalTransition(Exception):

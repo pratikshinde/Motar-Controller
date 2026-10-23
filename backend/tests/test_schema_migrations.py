@@ -124,8 +124,8 @@ class TestEmptyDatabase(Scratch):
 
     def test_the_rules_the_application_relies_on_are_really_there(self):
         url = self.build()
-        # fault-code reference data (SRS 6.2)
-        self.assertEqual(self.q(url, "select count(*) from agripump.fault_code_catalog")[0][0], 11)
+        # fault-code reference data (SRS 6.2 + VFD fault codes 100-106)
+        self.assertEqual(self.q(url, "select count(*) from agripump.fault_code_catalog")[0][0], 18)
         # one account per phone number, and a role has to be one of the five
         # (the database now supplies defaults itself: a bare insert with only the essentials works)
         self.q(url, "insert into agripump.users (full_name, role, hierarchy_path, phone_number) values "
@@ -218,7 +218,7 @@ class TestExistingDatabases(Scratch):
             "cccccccc-0000-0000-0000-000000000001": "EXPIRED",              # was waiting forever
             "cccccccc-0000-0000-0000-000000000002": "ACKNOWLEDGED",
             "cccccccc-0000-0000-0000-000000000003": "REJECTED"})
-        self.assertEqual(self.q(old, "select count(*) from agripump.fault_code_catalog")[0][0], 11)
+        self.assertEqual(self.q(old, "select count(*) from agripump.fault_code_catalog")[0][0], 18)
         self.assertEqual(self.q(old, "select description from agripump.fault_logs")[0][0], "Fault")
 
         diffs = schema_diff.compare(schema_diff.snapshot(_sa(clean)), schema_diff.snapshot(_sa(old)), "clean", "adopted")

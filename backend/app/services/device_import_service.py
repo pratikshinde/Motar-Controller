@@ -48,7 +48,7 @@ SUPPLY_MAP = {
 }
 
 REQUIRED_FIELDS = {"serial"}
-KNOWN_FIELDS = {"serial", "model", "hw_rev", "batch_id", "manufacture_date", "supply_type", "hp_rating", "name"}
+KNOWN_FIELDS = {"serial", "model", "hw_rev", "batch_id", "manufacture_date", "supply_type", "hp_rating", "name", "device_type"}
 
 
 class ImportError:
@@ -174,6 +174,7 @@ class DeviceImportService:
                     pump = Pump(
                         id=serial,
                         name=parsed.get("name") or f"Device {serial}",
+                        device_type=parsed.get("device_type") or "AC_3PH",
                         supply_type=parsed["supply_type"],
                         hp_rating=parsed["hp_rating"],
                         owner_user_id=self.actor.id,
@@ -321,5 +322,9 @@ class DeviceImportService:
                 parsed["hp_rating"] = 5.0
         else:
             parsed["hp_rating"] = 5.0
+
+        # ── device_type ──────────────────────────────────────────────────
+        dt_raw = row.get("device_type", "AC_3PH").strip().upper()
+        parsed["device_type"] = "SOLAR_VFD" if dt_raw in ["SOLAR_VFD", "SOLAR", "VFD"] else "AC_3PH"
 
         return errors, parsed

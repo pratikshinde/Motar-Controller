@@ -104,13 +104,13 @@ SWATI_ORGS = [
     ("sw_dist", "Demo Swati Distributor", OrgType.DISTRIBUTOR, "sw_mfr"),
     ("sw_dealer", "Demo Swati Dealer", OrgType.DEALER, "sw_dist"),
 ]
-# id, name, owner phone, brand, hierarchy path of the pump, org key
+# id, name, owner phone, brand, hierarchy path of the pump, org key, device_type
 DEMO_PUMPS = [
-    ("AJANTA-DEMO-01", "Rameshwar borewell", "9999900006", "ajanta", "/SA/MF/DIST1/DLR1/FARM1", "dealer"),
-    ("AJANTA-DEMO-02", "Rameshwar orchard pump", "9999900006", "ajanta", "/SA/MF/DIST1/DLR1/FARM1", "dealer"),
-    ("SWATI-DEMO-01", "Swati borewell", "9999900016", "swati", "/SA/SW/DIST1/DLR1/FARM1", "sw_dealer"),
-    ("DEMO-SHARED-AJ", "Shared farm - Ajanta pump", "9999900019", "ajanta", "/SA/MF/DIST1/DLR1/FARM2", "dealer"),
-    ("DEMO-SHARED-SW", "Shared farm - Swati pump", "9999900019", "swati", "/SA/SW/DIST1/DLR1/FARM2", "sw_dealer"),
+    ("AJANTA-DEMO-01", "Rameshwar borewell", "9999900006", "ajanta", "/SA/MF/DIST1/DLR1/FARM1", "dealer", "AC_3PH"),
+    ("AJANTA-DEMO-02", "Rameshwar orchard pump", "9999900006", "ajanta", "/SA/MF/DIST1/DLR1/FARM1", "dealer", "AC_3PH"),
+    ("SWATI-DEMO-01", "Swati borewell", "9999900016", "swati", "/SA/SW/DIST1/DLR1/FARM1", "sw_dealer", "SOLAR_VFD"),
+    ("DEMO-SHARED-AJ", "Shared farm - Ajanta pump", "9999900019", "ajanta", "/SA/MF/DIST1/DLR1/FARM2", "dealer", "AC_3PH"),
+    ("DEMO-SHARED-SW", "Shared farm - Swati pump", "9999900019", "swati", "/SA/SW/DIST1/DLR1/FARM2", "sw_dealer", "SOLAR_VFD"),
 ]
 
 
@@ -163,17 +163,17 @@ def _seed_swati(db, orgs, by_phone, pass_hash):
     ajanta.owner_user_id = by_phone["9999900002"].id
     swati.owner_user_id = by_phone["9999900012"].id
 
-    for pump_id, name, owner_phone, brand_key, path, org_key in DEMO_PUMPS:
+    for pump_id, name, owner_phone, brand_key, path, org_key, device_type in DEMO_PUMPS:
         owner = by_phone[owner_phone]
         pump = db.query(Pump).filter(Pump.id == pump_id).first()
-        values = dict(name=name, owner_user_id=owner.id, hierarchy_path=path, org_id=orgs[org_key].id, brand_id=brands[brand_key].id)
+        values = dict(name=name, owner_user_id=owner.id, hierarchy_path=path, org_id=orgs[org_key].id, brand_id=brands[brand_key].id, device_type=device_type)
         if pump is None:
             db.add(Pump(id=pump_id, supply_type="3-phase", hp_rating=7.5, status="STOPPED", lifecycle_state="ACTIVE", **values))
-            print(f"Created pump: {pump_id} ({brand_key})")
+            print(f"Created pump: {pump_id} ({brand_key}, {device_type})")
         else:
             for k, v in values.items():
                 setattr(pump, k, v)
-            print(f"Updated pump: {pump_id} ({brand_key})")
+            print(f"Updated pump: {pump_id} ({brand_key}, {device_type})")
 
 
 def seed_demo_users():

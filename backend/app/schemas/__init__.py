@@ -113,6 +113,7 @@ class TimerConfigRequest(BaseModel):
 class PumpCreate(BaseModel):
     id: str
     name: str
+    device_type: Optional[str] = "AC_3PH"
     supply_type: str = "3-phase"
     hp_rating: float = 10.0
     latitude: Optional[float] = None
@@ -122,6 +123,7 @@ class PumpCreate(BaseModel):
 
 class PumpUpdate(BaseModel):
     name: Optional[str] = None
+    device_type: Optional[str] = None
     supply_type: Optional[str] = None
     hp_rating: Optional[float] = None
     latitude: Optional[float] = None
@@ -201,6 +203,16 @@ class CommandAckRequest(BaseModel):
     status: Optional[str] = None
     reject_reason: Optional[str] = None
 
+# VFD Telemetry block for SOLAR_VFD pumps
+class VfdTelemetry(BaseModel):
+    hz: Optional[float] = Field(None, ge=0.0, le=500.0, description="Output frequency in Hz")
+    i_out: Optional[float] = Field(None, ge=0.0, le=500.0, description="Output current in Amperes")
+    v_ac: Optional[float] = Field(None, ge=0.0, le=1000.0, description="AC output voltage in Volts")
+    v_dc: Optional[float] = Field(None, ge=0.0, le=1500.0, description="DC bus voltage in Volts")
+    kw: Optional[float] = Field(None, ge=0.0, le=500.0, description="Motor output power in kW")
+    status: Optional[str] = Field(None, max_length=30, description="VFD operating status")
+    fault_code: Optional[int] = Field(None, ge=0, le=9999, description="VFD alarm / fault code")
+
 # Telemetry Ingest Schema
 class TelemetryIngest(BaseModel):
     dev_id: Optional[str] = None
@@ -213,6 +225,7 @@ class TelemetryIngest(BaseModel):
     ol: Optional[float] = None
     rssi: Optional[int] = None
     seq: Optional[int] = None
+    vfd: Optional[VfdTelemetry] = None
 
 # Alert Schemas
 class AlertResolveRequest(BaseModel):
