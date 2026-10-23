@@ -179,6 +179,15 @@ class TestMandatoryMfa(MfaBase):
         secret = client.post("/api/v1/auth/mfa/setup", headers=h).json()["secret"]
         ok = client.post(f"/api/v1/auth/mfa/enable?secret={secret}", json={"code": pyotp.TOTP(secret).now()}, headers=h)
         self.assertEqual(ok.status_code, 200, ok.text)
+        # Once an authenticator is on, enabling again (even with a different secret and a right code) is refused:
+        # replacing it takes the old authenticator, not a session.
+        other = pyotp.random_base32()
+        again = client.post(f"/api/v1/auth/mfa/enable?secret={other}", json={"code": pyotp.TOTP(other).now()}, headers=h)
+        self.assertEqual(again.status_code, 409, again.text)
+
+    def test_enabling_with_no_secret_at_all_is_refused(self):
+        u = self.make_user("superadmin", "sa6")
+        h = self.bearer(self.login(u).json())
         missing = client.post("/api/v1/auth/mfa/enable", json={"code": "123456"}, headers=h)
         self.assertEqual(missing.status_code, 422)
 

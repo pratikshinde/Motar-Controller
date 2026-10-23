@@ -243,7 +243,7 @@ def fleet_provisioning_pre_hook(
             hierarchy_path="/SA",
             status="STOPPED",
             lifecycle_state="COMMISSIONED",
-            firmware_version="1.0.367"
+            firmware_version=None   # the device reports its own firmware version in its first frame
         )
         db.add(pump)
         db.add(DeviceConfig(

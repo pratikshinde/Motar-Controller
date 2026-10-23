@@ -2,6 +2,7 @@ import uuid
 import random
 import hashlib
 import hmac
+from functools import lru_cache
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional, Union
@@ -138,6 +139,72 @@ def _issue_session(db: Session, user: User, app_install_id: Optional[str] = None
         }
     }
 
+def _mfa_challenge_response(user: User) -> dict:
+    """First factor passed for an account that must still pass the authenticator step."""
+    challenge_id = str(uuid.uuid4())
+    cache_service.set(f"mfa_challenge:{challenge_id}", str(user.id), ex=300)
+    temp_token = sign_token(
+        {"sub": str(user.id), "mfa_pending": True, "challenge_id": challenge_id, "role": user.role},
+        expires_in_seconds=300,
+    )
+    return {
+        "status": "MFA_REQUIRED",
+        "mfa_required": True,
+        "requires_mfa": True,
+        "challenge_id": challenge_id,
+        "temp_token": temp_token,
+        "user": format_user_response(user),
+    }
+
+
+def _needs_mfa_challenge(user: User) -> bool:
+    """A super admin who has enrolled an authenticator must present it at every sign-in. One who has not yet enrolled gets a
+    setup-only session instead (`mfa_setup_required`), so they can enrol: demanding a code they cannot yet produce would
+    lock them out of ever setting MFA up."""
+    return bool(user.mfa_enabled and user.totp_secret)
+
+
+# Password sign-in: this many wrong passwords for one number locks it for LOGIN_LOCK_SECONDS. Counted for unknown numbers
+# too, so a lock (and the 401 before it) reveals nothing about whether an account exists.
+LOGIN_MAX_FAILURES = 5
+LOGIN_LOCK_SECONDS = 900
+
+
+@lru_cache(maxsize=1)
+def _dummy_password_hash() -> str:
+    return hash_secret("no-such-account")
+
+
+def _login_fail_key(clean_phone: str) -> str:
+    return f"login_fail:{normalize_phone(clean_phone)[-10:]}"
+
+
+def _send_login_code(phone: str, code: str) -> bool:
+    """Deliver a sign-in code: WhatsApp first, SMS when WhatsApp is not set up or refuses. True when some channel took the
+    message (on a developer machine the console mock counts: that is how it "delivers"). False when nothing could send it,
+    so the caller can say so instead of telling the person a code is on its way when it is not."""
+    try:
+        sent = get_whatsapp_provider().send_otp(phone, code) or {}
+        if sent.get("status") not in ("not_configured", "send_failed"):
+            return True
+    except Exception:
+        pass
+    try:
+        sent = send_sms_otp(phone, code) or {}
+    except Exception:
+        return False
+    # send_sms_otp answers "mock_dispatched" when no gateway is configured at all.
+    return sent.get("status") != "mock_dispatched" or settings.dev_codes_enabled
+
+
+def _open_to_codes(db: Session, clean_phone: str) -> bool:
+    """With self-registration closed (always, in production) a sign-in code is only useful to a number that already has an
+    account. Sending one to any other number is how an OTP endpoint gets abused to message strangers, so those get no code."""
+    if settings.ALLOW_SELF_REGISTRATION:
+        return True
+    return db.query(User.id).filter(User.phone.in_(get_phone_variants(clean_phone))).first() is not None
+
+
 # Re-exported for existing callers (e.g. `api/invites.py`) that import it from here; the definition itself
 # now lives in app/core/phone.py so services can reach it without importing a router module.
 from app.core.phone import get_phone_variants, normalize_phone  # noqa: E402,F401
@@ -157,9 +224,22 @@ def send_otp(req: Union[OtpRequestIn, SendOtpRequest], db: Session = Depends(get
     user = db.query(User).filter(User.phone.in_(get_phone_variants(clean_phone))).first()
     is_new_user = (user is None)
 
+    # With self-registration closed (always, in production) a sign-in code is only useful to an existing account. Do not
+    # send WhatsApp messages to arbitrary numbers (that is how an OTP endpoint gets abused), and answer exactly as if one
+    # had been sent, so the response does not reveal which numbers have accounts.
+    if is_new_user and not _open_to_codes(db, clean_phone):
+        return {
+            "status": "OTP_REQUESTED",
+            "message": f"Verification code dispatched to {clean_phone} via WhatsApp",
+            "phone": clean_phone,
+            "phone_number": clean_phone,
+            "channel": "whatsapp",
+            "cooldown_seconds": 30,
+        }
+
     # Rate limiting: max 1 OTP request every 30 seconds per phone
     challenge = db.query(OtpChallenge).filter(
-        OtpChallenge.phone_number == clean_phone,
+        OtpChallenge.phone_number.in_(get_phone_variants(clean_phone)),
         OtpChallenge.purpose == "login",
         OtpChallenge.consumed_at.is_(None)
     ).first()
@@ -173,28 +253,27 @@ def send_otp(req: Union[OtpRequestIn, SendOtpRequest], db: Session = Depends(get
                 detail=f"Please wait {retry_after} seconds before requesting another OTP."
             )
 
-    is_dev = getattr(settings, "ENV", "development") == "development" or getattr(settings, "AUTH_PROVIDER", "") == "mock"
+    is_dev = settings.dev_codes_enabled
     otp_code = "123456" if is_dev else str(random.randint(100000, 999999))
     otp_hash = hashlib.sha256(otp_code.encode("utf-8")).hexdigest()
     expires_at = now_utc + timedelta(minutes=5)
 
-    if challenge:
-        challenge.code_hash = otp_hash
-        challenge.expires_at = expires_at
-        challenge.attempts = 0
-        challenge.created_at = now_utc
-        challenge.channel = "whatsapp"
-    else:
-        challenge = OtpChallenge(
-            phone_number=clean_phone,
-            purpose="login",
-            channel="whatsapp",
-            code_hash=otp_hash,
-            expires_at=expires_at,
-            attempts=0,
-            created_at=now_utc
-        )
-        db.add(challenge)
+    # Clean up previous challenges for this phone so old consumed records don't conflict
+    db.query(OtpChallenge).filter(
+        OtpChallenge.phone_number.in_(get_phone_variants(clean_phone))
+    ).delete(synchronize_session=False)
+
+    challenge = OtpChallenge(
+        phone_number=clean_phone,
+        purpose="login",
+        channel="whatsapp",
+        code_hash=otp_hash,
+        expires_at=expires_at,
+        attempts=0,
+        consumed_at=None,
+        created_at=now_utc
+    )
+    db.add(challenge)
 
     # Security audit event
     _record_audit_log(
@@ -208,25 +287,25 @@ def send_otp(req: Union[OtpRequestIn, SendOtpRequest], db: Session = Depends(get
     )
     db.commit()
 
-    # Dispatch via modular WhatsApp provider abstraction
-    provider = get_whatsapp_provider()
-    try:
-        dispatch_res = provider.send_otp(clean_phone, otp_code)
-    except Exception as exc:
-        # Fallback to SMS if WhatsApp dispatch throws
-        dispatch_res = send_sms_otp(clean_phone, otp_code)
+    if not _send_login_code(clean_phone, otp_code):
+        # Nothing could send it. Drop the code (it would only block a retry for the cooldown) and say so.
+        db.delete(challenge)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="We could not send a verification code right now. Please try again in a few minutes."
+        )
 
     response_data = {
         "status": "OTP_REQUESTED",
         "message": f"Verification code dispatched to {clean_phone} via WhatsApp",
         "phone": clean_phone,
         "phone_number": clean_phone,
-        "is_new_user": is_new_user,
         "channel": "whatsapp",
         "cooldown_seconds": 30
     }
-    # Dev OTP returned only in development or mock provider mode for safe testing
-    if getattr(settings, "ENV", "development") == "development" or getattr(settings, "AUTH_PROVIDER", "") == "mock":
+    # The code itself is only ever returned on a developer machine (ENV=development).
+    if settings.dev_codes_enabled:
         response_data["dev_otp"] = otp_code
 
     return response_data
@@ -249,7 +328,7 @@ def verify_otp(req: Union[OtpVerifyIn, VerifyOtpRequest], db: Session = Depends(
 
     # 1. Single-use enforcement: check if code was already consumed
     already_used = db.query(OtpChallenge).filter(
-        OtpChallenge.phone_number == clean_phone,
+        OtpChallenge.phone_number.in_(get_phone_variants(clean_phone)),
         OtpChallenge.code_hash == input_hash,
         OtpChallenge.consumed_at.isnot(None)
     ).first()
@@ -261,7 +340,7 @@ def verify_otp(req: Union[OtpVerifyIn, VerifyOtpRequest], db: Session = Depends(
 
     # 2. Check active unconsumed challenge
     challenge = db.query(OtpChallenge).filter(
-        OtpChallenge.phone_number == clean_phone,
+        OtpChallenge.phone_number.in_(get_phone_variants(clean_phone)),
         OtpChallenge.purpose == "login",
         OtpChallenge.consumed_at.is_(None)
     ).first()
@@ -281,7 +360,7 @@ def verify_otp(req: Union[OtpVerifyIn, VerifyOtpRequest], db: Session = Depends(
         )
 
     # 4. Constant-time comparison of hashed OTP
-    is_dev = getattr(settings, "ENV", "development") == "development" or getattr(settings, "AUTH_PROVIDER", "") == "mock"
+    is_dev = settings.dev_codes_enabled
     is_mock_match = is_dev and clean_code == "123456"
 
     if not hmac.compare_digest(input_hash, challenge.code_hash) and not is_mock_match:
@@ -326,17 +405,28 @@ def verify_otp(req: Union[OtpVerifyIn, VerifyOtpRequest], db: Session = Depends(
     user = db.query(User).filter(User.phone.in_(get_phone_variants(clean_phone))).first()
     is_new = False
     if not user:
+        # A code only proves the person holds this phone. Creating an account from it is self-registration, which is
+        # closed in production (onboarding is by dealer invite), so it must obey the same switch as /auth/register.
+        if not settings.ALLOW_SELF_REGISTRATION:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No account exists for this number. Accounts are created by your dealer."
+            )
         is_new = True
+        new_id = uuid.uuid4()
         user = User(
-            id=uuid.uuid4(),
+            id=new_id,
             phone=clean_phone,
             phone_number=clean_phone,
             full_name=f"Farmer {clean_phone[-4:]}",
             role=ROLE_END_USER,
             status="ACTIVE",
             account_status="ACTIVE",
-            hierarchy_path=f"/customers/{clean_phone[-4:]}",
+            # Unique per account: the last four digits of a phone number are shared by thousands of people.
+            hierarchy_path=f"/customers/{new_id}",
             preferred_language=getattr(req, "language", None) or "en",
+            is_active=True,
+            is_verified=True,
             created_at=datetime.utcnow()
         )
         db.add(user)
@@ -472,6 +562,12 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     user.password_hash = hash_secret(req.new_password)
     cache_service.increment_user_session_version(str(user.id))
     user.session_version = (user.session_version or 1) + 1
+    # Bumping the version only retires access tokens: /auth/refresh would happily mint a fresh one at the NEW version for
+    # any refresh token still alive. A reset exists to lock out whoever else holds the account, so end every session.
+    db.query(RefreshToken).filter(
+        RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None)
+    ).update({"revoked_at": datetime.utcnow()}, synchronize_session=False)
+    cache_service.delete(_login_fail_key(req.phone_number))
     # No session/JWT exists yet at this point - the ticket alone proved the phone. Set the actor context to the
     # resolved user so the audit row's row-level security (which only lets an actor write their own rows) passes.
     set_db_actor_context(db, user=user)
@@ -484,29 +580,39 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
 @router.post("/login-password", response_model=LoginResponse)
 def login_password(req: LoginPasswordRequest, db: Session = Depends(get_db)):
     clean_phone = req.phone_number.strip().replace(" ", "")
-    user = db.query(User).filter(User.phone.in_(get_phone_variants(clean_phone))).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Mobile number is not registered. Please create an account first."
+
+    fail_key = _login_fail_key(clean_phone)
+    failures = int(cache_service.get(fail_key) or 0)
+    if failures >= LOGIN_MAX_FAILURES:
+        raise AppError(
+            code="LOGIN_LOCKED", message_key="errors.login_locked", status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many wrong passwords. Wait a few minutes, or reset your password.",
+            headers={"Retry-After": str(LOGIN_LOCK_SECONDS)},
         )
 
-    if not user.password_hash or not verify_secret(req.password, user.password_hash):
+    user = db.query(User).filter(
+        (User.phone.in_(get_phone_variants(clean_phone))) |
+        (User.phone_number.in_(get_phone_variants(clean_phone)))
+    ).first()
+
+    # One password check is always paid for (against a dummy hash when there is no such account or no password), and
+    # "no such number" gets the same answer as "wrong password": neither the status code, the message nor the timing
+    # says which phone numbers have accounts.
+    stored = user.password_hash if user and user.password_hash else None
+    password_ok = verify_secret(req.password, stored or _dummy_password_hash()) and stored is not None
+    if not user or not password_ok:
+        cache_service.set(fail_key, failures + 1, ex=LOGIN_LOCK_SECONDS)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect password. Please check your password and try again."
+            detail="Incorrect mobile number or password. Please check and try again."
         )
+    cache_service.delete(fail_key)
 
     if user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
         raise HTTPException(status_code=403, detail="Account suspended")
 
-    if user.mfa_enabled and user.totp_secret:
-        temp_token = sign_token({"sub": str(user.id), "mfa_pending": True}, expires_in_seconds=300)
-        return {
-            "mfa_required": True,
-            "temp_token": temp_token,
-            "user": format_user_response(user)
-        }
+    if _needs_mfa_challenge(user):
+        return _mfa_challenge_response(user)
 
     session = _issue_session(db, user, req.app_install_id, req.device_info)
     db.commit()
@@ -709,6 +815,16 @@ def mfa_enroll(
             detail="Valid authentication session or challenge token required for MFA enrollment."
         )
 
+    # Enrolment can be started from a first-factor challenge (the super admin who has no authenticator yet has nothing else
+    # to present). It must therefore never be allowed to REPLACE an authenticator that is already active: otherwise anyone
+    # who learned the password could swap in their own secret and then pass the second factor. Changing an active
+    # authenticator goes through /mfa/disable, which needs a valid current code.
+    if user.mfa_enabled and user.totp_secret:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An authenticator is already set up for this account. Remove it with a valid code before setting up a new one."
+        )
+
     secret = generate_secret()
     # Save the secret temporarily on user so first code can activate it
     user.totp_secret = secret
@@ -731,6 +847,11 @@ def mfa_enable(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    if current_user.mfa_enabled and current_user.totp_secret:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An authenticator is already enabled. Disable it with a valid code before setting up a new one."
+        )
     secret = req.secret or secret or current_user.totp_secret
     if not secret:
         raise HTTPException(status_code=422, detail="secret is required")
@@ -798,7 +919,7 @@ def mfa_verify(req: MfaVerifyRequest, db: Session = Depends(get_db)):
         )
 
     code_str = str(code).strip()
-    is_dev = getattr(settings, "ENV", "development") == "development" or getattr(settings, "AUTH_PROVIDER", "") == "mock"
+    is_dev = settings.dev_codes_enabled
     is_mock_code = is_dev and code_str == "123456"
 
     totp_valid = False
@@ -895,6 +1016,16 @@ def register_request(req: RegisterRequestIn, db: Session = Depends(get_db)):
             detail=f"Registration for role '{target_role}' requires an authorized onboarding invite link."
         )
 
+    # Self-registration closed: only a number that already has an account gets a code, and the answer is the same either way.
+    if not _open_to_codes(db, clean_phone):
+        return {
+            "status": "OTP_REQUESTED",
+            "message": f"Registration OTP sent to {clean_phone} via WhatsApp",
+            "phone": clean_phone,
+            "role": target_role,
+            "cooldown_seconds": 30
+        }
+
     # Rate limiting: max 1 OTP request every 30 seconds
     challenge = db.query(OtpChallenge).filter(
         OtpChallenge.phone_number == clean_phone,
@@ -911,7 +1042,7 @@ def register_request(req: RegisterRequestIn, db: Session = Depends(get_db)):
                 detail=f"Please wait {retry_after} seconds before requesting another OTP."
             )
 
-    is_dev = getattr(settings, "ENV", "development") == "development" or getattr(settings, "AUTH_PROVIDER", "") == "mock"
+    is_dev = settings.dev_codes_enabled
     otp_code = "123456" if is_dev else str(random.randint(100000, 999999))
     otp_hash = hashlib.sha256(otp_code.encode("utf-8")).hexdigest()
     expires_at = now_utc + timedelta(minutes=5)
@@ -934,21 +1065,21 @@ def register_request(req: RegisterRequestIn, db: Session = Depends(get_db)):
         )
         db.add(challenge)
 
-    db.add(AuditLog(
-        actor_id=None,
-        actor_role=None,
-        entity_type="auth",
-        entity_id=clean_phone,
-        action="OTP_REQUESTED",
-        after_json={"channel": "whatsapp", "purpose": "registration", "role": target_role}
-    ))
+    # Not db.add(AuditLog(actor_id=None, ...)): with no signed-in actor the audit table's row-level security refuses the row
+    # (and this route answered 500) unless the bypass is set first, which is what the helper does.
+    _record_audit_log(
+        db, None, None, "auth", clean_phone, "OTP_REQUESTED",
+        {"channel": "whatsapp", "purpose": "registration", "role": target_role}
+    )
     db.commit()
 
-    provider = get_whatsapp_provider()
-    try:
-        provider.send_otp(clean_phone, otp_code)
-    except Exception:
-        send_sms_otp(clean_phone, otp_code)
+    if not _send_login_code(clean_phone, otp_code):
+        db.delete(challenge)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="We could not send a verification code right now. Please try again in a few minutes."
+        )
 
     response_data = {
         "status": "OTP_REQUESTED",
@@ -957,7 +1088,7 @@ def register_request(req: RegisterRequestIn, db: Session = Depends(get_db)):
         "role": target_role,
         "cooldown_seconds": 30
     }
-    if getattr(settings, "ENV", "development") == "development" or getattr(settings, "AUTH_PROVIDER", "") == "mock":
+    if settings.dev_codes_enabled:
         response_data["dev_otp"] = otp_code
 
     return response_data
@@ -997,11 +1128,18 @@ def register_verify(req: RegisterVerifyIn, db: Session = Depends(get_db)):
         db.commit()
         raise HTTPException(status_code=400, detail="Verification code expired. Please request a new code.")
 
-    is_dev = getattr(settings, "ENV", "development") == "development" or getattr(settings, "AUTH_PROVIDER", "") == "mock"
+    is_dev = settings.dev_codes_enabled
     is_mock_match = is_dev and clean_code == "123456"
 
     if not hmac.compare_digest(input_hash, challenge.code_hash) and not is_mock_match:
         challenge.attempts = (challenge.attempts or 0) + 1
+        if challenge.attempts >= 5:
+            db.delete(challenge)
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many attempts. Please request a new code."
+            )
         db.commit()
         raise HTTPException(status_code=400, detail="Incorrect verification code.")
 
@@ -1010,9 +1148,25 @@ def register_verify(req: RegisterVerifyIn, db: Session = Depends(get_db)):
     # Check if phone is already registered
     existing = db.query(User).filter(User.phone.in_(get_phone_variants(clean_phone))).first()
     if existing:
+        # Proving the phone is not signing in. Whoever holds the number gets the same rules as every other sign-in:
+        # a suspended account is refused, and a super admin still has to pass the authenticator step (a code alone must
+        # never be a way round it).
+        if existing.status == "SUSPENDED" or existing.account_status == "SUSPENDED":
+            db.commit()
+            raise HTTPException(status_code=403, detail="Your account is suspended. Please contact your administrator.")
+        if normalize_role(existing.role) == ROLE_SUPER_ADMIN or _needs_mfa_challenge(existing):
+            db.commit()
+            return _mfa_challenge_response(existing)
         session = _issue_session(db, existing, req.app_install_id, req.device_info)
         db.commit()
         return session
+
+    if not settings.ALLOW_SELF_REGISTRATION:
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Self-registration is disabled. Onboarding is by dealer invite only."
+        )
 
     target_role = normalize_role(req.role)
     if target_role in (ROLE_SUPER_ADMIN, ROLE_PANEL_MANUFACTURER, ROLE_DISTRIBUTOR, ROLE_DEALER):
@@ -1068,7 +1222,7 @@ def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
         )
 
     if clean_phone:
-        existing_phone = db.query(User).filter(User.phone == clean_phone).first()
+        existing_phone = db.query(User).filter(User.phone.in_(get_phone_variants(clean_phone))).first()
         if existing_phone:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1084,7 +1238,9 @@ def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
             )
 
     phone_verified = False
-    if clean_phone and req.phone_verification_token:
+    if clean_phone:
+        # An account with a phone number proves it first: WhatsApp code -> single-use ticket (see /verify-phone/*). No
+        # ticket, no account; otherwise anyone could register, and be treated as "verified", on a number they do not own.
         redeem_phone_verification(db, clean_phone, "registration", req.phone_verification_token)
         phone_verified = True
 

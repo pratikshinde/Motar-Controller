@@ -63,6 +63,13 @@ def _ensure_remote_control_allowed(pump: Pump) -> None:
         )
 
 
+def _require_configure_permission(user: User) -> None:
+    """403 unless the role may configure devices (everyone but the farmer). Scope is checked separately, per pump."""
+    from app.services.authorization_service import AuthorizationService
+    from app.core.permissions import Permission
+    AuthorizationService.authorize(user, Permission.CONFIGURE_DEVICE)
+
+
 def connectivity_of(last_seen) -> str:
     """ONLINE, OFFLINE (reported before, but not recently) or NEVER_SEEN. Same rule as the fleet counts."""
     if last_seen is None:
@@ -855,6 +862,9 @@ def update_pump_config(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # The protection settings (trip voltages and currents, delays) are an installer's to set: the farmer who owns the
+    # pump may see them, but the role matrix (CONFIGURE_DEVICE) does not give END_USER the right to change them.
+    _require_configure_permission(current_user)
     pump = get_pump_in_scope(db, id, current_user)
     if not pump:
         raise HTTPException(status_code=404, detail="Pump not found")
@@ -885,6 +895,8 @@ def report_pump_config(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Marks a configuration as applied on the device: not something the pump's owner may claim on its behalf.
+    _require_configure_permission(current_user)
     pump = get_pump_in_scope(db, id, current_user)
     if not pump:
         raise HTTPException(status_code=404, detail="Pump not found or out of scope")
@@ -969,6 +981,9 @@ def update_pump_lifecycle(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # SUSPENDED / RMA / RETIRED pause remote control (FR-CLD-073). Lifting that is the partner's call, never the
+    # farmer's: without this check the owner of a suspended pump could simply set it back to ACTIVE.
+    _require_configure_permission(current_user)
     pump = get_pump_in_scope(db, id, current_user)
     if not pump:
         raise HTTPException(status_code=404, detail="Pump not found")
@@ -1335,36 +1350,48 @@ def bulk_import_pumps(
     current_user: User = Depends(require_roles(["superadmin"])),
     db: Session = Depends(get_db)
 ):
-    if not file.filename.endswith('.csv'):
+    if not (file.filename or "").lower().endswith('.csv'):
         raise HTTPException(status_code=400, detail="Uploaded file must be a .csv file")
-    
+
     contents = file.file.read()
-    decoded = contents.decode('utf-8')
+    try:
+        # utf-8-sig: a spreadsheet's "CSV UTF-8" starts with a byte-order mark that would otherwise glue itself to the
+        # first column name, so every row would read as having no serial.
+        decoded = contents.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="The file is not valid UTF-8 text. Save it as CSV (UTF-8) and try again.")
     reader = csv.DictReader(io.StringIO(decoded))
-    
+
     imported_count = 0
     skipped_count = 0
     errors = []
+    seen_in_file = set()
 
     for idx, row in enumerate(reader, start=2):
-        serial = row.get("serial", "").strip()
+        serial = (row.get("serial") or "").strip()
         if not serial:
             errors.append(f"Line {idx}: Missing serial number")
             continue
-        
-        # Check if already exists
-        existing = db.query(Pump).filter(Pump.id == serial).first()
-        if existing:
+        if len(serial) > 50:
+            errors.append(f"Line {idx}: Serial number is longer than 50 characters")
+            continue
+
+        # Already in the database, or already earlier in this very file (those rows are not written until the end, so
+        # the query cannot see them and the second copy would otherwise fail the whole import at commit).
+        if serial in seen_in_file or db.query(Pump).filter(Pump.id == serial).first():
             skipped_count += 1
             continue
-        
-        raw_st = row.get("supply_type", "3-phase").strip()
+        seen_in_file.add(serial)
+
+        raw_st = (row.get("supply_type") or "3-phase").strip()
         supply_type = "3-phase" if raw_st in ["3P", "3-phase"] else "1-phase"
         try:
-            hp = float(row.get("hp_rating", "5.0"))
+            hp = float(row.get("hp_rating") or "5.0")
         except ValueError:
             hp = 5.0
 
+        # A device imported from a manufacturing list has not been installed or switched on: its position and firmware
+        # are unknown until it says so, and nothing is invented for them (see the pump_truthful_defaults migration).
         new_pump = Pump(
             id=serial,
             name=f"Pump {serial}",
@@ -1372,11 +1399,11 @@ def bulk_import_pumps(
             hp_rating=hp,
             owner_user_id=current_user.id,
             hierarchy_path=current_user.hierarchy_path or "/SA",
-            latitude=19.9975,
-            longitude=73.7898,
+            latitude=None,
+            longitude=None,
             status="STOPPED",
             lifecycle_state="MANUFACTURED",
-            firmware_version="1.0.367"
+            firmware_version=None,
         )
         db.add(new_pump)
 
@@ -1389,11 +1416,12 @@ def bulk_import_pumps(
 
         # Add audit log
         db.add(AuditLog(
-            actor_user_id=current_user.id,
+            actor_id=current_user.id,
+            actor_role=current_user.role,
+            entity_type="pump",
+            entity_id=serial,
             action="BULK_IMPORT_DEVICE",
-            target_type="PUMP",
-            target_id=serial,
-            details=f"Imported from batch {row.get('batch_id', 'N/A')}"
+            after_json={"batch_id": (row.get("batch_id") or "").strip() or None},
         ))
 
         imported_count += 1

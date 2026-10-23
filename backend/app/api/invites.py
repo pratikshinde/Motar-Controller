@@ -168,9 +168,14 @@ def redeem_invite_link(token: str, req: PartnerInviteRedeem, db: Session = Depen
         # From here on this is the new account acting: the audit trail's row-level security only lets an actor
         # write their own rows.
         set_db_actor_context(db, user=user)
+        via = {"role": role, "parent": str(parent.id), "via": "invite", "invited_by": str(inviter.id)}
         db.add(AuditLog(
-            actor_id=user.id, actor_role=role, entity_type="user", entity_id=str(user.id), action="INVITATION_ACCEPTED",
-            after_json={"role": role, "parent": str(parent.id), "via": "invite", "invited_by": str(inviter.id)},
+            actor_id=user.id, actor_role=role, entity_type="user", entity_id=str(user.id), action="USER_CREATED",
+            after_json=via,
+        ))
+        db.add(AuditLog(
+            actor_id=user.id, actor_role=role, entity_type="invite", entity_id=str(invite_id), action="INVITATION_ACCEPTED",
+            after_json=via,
         ))
         session = _issue_session(db, user, None, "Invite sign-up")
         session["status"] = "AUTHENTICATED"

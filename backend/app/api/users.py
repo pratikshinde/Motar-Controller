@@ -31,7 +31,7 @@ PARTNER_ROLES = ["superadmin", "manufacturer", "distributor", "dealer"]
 
 # Who may create whom (mirrors web/src/api/users.ts, which only offers what the server accepts).
 ASSIGNABLE_ROLES: Dict[str, List[str]] = {
-    "superadmin": ["manufacturer", "distributor", "dealer", "customer"],
+    "superadmin": ["manufacturer", "distributor", "dealer", "customer", "support"],
     "manufacturer": ["distributor", "dealer", "customer"],
     "distributor": ["dealer", "customer"],
     "dealer": ["dealer", "customer"],
@@ -183,6 +183,12 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
             raise HTTPException(status_code=422, detail=f"A password of at least {MIN_PARTNER_PASSWORD} characters is required.")
     phone = normalize_phone(req.phone_number or req.phone or "") or None
 
+    email = req.email.lower().strip() if req.email else None
+    if email and db.query(User.id).filter(User.email == email).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That phone number or email is already registered.")
+    if phone and db.query(User.id).filter((User.phone == phone) | (User.phone_number == phone)).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That phone number or email is already registered.")
+
     # The caller (a dealer, typically) is not the phone's owner, so it does not get to just assert this number
     # is real - it must present a ticket proving *someone* answered a WhatsApp code sent to it just now
     # (dealer-waits-for-the-code onboarding). An email-only account (no phone at all) has nothing to verify.
@@ -194,7 +200,7 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
     user = User(
         id=uuid.uuid4() if staff else new_id,
         full_name=req.full_name.strip(),
-        email=req.email.lower().strip() if req.email else None,
+        email=email,
         phone_number=phone,
         phone=phone,
         password_hash=hash_secret(password) if password else None,

@@ -238,26 +238,40 @@ class InvitationService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="INVITATION_EXPIRED")
 
         if inv.status == "ACCEPTED" or inv.used_at is not None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invitation has already been accepted.")
+            # A used link is gone: it answers exactly like one that never existed, so the link says nothing about
+            # who has already signed up through it.
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation link is invalid or revoked.")
 
-        target_org = db.query(Organisation).filter(Organisation.id == inv.target_org_id).first() if inv.target_org_id else None
         inviter = db.query(User).filter(User.id == inv.created_by).first() if inv.created_by else None
-        inviter_org = None
-        if inviter and inviter.org_id:
-            inviter_org = db.query(Organisation).filter(Organisation.id == inviter.org_id).first()
 
         AuthorizationService.log_audit(
             db=db, actor=None, action="INVITATION_VIEWED",
             entity_type="invitation", entity_id=str(inv.id)
         )
 
-        return {
-            "role": inv.target_role or inv.role.upper(),
-            "organisation_name": target_org.name if target_org else None,
-            "inviter_organisation_name": inviter_org.name if inviter_org else (inviter.full_name if inviter else None),
+        # What the sign-up pages (web InviteRedeemView, the mobile onboarding) read: who invited you, as what, until
+        # when, and whether a password has to be chosen (every role except a farmer signs in with one).
+        role = inv.target_role or inv.role
+        preview = {
+            "role": role,
+            "invited_by": inviter.full_name if inviter and inviter.full_name else "Administrator",
             "expires_at": _utc_iso(inv.expires_at),
-            "phone": inv.phone
+            "password_required": to_db_role(normalize_role(role)) != "customer",
         }
+
+        # An invitation made for one organisation and phone number (POST /organisations/{id}/invitations) also says
+        # which organisation and number; a plain role link (POST /invites) has neither and shows nothing extra.
+        if inv.target_org_id or inv.phone:
+            target_org = db.query(Organisation).filter(Organisation.id == inv.target_org_id).first() if inv.target_org_id else None
+            inviter_org = None
+            if inviter and inviter.org_id:
+                inviter_org = db.query(Organisation).filter(Organisation.id == inviter.org_id).first()
+            preview.update({
+                "organisation_name": target_org.name if target_org else None,
+                "inviter_organisation_name": inviter_org.name if inviter_org else (inviter.full_name if inviter else None),
+                "phone": inv.phone,
+            })
+        return preview
 
     @classmethod
     def accept_invitation(

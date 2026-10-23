@@ -55,7 +55,7 @@ def start_phone_verification(db: Session, phone_number: str, purpose: str, chann
             and account.account_status == "ACTIVE" and account.is_active is not False
         )
 
-    is_dev = getattr(settings, "ENV", "production") == "development"
+    is_dev = settings.dev_codes_enabled
     response = {"message": f"Verification code sent to {clean_phone}", "phone_number": clean_phone, "channel": channel}
 
     if eligible:

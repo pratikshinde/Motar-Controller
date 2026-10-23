@@ -96,13 +96,14 @@ def get_whatsapp_provider() -> WhatsAppOtpProvider:
 
     provider_type = provider_type.strip().lower()
 
-    if provider_type == "whatsapp":
-        if settings.WHATSAPP_API_TOKEN and settings.WHATSAPP_PHONE_ID:
-            return RealWhatsAppOtpProvider()
-        elif settings.ENV == "development":
-            logger.info("Real WhatsApp credentials absent; falling back to MockWhatsAppOtpProvider in development.")
-            return MockWhatsAppOtpProvider()
-        else:
-            return RealWhatsAppOtpProvider()
+    # Only an explicit "mock" selects the console logger (config.py refuses that value outside ENV=development). A
+    # misspelt value must not silently become "log every code and send nothing".
+    if provider_type == "mock":
+        return MockWhatsAppOtpProvider()
 
-    return MockWhatsAppOtpProvider()
+    if settings.WHATSAPP_API_TOKEN and settings.WHATSAPP_PHONE_ID:
+        return RealWhatsAppOtpProvider()
+    if settings.ENV == "development":
+        logger.info("Real WhatsApp credentials absent; falling back to MockWhatsAppOtpProvider in development.")
+        return MockWhatsAppOtpProvider()
+    return RealWhatsAppOtpProvider()

@@ -135,13 +135,24 @@ class Settings(BaseSettings):
                 return url
         return f"postgresql+psycopg://{self.PGUSER}:{self.PGPASSWORD}@{self.PGHOST}:{self.PGPORT}/{self.PGDATABASE}"
 
+    @property
+    def dev_codes_enabled(self) -> bool:
+        """True only on a developer machine (ENV=development): the fixed verification code 123456 is accepted and OTPs are
+        returned in API responses. This is the ONE switch for every such shortcut; nothing else (an AUTH_PROVIDER value, a
+        header, a client flag) may turn them on."""
+        return self.ENV == "development"
+
     @model_validator(mode="after")
     def validate_environment_settings(self):
-        if self.ENV in ("production", "staging"):
+        # Anything that is not an explicit developer/test environment is treated as production, so a typo such as
+        # ENV=prod or ENV=Production fails closed instead of quietly running with development shortcuts.
+        if self.ENV not in ("development", "test"):
             if not self.JWT_SECRET or len(self.JWT_SECRET) < 32:
-                raise ValueError("JWT_SECRET must be at least 32 characters in production/staging environments.")
+                raise ValueError("JWT_SECRET must be at least 32 characters outside development.")
             if self.ALLOW_SELF_REGISTRATION:
                 object.__setattr__(self, "ALLOW_SELF_REGISTRATION", False)
+            if str(getattr(self, "AUTH_PROVIDER", "") or "").strip().lower() == "mock":
+                raise ValueError("AUTH_PROVIDER=mock (fixed verification codes) is only allowed with ENV=development.")
         return self
 
     class Config:

@@ -6,7 +6,10 @@ def send_sms_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
     """
     Sends real SMS OTP via Twilio, Fast2SMS, or MSG91 if credentials are set in backend/.env.
     """
-    print(f"[AUTH OTP GENERATED] Phone: {phone_number} | OTP Code: {otp_code} (Expires in 5m)")
+    # The code goes to the console on a developer machine only: anywhere else stdout ends up in shared logs, and a code in
+    # a log is a sign-in for anyone who can read it.
+    if settings.dev_codes_enabled:
+        print(f"[AUTH OTP GENERATED] Phone: {phone_number} | OTP Code: {otp_code} (Expires in 5m)")
 
     clean_num = phone_number.strip().replace(" ", "")
 

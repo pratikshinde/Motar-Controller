@@ -17,6 +17,12 @@ from app.core.authorization import (
     ROLE_DEALER, ROLE_SUPPORT_ENGINEER, ROLE_END_USER, MAX_DEALER_DEPTH
 )
 
+def _unique_phone() -> str:
+    """A phone number no other account has. The fixtures used to be 9999900001/3/4 - the demo accounts the dev database is
+    seeded with - and the pre-clean below deleted those real rows (and the suite's teardown did again) on every run."""
+    return f"+91{uuid.uuid4().int % 10**10:010d}"
+
+
 client = TestClient(app)
 
 class TestFunctionalAuthFlowSuite(unittest.TestCase):
@@ -39,7 +45,7 @@ class TestFunctionalAuthFlowSuite(unittest.TestCase):
 
         # 1. Super Admin User
         cls.sa_id = uuid.uuid4()
-        cls.sa_phone = "+919999900001"
+        cls.sa_phone = _unique_phone()
         cls.sa_user = User(
             id=cls.sa_id,
             phone=cls.sa_phone,
@@ -56,7 +62,7 @@ class TestFunctionalAuthFlowSuite(unittest.TestCase):
 
         # 2. Distributor User (Distributor A)
         cls.dist_a_id = uuid.uuid4()
-        cls.dist_a_phone = "+919999900003"
+        cls.dist_a_phone = _unique_phone()
         cls.dist_a_user = User(
             id=cls.dist_a_id,
             phone=cls.dist_a_phone,
@@ -72,7 +78,7 @@ class TestFunctionalAuthFlowSuite(unittest.TestCase):
 
         # 3. Distributor B User (Different Org Subtree)
         cls.dist_b_id = uuid.uuid4()
-        cls.dist_b_phone = "+919999988888"
+        cls.dist_b_phone = _unique_phone()
         cls.dist_b_user = User(
             id=cls.dist_b_id,
             phone=cls.dist_b_phone,
@@ -88,7 +94,7 @@ class TestFunctionalAuthFlowSuite(unittest.TestCase):
 
         # 4. Dealer User under Distributor A
         cls.dealer_id = uuid.uuid4()
-        cls.dealer_phone = "+919999900004"
+        cls.dealer_phone = _unique_phone()
         cls.dealer_user = User(
             id=cls.dealer_id,
             phone=cls.dealer_phone,
@@ -105,7 +111,7 @@ class TestFunctionalAuthFlowSuite(unittest.TestCase):
 
         # 5. Suspended User
         cls.suspended_id = uuid.uuid4()
-        cls.suspended_phone = "+919999900999"
+        cls.suspended_phone = _unique_phone()
         cls.suspended_user = User(
             id=cls.suspended_id,
             phone=cls.suspended_phone,
@@ -132,6 +138,16 @@ class TestFunctionalAuthFlowSuite(unittest.TestCase):
             lifecycle_state="ACTIVE",
             status="STOPPED"
         )
+
+        # Pre-clean any existing records for test phones to avoid duplicate key conflicts
+        all_test_phones = [cls.sa_phone, cls.dist_a_phone, cls.dist_b_phone, cls.dealer_phone, cls.suspended_phone]
+        cls.db.query(OtpChallenge).filter(OtpChallenge.phone_number.in_(all_test_phones + [p.replace("+91", "") for p in all_test_phones])).delete(synchronize_session=False)
+        cls.db.query(RefreshToken).filter(RefreshToken.user_id.in_(
+            cls.db.query(User.id).filter(User.phone.in_(all_test_phones + [p.replace("+91", "") for p in all_test_phones]))
+        )).delete(synchronize_session=False)
+        cls.db.query(Pump).filter(Pump.id == cls.pump_b_id).delete(synchronize_session=False)
+        cls.db.query(User).filter(User.phone.in_(all_test_phones + [p.replace("+91", "") for p in all_test_phones])).delete(synchronize_session=False)
+        cls.db.commit()
 
         cls.db.add_all([
             cls.sa_user, cls.dist_a_user, cls.dist_b_user,

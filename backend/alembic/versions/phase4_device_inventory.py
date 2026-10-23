@@ -1,21 +1,21 @@
-"""
-Phase 4 Device Inventory Schema
-================================
-- Creates device_org_allocation_log table
-- Creates panel_binding_history table
-- Adds org_id-based device ownership indexes
-- Adds lifecycle_state index with org scope
+"""device inventory: org allocation log, panel binding history, prefix search on pump ids
 
-Set down_revision to your latest migration before running.
+Revision ID: phase4_device_inventory
+Revises: phase3_dashboard_indexes
 
-Revision: phase4_device_inventory
+Creates `device_org_allocation_log` and `panel_binding_history`, and an index for searching pumps by the start of
+their id. Not repeated here, because they already exist: the unique index on pumps.id (it is the primary key) and the
+(org_id, lifecycle_state) index (`ix_pumps_org_state`, phase3_dashboard_indexes).
+
+Note: neither new table has row-level security yet. Nothing mounts the Phase 4 services today; add the policies (the
+pattern is `dashboard_runtime` in phase3_dashboard_indexes) before a route can read or write them.
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 
 revision = "phase4_device_inventory"
-down_revision = None   # Set to your current latest revision
+down_revision = "phase3_dashboard_indexes"
 branch_labels = None
 depends_on = None
 
@@ -62,29 +62,23 @@ def upgrade() -> None:
     )
     op.create_index("idx_pbh_device_id", "panel_binding_history", ["device_id"], schema="agripump")
 
-    # ── Additional Phase 4 query indexes ────────────────────────────────────
-    op.execute("""
-        CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pumps_org_lifecycle
-        ON agripump.pumps (org_id, lifecycle_state)
-    """)
-    op.execute("""
-        CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pumps_serial_search
-        ON agripump.pumps (id varchar_pattern_ops)
-    """)
-    op.execute("""
-        CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS uq_pumps_id
-        ON agripump.pumps (id)
-    """)
+    # ── Prefix search on pump ids ───────────────────────────────────────────
+    # CONCURRENTLY cannot run inside the migration's transaction (see phase3_dashboard_indexes).
+    with op.get_context().autocommit_block():
+        op.execute("""
+            CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pumps_serial_search
+            ON agripump.pumps (id varchar_pattern_ops)
+        """)
 
 
 def downgrade() -> None:
+    with op.get_context().autocommit_block():
+        op.execute("DROP INDEX CONCURRENTLY IF EXISTS agripump.idx_pumps_serial_search")
+    op.drop_index("idx_pbh_device_id", "panel_binding_history", schema="agripump")
+    op.drop_table("panel_binding_history", schema="agripump")
     op.drop_index("idx_doal_idempotency", "device_org_allocation_log", schema="agripump")
     op.drop_index("idx_doal_from_org", "device_org_allocation_log", schema="agripump")
     op.drop_index("idx_doal_to_org", "device_org_allocation_log", schema="agripump")
     op.drop_index("idx_doal_occurred_at", "device_org_allocation_log", schema="agripump")
     op.drop_index("idx_doal_device_id", "device_org_allocation_log", schema="agripump")
     op.drop_table("device_org_allocation_log", schema="agripump")
-    op.drop_index("idx_pbh_device_id", "panel_binding_history", schema="agripump")
-    op.drop_table("panel_binding_history", schema="agripump")
-    op.execute("DROP INDEX CONCURRENTLY IF EXISTS agripump.idx_pumps_org_lifecycle")
-    op.execute("DROP INDEX CONCURRENTLY IF EXISTS agripump.idx_pumps_serial_search")
