@@ -23,7 +23,7 @@ export const OtpScreen: React.FC<OtpScreenProps> = ({ onBack, onVerified }) => {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(RESEND_SECONDS);
-  const inputs = useRef<Array<TextInput | null>>([]);
+  const inputs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
     if (cooldown <= 0) return;

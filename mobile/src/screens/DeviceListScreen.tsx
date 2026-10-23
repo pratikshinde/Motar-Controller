@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Platform,
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,48 +27,53 @@ export const DeviceListScreen: React.FC<DeviceListScreenProps> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDevices();
-  }, []);
-
-  const fetchDevices = async () => {
-    setLoading(true);
-    try {
-      const res = await apiClient.get('/pumps');
-      if (Array.isArray(res.data)) {
-        setDevices(res.data);
-      } else if (res.data.pumps) {
-        setDevices(res.data.pumps);
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const res = await apiClient.get('/pumps');
+        if (!isMounted) return;
+        if (Array.isArray(res.data)) {
+          setDevices(res.data);
+        } else if (res.data.pumps) {
+          setDevices(res.data.pumps);
+        }
+      } catch {
+        if (!isMounted) return;
+        // Fallback mockup list if offline / mock
+        setDevices([
+          {
+            id: '1',
+            name: 'North Field Borewell #1',
+            device_id: 'PUMP-4G-3P-8821',
+            status: 'ONLINE',
+            pump_state: 'RUNNING',
+            fault_code: 0,
+            motor_hp: 15.0,
+            phase_type: '3P',
+            location: 'Sector A - Plot 4',
+          },
+          {
+            id: '2',
+            name: 'South Canal Drip Pump #2',
+            device_id: 'PUMP-4G-3P-9912',
+            status: 'ONLINE',
+            pump_state: 'OFF',
+            fault_code: 0,
+            motor_hp: 7.5,
+            phase_type: '3P',
+            location: 'Sector B - Plot 12',
+          },
+        ]);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    } catch (e) {
-      // Fallback mockup list if offline / mock
-      setDevices([
-        {
-          id: '1',
-          name: 'North Field Borewell #1',
-          device_id: 'PUMP-4G-3P-8821',
-          status: 'ONLINE',
-          pump_state: 'RUNNING',
-          fault_code: 0,
-          motor_hp: 15.0,
-          phase_type: '3P',
-          location: 'Sector A - Plot 4',
-        },
-        {
-          id: '2',
-          name: 'South Canal Drip Pump #2',
-          device_id: 'PUMP-4G-3P-9912',
-          status: 'ONLINE',
-          pump_state: 'OFF',
-          fault_code: 0,
-          motor_hp: 7.5,
-          phase_type: '3P',
-          location: 'Sector B - Plot 12',
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    void load();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>

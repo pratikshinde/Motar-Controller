@@ -23,14 +23,14 @@ export const colors = {
   // Text
   text: '#0D1B2A',
   textMuted: '#475569',
-  textFaint: '#8E9BB0',
+  textFaint: '#596780',
   textOnDark: '#F2F8F0',
   textOnDarkMuted: '#9FB8A8',
   textOnPrimary: '#FFFFFF',
 
   // Brand
-  primary: '#00C853',
-  primaryDark: '#00963D',
+  primary: '#007F3B',
+  primaryDark: '#006B32',
   primarySoft: '#E6F9F0',
   primaryBorder: '#BBF2D3',
   accent: '#FFB300', // sun / harvest amber
@@ -39,11 +39,11 @@ export const colors = {
   waterSoft: '#EAF4FF',
 
   // Status (text-safe on light surfaces) + soft fills
-  ok: '#00963D',
+  ok: '#007A30',
   okSoft: '#E6F9F0',
   warn: '#A15C00',
   warnSoft: '#FEF8E7',
-  danger: '#E02454',
+  danger: '#C21840',
   dangerSoft: '#FFF0F3',
   idle: '#5B6B60',
   idleSoft: '#ECF0EA',

@@ -17,11 +17,12 @@ import { useDirection } from '@/shared/i18n/useDirection';
 interface AuthShellProps {
   onBack?: () => void;
   showLogo?: boolean;
+  rightAction?: React.ReactNode;
   children: React.ReactNode;
 }
 
 /** Shared header (back button + AJANTA brand mark) and scroll frame for every auth-flow screen. */
-export const AuthShell: React.FC<AuthShellProps> = ({ onBack, showLogo = true, children }) => {
+export const AuthShell: React.FC<AuthShellProps> = ({ onBack, showLogo = true, rightAction, children }) => {
   const { flip } = useDirection();
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -42,13 +43,16 @@ export const AuthShell: React.FC<AuthShellProps> = ({ onBack, showLogo = true, c
 
           {showLogo && (
             <View style={styles.brandRow}>
-              <View style={styles.logoCircle}>
-                <Droplets size={26} color={colors.textOnPrimary} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={styles.logoCircle}>
+                  <Droplets size={26} color={colors.textOnPrimary} />
+                </View>
+                <View>
+                  <Text style={styles.brandTitle}>AJANTA</Text>
+                  <Text style={styles.brandSubtitle}>AJANTA PUMP CONTROLLER</Text>
+                </View>
               </View>
-              <View>
-                <Text style={styles.brandTitle}>AJANTA</Text>
-                <Text style={styles.brandSubtitle}>AJANTA PUMP CONTROLLER</Text>
-              </View>
+              {rightAction}
             </View>
           )}
 
@@ -74,7 +78,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: space.lg,
   },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: space.xl },
+  brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.xl },
   logoCircle: {
     width: 48,
     height: 48,

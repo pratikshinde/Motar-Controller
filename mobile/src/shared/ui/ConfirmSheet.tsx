@@ -43,7 +43,7 @@ export const ConfirmSheet: React.FC<{
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(13,43,32,0.55)' },
+  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(13,43,32,0.55)' },
   sheet: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,

@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import { Bell, Droplets, Settings } from 'lucide-react-native';
 import { useListAlerts } from '@/api/generated/farmer';
@@ -13,8 +12,13 @@ const ITEMS: Record<string, { labelKey: string; Icon: React.ComponentType<{ size
   settings: { labelKey: 'nav.settings', Icon: Settings },
 };
 
+export interface TabBarProps {
+  state: { index: number; routes: { key: string; name: string }[] };
+  navigation: { emit: (event: { type: string; target: string; canPreventDefault?: boolean }) => { defaultPrevented: boolean }; navigate: (name: string) => void };
+}
+
 /** Big, labelled tabs: icon + word, never icon alone. The Alerts tab shows how many are open. */
-export const TabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
+export const TabBar: React.FC<TabBarProps> = ({ state, navigation }) => {
   const { t } = useTranslation();
   const alerts = useListAlerts({ unresolved_only: true });
   const open = (alerts.data?.alerts ?? []).length;
@@ -22,7 +26,7 @@ export const TabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
   return (
     <SafeAreaView edges={['bottom']} style={styles.safe}>
       <View style={styles.bar} accessibilityRole="tablist">
-        {state.routes.map((route, index) => {
+        {state.routes.map((route: any, index: number) => {
           const item = ITEMS[route.name];
           if (!item) return null;
           const on = state.index === index;

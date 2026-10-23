@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -32,20 +32,29 @@ export const TimerTab: React.FC<{ pump: PumpResponse }> = ({ pump }) => {
   const qc = useQueryClient();
   const online = useOnline();
   const now = useNow(1000);
-  const q = useGetPumpTimer(pump.id);
+  const timerData = useGetPumpTimer(pump.id).data?.timer;
   const cooldownUntil = useCommands((s) => s.cooldownUntil[pump.id]);
 
-  const sent = q.data?.timer;
-  const last = sent
-    ? { on: sent.on_duration_minutes, off: sent.off_duration_minutes ?? 0, cycles: sent.cycle_count ?? 1 }
-    : null;
+  const last = useMemo(
+    () =>
+      timerData
+        ? {
+            on: timerData.on_duration_minutes,
+            off: timerData.off_duration_minutes ?? 0,
+            cycles: timerData.cycle_count ?? 1,
+          }
+        : null,
+    [timerData],
+  );
   const [form, setForm] = useState<TimerForm>({ on: '30', off: '0', cycles: '1' });
   const seeded = useRef(false);
   // Fill the form from the last timer that was sent, once, without overwriting what the farmer types.
-  if (last && !seeded.current) {
-    seeded.current = true;
-    setForm({ on: String(last.on), off: String(last.off), cycles: String(last.cycles) });
-  }
+  useEffect(() => {
+    if (last && !seeded.current) {
+      seeded.current = true;
+      setForm({ on: String(last.on), off: String(last.off), cycles: String(last.cycles) });
+    }
+  }, [last]);
 
   const [errors, setErrors] = useState<Partial<Record<Field, true>>>({});
   const [pending, setPending] = useState<TimerValue | null>(null);

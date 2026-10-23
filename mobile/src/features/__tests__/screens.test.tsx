@@ -1,14 +1,13 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { PumpResponse } from '@/api/generated/model';
+import type { AlertOut, PumpResponse } from '@/api/generated/model';
 import i18n from '@/shared/i18n';
 import { AlertsScreen } from '../alerts/AlertsScreen';
 import { CommandStepper } from '../commands/CommandStepper';
 import { PowerHero } from '../pump/PowerHero';
 import { TimerTab } from '../timer/TimerTab';
 import * as api from '@/api/generated/farmer';
-import type { AlertOut } from '@/api/generated/model';
 
 jest.mock('@/api/generated/farmer', () => ({
   ...jest.requireActual('@/api/generated/farmer'),
@@ -27,7 +26,7 @@ beforeEach(async () => {
 });
 
 describe('PowerHero (the ON / OFF button farmers know)', () => {
-  const base = { name: 'Borewell Pump', hp: 15, signalDbm: -70, busy: false, disabled: false, cooldownLeft: 0 };
+  const base = { name: 'Borewell Pump', hp: 15, supplyType: '3-phase', rotation: 'ok' as const, signalDbm: -70, busy: false, disabled: false, cooldownLeft: 0 };
 
   it('shows the pump name and HP, and reports a press', () => {
     const onPower = jest.fn();

@@ -34,7 +34,9 @@ export const StateView: React.FC<{
 };
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28, gap: 12 },
+  // Paints its own surface: screens put it under a green header on a green safe area, and the grey message text was
+  // drawn straight onto that green (nearly unreadable) when there was nothing to list.
+  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28, gap: 12, backgroundColor: colors.bg },
   iconCircle: {
     width: 84,
     height: 84,

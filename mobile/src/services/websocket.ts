@@ -9,7 +9,7 @@ class WebSocketService {
   private ws: WebSocket | null = null;
   private onTelemetryListeners: Set<TelemetryCallback> = new Set();
   private onConnectionListeners: Set<ConnectionCallback> = new Set();
-  private reconnectTimer: NodeJS.Timeout | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private isConnecting: boolean = false;
 
   async connect() {
@@ -56,7 +56,7 @@ class WebSocketService {
         this.notifyConnection(false);
         this.scheduleReconnect();
       };
-    } catch (e) {
+    } catch {
       this.isConnecting = false;
       this.notifyConnection(false);
       this.scheduleReconnect();

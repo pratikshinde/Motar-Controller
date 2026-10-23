@@ -17,6 +17,7 @@ export default function LoginRoute() {
       }}
       onForgotPassword={() => router.push('/forgot-password')}
       onRegister={() => router.push('/register')}
+      onChangeLanguage={() => router.push({ pathname: '/language', params: { mode: 'change' } })}
     />
   );
 }

@@ -81,7 +81,11 @@ export const SettingsScreen: React.FC = () => {
   const [name, setName] = useState(user?.full_name ?? '');
   const [nameSaved, setNameSaved] = useState(false);
   const updateMe = useUpdateMe();
-  useEffect(() => setName(user?.full_name ?? ''), [user?.full_name]);
+  const [prevFullName, setPrevFullName] = useState(user?.full_name);
+  if (user?.full_name !== prevFullName) {
+    setPrevFullName(user?.full_name);
+    setName(user?.full_name ?? '');
+  }
 
   const sessions = useListSessions();
   const [installId, setInstallId] = useState<string | null>(null);

@@ -16,25 +16,19 @@ import Svg, { Circle } from 'react-native-svg';
 import {
   Zap,
   Activity,
-  RotateCw,
   Clock,
   Power,
   AlertTriangle,
-  CheckCircle2,
   XCircle,
   ShieldCheck,
   Droplets,
   Gauge,
   Scale,
-  Wifi,
-  ChevronRight,
-  ArrowRight,
-  ArrowLeft,
   LogOut,
 } from 'lucide-react-native';
 import { apiClient } from '../config/api';
 import { wsService } from '../services/websocket';
-import { TelemetryData, PumpState } from '../types';
+import { TelemetryData } from '../types';
 
 interface PumpDashboardScreenProps {
   deviceId: string;
@@ -146,12 +140,12 @@ export const PumpDashboardScreen: React.FC<PumpDashboardScreenProps> = ({
   });
 
   const [pumpOn, setPumpOn] = useState(true);
-  const [phaseSequence, setPhaseSequence] = useState<'forward' | 'reverse'>('forward');
+  const [phaseSequence] = useState<'forward' | 'reverse'>('forward');
   const [totalSeconds, setTotalSeconds] = useState(84732);
   const [cycleSeconds, setCycleSeconds] = useState(3724);
 
   // Active Faults dictionary
-  const [faults, setFaults] = useState<{ [key: string]: boolean }>({
+  const [faults] = useState<{ [key: string]: boolean }>({
     cableOpen: false,
     dryRun: false,
     overload: false,
@@ -203,12 +197,35 @@ export const PumpDashboardScreen: React.FC<PumpDashboardScreenProps> = ({
   }, [cooldownSeconds]);
 
   useEffect(() => {
+    let isMounted = true;
+    const fetchLatest = async () => {
+      try {
+        const res = await apiClient.get(`/pumps/${deviceId}`);
+        if (!isMounted) return;
+        if (res.data) {
+          const d = res.data;
+          setTelemetry((prev) => ({
+            ...prev,
+            v_ry: d.v_ry ?? 435.0,
+            v_yb: d.v_yb ?? 428.0,
+            v_br: d.v_br ?? 422.0,
+            i_r: d.i_r ?? 11.3,
+            i_y: d.i_y ?? 10.8,
+            i_b: d.i_b ?? 10.2,
+          }));
+        }
+      } catch {
+        // Fallback stays active for presentation demo
+      }
+    };
+
     // Fetch live backend telemetry
-    fetchLatestTelemetry();
+    void fetchLatest();
 
     // Connect WebSocket
     wsService.connect();
     const unsubTelem = wsService.onTelemetry((data) => {
+      if (!isMounted) return;
       if (!data.device_id || data.device_id === deviceId) {
         setTelemetry((prev) => ({ ...prev, ...data }));
         if (data.pump_state) {
@@ -218,29 +235,10 @@ export const PumpDashboardScreen: React.FC<PumpDashboardScreenProps> = ({
     });
 
     return () => {
+      isMounted = false;
       unsubTelem();
     };
   }, [deviceId]);
-
-  const fetchLatestTelemetry = async () => {
-    try {
-      const res = await apiClient.get(`/pumps/${deviceId}`);
-      if (res.data) {
-        const d = res.data;
-        setTelemetry((prev) => ({
-          ...prev,
-          v_ry: d.v_ry ?? 435.0,
-          v_yb: d.v_yb ?? 428.0,
-          v_br: d.v_br ?? 422.0,
-          i_r: d.i_r ?? 11.3,
-          i_y: d.i_y ?? 10.8,
-          i_b: d.i_b ?? 10.2,
-        }));
-      }
-    } catch {
-      // Fallback stays active for presentation demo
-    }
-  };
 
   const handlePowerClick = () => {
     setPendingTargetState(!pumpOn);
@@ -701,7 +699,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 2,
   },
-  headerSubText: {
+  headerSubTextAlt: {
     color: '#4a5a78',
     fontSize: 11,
     letterSpacing: 1,

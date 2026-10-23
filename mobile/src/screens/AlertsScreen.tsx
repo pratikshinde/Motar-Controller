@@ -6,8 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Platform,
-  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiClient } from '../config/api';
@@ -21,46 +19,53 @@ export const AlertsScreen: React.FC<AlertsScreenProps> = ({ onBackToDashboard })
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAlerts();
-  }, []);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  const fetchAlerts = async () => {
-    setLoading(true);
-    try {
-      const res = await apiClient.get('/alerts');
-      if (Array.isArray(res.data)) {
-        setAlerts(res.data);
-      } else if (res.data.alerts) {
-        setAlerts(res.data.alerts);
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const res = await apiClient.get('/alerts');
+        if (!isMounted) return;
+        if (Array.isArray(res.data)) {
+          setAlerts(res.data);
+        } else if (res.data.alerts) {
+          setAlerts(res.data.alerts);
+        }
+      } catch {
+        if (!isMounted) return;
+        setAlerts([
+          {
+            id: 'alt-101',
+            device_id: 'PUMP-4G-3P-8821',
+            fault_code: 1,
+            fault_name: 'Dry Run Protection Trip',
+            severity: 'CRITICAL',
+            status: 'ACTIVE',
+            created_at: new Date(Date.now() - 3600000).toISOString(),
+            message: 'Borewell water level dropped below sensor threshold.',
+          },
+          {
+            id: 'alt-102',
+            device_id: 'PUMP-4G-3P-9912',
+            fault_code: 4,
+            fault_name: 'Phase Reversal Detected',
+            severity: 'WARNING',
+            status: 'RESOLVED',
+            created_at: new Date(Date.now() - 86400000).toISOString(),
+            message: 'Phase sequence corrected by grid operator.',
+          },
+        ]);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    } catch (e) {
-      setAlerts([
-        {
-          id: 'alt-101',
-          device_id: 'PUMP-4G-3P-8821',
-          fault_code: 1,
-          fault_name: 'Dry Run Protection Trip',
-          severity: 'CRITICAL',
-          status: 'ACTIVE',
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-          message: 'Borewell water level dropped below sensor threshold.',
-        },
-        {
-          id: 'alt-102',
-          device_id: 'PUMP-4G-3P-9912',
-          fault_code: 4,
-          fault_name: 'Phase Reversal Detected',
-          severity: 'WARNING',
-          status: 'RESOLVED',
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          message: 'Phase sequence corrected by grid operator.',
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    void load();
+    return () => {
+      isMounted = false;
+    };
+  }, [reloadTrigger]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,7 +74,7 @@ export const AlertsScreen: React.FC<AlertsScreenProps> = ({ onBackToDashboard })
           <Text style={styles.backText}>‹ Dashboard</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Alerts & Fault Inbox</Text>
-        <TouchableOpacity style={styles.refreshBtn} onPress={fetchAlerts}>
+        <TouchableOpacity style={styles.refreshBtn} onPress={() => setReloadTrigger((p) => p + 1)}>
           <Text style={styles.refreshText}>↻</Text>
         </TouchableOpacity>
       </View>

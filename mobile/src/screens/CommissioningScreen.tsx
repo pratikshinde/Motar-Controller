@@ -65,7 +65,7 @@ export const CommissioningScreen: React.FC<CommissioningScreenProps> = ({
         `Device ${deviceId} successfully commissioned and handed over to ${customerPhone}`,
         [{ text: 'View Pump Dashboard', onPress: () => onCompleted(deviceId) }]
       );
-    } catch (e: any) {
+    } catch {
       // Even if API mock, fallback successfully for demo
       Alert.alert(
         '✅ Commissioning Complete',

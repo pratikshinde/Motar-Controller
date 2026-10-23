@@ -30,7 +30,9 @@ export function SegmentedTabs<K extends string>({
             accessibilityState={{ selected: on }}
             activeOpacity={0.8}
           >
-            <Text style={[styles.label, on && styles.labelOn]} numberOfLines={2}>
+            {/* Two lines for a long translation; a single word that is wider than its tab (a 320dp phone) shrinks a little
+                instead of being cut in the middle of the word. */}
+            <Text style={[styles.label, on && styles.labelOn]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}>
               {o.label}
             </Text>
           </TouchableOpacity>

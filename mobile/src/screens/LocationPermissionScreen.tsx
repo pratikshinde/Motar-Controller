@@ -8,7 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { MapPin, ShieldCheck, Zap, Radio } from 'lucide-react-native';
-import { colors, font, radius, space, TOUCH } from '../shared/theme';
+import { colors, font, radius, TOUCH } from '../shared/theme';
 
 interface LocationPermissionScreenProps {
   onPermissionGranted: () => void;
@@ -92,7 +92,7 @@ export const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> =
 };
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: colors.bg },
   container: {
     flex: 1,
     paddingHorizontal: 24,
@@ -156,15 +156,15 @@ const styles = StyleSheet.create({
     gap: 14,
     backgroundColor: colors.surface,
     padding: 14,
-    borderRadius: radius.card,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
   benefitText: { flex: 1, fontSize: 13, color: colors.text, fontWeight: '500' },
   actions: { width: '100%', gap: 12 },
   grantBtn: {
-    height: TOUCH.minHeight,
-    borderRadius: radius.card,
+    height: TOUCH,
+    borderRadius: radius.lg,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   skipBtn: {
-    height: TOUCH.minHeight - 8,
+    height: TOUCH - 8,
     alignItems: 'center',
     justifyContent: 'center',
   },

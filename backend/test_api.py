@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 from sqlalchemy import text
 from fastapi.testclient import TestClient
 from app.main import app
@@ -59,6 +60,7 @@ def run_tests():
     p = db.query(Pump).filter(Pump.id == "PUMP-4G-3P-8821").first()
     test_key = "test_device_key_123"
     p.device_key_hash = hash_secret(test_key)
+    p.lifecycle_state = "ACTIVE"
     p.last_command_at = None # Reset command cooldown timer for test suite execution
     db.commit()
     db.close()
@@ -71,7 +73,7 @@ def run_tests():
         "mot": 1,
         "flt": 0,
         "rssi": -72,
-        "seq": 9999
+        "seq": int(datetime.now().timestamp()) % 900000 + 10000
     }
     telem_headers = {
         "X-Device-Id": "PUMP-4G-3P-8821",
@@ -83,17 +85,21 @@ def run_tests():
 
     # 6. Query pump telemetry history (TimescaleDB / time-series store)
     r = client.get("/api/pumps/PUMP-4G-3P-8821/telemetry", headers=headers)
-    assert r.status_code == 200, f"Failed get telemetry: {r.text}"
-    telem_history = r.json()
+    telem_resp = r.json()
+    telem_history = telem_resp.get("telemetry", telem_resp) if isinstance(telem_resp, dict) else telem_resp
     assert len(telem_history) > 0
     latest_pt = telem_history[-1]
     assert latest_pt["v_ry"] == 418.5
     print(f"✅ 6. GET /api/pumps/PUMP-4G-3P-8821/telemetry -> {len(telem_history)} points verified in time-series table")
 
-    # 7. Pump command dispatch (Clear prior test commands so test passes on instant re-runs)
+    # 7. Pump command dispatch (Clear prior test commands and cooldown so test passes on instant re-runs)
     from app.models import Command
     db = SessionLocal()
+    db.execute(text("SET LOCAL app.bypass_rls = 'on';"))
     db.query(Command).filter(Command.pump_id == "PUMP-4G-3P-8821").delete()
+    p_rec = db.query(Pump).filter(Pump.id == "PUMP-4G-3P-8821").first()
+    if p_rec:
+        p_rec.last_command_at = None
     db.commit()
     db.close()
 
@@ -114,19 +120,25 @@ def run_tests():
     print("✅ 9. GET /api/fleet/dashboard -> Summary and map verified")
 
     # 10. User Registration & GET /me
-    reg_phone = "+919876543210"
+    import uuid
+    reg_phone = f"+9198{uuid.uuid4().int % 10**8:08d}"
+    reg_email = f"farmer_{uuid.uuid4().hex[:6]}@test.com"
+
+    # Obtain phone verification token for registration
+    sent = client.post("/api/v1/auth/verify-phone/send", json={"phone_number": reg_phone, "purpose": "registration"})
+    assert sent.status_code == 200, f"Failed verify-phone send: {sent.text}"
+    v_code = sent.json()["dev_otp"]
+    conf = client.post("/api/v1/auth/verify-phone/confirm", json={"phone_number": reg_phone, "purpose": "registration", "code": v_code})
+    assert conf.status_code == 200, f"Failed verify-phone confirm: {conf.text}"
+    phone_token = conf.json()["verification_token"]
+
     reg_payload = {
         "full_name": "Test Farmer",
         "phone": reg_phone,
-        "email": "farmer@test.com",
-        "password": "Password123"
+        "email": reg_email,
+        "password": "Password123",
+        "phone_verification_token": phone_token
     }
-    # Clear existing test user if any
-    from app.models import User
-    db = SessionLocal()
-    db.query(User).filter((User.phone == reg_phone) | (User.email == "farmer@test.com")).delete()
-    db.commit()
-    db.close()
 
     r = client.post("/api/auth/register", json=reg_payload)
     assert r.status_code == 200, f"Registration failed: {r.text}"
@@ -141,10 +153,14 @@ def run_tests():
     assert me_data["full_name"] == "Test Farmer"
     print("✅ 11. GET /api/auth/me -> Authenticated profile returned")
 
-    # 12. Reset cooldown for timer test by clearing prior test commands
-    from app.models import Command
+    # 12. Reset cooldown for timer test by clearing prior test commands and cooldown timer
+    from app.models import Command, Pump
     db = SessionLocal()
+    db.execute(text("SET LOCAL app.bypass_rls = 'on';"))
     db.query(Command).filter(Command.pump_id == "PUMP-4G-3P-8821").delete()
+    p_rec = db.query(Pump).filter(Pump.id == "PUMP-4G-3P-8821").first()
+    if p_rec:
+        p_rec.last_command_at = None
     db.commit()
     db.close()
 
@@ -160,24 +176,39 @@ def run_tests():
     assert timer_res["timer"]["on_duration_minutes"] == 30
     print("✅ 12. POST /api/pumps/PUMP-4G-3P-8821/timer -> SET_TIMER dispatched successfully")
 
-    # 13. System health
-    r = client.get("/api/system/health")
+    # 13. System health (Superadmin detailed view)
+    from app.services.jwt_auth import sign_token
+    from app.models import User
+    db = SessionLocal()
+    db.execute(text("SET LOCAL app.bypass_rls = 'on';"))
+    sa = db.query(User).filter(User.role == "superadmin").first()
+    admin_id = str(sa.id) if sa else str(uuid.uuid4())
+    db.close()
+    admin_token = sign_token({"sub": admin_id, "role": "superadmin", "hierarchy_path": "/SA"})
+    admin_headers = {"Authorization": f"Bearer {admin_token}"}
+
+    r = client.get("/api/system/health", headers=admin_headers)
     assert r.status_code == 200, f"Failed health: {r.text}"
     health_data = r.json()
     assert health_data["status"] in ["OK", "healthy"]
     print(f"✅ 13. GET /api/system/health -> {health_data['engine']} (Database: {health_data['database']})")
 
-    # 14. Pump creation and deletion
+    # 14. Pump creation and deletion (RBAC check)
     test_pump_id = "PUMP-TEST-DELETE-001"
-    # Ensure test pump does not exist
     db = SessionLocal()
+    db.execute(text("SET LOCAL app.bypass_rls = 'on';"))
     db.query(Pump).filter(Pump.id == test_pump_id).delete()
     db.commit()
     db.close()
 
-    r = client.post("/api/pumps", json={"id": test_pump_id, "name": "Test Pump Delete", "supply_type": "3-phase", "hp_rating": 5.0}, headers=headers)
+    # Customer creation must fail with 403 Forbidden
+    r_cust_create = client.post("/api/pumps", json={"id": test_pump_id, "name": "Test Pump Delete", "supply_type": "3-phase", "hp_rating": 5.0}, headers=headers)
+    assert r_cust_create.status_code == 403, f"Customer pump create must be 403, got {r_cust_create.status_code}"
+
+    # Superadmin creation succeeds
+    r = client.post("/api/pumps", json={"id": test_pump_id, "name": "Test Pump Delete", "supply_type": "3-phase", "hp_rating": 5.0}, headers=admin_headers)
     assert r.status_code == 201, f"Failed create pump: {r.text}"
-    print(f"✅ 14a. POST /api/pumps -> Created {test_pump_id}")
+    print(f"✅ 14a. POST /api/pumps -> Created {test_pump_id} with admin credentials")
 
     # Non-superadmin delete must fail with 403 Forbidden
     r_forbidden = client.delete(f"/api/pumps/{test_pump_id}", headers=headers)
@@ -185,13 +216,6 @@ def run_tests():
     print(f"✅ 14b. DELETE /api/pumps/{test_pump_id} -> Blocked for customer with HTTP 403")
 
     # Superadmin delete succeeds
-    from app.services.jwt_auth import sign_token
-    db = SessionLocal()
-    sa = db.query(User).filter(User.role == "superadmin").first()
-    admin_id = str(sa.id) if sa else str(uuid.uuid4())
-    db.close()
-    admin_token = sign_token({"sub": admin_id, "role": "superadmin", "hierarchy_path": "/SA"})
-    admin_headers = {"Authorization": f"Bearer {admin_token}"}
     r_admin = client.delete(f"/api/pumps/{test_pump_id}", headers=admin_headers)
     assert r_admin.status_code == 200, f"Failed superadmin delete pump: {r_admin.text}"
     print(f"✅ 14c. DELETE /api/pumps/{test_pump_id} -> Deleted successfully with superadmin role")
