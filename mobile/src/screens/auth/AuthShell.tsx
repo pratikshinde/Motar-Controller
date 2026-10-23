@@ -13,6 +13,7 @@ import {
 import { Droplets, ChevronLeft } from 'lucide-react-native';
 import { colors, font, radius, space, cardShadow } from '@/shared/theme';
 import { useDirection } from '@/shared/i18n/useDirection';
+import { brand } from '@/config/brand';
 
 interface AuthShellProps {
   onBack?: () => void;
@@ -21,7 +22,7 @@ interface AuthShellProps {
   children: React.ReactNode;
 }
 
-/** Shared header (back button + AJANTA brand mark) and scroll frame for every auth-flow screen. */
+/** Shared header (back button + the brand mark) and scroll frame for every auth-flow screen. */
 export const AuthShell: React.FC<AuthShellProps> = ({ onBack, showLogo = true, rightAction, children }) => {
   const { flip } = useDirection();
   return (
@@ -48,8 +49,8 @@ export const AuthShell: React.FC<AuthShellProps> = ({ onBack, showLogo = true, r
                   <Droplets size={26} color={colors.textOnPrimary} />
                 </View>
                 <View>
-                  <Text style={styles.brandTitle}>AJANTA</Text>
-                  <Text style={styles.brandSubtitle}>AJANTA PUMP CONTROLLER</Text>
+                  <Text style={styles.brandTitle}>{brand.shortName}</Text>
+                  <Text style={styles.brandSubtitle}>{brand.appName.toUpperCase()}</Text>
                 </View>
               </View>
               {rightAction}

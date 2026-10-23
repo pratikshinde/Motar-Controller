@@ -1,8 +1,4 @@
 {
-  "brand": {
-    "line1": "அஜந்தா பம்ப்",
-    "line2": "கன்ட்ரோலர்"
-  },
   "common": {
     "retry": "மீண்டும் முயற்சிக்கவும்",
     "refresh": "புதுப்பிக்கவும்",
@@ -467,7 +463,7 @@
   },
   "registered": {
     "title": "Registration Successful!",
-    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "desc": "Your account has been created. You can now use {{appName}}.",
     "phoneLabel": "Registered mobile number",
     "continueButton": "Continue to App"
   },

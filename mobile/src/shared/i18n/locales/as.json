@@ -1,8 +1,4 @@
 {
-  "brand": {
-    "line1": "অজন্তা পাম্প",
-    "line2": "কণ্ট্ৰোলাৰ"
-  },
   "common": {
     "retry": "আকৌ চেষ্টা কৰক",
     "refresh": "ৰিফ্ৰেচ কৰক",
@@ -467,7 +463,7 @@
   },
   "registered": {
     "title": "Registration Successful!",
-    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "desc": "Your account has been created. You can now use {{appName}}.",
     "phoneLabel": "Registered mobile number",
     "continueButton": "Continue to App"
   },

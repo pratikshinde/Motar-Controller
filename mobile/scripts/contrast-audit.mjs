@@ -1,10 +1,14 @@
 // WCAG contrast audit for the colours the farmer app actually puts text on (planner P3.5).
-// Reads the tokens from src/shared/theme/index.ts, so a colour change that drops below the
-// threshold fails CI. Normal text needs 4.5:1 (WCAG AA); large / bold display text needs 3:1.
+// Reads the tokens from src/shared/theme/index.ts and applies each brand's colour overrides
+// (brands/<key>/brand.json) on top, so a colour change - in the app or in any one brand - that drops below the
+// threshold fails CI. Audit one brand with BRAND=<key>; by default every brand is audited. Normal text needs 4.5:1 (WCAG AA); large / bold display text needs 3:1.
 // Run: npm run a11y:contrast
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const brands = createRequire(import.meta.url)('../brands/load.js');
 
 const themeFile = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'shared', 'theme', 'index.ts');
 const source = readFileSync(themeFile, 'utf8');
@@ -16,7 +20,7 @@ const block = (name) => {
     [...m[1].matchAll(/(\w+):\s*'(#[0-9a-fA-F]{6,8})'/g)].map(([, k, v]) => [k, v.slice(0, 7)]),
   );
 };
-const c = block('colors');
+const baseColors = block('baseColors');
 const power = block('power');
 
 const lum = (hex) => {
@@ -33,8 +37,8 @@ const ratio = (fg, bg) => {
 const AA = 4.5;
 const LARGE = 3;
 const white = '#FFFFFF';
-// [foreground, background, minimum ratio, where it is used]
-const pairs = [
+const pairsFor = (c) => // [foreground, background, minimum ratio, where it is used]
+[
   [c.text, c.surface, AA, 'body text on cards'],
   [c.text, c.bg, AA, 'body text on the page'],
   [c.textMuted, c.surface, AA, 'secondary text on cards'],
@@ -72,12 +76,25 @@ const pairs = [
 ];
 
 let failures = 0;
-console.log('ratio  need  result  foreground -> background  (use)');
-for (const [fg, bg, min, use] of pairs) {
-  const r = ratio(fg, bg);
-  const ok = r >= min;
-  if (!ok) failures += 1;
-  console.log(`${r.toFixed(2).padStart(5)}  ${min.toFixed(1)}   ${ok ? 'pass  ' : 'FAIL  '}  ${fg} -> ${bg}  (${use})`);
+const keys = process.env.BRAND ? [brands.selectedKey()] : brands.listBrands();
+for (const key of keys) {
+  const brand = brands.load(key);
+  const c = { ...baseColors, ...brand.colors };
+  const pairs = pairsFor(c);
+  console.log(`
+== brand: ${key}${Object.keys(brand.colors).length ? '' : ' (base palette)'}`);
+  console.log('ratio  need  result  foreground -> background  (use)');
+  let brandFailures = 0;
+  for (const [fg, bg, min, use] of pairs) {
+    const r = ratio(fg, bg);
+    const ok = r >= min;
+    if (!ok) brandFailures += 1;
+    console.log(`${r.toFixed(2).padStart(5)}  ${min.toFixed(1)}   ${ok ? 'pass  ' : 'FAIL  '}  ${fg} -> ${bg}  (${use})`);
+  }
+  failures += brandFailures;
+  console.log(brandFailures ? `${brandFailures} pair(s) below WCAG AA for ${key}.` : `All ${pairs.length} pairs meet WCAG AA for ${key}.`);
 }
-console.log(failures ? `\n${failures} pair(s) below WCAG AA.` : `\nAll ${pairs.length} pairs meet WCAG AA.`);
+console.log(failures ? `
+${failures} pair(s) below WCAG AA in total.` : `
+All ${keys.length} brand(s) meet WCAG AA.`);
 process.exit(failures ? 1 : 0);

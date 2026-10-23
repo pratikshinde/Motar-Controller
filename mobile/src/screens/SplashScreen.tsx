@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { Droplets, Sprout } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { colors, font, radius } from '../shared/theme';
+import { brand } from '../config/brand';
 import { tracking } from '../shared/i18n/languages';
 
 interface SplashScreenProps {
@@ -30,8 +31,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           </View>
         </View>
 
-        <Text style={[styles.titleLine1, tracking(i18n.language, 2)]}>{t('brand.line1')}</Text>
-        <Text style={[styles.titleLine2, tracking(i18n.language, 3)]}>{t('brand.line2')}</Text>
+        <Text style={[styles.titleLine1, tracking(i18n.language, 2)]}>{brand.titleLine1}</Text>
+        <Text style={[styles.titleLine2, tracking(i18n.language, 3)]}>{brand.titleLine2}</Text>
         <Text style={styles.tagline}>{t('splash.tagline')}</Text>
 
         <View style={styles.loaderBox}>

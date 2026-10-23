@@ -11,8 +11,9 @@
  * neon green / red on a dark surface (`power.*`) because farmers already know it.
  */
 import { Platform } from 'react-native';
+import { brand } from '@/config/brand';
 
-export const colors = {
+export const baseColors = {
   // Surfaces
   bg: '#F4F7FB',
   surface: '#FFFFFF',
@@ -60,6 +61,12 @@ export const colors = {
   heroBorder: '#1C4432',
   heroRaised: '#143A2B',
 } as const;
+
+/**
+ * The palette the app really draws with: the tokens above, with the brand's own overrides on top (brands/<key>/brand.json,
+ * `colors`). A brand that overrides nothing uses the base palette. `npm run a11y:contrast` checks every brand's result.
+ */
+export const colors: { [K in keyof typeof baseColors]: string } = { ...baseColors, ...(brand.colors as object) };
 
 /** The pump power button. Kept exactly as farmers already know it. */
 export const power = {

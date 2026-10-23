@@ -1,8 +1,4 @@
 {
-  "brand": {
-    "line1": "અજંતા પંપ",
-    "line2": "કંટ્રોલર"
-  },
   "common": {
     "retry": "ફરી પ્રયત્ન કરો",
     "refresh": "રિફ્રેશ કરો",
@@ -467,7 +463,7 @@
   },
   "registered": {
     "title": "Registration Successful!",
-    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "desc": "Your account has been created. You can now use {{appName}}.",
     "phoneLabel": "Registered mobile number",
     "continueButton": "Continue to App"
   },

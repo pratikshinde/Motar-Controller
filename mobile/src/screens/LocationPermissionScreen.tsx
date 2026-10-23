@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { MapPin, ShieldCheck, Zap, Radio } from 'lucide-react-native';
 import { colors, font, radius, TOUCH } from '../shared/theme';
+import { brand } from '../config/brand';
 
 interface LocationPermissionScreenProps {
   onPermissionGranted: () => void;
@@ -44,7 +45,7 @@ export const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> =
 
         <Text style={styles.title}>Enable Pump Geo-Location</Text>
         <Text style={styles.subtitle}>
-          Ajanta Pump Controller requires location permission to map and track your pump installation site, detect local substation grid availability, and safeguard equipment.
+          {brand.appName} requires location permission to map and track your pump installation site, detect local substation grid availability, and safeguard equipment.
         </Text>
 
         <View style={styles.benefitList}>

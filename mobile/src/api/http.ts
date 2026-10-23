@@ -1,13 +1,16 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import type { ZodType } from 'zod';
 import { API_BASE_URL } from '@/config/env';
+import { brand } from '@/config/brand';
 import { clearTokens, getAccessToken, getInstallId, getRefreshToken, notifySessionExpired, setTokens } from './session';
 import * as contract from './generated/farmer.zod';
 
 export const http = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' },
+  // X-App-Brand tells the server which manufacturer's app this is, so it answers with that manufacturer's data and
+  // branding. It selects a view; who the user is and what they may see is still decided by their login.
+  headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true', 'X-App-Brand': brand.key },
 });
 
 http.interceptors.request.use(async (config) => {

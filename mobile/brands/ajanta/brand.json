@@ -1,0 +1,19 @@
+{
+  "key": "ajanta",
+  "appName": "Ajanta Pump Controller",
+  "shortName": "AJANTA",
+  "titleLine1": "AJANTA PUMP",
+  "titleLine2": "CONTROLLER",
+  "colors": {},
+  "build": {
+    "slug": "agripump-farmer",
+    "scheme": "agripump",
+    "androidPackage": "com.agripump.farmer",
+    "iosBundleId": "com.agripump.farmer",
+    "easProjectId": null,
+    "icon": null,
+    "adaptiveIconForeground": null,
+    "adaptiveIconBackground": null,
+    "splashImage": null
+  }
+}

@@ -1,6 +1,7 @@
-# AgriPump farmer app
+# AgriPump farmer app (one codebase, one app per manufacturer)
 
-The farmer's app for the AgriPump controller: see whether each pump is running, start and stop it, set a run
+The farmer's app for the AgriPump controller, built once per manufacturer (Ajanta, Swati, ...) - see
+[Brands](#brands): see whether each pump is running, start and stop it, set a run
 timer, read what is wrong and what to do, and call the dealer. Expo SDK 54, React Native 0.81, TypeScript, Expo Router.
 
 ## Run it
@@ -64,3 +65,12 @@ look first (Konkani, Maithili and Kashmiri are the weakest).
 `eas.json` has `development`, `preview` (APK for field testing) and `production` profiles. Preview builds may talk to
 the plain-HTTP server; a **production** build must use an HTTPS `EXPO_PUBLIC_API_URL`, because Android blocks
 cleartext traffic in release builds.
+
+## Brands
+
+Every manufacturer that sells controllers has its own app in the store, built from this code with `BRAND=<key>`
+(default `ajanta`). A brand decides the app's name, store identity, icon and colours; the manufacturer's name is never
+hard-coded in a screen or a translation (`{{appName}}` / `src/config/brand.ts`). Each request carries `X-App-Brand`
+so the one server answers with that manufacturer's data. How to add one: [`brands/README.md`](brands/README.md).
+
+Build profiles are named `<brand>-preview` and `<brand>-production` (`eas build --profile ajanta-production`).

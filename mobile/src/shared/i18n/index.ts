@@ -4,6 +4,7 @@ import { getLocales } from 'expo-localization';
 import { storage } from '@/services/storage';
 import { getAccessToken } from '@/api/session';
 import { updateMe } from '@/api/generated/farmer';
+import { brand } from '@/config/brand';
 import { pseudoLocalize } from './pseudo';
 import { DEFAULT_LANGUAGE, LangCode, isSupportedLanguage } from './languages';
 import en from './locales/en.json';
@@ -44,7 +45,8 @@ i18n.use(initReactI18next).init({
   },
   lng: DEFAULT_LANGUAGE,
   fallbackLng: DEFAULT_LANGUAGE,
-  interpolation: { escapeValue: false }, // React already escapes
+  // React already escapes. `appName` is available in every string as {{appName}}: the brand's name is not translated.
+  interpolation: { escapeValue: false, defaultVariables: { appName: brand.appName } },
   returnNull: false,
 });
 

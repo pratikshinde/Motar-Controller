@@ -1,8 +1,4 @@
 {
-  "brand": {
-    "line1": "అజంతా పంపు",
-    "line2": "కంట్రోలర్"
-  },
   "common": {
     "retry": "మళ్లీ ప్రయత్నించండి",
     "refresh": "రిఫ్రెష్ చేయండి",
@@ -467,7 +463,7 @@
   },
   "registered": {
     "title": "Registration Successful!",
-    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "desc": "Your account has been created. You can now use {{appName}}.",
     "phoneLabel": "Registered mobile number",
     "continueButton": "Continue to App"
   },

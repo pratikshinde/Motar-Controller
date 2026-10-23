@@ -16,6 +16,14 @@
     },
     "production": {
       "autoIncrement": true
+    },
+    "ajanta-preview": {
+      "extends": "preview",
+      "env": { "BRAND": "ajanta" }
+    },
+    "ajanta-production": {
+      "extends": "production",
+      "env": { "BRAND": "ajanta" }
     }
   },
   "submit": {

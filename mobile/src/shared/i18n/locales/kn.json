@@ -1,8 +1,4 @@
 {
-  "brand": {
-    "line1": "ಅಜಂತಾ ಪಂಪ್",
-    "line2": "ಕಂಟ್ರೋಲರ್"
-  },
   "common": {
     "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
     "refresh": "ರಿಫ್ರೆಶ್ ಮಾಡಿ",
@@ -467,7 +463,7 @@
   },
   "registered": {
     "title": "Registration Successful!",
-    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "desc": "Your account has been created. You can now use {{appName}}.",
     "phoneLabel": "Registered mobile number",
     "continueButton": "Continue to App"
   },

@@ -27,6 +27,7 @@ import {
   LogOut,
 } from 'lucide-react-native';
 import { apiClient } from '../config/api';
+import { brand } from '../config/brand';
 import { wsService } from '../services/websocket';
 import { TelemetryData } from '../types';
 
@@ -320,7 +321,7 @@ export const PumpDashboardScreen: React.FC<PumpDashboardScreenProps> = ({
                 <Activity size={30} color={pumpOn ? '#00e676' : '#ff1744'} />
               </View>
               <View style={styles.titleTextGroup}>
-                <Text style={styles.headerTitleLine1}>AJANTA PUMP</Text>
+                <Text style={styles.headerTitleLine1}>{brand.titleLine1}</Text>
                 <Text style={styles.headerTitleLine2}>CONTROLLER</Text>
                 <Text style={styles.headerSubText}>3-Phase 440V • {deviceId}</Text>
               </View>

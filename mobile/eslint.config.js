@@ -11,6 +11,7 @@ module.exports = [
       'coverage/**',
       'babel.config.js',
       'app.config.js',
+      'brands/load.js', // plain Node (CommonJS) build tooling, like app.config.js
     ],
   },
   {

@@ -1,8 +1,4 @@
 {
-  "brand": {
-    "line1": "AJANTA PUMP",
-    "line2": "CONTROLLER"
-  },
   "common": {
     "retry": "Try again",
     "refresh": "Refresh",
@@ -467,7 +463,7 @@
   },
   "registered": {
     "title": "Registration Successful!",
-    "desc": "Your account has been created. You can now use Ajanta Pump Controller.",
+    "desc": "Your account has been created. You can now use {{appName}}.",
     "phoneLabel": "Registered mobile number",
     "continueButton": "Continue to App"
   },
