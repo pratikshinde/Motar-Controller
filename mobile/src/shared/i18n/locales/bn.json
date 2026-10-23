@@ -183,7 +183,19 @@
     "viewHistory": "History",
     "totalRunTime": "TOTAL RUN TIME",
     "lastCycleRunTime": "TODAY'S RUN TIME",
-    "hoursMinutes": "HOURS : MINUTES"
+    "hoursMinutes": "HOURS : MINUTES",
+    "solarTitle": "সোলার ভিএফডি",
+    "dcVolts": "ডিসি বাস ভোল্টেজ",
+    "frequencyHz": "আউটপুট ফ্রিকোয়েন্সি",
+    "motorPowerKw": "মোটর পাওয়ার",
+    "acOutputVolts": "এসি আউটপুট ভোল্টেজ",
+    "outputCurrentA": "আউটপুট কারেন্ট",
+    "vfdStatus": "ড্রাইভ স্ট্যাটাস",
+    "solarSystem": "সোলার ভিএফডি",
+    "unitHz": "Hz",
+    "unitKw": "kW",
+    "unitVdc": "V DC",
+    "unitVac": "V AC"
   },
   "faults": {
     "code1": "Y-ফেজ ত্রুটি",

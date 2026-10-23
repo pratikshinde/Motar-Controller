@@ -183,7 +183,19 @@
     "viewHistory": "History",
     "totalRunTime": "TOTAL RUN TIME",
     "lastCycleRunTime": "TODAY'S RUN TIME",
-    "hoursMinutes": "HOURS : MINUTES"
+    "hoursMinutes": "HOURS : MINUTES",
+    "solarTitle": "સોલર વીએફડી",
+    "dcVolts": "ડીસી બસ વોલ્ટેજ",
+    "frequencyHz": "આઉટપુટ ફ્રીક્વન્સી",
+    "motorPowerKw": "મોટર પાવર",
+    "acOutputVolts": "એસી આઉટપુટ વોલ્ટેજ",
+    "outputCurrentA": "આઉટપુટ કરંટ",
+    "vfdStatus": "ડ્રાઇવ સ્થિતિ",
+    "solarSystem": "સોલર વીએફડી",
+    "unitHz": "Hz",
+    "unitKw": "kW",
+    "unitVdc": "V DC",
+    "unitVac": "V AC"
   },
   "faults": {
     "code1": "Y-ફેઝ ખામી",

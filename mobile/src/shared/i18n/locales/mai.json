@@ -183,7 +183,19 @@
     "viewHistory": "History",
     "totalRunTime": "TOTAL RUN TIME",
     "lastCycleRunTime": "TODAY'S RUN TIME",
-    "hoursMinutes": "HOURS : MINUTES"
+    "hoursMinutes": "HOURS : MINUTES",
+    "solarTitle": "सोलर वीएफडी",
+    "dcVolts": "डीसी बस वोल्टेज",
+    "frequencyHz": "आउटपुट फ्रीक्वेंसी",
+    "motorPowerKw": "मोटर पावर",
+    "acOutputVolts": "एसी आउटपुट वोल्टेज",
+    "outputCurrentA": "आउटपुट करंट",
+    "vfdStatus": "ड्राइव स्थिति",
+    "solarSystem": "सोलर वीएफडी",
+    "unitHz": "Hz",
+    "unitKw": "kW",
+    "unitVdc": "V DC",
+    "unitVac": "V AC"
   },
   "faults": {
     "code1": "Y-फेज खराबी",

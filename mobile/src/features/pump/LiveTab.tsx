@@ -92,6 +92,8 @@ export const LiveTab: React.FC<{
   const rotation = phaseIndicator(pump);
   const hasFault = hasKnownFault(pump, now);
 
+  const isSolar = pump.device_type === 'SOLAR_VFD';
+
   const powerDisabled = !online || !controllable || flow.cooldownLeft > 0 || flow.sending;
   const ago = timeAgo(t, pump.last_seen_at, now);
 
@@ -136,8 +138,8 @@ export const LiveTab: React.FC<{
       <PowerHero
         name={name}
         hp={pump.hp_rating}
-        supplyType={pump.supply_type}
-        rotation={rotation}
+        supplyType={isSolar ? t('dashboard.solarSystem') : pump.supply_type}
+        rotation={isSolar ? null : rotation}
         state={state}
         signalDbm={pump.signal_dbm ?? pump.gsm_rssi}
         busy={flow.sending}
@@ -164,42 +166,94 @@ export const LiveTab: React.FC<{
         />
       ) : null}
 
-      <Card>
-        <CardTitle icon={Zap} title={t('dashboard.cardVoltages')} />
-        <View style={styles.rings}>
-          <VoltageRing phase="RY" voltage={pump.v_ry} color={colors.phaseR} />
-          <VoltageRing phase="YB" voltage={pump.v_yb} color={colors.phaseY} />
-          <VoltageRing phase="BR" voltage={pump.v_br} color={colors.phaseB} />
-        </View>
-      </Card>
+      {isSolar ? (
+        <Card>
+          <CardTitle icon={Zap} title={t('dashboard.solarTitle')} />
+          <View style={styles.solarGrid}>
+            <View style={[styles.solarBox, styles.solarBoxPrimary]}>
+              <Text style={[styles.solarLabel, { color: colors.primaryDark }]}>{t('dashboard.frequencyHz')}</Text>
+              <Text style={[styles.solarValue, { color: colors.primaryDark }]}>
+                {formatReading(pump.vfd_hz, 1)}
+              </Text>
+              <Text style={styles.solarUnit}>{t('dashboard.unitHz')}</Text>
+            </View>
+            <View style={[styles.solarBox, styles.solarBoxAmber]}>
+              <Text style={[styles.solarLabel, { color: colors.warn }]}>{t('dashboard.motorPowerKw')}</Text>
+              <Text style={[styles.solarValue, { color: colors.warn }]}>
+                {formatReading(pump.vfd_kw, 1)}
+              </Text>
+              <Text style={styles.solarUnit}>{t('dashboard.unitKw')}</Text>
+            </View>
+            <View style={[styles.solarBox, styles.solarBoxWater]}>
+              <Text style={[styles.solarLabel, { color: colors.water }]}>{t('dashboard.dcVolts')}</Text>
+              <Text style={[styles.solarValue, { color: colors.water }]}>
+                {pump.vfd_v_dc != null ? String(Math.round(pump.vfd_v_dc)) : '—'}
+              </Text>
+              <Text style={styles.solarUnit}>{t('dashboard.unitVdc')}</Text>
+            </View>
+            <View style={[styles.solarBox, styles.solarBoxWater]}>
+              <Text style={[styles.solarLabel, { color: colors.water }]}>{t('dashboard.acOutputVolts')}</Text>
+              <Text style={[styles.solarValue, { color: colors.water }]}>
+                {pump.vfd_v_ac != null ? String(Math.round(pump.vfd_v_ac)) : '—'}
+              </Text>
+              <Text style={styles.solarUnit}>{t('dashboard.unitVac')}</Text>
+            </View>
+            <View style={[styles.solarBox, styles.solarBoxPurple]}>
+              <Text style={[styles.solarLabel, { color: colors.purple }]}>{t('dashboard.outputCurrentA')}</Text>
+              <Text style={[styles.solarValue, { color: colors.purple }]}>
+                {formatReading(pump.vfd_i_out, 1)}
+              </Text>
+              <Text style={styles.solarUnit}>{t('dashboard.ampere')}</Text>
+            </View>
+            <View style={[styles.solarBox, styles.solarBoxPrimary]}>
+              <Text style={[styles.solarLabel, { color: colors.primaryDark }]}>{t('dashboard.vfdStatus')}</Text>
+              <Text style={[styles.solarValue, { color: colors.primaryDark, fontSize: 18 }]}>
+                {pump.vfd_status || (known ? (pumpOn ? t('dashboard.running') : t('dashboard.stopped')) : '—')}
+              </Text>
+              <Text style={styles.solarUnit}>FRENIC-Ace</Text>
+            </View>
+          </View>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <CardTitle icon={Zap} title={t('dashboard.cardVoltages')} />
+            <View style={styles.rings}>
+              <VoltageRing phase="RY" voltage={pump.v_ry} color={colors.phaseR} />
+              <VoltageRing phase="YB" voltage={pump.v_yb} color={colors.phaseY} />
+              <VoltageRing phase="BR" voltage={pump.v_br} color={colors.phaseB} />
+            </View>
+          </Card>
 
-      <Card>
-        <CardTitle icon={Activity} title={t('dashboard.cardCurrents')} />
-        {state === 'running' || state === 'fault' ? (
-          <View style={styles.currents}>
-            <CurrentBar
-              phase="R"
-              amps={pump.i_r}
-              color={colors.phaseR}
-              labelColor={colors.phaseR}
-              textColor="#FFFFFF"
-            />
-            <CurrentBar phase="Y" amps={pump.i_y} color={colors.phaseY} labelColor={colors.warn} textColor="#3B2A00" />
-            <CurrentBar
-              phase="B"
-              amps={pump.i_b}
-              color={colors.phaseB}
-              labelColor={colors.phaseB}
-              textColor="#FFFFFF"
-            />
-          </View>
-        ) : (
-          <View style={styles.stopped}>
-            <XCircle size={36} color={colors.textFaint} />
-            <Text style={styles.stoppedText}>{known ? t('dashboard.offNoLoad') : t('live.noReading')}</Text>
-          </View>
-        )}
-      </Card>
+          <Card>
+            <CardTitle icon={Activity} title={t('dashboard.cardCurrents')} />
+            {state === 'running' || state === 'fault' ? (
+              <View style={styles.currents}>
+                <CurrentBar
+                  phase="R"
+                  amps={pump.i_r}
+                  color={colors.phaseR}
+                  labelColor={colors.phaseR}
+                  textColor="#FFFFFF"
+                />
+                <CurrentBar phase="Y" amps={pump.i_y} color={colors.phaseY} labelColor={colors.warn} textColor="#3B2A00" />
+                <CurrentBar
+                  phase="B"
+                  amps={pump.i_b}
+                  color={colors.phaseB}
+                  labelColor={colors.phaseB}
+                  textColor="#FFFFFF"
+                />
+              </View>
+            ) : (
+              <View style={styles.stopped}>
+                <XCircle size={36} color={colors.textFaint} />
+                <Text style={styles.stoppedText}>{known ? t('dashboard.offNoLoad') : t('live.noReading')}</Text>
+              </View>
+            )}
+          </Card>
+        </>
+      )}
 
       <Card>
         <CardTitle icon={Clock} title={t('dashboard.cardRuntime2')} />
@@ -347,6 +401,15 @@ const styles = StyleSheet.create({
   runtimeLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
   runtimeValue: { fontSize: 24, fontWeight: '900', fontVariant: ['tabular-nums'], marginTop: 6 },
   runtimeUnit: { color: colors.textFaint, fontSize: 10, fontWeight: '700', marginTop: 4 },
+  solarGrid: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  solarBox: { flex: 1, minWidth: 140, borderRadius: radius.md, padding: 14, borderWidth: 1 },
+  solarBoxPrimary: { backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder },
+  solarBoxAmber: { backgroundColor: colors.accentSoft, borderColor: '#FFE8B3' },
+  solarBoxWater: { backgroundColor: colors.waterSoft, borderColor: '#B8DBFF' },
+  solarBoxPurple: { backgroundColor: colors.purpleSoft, borderColor: '#E1D0FF' },
+  solarLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
+  solarValue: { fontSize: 24, fontWeight: '900', fontVariant: ['tabular-nums'], marginTop: 6 },
+  solarUnit: { color: colors.textFaint, fontSize: 10, fontWeight: '700', marginTop: 4 },
   faultRow: {
     flexDirection: 'row',
     alignItems: 'center',

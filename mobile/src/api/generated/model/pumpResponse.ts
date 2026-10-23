@@ -45,5 +45,13 @@ export interface PumpResponse {
   v_yb?: number | null;
   warranty_period_months?: number | null;
   warranty_start_at?: string | null;
+  device_type?: 'AC_3PH' | 'SOLAR_VFD' | null;
+  vfd_hz?: number | null;
+  vfd_i_out?: number | null;
+  vfd_v_ac?: number | null;
+  vfd_v_dc?: number | null;
+  vfd_kw?: number | null;
+  vfd_status?: string | null;
+  vfd_fault_code?: number | null;
   [key: string]: unknown;
  }

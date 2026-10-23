@@ -19,4 +19,12 @@ export interface TelemetrySnapshot {
   v_br?: number | null;
   v_ry?: number | null;
   v_yb?: number | null;
+  device_type?: 'AC_3PH' | 'SOLAR_VFD' | null;
+  vfd_hz?: number | null;
+  vfd_i_out?: number | null;
+  vfd_v_ac?: number | null;
+  vfd_v_dc?: number | null;
+  vfd_kw?: number | null;
+  vfd_status?: string | null;
+  vfd_fault_code?: number | null;
 }

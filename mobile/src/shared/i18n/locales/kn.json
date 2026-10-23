@@ -183,7 +183,19 @@
     "viewHistory": "History",
     "totalRunTime": "TOTAL RUN TIME",
     "lastCycleRunTime": "TODAY'S RUN TIME",
-    "hoursMinutes": "HOURS : MINUTES"
+    "hoursMinutes": "HOURS : MINUTES",
+    "solarTitle": "ಸೋಲಾರ್ ವಿಎಫ್‌ಡಿ",
+    "dcVolts": "ಡಿಸಿ ಬಸ್ ವೋಲ್ಟೇಜ್",
+    "frequencyHz": "ಔಟ್‌ಪುಟ್ ಆವರ್ತನ",
+    "motorPowerKw": "ಮೋಟಾರ್ ಪವರ್",
+    "acOutputVolts": "ಎಸಿ ಔಟ್‌ಪುಟ್ ವೋಲ್ಟೇಜ್",
+    "outputCurrentA": "ಔಟ್‌ಪುಟ್ ಕರೆಂಟ್",
+    "vfdStatus": "ಡ್ರೈವ್ ಸ್ಥಿತಿ",
+    "solarSystem": "ಸೋಲಾರ್ ವಿಎಫ್‌ಡಿ",
+    "unitHz": "Hz",
+    "unitKw": "kW",
+    "unitVdc": "V DC",
+    "unitVac": "V AC"
   },
   "faults": {
     "code1": "Y-ಫೇಸ್ ದೋಷ",

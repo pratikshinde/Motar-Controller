@@ -183,7 +183,19 @@
     "viewHistory": "History",
     "totalRunTime": "TOTAL RUN TIME",
     "lastCycleRunTime": "TODAY'S RUN TIME",
-    "hoursMinutes": "HOURS : MINUTES"
+    "hoursMinutes": "HOURS : MINUTES",
+    "solarTitle": "సోలార్ విఎఫ్‌డి",
+    "dcVolts": "డిసి బస్ వోల్టేజ్",
+    "frequencyHz": "అవుట్‌పుట్ ఫ్రీక్వెన్సీ",
+    "motorPowerKw": "మోటార్ పవర్",
+    "acOutputVolts": "ఎసి అవుట్‌పుట్ వోల్టేజ్",
+    "outputCurrentA": "అవుట్‌పుట్ కరెంట్",
+    "vfdStatus": "డ్రైవ్ స్థితి",
+    "solarSystem": "సోలార్ విఎఫ్‌డి",
+    "unitHz": "Hz",
+    "unitKw": "kW",
+    "unitVdc": "V DC",
+    "unitVac": "V AC"
   },
   "faults": {
     "code1": "Y-ఫేజ్ లోపం",

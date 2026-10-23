@@ -183,7 +183,19 @@
     "viewHistory": "History",
     "totalRunTime": "TOTAL RUN TIME",
     "lastCycleRunTime": "TODAY'S RUN TIME",
-    "hoursMinutes": "HOURS : MINUTES"
+    "hoursMinutes": "HOURS : MINUTES",
+    "solarTitle": "சோலார் விஎஃப்டி",
+    "dcVolts": "டிசி பஸ் மின்னழுத்தம்",
+    "frequencyHz": "வெளியீட்டு அதிர்வெண்",
+    "motorPowerKw": "மோட்டார் பவர்",
+    "acOutputVolts": "ஏசி வெளியீட்டு மின்னழுத்தம்",
+    "outputCurrentA": "வெளியீட்டு மின்னோட்டம்",
+    "vfdStatus": "டிரைவ் நிலை",
+    "solarSystem": "சோலார் விஎஃப்டி",
+    "unitHz": "Hz",
+    "unitKw": "kW",
+    "unitVdc": "V DC",
+    "unitVac": "V AC"
   },
   "faults": {
     "code1": "Y-ஃபேஸ் கோளாறு",

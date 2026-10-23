@@ -6,6 +6,7 @@ import i18n from '@/shared/i18n';
 import { AlertsScreen } from '../alerts/AlertsScreen';
 import { CommandStepper } from '../commands/CommandStepper';
 import { PowerHero } from '../pump/PowerHero';
+import { LiveTab } from '../pump/LiveTab';
 import { TimerTab } from '../timer/TimerTab';
 import * as api from '@/api/generated/farmer';
 
@@ -16,6 +17,8 @@ jest.mock('@/api/generated/farmer', () => ({
   useListAlerts: jest.fn(),
   useAckAlert: jest.fn(),
   useResolveAlert: jest.fn(),
+  useGetPumpCommand: jest.fn().mockReturnValue({ data: null }),
+  sendPumpCommand: jest.fn(),
 }));
 
 beforeEach(async () => {
@@ -222,3 +225,87 @@ describe('TimerTab', () => {
     expect(screen.getByText('Timers cannot be sent while remote control is paused.')).toBeTruthy();
   });
 });
+
+describe('LiveTab (Solar VFD vs AC 3-Phase)', () => {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const solarPump: PumpResponse = {
+    id: 'solar-1',
+    name: 'Solar Pump',
+    hierarchy_path: 'root.swati.dealer.farmer',
+    lifecycle_state: 'ACTIVE',
+    status: 'RUNNING',
+    supply_type: '3-phase',
+    device_type: 'SOLAR_VFD',
+    pump_on: true,
+    last_seen_at: new Date().toISOString(),
+    vfd_hz: 48.5,
+    vfd_kw: 3.2,
+    vfd_v_dc: 580.0,
+    vfd_v_ac: 380.0,
+    vfd_i_out: 7.5,
+    vfd_status: 'RUNNING',
+  };
+
+  const acPump: PumpResponse = {
+    id: 'ac-1',
+    name: 'Grid AC Pump',
+    hierarchy_path: 'root.ajanta.dealer.farmer',
+    lifecycle_state: 'ACTIVE',
+    status: 'RUNNING',
+    supply_type: '3-phase',
+    device_type: 'AC_3PH',
+    pump_on: true,
+    last_seen_at: new Date().toISOString(),
+    v_ry: 415.0,
+    v_yb: 418.0,
+    v_br: 412.0,
+    i_r: 10.2,
+    i_y: 9.8,
+    i_b: 10.0,
+  };
+
+  it('renders Solar VFD metrics and hides 3-phase rings/bars for SOLAR_VFD pumps', () => {
+    render(
+      <QueryClientProvider client={qc}>
+        <LiveTab pump={solarPump} onOpenFaults={jest.fn()} onOpenTimer={jest.fn()} onOpenHistory={jest.fn()} />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText('SOLAR VFD')).toBeTruthy();
+    expect(screen.getByText('48.5')).toBeTruthy();
+    expect(screen.getByText('3.2')).toBeTruthy();
+    expect(screen.getByText('580')).toBeTruthy();
+    expect(screen.getByText('380')).toBeTruthy();
+    expect(screen.getByText('7.5')).toBeTruthy();
+    expect(screen.queryByText('LINE VOLTAGES')).toBeNull();
+    expect(screen.queryByText('PHASE CURRENTS')).toBeNull();
+  });
+
+  it('renders 3-phase line voltages and currents for AC_3PH pumps and hides SOLAR VFD', () => {
+    render(
+      <QueryClientProvider client={qc}>
+        <LiveTab pump={acPump} onOpenFaults={jest.fn()} onOpenTimer={jest.fn()} onOpenHistory={jest.fn()} />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText('LINE VOLTAGES')).toBeTruthy();
+    expect(screen.getByText('PHASE CURRENTS')).toBeTruthy();
+    expect(screen.queryByText('SOLAR VFD')).toBeNull();
+  });
+
+  it('shows em dash for missing solar readings rather than inventing numbers', () => {
+    const emptySolar: PumpResponse = {
+      ...solarPump,
+      vfd_hz: null,
+      vfd_kw: null,
+      vfd_v_dc: null,
+      vfd_v_ac: null,
+      vfd_i_out: null,
+    };
+    render(
+      <QueryClientProvider client={qc}>
+        <LiveTab pump={emptySolar} onOpenFaults={jest.fn()} onOpenTimer={jest.fn()} onOpenHistory={jest.fn()} />
+      </QueryClientProvider>,
+    );
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(5);
+  });
+});
+
