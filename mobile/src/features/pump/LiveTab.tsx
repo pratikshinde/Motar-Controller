@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
   Activity,
@@ -26,6 +27,9 @@ import { formatHM, formatMinutes, formatReading, timeAgo } from '@/shared/i18n/f
 import { useNow, useOnline } from '@/shared/hooks/useOnline';
 import { CommandStepper } from '@/features/commands/CommandStepper';
 import { useCommandFlow } from '@/features/commands/useCommandFlow';
+import { isFinished } from '@/features/commands/progress';
+import { useGetPumpTimer } from '@/api/generated/farmer';
+import { brand } from '@/config/brand';
 import {
   canControl,
   displayName,
@@ -72,8 +76,11 @@ export const LiveTab: React.FC<{
   onOpenTimer: () => void;
   onOpenHistory: () => void;
   refreshFailed?: boolean;
-}> = ({ pump, onOpenFaults, onOpenTimer, onOpenHistory, refreshFailed }) => {
+  /** Read the pump again (the "check again" / "try again" buttons). */
+  onRefresh?: () => void;
+}> = ({ pump, onOpenFaults, onOpenTimer, onOpenHistory, refreshFailed, onRefresh }) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const online = useOnline();
   const now = useNow(30_000);
   const flow = useCommandFlow(pump);
@@ -93,6 +100,21 @@ export const LiveTab: React.FC<{
   const hasFault = hasKnownFault(pump, now);
 
   const isSolar = pump.device_type === 'SOLAR_VFD';
+  const swati = brand.design === 'swati';
+
+  // The command the farmer sent that is still being carried out (Swati's home shows "starting..." / "stopping...").
+  const pending: 'START' | 'STOP' | null = flow.sending
+    ? (target ?? lastTarget)
+    : flow.attempt && !flow.attempt.failed && flow.progress && !isFinished(flow.progress) && flow.progress.kind !== 'notConfirmed'
+      ? flow.attempt.action
+      : null;
+
+  const timer = useGetPumpTimer(pump.id).data?.timer;
+  const timerText = timer
+    ? (timer.off_duration_minutes ?? 0) > 0 && timer.cycle_count !== 1
+      ? `${timer.on_duration_minutes}/${timer.off_duration_minutes} ${t('swati.minShort')}`
+      : t('units.minutes', { m: timer.on_duration_minutes })
+    : undefined;
 
   const powerDisabled = !online || !controllable || flow.cooldownLeft > 0 || flow.sending;
   const ago = timeAgo(t, pump.last_seen_at, now);
@@ -145,11 +167,22 @@ export const LiveTab: React.FC<{
         busy={flow.sending}
         disabled={powerDisabled}
         cooldownLeft={flow.cooldownLeft}
+        isSolar={isSolar}
+        solarKw={pump.vfd_kw}
+        faultCode={pump.fault_code}
+        pending={pending}
+        lastUpdatedText={pump.last_seen_at ? timeAgo(t, pump.last_seen_at, now) : undefined}
+        runtimeTodayText={pump.runtime_today_min != null ? formatMinutes(t, pump.runtime_today_min) : undefined}
+        timerText={timerText}
         onPower={askPower}
+        onRetry={onRefresh}
+        onSelectPump={() => router.push('/pumps')}
+        onOpenTimer={onOpenTimer}
+        onOpenHistory={onOpenHistory}
       />
 
       <View style={styles.metaRow}>
-        <Text style={styles.updated}>{t('live.updated', { ago })}</Text>
+        {swati ? <View /> : <Text style={styles.updated}>{t('live.updated', { ago })}</Text>}
         <ListenButton getText={speech} testID="listen" />
       </View>
 
@@ -166,6 +199,8 @@ export const LiveTab: React.FC<{
         />
       ) : null}
 
+      {swati ? null : (
+        <>
       {isSolar ? (
         <Card>
           <CardTitle icon={Zap} title={t('dashboard.solarTitle')} />
@@ -338,6 +373,8 @@ export const LiveTab: React.FC<{
           </TouchableOpacity>
         </View>
       </Card>
+        </>
+      )}
 
       <ConfirmSheet
         visible={target !== null}

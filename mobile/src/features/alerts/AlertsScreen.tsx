@@ -1,3 +1,5 @@
+import { brand } from '@/config/brand';
+import { AlertsScreenSwati } from './AlertsScreen.swati';
 import React, { useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -98,7 +100,7 @@ const AlertCard: React.FC<{
 };
 
 /** Alerts for the farmer's pumps: see, acknowledge, mark fixed, or jump to the pump. */
-export const AlertsScreen: React.FC = () => {
+const AlertsScreenClassic: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const qc = useQueryClient();
@@ -221,3 +223,6 @@ const styles = StyleSheet.create({
   when: { color: colors.textMuted, fontSize: font.body },
   actions: { gap: 10, marginTop: 10 },
 });
+
+
+export const AlertsScreen = brand.design === 'swati' ? AlertsScreenSwati : AlertsScreenClassic;

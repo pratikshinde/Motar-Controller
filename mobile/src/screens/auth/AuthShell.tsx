@@ -1,3 +1,4 @@
+import { AuthShellSwati, authStylesSwati } from './AuthShell.swati';
 import React from 'react';
 import {
   KeyboardAvoidingView,
@@ -23,7 +24,7 @@ interface AuthShellProps {
 }
 
 /** Shared header (back button + the brand mark) and scroll frame for every auth-flow screen. */
-export const AuthShell: React.FC<AuthShellProps> = ({ onBack, showLogo = true, rightAction, children }) => {
+const AuthShellClassic: React.FC<AuthShellProps> = ({ onBack, showLogo = true, rightAction, children }) => {
   const { flip } = useDirection();
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const authStyles = StyleSheet.create({
+const authStylesClassic = StyleSheet.create({
   title: { color: colors.text, fontSize: font.headline, fontWeight: '800' },
   desc: { color: colors.textMuted, fontSize: font.body, marginTop: 6, marginBottom: space.lg, lineHeight: 22 },
   label: { color: colors.text, fontSize: font.body, fontWeight: '700', marginTop: space.md, marginBottom: 6 },
@@ -151,3 +152,8 @@ export const authStyles = StyleSheet.create({
   },
   errorText: { color: colors.danger, fontSize: 14, fontWeight: '700' },
 });
+
+
+export const AuthShell: typeof AuthShellClassic = brand.design === 'swati' ? AuthShellSwati : AuthShellClassic;
+
+export const authStyles = brand.design === 'swati' ? authStylesSwati : authStylesClassic;

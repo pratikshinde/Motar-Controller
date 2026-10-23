@@ -1,3 +1,5 @@
+import { brand } from '@/config/brand';
+import { LanguageScreenSwati } from './LanguageScreen.swati';
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Platform, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,7 +32,7 @@ const norm = (tag: string) => tag.replace('_', '-').toLowerCase();
  * people who can't read any of them. It is also where the voice assistant
  * (planner Phase 5) will live: "say your language".
  */
-export const LanguageScreen: React.FC<LanguageScreenProps> = ({ initial, mode, onDone, onBack }) => {
+const LanguageScreenClassic: React.FC<LanguageScreenProps> = ({ initial, mode, onDone, onBack }) => {
   const { t } = useTranslation();
   const { flip } = useDirection();
   const [selected, setSelected] = useState<LangCode>(initial);
@@ -289,3 +291,6 @@ const styles = StyleSheet.create({
   },
   continueText: { color: colors.textOnPrimary, fontSize: font.title, fontWeight: '800' },
 });
+
+
+export const LanguageScreen: typeof LanguageScreenClassic = brand.design === 'swati' ? LanguageScreenSwati : LanguageScreenClassic;

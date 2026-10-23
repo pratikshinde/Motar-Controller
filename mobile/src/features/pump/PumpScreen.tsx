@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ChevronLeft, Droplets, RefreshCw } from 'lucide-react-native';
-import { useGetPump } from '@/api/generated/farmer';
+import { useGetPump, useListAlerts } from '@/api/generated/farmer';
 import { useRealtimeStatus } from '@/realtime/RealtimeProvider';
 import { colors, font, TOUCH } from '@/shared/theme';
 import { StateView } from '@/shared/ui/StateView';
@@ -18,6 +18,10 @@ import { displayName } from '@/features/pumps/model';
 import { FaultsTab } from '@/features/faults/FaultsTab';
 import { HistoryTab } from '@/features/history/HistoryTab';
 import { TimerTab } from '@/features/timer/TimerTab';
+import { SwatiTopBar } from '@/shared/ui/SwatiTopBar';
+import { useAuth } from '@/state/auth';
+import { brand } from '@/config/brand';
+import { useSelectedPump } from '@/state/selectedPump';
 import { LiveTab } from './LiveTab';
 
 export type PumpTab = 'live' | 'timer' | 'history' | 'faults';
@@ -33,26 +37,33 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
   const { t } = useTranslation();
   const router = useRouter();
   const { flip } = useDirection();
+  const user = useAuth((s) => s.user);
   const [tab, setTab] = useState<PumpTab>(initialTab ?? 'live');
-  // The live connection keeps this current while it is open. When it is not (a network that drops it, a server
-  // restart), the screen re-reads every few seconds instead of showing a state that may be a minute old.
+  // The other Swati screens (timer, history, technical details) are about the pump the farmer is looking at.
+  useEffect(() => useSelectedPump.getState().select(id), [id]);
   const rt = useRealtimeStatus();
   const q = useGetPump(id, { query: { refetchInterval: rt === 'open' ? 60_000 : 5_000 } });
+  const alertsQ = useListAlerts({ unresolved_only: true });
+  const openAlerts = (alertsQ.data?.alerts ?? []).length;
   const [refreshing, setRefreshing] = useState(false);
-  useStatusBar('dark');
+  useStatusBar('light');
 
   const pump = q.data?.pump;
   const notFound = (q.error as { response?: { status?: number } } | null)?.response?.status === 404;
 
   const refresh = async () => {
     setRefreshing(true);
-    await q.refetch();
+    await Promise.all([q.refetch(), alertsQ.refetch()]);
     setRefreshing(false);
   };
 
   const back = embedded ? undefined : () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  const topBar = (
+  // Swati's design greets the farmer by name and puts the bell and profile in its own header (embedded = the home tab).
+  const swatiHeader = brand.design === 'swati' && !!embedded;
+  const farmerFirstName = user?.full_name ? user.full_name.split(' ')[0] : '';
+
+  const defaultTopBar = (
     <View style={styles.top}>
       <View style={styles.side}>
         {back ? (
@@ -87,7 +98,16 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
   if (q.isLoading && !q.data) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        {topBar}
+        {swatiHeader ? (
+          <SwatiTopBar
+            farmerName={farmerFirstName}
+            unreadAlerts={openAlerts}
+            onPressAlerts={() => router.push('/alerts')}
+            onPressProfile={() => router.push('/settings')}
+          />
+        ) : (
+          defaultTopBar
+        )}
         <StateView kind="loading" title={t('common.loading')} />
       </SafeAreaView>
     );
@@ -96,7 +116,16 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
   if (!pump) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        {topBar}
+        {swatiHeader ? (
+          <SwatiTopBar
+            farmerName={farmerFirstName}
+            unreadAlerts={openAlerts}
+            onPressAlerts={() => router.push('/alerts')}
+            onPressProfile={() => router.push('/settings')}
+          />
+        ) : (
+          defaultTopBar
+        )}
         <StateView
           kind={notFound ? 'empty' : 'error'}
           icon={notFound ? Droplets : AlertTriangle}
@@ -111,7 +140,16 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      {topBar}
+      {swatiHeader ? (
+        <SwatiTopBar
+          farmerName={farmerFirstName}
+          unreadAlerts={openAlerts}
+          onPressAlerts={() => router.push('/alerts')}
+          onPressProfile={() => router.push('/settings')}
+        />
+      ) : (
+        defaultTopBar
+      )}
       <OfflineBanner savedAt={q.dataUpdatedAt} />
       <ScrollView
         contentContainerStyle={styles.content}
@@ -119,24 +157,27 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} colors={[colors.primary]} />}
       >
-        <SegmentedTabs
-          options={[
-            { key: 'live', label: t('pump.tabs.live') },
-            { key: 'timer', label: t('pump.tabs.timer') },
-            { key: 'history', label: t('pump.tabs.history') },
-            { key: 'faults', label: t('pump.tabs.faults') },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
+        {!embedded && (
+          <SegmentedTabs
+            options={[
+              { key: 'live', label: t('pump.tabs.live') },
+              { key: 'timer', label: t('pump.tabs.timer') },
+              { key: 'history', label: t('pump.tabs.history') },
+              { key: 'faults', label: t('pump.tabs.faults') },
+            ]}
+            value={tab}
+            onChange={setTab}
+          />
+        )}
         <ErrorBoundary>
           {tab === 'live' ? (
             <LiveTab
               pump={pump}
-              onOpenFaults={() => setTab('faults')}
-              onOpenTimer={() => setTab('timer')}
-              onOpenHistory={() => setTab('history')}
+              onOpenFaults={() => router.push('/alerts')}
+              onOpenTimer={() => router.push('/timer')}
+              onOpenHistory={() => router.push('/history')}
               refreshFailed={q.isError}
+              onRefresh={() => void refresh()}
             />
           ) : null}
           {tab === 'timer' ? <TimerTab pump={pump} /> : null}
@@ -149,10 +190,10 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
 };
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, minHeight: TOUCH },
+  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, minHeight: TOUCH, backgroundColor: '#FFFFFF' },
   side: { width: TOUCH - 4 },
   iconBtn: { width: TOUCH - 8, height: TOUCH - 8, alignItems: 'center', justifyContent: 'center' },
-  title: { flex: 1, textAlign: 'center', color: colors.text, fontSize: font.title, fontWeight: '900' },
-  content: { padding: 16, paddingBottom: 40, gap: 16 },
+  title: { flex: 1, textAlign: 'center', color: '#0F172A', fontSize: font.title, fontWeight: '900' },
+  content: { paddingBottom: 40, backgroundColor: '#F8FAFC' },
 });

@@ -1,3 +1,5 @@
+import { brand } from '@/config/brand';
+import { TabBarSwati } from './TabBar.swati';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +20,7 @@ export interface TabBarProps {
 }
 
 /** Big, labelled tabs: icon + word, never icon alone. The Alerts tab shows how many are open. */
-export const TabBar: React.FC<TabBarProps> = ({ state, navigation }) => {
+const TabBarClassic: React.FC<TabBarProps> = ({ state, navigation }) => {
   const { t } = useTranslation();
   const alerts = useListAlerts({ unresolved_only: true });
   const open = (alerts.data?.alerts ?? []).length;
@@ -101,3 +103,6 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
 });
+
+
+export const TabBar: typeof TabBarClassic = brand.design === 'swati' ? TabBarSwati : TabBarClassic;

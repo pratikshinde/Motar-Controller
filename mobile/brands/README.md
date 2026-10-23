@@ -20,6 +20,7 @@ brands/
 | `key` | Short machine name; equals the folder name. Sent to the server on every request as `X-App-Brand`. |
 | `appName` | The product name users see: the store title, the home-screen label, "Registration successful - you can now use *appName*". |
 | `shortName`, `titleLine1`, `titleLine2` | The marks in the sign-in header and on the splash screen. |
+| `design` | Which screen design the app uses: leave it out for the original one (Ajanta), or `"swati"` for Swati's (blue, big single button, 3-tab home). Both designs share the same data, translations and server; only the screens differ. |
 | `colors` | Overrides for the design tokens in `src/shared/theme` (`primary`, `primaryDark`, `primarySoft`, ...), `#RRGGBB`. Leave `{}` to use the base palette. |
 | `build.slug`, `build.scheme` | Expo project slug and the deep-link scheme (`<scheme>://pump/<id>`). |
 | `build.androidPackage`, `build.iosBundleId` | The store identity. **Never change it after the app is published**: the store treats a new id as a different app. |
@@ -34,7 +35,8 @@ Only the part above `build` is shipped inside the app; `build` is read by the bu
 2. Fill in `brands/swati/brand.json` (colours) and add the image files.
 3. `npm run a11y:contrast` - it audits every brand's palette against WCAG AA; fix any pair it rejects.
 4. Try it: `BRAND=swati npx expo start --web --clear` (PowerShell: `$env:BRAND="swati"; npx expo start --web --clear`).
-   `--clear` matters whenever you switch brand: Metro caches the brand it saw first.
+   `--clear` matters whenever you switch brand: Metro caches the brand it saw first. Two dev servers for two brands share
+   one cache, so run them one at a time (or each with `--clear`); a server can otherwise serve the other brand's config.
 5. On the server, create the manufacturer and its brand record (so the app's `X-App-Brand: swati` maps to it).
 6. Store build: `eas init` once for the new app, put the project id in `build.easProjectId`, then
    `eas build --profile swati-production --platform android`.

@@ -1,15 +1,16 @@
 {
   "key": "swati",
-  "_comment": "TODO: Replace placeholder package and branding assets when finalized by manufacturer",
   "appName": "Swati Pump Controller",
   "shortName": "SWATI",
-  "titleLine1": "SWATI PUMP",
-  "titleLine2": "CONTROLLER",
+  "titleLine1": "SWATI",
+  "titleLine2": "PUMP CONTROLLER",
+  "design": "swati",
   "colors": {
-    "primary": "#1B4FB8",
-    "primaryDark": "#143C8E",
-    "primarySoft": "#E8EFFC",
-    "primaryBorder": "#BFD0F5"
+    "primary": "#1565C0",
+    "primaryDark": "#0D47A1",
+    "primarySoft": "#E3F2FD",
+    "primaryBorder": "#90CAF9",
+    "water": "#1976D2"
   },
   "build": {
     "slug": "swati-pump-controller",

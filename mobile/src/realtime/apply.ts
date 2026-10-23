@@ -25,6 +25,14 @@ const LIVE_FIELDS = [
   'gsm_rssi',
   'status',
   'total_runtime_min',
+  'device_type',
+  'vfd_hz',
+  'vfd_i_out',
+  'vfd_v_ac',
+  'vfd_v_dc',
+  'vfd_kw',
+  'vfd_status',
+  'vfd_fault_code',
 ] as const;
 
 export function mergeTelemetry(pump: PumpResponse, data: Record<string, unknown>, nowIso: string): PumpResponse {
@@ -32,6 +40,16 @@ export function mergeTelemetry(pump: PumpResponse, data: Record<string, unknown>
   for (const key of LIVE_FIELDS) {
     // `fault_code: null` is meaningful (fault cleared); `undefined` (key absent) is not.
     if (key in data && (data[key] !== null || key === 'fault_code')) next[key] = data[key];
+  }
+  if (data.vfd && typeof data.vfd === 'object') {
+    const v = data.vfd as Record<string, unknown>;
+    if (v.hz !== undefined) next.vfd_hz = v.hz;
+    if (v.i_out !== undefined) next.vfd_i_out = v.i_out;
+    if (v.v_ac !== undefined) next.vfd_v_ac = v.v_ac;
+    if (v.v_dc !== undefined) next.vfd_v_dc = v.v_dc;
+    if (v.kw !== undefined) next.vfd_kw = v.kw;
+    if (v.status !== undefined) next.vfd_status = v.status;
+    if (v.fault_code !== undefined) next.vfd_fault_code = v.fault_code;
   }
   if (data.gsm_rssi !== undefined && data.signal_dbm === undefined) next.signal_dbm = data.gsm_rssi;
   // The reading's own timestamp when it has one, so "last reported" and command confirmation use one clock.

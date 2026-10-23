@@ -1,3 +1,5 @@
+import { brand } from '@/config/brand';
+import { SettingsScreenSwati } from './SettingsScreen.swati';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -70,7 +72,7 @@ const Row: React.FC<{
   );
 };
 
-export const SettingsScreen: React.FC = () => {
+const SettingsScreenClassic: React.FC = () => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const qc = useQueryClient();
@@ -354,3 +356,6 @@ const styles = StyleSheet.create({
   signOutText: { color: colors.danger, fontSize: font.body, fontWeight: '900' },
   version: { color: colors.textFaint, fontSize: font.caption + 1, textAlign: 'center' },
 });
+
+
+export const SettingsScreen = brand.design === 'swati' ? SettingsScreenSwati : SettingsScreenClassic;

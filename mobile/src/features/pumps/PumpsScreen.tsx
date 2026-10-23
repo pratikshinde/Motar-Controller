@@ -20,6 +20,8 @@ import { useNow } from '@/shared/hooks/useOnline';
 import { useStatusBar } from '@/shared/hooks/useStatusBar';
 import { useRealtimeStatus } from '@/realtime/RealtimeProvider';
 import { PumpScreen } from '@/features/pump/PumpScreen';
+import { brand } from '@/config/brand';
+import { useSelectedPump } from '@/state/selectedPump';
 import { PumpState, displayName, groupBySite, pumpState } from './model';
 
 const STATE_PILL: Record<
@@ -87,6 +89,7 @@ export const PumpsScreen: React.FC = () => {
   // Live updates arrive over the socket; poll only while it is down.
   const q = useListPumps(undefined, { query: { refetchInterval: rt === 'open' ? false : 30_000 } });
   useStatusBar('light');
+  const selectedId = useSelectedPump((st) => st.id);
 
   const pumps = useMemo(() => q.data?.pumps ?? [], [q.data]);
   const sections = useMemo(() => groupBySite(pumps), [pumps]);
@@ -139,6 +142,8 @@ export const PumpsScreen: React.FC = () => {
   }
 
   if (pumps.length === 1) return <PumpScreen id={pumps[0].id} embedded />;
+  // Swati's home is always one pump (tap its card to switch); the list is the "My pumps" page.
+  if (brand.design === 'swati') return <PumpScreen key={selectedId ?? 'first'} id={pumps.find((p) => p.id === selectedId)?.id ?? pumps[0].id} embedded />;
 
   const showTitles = sections.some((s) => s.title);
   return (

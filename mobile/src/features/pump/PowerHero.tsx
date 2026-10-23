@@ -1,3 +1,6 @@
+import { brand } from '@/config/brand';
+import { PowerHeroSwati } from './PowerHero.swati';
+import type { PowerHeroProps as PowerHeroSwatiProps } from './PowerHero.swati';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +14,7 @@ import { SignalBars } from './Gauges';
  * ON/OFF power button. The power button (size, colours, icon, glow) is deliberately the one farmers
  * already know: it is unchanged, only its surroundings moved from the old dark hero card to this one.
  */
-export const PowerHero: React.FC<{
+const PowerHeroClassic: React.FC<{
   name: string;
   hp: number | null | undefined;
   supplyType: string | null | undefined;
@@ -134,3 +137,7 @@ const styles = StyleSheet.create({
   powerLabel: { fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
   cooldown: { color: colors.warn, fontSize: 11, fontWeight: '800' },
 });
+
+
+/** The Swati design needs a few more facts than the classic one (solar power, last update, ...); the classic hero ignores them. */
+export const PowerHero: React.FC<PowerHeroSwatiProps> = brand.design === 'swati' ? PowerHeroSwati : (PowerHeroClassic as React.FC<any>);

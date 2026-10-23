@@ -1,3 +1,4 @@
+import { SplashScreenSwati } from './SplashScreen.swati';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { Droplets, Sprout } from 'lucide-react-native';
@@ -10,7 +11,7 @@ interface SplashScreenProps {
   onFinish: () => void;
 }
 
-export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
+const SplashScreenClassic: React.FC<SplashScreenProps> = ({ onFinish }) => {
   const { t, i18n } = useTranslation();
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -116,3 +117,6 @@ const styles = StyleSheet.create({
   loaderText: { color: '#E3F3E6', fontSize: font.body, fontWeight: '600' },
   footer: { color: '#CFEBD6', fontSize: 13, letterSpacing: 0.5 },
 });
+
+
+export const SplashScreen: typeof SplashScreenClassic = brand.design === 'swati' ? SplashScreenSwati : SplashScreenClassic;

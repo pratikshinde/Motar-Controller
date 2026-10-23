@@ -65,7 +65,10 @@
   "nav": {
     "pumps": "My Pumps",
     "alerts": "Alerts",
-    "settings": "Settings"
+    "settings": "Settings",
+    "home": "Home",
+    "timer": "Timer",
+    "more": "More"
   },
   "pumps": {
     "title": "My Pumps",
@@ -227,7 +230,14 @@
     "panelLabel": "Pump panel",
     "resetButton": "RESET",
     "occurred": "Started {{when}}",
-    "seenAt": "Seen {{when}}"
+    "seenAt": "Seen {{when}}",
+    "code100": "Solar voltage too high",
+    "code101": "Not enough sunlight",
+    "code102": "Motor overcurrent",
+    "code103": "Dry run (no water or very low sun)",
+    "code104": "Drive overheating",
+    "code105": "Controller cannot reach the drive",
+    "code106": "Motor overload"
   },
   "errors": {
     "network": "Can't connect. Please check your internet and try again.",
@@ -416,6 +426,34 @@
     "unknown": {
       "cause": "The pump found a problem it could not name.",
       "action": "Call your dealer and tell them the problem code."
+    },
+    "code100": {
+      "cause": "The solar panels are giving too much voltage, so the drive stopped to protect itself.",
+      "action": "Do not restart for now. Call your dealer."
+    },
+    "code101": {
+      "cause": "The solar voltage is too low. This happens early morning, in the evening or in cloudy weather.",
+      "action": "Wait. The pump will start by itself when there is enough sun."
+    },
+    "code102": {
+      "cause": "The motor is taking too much current, maybe because the pump is blocked.",
+      "action": "Check the pump for a blockage. Wait, then restart. Call your dealer if it repeats."
+    },
+    "code103": {
+      "cause": "The pump is running without enough water, or the sun is too weak to run it.",
+      "action": "Check the water level. Restart only when water is available."
+    },
+    "code104": {
+      "cause": "The drive or the motor became too hot.",
+      "action": "Let it cool down and keep the drive shaded and clean. Call your dealer if it repeats."
+    },
+    "code105": {
+      "cause": "The pump controller lost its connection to the solar drive.",
+      "action": "Check the cable between the controller and the drive. Call your dealer."
+    },
+    "code106": {
+      "cause": "The motor has been overloaded for too long.",
+      "action": "Check the pump and wait before restarting. Call your dealer if it repeats."
     }
   },
   "support": {
@@ -496,5 +534,48 @@
     "title": "Password Updated!",
     "desc": "Your password has been updated successfully. Please sign in with your new password.",
     "goToLogin": "Go to Login"
+  },
+  "swati": {
+    "hello": "Hello, {{name}}",
+    "helloNoName": "Hello",
+    "pumpIsOff": "Pump is OFF",
+    "pumpIsRunning": "Pump is RUNNING",
+    "startPump": "Start pump",
+    "stopPump": "Stop pump",
+    "starting": "Pump is starting…",
+    "stopping": "Pump is stopping…",
+    "pleaseWait": "Please wait. This can take a few seconds.",
+    "nextCommandIn": "You can send another command in {{seconds}} s",
+    "lastUpdated": "Last updated: {{when}}",
+    "offlineTitle": "Cannot reach the pump",
+    "offlineBody": "We cannot reach your pump right now. Check that it has power and mobile signal.",
+    "noReadingsTitle": "No readings from this pump yet",
+    "noReadingsBody": "The pump has not sent any data yet. It may be switched off or out of signal.",
+    "whatToDo": "What to do?",
+    "sunTitle": "Waiting for sunlight",
+    "sunBody": "The solar pump starts by itself when there is enough sun.",
+    "solarPower": "Solar power: {{kw}} kW",
+    "runtimeToday": "Today's run time",
+    "timerTile": "Last timer",
+    "timerNone": "Not set",
+    "minShort": "min",
+    "history": "Pump history",
+    "technical": "Technical details",
+    "yesterday": "Yesterday",
+    "started": "Pump started",
+    "stopped": "Pump stopped",
+    "runningNow": "Running now",
+    "totalRun": "Total run time",
+    "frequency": "Frequency",
+    "outputCurrent": "Output current",
+    "outputVoltage": "Output voltage",
+    "dcVoltage": "DC voltage",
+    "power": "Power",
+    "allOk": "Everything is fine",
+    "problemNow": "There is a problem",
+    "typeSolar": "Solar pump",
+    "type3Phase": "3-phase pump",
+    "filterAll": "All",
+    "start": "Start"
   }
 }

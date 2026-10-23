@@ -10,12 +10,15 @@ import ajanta from '../../brands/ajanta/brand.json';
 export interface Brand {
   /** Short machine name, also sent to the server on every request (X-App-Brand). */
   key: string;
-  /** Full product name, e.g. "Ajanta Pump Controller". */
+  /** Full product name, e.g. "Swati Pump Controller". */
   appName: string;
-  /** The mark in the small header, e.g. "AJANTA". */
+  /** The mark in the small header, e.g. "SWATI". */
   shortName: string;
   titleLine1: string;
   titleLine2: string;
+  tagline?: string;
+  /** Which screen design this brand's app uses: the original one ('classic') or Swati's ('swati'). */
+  design?: 'classic' | 'swati';
   /** Overrides for the design tokens in shared/theme (same names, #RRGGBB). */
   colors: Record<string, string>;
 }
@@ -32,6 +35,7 @@ const defaults: Brand = {
   shortName: ajanta.shortName,
   titleLine1: ajanta.titleLine1,
   titleLine2: ajanta.titleLine2,
+  design: 'classic',
   colors: ajanta.colors as Record<string, string>,
 };
 
