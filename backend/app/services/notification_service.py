@@ -1,6 +1,7 @@
 import httpx
 from typing import Optional, Dict, Any
 from app.config import settings
+from app.services.brand_service import channel_setting, current_brand
 
 def send_sms_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
     """
@@ -13,18 +14,25 @@ def send_sms_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
 
     clean_num = phone_number.strip().replace(" ", "")
 
+    # Each manufacturer's app sends from its own account where it has one (BRAND_<KEY>_<SETTING>), else the platform's.
+    brand = current_brand.get()
+    product = brand.name if brand else "AgriPump SmartSpace"
+    twilio_sid, twilio_token, twilio_from = (channel_setting(n) for n in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"))
+    fast2sms_key = channel_setting("FAST2SMS_API_KEY")
+    msg91_key, msg91_flow = channel_setting("MSG91_AUTH_KEY"), channel_setting("MSG91_FLOW_ID")
+
     # 1. Twilio SMS Integration
-    if settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN and settings.TWILIO_PHONE_NUMBER:
+    if twilio_sid and twilio_token and twilio_from:
         try:
-            url = f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json"
+            url = f"https://api.twilio.com/2010-04-01/Accounts/{twilio_sid}/Messages.json"
             with httpx.Client(timeout=8.0) as client:
                 res = client.post(
                     url,
-                    auth=(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN),
+                    auth=(twilio_sid, twilio_token),
                     data={
-                        "From": settings.TWILIO_PHONE_NUMBER,
+                        "From": twilio_from,
                         "To": clean_num,
-                        "Body": f"Your AgriPump SmartSpace OTP verification code is: {otp_code}. Valid for 5 minutes."
+                        "Body": f"Your {product} OTP verification code is: {otp_code}. Valid for 5 minutes."
                     }
                 )
                 return res.json()
@@ -32,12 +40,12 @@ def send_sms_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
             print(f"Twilio SMS Dispatch Error: {e}")
 
     # 2. Fast2SMS Integration (India)
-    if settings.FAST2SMS_API_KEY:
+    if fast2sms_key:
         try:
             num_10digit = clean_num.replace("+91", "").strip()
             url = "https://www.fast2sms.com/dev/bulkV2"
             headers = {
-                "authorization": settings.FAST2SMS_API_KEY,
+                "authorization": fast2sms_key,
                 "Content-Type": "application/x-www-form-urlencoded"
             }
             data = {
@@ -52,16 +60,16 @@ def send_sms_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
             print(f"Fast2SMS Dispatch Warning: {e}")
 
     # 3. MSG91 DLT Integration (India)
-    if settings.MSG91_AUTH_KEY and settings.MSG91_FLOW_ID:
+    if msg91_key and msg91_flow:
         try:
             url = "https://control.msg91.com/api/v5/flow/"
             headers = {
-                "authkey": settings.MSG91_AUTH_KEY,
+                "authkey": msg91_key,
                 "content-type": "application/json"
             }
             payload = {
-                "flow_id": settings.MSG91_FLOW_ID,
-                "sender": "AGRPMP",
+                "flow_id": msg91_flow,
+                "sender": channel_setting("SMS_SENDER_ID") or "AGRPMP",
                 "recipients": [
                     {
                         "mobiles": clean_num.replace("+", ""),
@@ -90,13 +98,14 @@ def send_whatsapp_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
     Requires an Authentication-category template pre-approved by Meta (`WHATSAPP_OTP_TEMPLATE`) whose one
     body variable is the code; Meta does not accept free-text business-initiated messages.
     """
-    if not (settings.WHATSAPP_API_TOKEN and settings.WHATSAPP_PHONE_ID):
+    token, phone_id = channel_setting("WHATSAPP_API_TOKEN"), channel_setting("WHATSAPP_PHONE_ID")
+    if not (token and phone_id):
         return {"status": "not_configured"}
 
     clean_num = phone_number.strip().replace(" ", "").replace("+", "")
-    url = f"https://graph.facebook.com/v21.0/{settings.WHATSAPP_PHONE_ID}/messages"
+    url = f"https://graph.facebook.com/v21.0/{phone_id}/messages"
     headers = {
-        "Authorization": f"Bearer {settings.WHATSAPP_API_TOKEN}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
     payload = {
@@ -104,8 +113,8 @@ def send_whatsapp_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
         "to": clean_num,
         "type": "template",
         "template": {
-            "name": settings.WHATSAPP_OTP_TEMPLATE,
-            "language": {"code": settings.WHATSAPP_OTP_LANGUAGE},
+            "name": channel_setting("WHATSAPP_OTP_TEMPLATE"),
+            "language": {"code": channel_setting("WHATSAPP_OTP_LANGUAGE")},
             "components": [
                 {"type": "body", "parameters": [{"type": "text", "text": otp_code}]},
             ],

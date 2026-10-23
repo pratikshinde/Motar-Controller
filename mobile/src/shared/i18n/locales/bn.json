@@ -234,7 +234,10 @@
     "contract": "সার্ভার অ্যাপের বোঝার অযোগ্য তথ্য পাঠিয়েছে। অনুগ্রহ করে অ্যাপ আপডেট করুন।",
     "deviceSuspended": "এই পাম্পের রিমোট কন্ট্রোল বন্ধ রাখা হয়েছে। অনুগ্রহ করে আপনার ডিলারের সঙ্গে যোগাযোগ করুন।",
     "siteExists": "এই নামের দল আপনার আগে থেকেই আছে।",
-    "mfaUnsupported": "এই অ্যাকাউন্টে নিরাপত্তা কোড লাগে, যা এই অ্যাপ এখনও চালায় না। অনুগ্রহ করে আপনার ডিলারের সঙ্গে যোগাযোগ করুন।"
+    "mfaUnsupported": "এই অ্যাকাউন্টে নিরাপত্তা কোড লাগে, যা এই অ্যাপ এখনও চালায় না। অনুগ্রহ করে আপনার ডিলারের সঙ্গে যোগাযোগ করুন।",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "কখনও না",

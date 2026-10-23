@@ -234,7 +234,10 @@
     "contract": "सर्व्हरने ॲपला न समजणारी माहिती पाठवली. कृपया ॲप अपडेट करा.",
     "deviceSuspended": "या पंपाचे रिमोट कंट्रोल थांबवले आहे. कृपया तुमच्या डीलरशी संपर्क करा.",
     "siteExists": "या नावाचा गट तुमच्याकडे आधीच आहे.",
-    "mfaUnsupported": "या खात्यासाठी सुरक्षा कोड लागतो, जो हे ॲप अजून वापरत नाही. कृपया तुमच्या डीलरशी संपर्क करा."
+    "mfaUnsupported": "या खात्यासाठी सुरक्षा कोड लागतो, जो हे ॲप अजून वापरत नाही. कृपया तुमच्या डीलरशी संपर्क करा.",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "कधीच नाही",

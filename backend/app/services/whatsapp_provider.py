@@ -7,6 +7,7 @@ import logging
 from typing import Dict, Any, Optional
 import httpx
 from app.config import settings
+from app.services.brand_service import channel_setting
 
 logger = logging.getLogger("agripump.auth.whatsapp")
 
@@ -39,10 +40,11 @@ class RealWhatsAppOtpProvider(WhatsAppOtpProvider):
     Uses pre-approved authentication template.
     """
     def __init__(self, api_token: Optional[str] = None, phone_id: Optional[str] = None, template_name: Optional[str] = None, language_code: Optional[str] = None):
-        self.api_token = api_token or settings.WHATSAPP_API_TOKEN
-        self.phone_id = phone_id or settings.WHATSAPP_PHONE_ID
-        self.template_name = template_name or settings.WHATSAPP_OTP_TEMPLATE or "otp_verification"
-        self.language_code = language_code or settings.WHATSAPP_OTP_LANGUAGE or "en_US"
+        # The calling app's own WhatsApp account when its brand has one, else the platform's (brand_service.channel_setting).
+        self.api_token = api_token or channel_setting("WHATSAPP_API_TOKEN")
+        self.phone_id = phone_id or channel_setting("WHATSAPP_PHONE_ID")
+        self.template_name = template_name or channel_setting("WHATSAPP_OTP_TEMPLATE") or "otp_verification"
+        self.language_code = language_code or channel_setting("WHATSAPP_OTP_LANGUAGE") or "en_US"
 
     def send_otp(self, phone_number: str, otp_code: str) -> Dict[str, Any]:
         if not self.api_token or not self.phone_id:
@@ -101,7 +103,7 @@ def get_whatsapp_provider() -> WhatsAppOtpProvider:
     if provider_type == "mock":
         return MockWhatsAppOtpProvider()
 
-    if settings.WHATSAPP_API_TOKEN and settings.WHATSAPP_PHONE_ID:
+    if channel_setting("WHATSAPP_API_TOKEN") and channel_setting("WHATSAPP_PHONE_ID"):
         return RealWhatsAppOtpProvider()
     if settings.ENV == "development":
         logger.info("Real WhatsApp credentials absent; falling back to MockWhatsAppOtpProvider in development.")

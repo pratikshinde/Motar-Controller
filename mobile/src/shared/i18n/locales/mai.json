@@ -234,7 +234,10 @@
     "contract": "सर्वर एहन जानकारी पठौलक जे ऐप नहि बुझि सकल। कृपया ऐप अपडेट करू।",
     "deviceSuspended": "एहि पंपक रिमोट कंट्रोल रोकल गेल अछि। कृपया अपन डीलरसँ संपर्क करू।",
     "siteExists": "एहि नामक समूह अहाँक लग पहिनहिं सँ अछि।",
-    "mfaUnsupported": "एहि खातामे सुरक्षा कोड चाही, जे ई ऐप एखन नहि चला सकैत अछि। कृपया अपन डीलरसँ संपर्क करू।"
+    "mfaUnsupported": "एहि खातामे सुरक्षा कोड चाही, जे ई ऐप एखन नहि चला सकैत अछि। कृपया अपन डीलरसँ संपर्क करू।",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "कहियो नहि",

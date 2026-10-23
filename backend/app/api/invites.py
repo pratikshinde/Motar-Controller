@@ -30,6 +30,7 @@ from app.models.user import User
 from app.schemas import PartnerInviteCreate, PartnerInviteRedeem
 from app.services.jwt_auth import hash_refresh_token, hash_secret
 from app.services.phone_verification import redeem_phone_verification
+from app.services import brand_service
 
 logger = logging.getLogger("agripump.invites")
 router = APIRouter(tags=["Invites"])
@@ -156,6 +157,7 @@ def redeem_invite_link(token: str, req: PartnerInviteRedeem, db: Session = Depen
         parent_user_id=parent.id,
         dealer_depth=depth,
         org_role="owner",
+        brand_id=brand_service.brand_id_for_new_account(db, role, parent=parent, creator=inviter),
         is_active=True,
         is_verified=True,
     )

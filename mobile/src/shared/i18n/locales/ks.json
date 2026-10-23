@@ -234,7 +234,10 @@
     "contract": "سَرور چھُ اَیپَس اَہِ مَعلومات ہیجان یُس سُہ سَمجھِ نہ ہیٚکان۔ مِہربانی کَرِتھ اَیپ اَپڈیٹ کَرِو۔",
     "deviceSuspended": "اَتھ پَمپَچ رِموٹ کَنٹرول چھُ بَند کَرنہٕ آمُت۔ مِہربانی کَرِتھ پَنٕنِس ڈیٖلَرَس سٕتۍ رابطہٕ کَرِو۔",
     "siteExists": "یِہ ناو گروپ چھُ تُہٕ سٕتۍ پَتھ۔",
-    "mfaUnsupported": "اَتھ کھاتَس چھُ سیکیورٹی کوڈ ضَروٗرِ، یُس یہِ اَیپ اَتھ نہ ہیٚکان چَلاوِتھ۔ مِہربانی کَرِتھ پَنٕنِس ڈیٖلَرَس سٕتۍ رابطہٕ کَرِو۔"
+    "mfaUnsupported": "اَتھ کھاتَس چھُ سیکیورٹی کوڈ ضَروٗرِ، یُس یہِ اَیپ اَتھ نہ ہیٚکان چَلاوِتھ۔ مِہربانی کَرِتھ پَنٕنِس ڈیٖلَرَس سٕتۍ رابطہٕ کَرِو۔",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "کَنہِ وَخ نہ",

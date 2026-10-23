@@ -32,6 +32,8 @@ class User(Base):
     preferred_language: Mapped[Optional[str]] = mapped_column(String(10), default="en", nullable=True)
     totp_secret: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Partner accounts (manufacturer / distributor / dealer / support): the brand whose tree they belong to. Farmers: NULL.
+    brand_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.brands.id", ondelete="SET NULL"), nullable=True)
     org_node_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
     org_role: Mapped[Optional[str]] = mapped_column(String(10), default="owner", nullable=True)
     account_status: Mapped[str] = mapped_column(String(10), default="ACTIVE", nullable=False)

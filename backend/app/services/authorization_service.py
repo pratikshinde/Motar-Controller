@@ -218,6 +218,25 @@ class AuthorizationService:
         user: User,
         db: Session
     ) -> Query:
+        """Tenant scope (below) plus, when the request comes from a manufacturer's app (X-App-Brand), only that brand's
+        pumps. The brand is a VIEW on top of the scope, never a way past it - every role, the super admin included, sees
+        a subset of what they could already see. A request without a brand (web portal, an older app) is unchanged."""
+        scoped = cls._apply_tenant_scope(query, model, user, db)
+        if model is Pump:
+            from app.services.brand_service import current_brand
+            brand = current_brand.get()
+            if brand is not None:
+                scoped = scoped.filter(Pump.brand_id == brand.id)
+        return scoped
+
+    @classmethod
+    def _apply_tenant_scope(
+        cls,
+        query: Query,
+        model: Type,
+        user: User,
+        db: Session
+    ) -> Query:
         """
         MANDATORY TENANT PREDICATE:
         Applies strict organisation/subtree scoping to the query for the authenticated user.

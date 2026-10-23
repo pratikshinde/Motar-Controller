@@ -15,6 +15,7 @@ from app.models.organisation import Organisation
 from app.models.site import Site
 from app.models.device_access import DeviceAccess
 from app.models.user import User
+from app.models.brand import AppBrand
 
 class OtpChallenge(Base):
     """An OTP in flight: today only `purpose='login'` (every phone-based sign-in), soon also `registration`
@@ -105,6 +106,8 @@ class Pump(Base):
     owner_user_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="CASCADE"), nullable=False)
     installed_by_user_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
     org_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.organisations.id", ondelete="SET NULL"), nullable=True)
+    # Whose device it is (which manufacturer's app lists it). See alembic phase5_brands.
+    brand_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.brands.id", ondelete="SET NULL"), nullable=True)
     hierarchy_path = Column(Text, nullable=False)
     # NULL = position not known (never a placeholder 0, 0)
     latitude = Column(Numeric(10, 6), nullable=True)
@@ -374,6 +377,7 @@ class DeviceBatch(Base):
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     revoked = Column(Boolean, nullable=False, default=False)
     revoked_at = Column(DateTime(timezone=True), nullable=True)
+    brand_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.brands.id", ondelete="SET NULL"), nullable=True)
 
 class BatchImei(Base):
     __tablename__ = "batch_imeis"

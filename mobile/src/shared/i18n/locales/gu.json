@@ -234,7 +234,10 @@
     "contract": "સર્વરે એપને ન સમજાય એવી માહિતી મોકલી. કૃપા કરીને એપ અપડેટ કરો.",
     "deviceSuspended": "આ પંપનું રિમોટ કંટ્રોલ બંધ કરેલું છે. કૃપા કરીને તમારા ડીલરનો સંપર્ક કરો.",
     "siteExists": "આ નામનું જૂથ તમારી પાસે પહેલેથી છે.",
-    "mfaUnsupported": "આ ખાતા માટે સિક્યુરિટી કોડ જોઈએ, જે આ એપ હજી ચલાવતી નથી. કૃપા કરીને તમારા ડીલરનો સંપર્ક કરો."
+    "mfaUnsupported": "આ ખાતા માટે સિક્યુરિટી કોડ જોઈએ, જે આ એપ હજી ચલાવતી નથી. કૃપા કરીને તમારા ડીલરનો સંપર્ક કરો.",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "ક્યારેય નહીં",

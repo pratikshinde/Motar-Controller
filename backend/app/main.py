@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import SessionLocal, check_timescaledb_extension
-from app.api import auth, pumps, commands, fleet, telemetry, alerts, users, batches, templates, audit, health, branding, panels, service_reports, sites, invites, organisations, dashboard
+from app.api import auth, pumps, commands, fleet, telemetry, alerts, users, batches, templates, audit, health, branding, panels, service_reports, sites, invites, organisations, dashboard, brands
 from app.websockets import router as ws_router
 from app.websockets import dashboard_ws as dashboard_ws_router
 
@@ -104,6 +104,10 @@ setup_structured_logging()
 from app.core.idempotency import IdempotencyMiddleware
 app.add_middleware(IdempotencyMiddleware)
 
+# Brand (X-App-Brand): which manufacturer's app is calling. Runs inside rate limiting and logging, outside the routes.
+from app.core.brand_middleware import BrandMiddleware
+app.add_middleware(BrandMiddleware)
+
 # Rate Limiting Middleware (FR-CLD-043)
 from app.core.rate_limit import RateLimitMiddleware
 app.add_middleware(RateLimitMiddleware, default_limit=120, window_seconds=60)
@@ -191,6 +195,8 @@ for prefix in ["/api/v1", "/api"]:
     app.include_router(audit.router, prefix=f"{prefix}/audit-log")
     app.include_router(health.router, prefix=f"{prefix}/system")
     app.include_router(branding.router, prefix=f"{prefix}/branding")
+    app.include_router(brands.router, prefix=f"{prefix}/brands")
+    app.include_router(brands.app_router, prefix=f"{prefix}/app")
     app.include_router(panels.router, prefix=f"{prefix}/panels")
     app.include_router(service_reports.router, prefix=f"{prefix}/service-reports")
     app.include_router(dashboard.router, prefix=f"{prefix}/dashboard")

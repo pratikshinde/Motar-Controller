@@ -8,6 +8,7 @@ from sqlalchemy import desc, func, text
 from app.database import get_db
 from app.models import DeviceBatch, BatchImei, User, Pump, DeviceConfig, AuditLog
 from app.api.deps import get_current_user
+from app.services import brand_service
 
 router = APIRouter(tags=["Factory Batches & Provisioning"])
 
@@ -93,7 +94,8 @@ def create_batch(
         hw_rev=payload.get("hw_rev"),
         quantity=int(payload.get("quantity") or payload.get("total_devices") or 0),
         manufacture_date=m_date,
-        created_by=current_user.id
+        created_by=current_user.id,
+        brand_id=brand_service.brand_id_for_new_device(db, current_user, payload.get("brand")),
     )
     db.add(batch)
     db.commit()
@@ -243,6 +245,7 @@ def fleet_provisioning_pre_hook(
             hierarchy_path="/SA",
             status="STOPPED",
             lifecycle_state="COMMISSIONED",
+            brand_id=batch.brand_id,   # the manufacturer whose factory batch this unit came from
             firmware_version=None   # the device reports its own firmware version in its first frame
         )
         db.add(pump)

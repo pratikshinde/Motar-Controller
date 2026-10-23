@@ -46,6 +46,7 @@ from app.services.command_service import (
 from app.services.command_dispatch import dispatch_command
 from app.services.fault_catalog import load_fault_catalog
 from app.services.ws_hub import ws_hub
+from app.services import brand_service
 from app.repositories import PumpRepository, TelemetryRepository
 
 logger = logging.getLogger("agripump.pumps")
@@ -258,6 +259,7 @@ def create_pump(
             hierarchy_path=h_path,
             latitude=req.latitude,
             longitude=req.longitude,
+            brand_id=brand_service.brand_id_for_new_device(db, current_user, req.brand),
             status="STOPPED",
             lifecycle_state="ACTIVE",
             firmware_version=None,          # the device reports its own firmware version; nothing is assumed
@@ -817,15 +819,17 @@ def get_pump_support_contact(
         dealer_phone = dealer_user.phone_number or dealer_user.phone
         dealer_email = dealer_user.email
 
-    # Nothing is filled in when unknown: the app then says "ask your dealer" instead of
+    # The manufacturer's own support contact when its brand has one (the pump's brand: the same manufacturer's app asks),
+    # else the platform's. Nothing is filled in when unknown: the app then says "ask your dealer" instead of
     # offering a number that goes nowhere.
+    escalation = brand_service.support_contact(brand_service.info_for_id(db, pump.brand_id))
     return {
         "dealer_name": dealer_name,
         "dealer_phone": dealer_phone,
         "dealer_email": dealer_email,
-        "escalation_name": settings.SUPPORT_ESCALATION_NAME or None,
-        "escalation_phone": settings.SUPPORT_ESCALATION_PHONE or None,
-        "escalation_email": settings.SUPPORT_ESCALATION_EMAIL or None,
+        "escalation_name": escalation["name"],
+        "escalation_phone": escalation["phone"],
+        "escalation_email": escalation["email"],
         "hierarchy_path": pump.hierarchy_path,
     }
 
@@ -1347,6 +1351,7 @@ def download_sample_csv():
 @router.post("/bulk-import")
 def bulk_import_pumps(
     file: UploadFile = File(...),
+    brand: Optional[str] = None,
     current_user: User = Depends(require_roles(["superadmin"])),
     db: Session = Depends(get_db)
 ):
@@ -1361,6 +1366,7 @@ def bulk_import_pumps(
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="The file is not valid UTF-8 text. Save it as CSV (UTF-8) and try again.")
     reader = csv.DictReader(io.StringIO(decoded))
+    brand_id = brand_service.brand_id_for_new_device(db, current_user, brand)
 
     imported_count = 0
     skipped_count = 0
@@ -1401,6 +1407,7 @@ def bulk_import_pumps(
             hierarchy_path=current_user.hierarchy_path or "/SA",
             latitude=None,
             longitude=None,
+            brand_id=brand_id,
             status="STOPPED",
             lifecycle_state="MANUFACTURED",
             firmware_version=None,

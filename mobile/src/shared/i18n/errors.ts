@@ -53,6 +53,10 @@ function friendlyErrorText(err: unknown, t: TFunction, context: ErrorContext): s
   if (code === 'DEVICE_SUSPENDED') return t('errors.deviceSuspended');
   if (code === 'SITE_NAME_EXISTS') return t('errors.siteExists');
   if (code === 'MFA_REQUIRED') return t('errors.mfaUnsupported');
+  // Several manufacturers' apps share one server (see mobile/brands): these say why this app cannot be used.
+  if (code === 'WRONG_BRAND_APP') return t('errors.wrongBrandApp');
+  if (code === 'BRAND_DISABLED') return t('errors.brandDisabled');
+  if (code === 'BRAND_UNKNOWN') return t('errors.brandUnknown');
   if (code === 'RATE_LIMIT_EXCEEDED' || status === 429) return t('errors.tooMany');
 
   switch (status) {

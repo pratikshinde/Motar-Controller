@@ -234,7 +234,10 @@
     "contract": "চাৰ্ভাৰে এপে বুজি নোপোৱা তথ্য পঠিয়াইছে। অনুগ্ৰহ কৰি এপ আপডেট কৰক।",
     "deviceSuspended": "এই পাম্পৰ ৰিমোট নিয়ন্ত্ৰণ বন্ধ কৰি ৰখা হৈছে। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰৰ সৈতে যোগাযোগ কৰক।",
     "siteExists": "এই নামৰ দল আপোনাৰ আগৰ পৰাই আছে।",
-    "mfaUnsupported": "এই একাউণ্টৰ বাবে সুৰক্ষা ক'ড লাগে, যিটো এই এপে এতিয়াও নচলায়। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰৰ সৈতে যোগাযোগ কৰক।"
+    "mfaUnsupported": "এই একাউণ্টৰ বাবে সুৰক্ষা ক'ড লাগে, যিটো এই এপে এতিয়াও নচলায়। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰৰ সৈতে যোগাযোগ কৰক।",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "কেতিয়াও নহয়",

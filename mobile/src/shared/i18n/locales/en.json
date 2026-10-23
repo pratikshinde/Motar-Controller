@@ -234,7 +234,10 @@
     "contract": "The server sent something the app does not understand. Please update the app.",
     "deviceSuspended": "Remote control is paused for this pump. Please contact your dealer.",
     "siteExists": "You already have a group with this name.",
-    "mfaUnsupported": "This account needs a security code, which this app does not support yet. Please contact your dealer."
+    "mfaUnsupported": "This account needs a security code, which this app does not support yet. Please contact your dealer.",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "Never",

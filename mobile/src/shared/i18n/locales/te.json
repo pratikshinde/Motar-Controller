@@ -234,7 +234,10 @@
     "contract": "సర్వర్ యాప్‌కు అర్థం కాని సమాచారం పంపింది. దయచేసి యాప్‌ను అప్‌డేట్ చేయండి.",
     "deviceSuspended": "ఈ పంపుకు రిమోట్ కంట్రోల్ ఆపివేయబడింది. దయచేసి మీ డీలర్‌ను సంప్రదించండి.",
     "siteExists": "ఈ పేరుతో సమూహం మీకు ఇప్పటికే ఉంది.",
-    "mfaUnsupported": "ఈ ఖాతాకు భద్రతా కోడ్ కావాలి, ఈ యాప్ దాన్ని ఇంకా సపోర్ట్ చేయదు. దయచేసి మీ డీలర్‌ను సంప్రదించండి."
+    "mfaUnsupported": "ఈ ఖాతాకు భద్రతా కోడ్ కావాలి, ఈ యాప్ దాన్ని ఇంకా సపోర్ట్ చేయదు. దయచేసి మీ డీలర్‌ను సంప్రదించండి.",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "ఎప్పుడూ లేదు",

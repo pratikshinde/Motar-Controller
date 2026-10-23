@@ -234,7 +234,10 @@
     "contract": "ಸರ್ವರ್ ಆ್ಯಪ್‌ಗೆ ಅರ್ಥವಾಗದ ಮಾಹಿತಿ ಕಳುಹಿಸಿದೆ. ದಯವಿಟ್ಟು ಆ್ಯಪ್ ಅಪ್‌ಡೇಟ್ ಮಾಡಿ.",
     "deviceSuspended": "ಈ ಪಂಪ್‌ನ ರಿಮೋಟ್ ನಿಯಂತ್ರಣ ನಿಲ್ಲಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಡೀಲರ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿ.",
     "siteExists": "ಈ ಹೆಸರಿನ ಗುಂಪು ನಿಮ್ಮಲ್ಲಿ ಈಗಾಗಲೇ ಇದೆ.",
-    "mfaUnsupported": "ಈ ಖಾತೆಗೆ ಭದ್ರತಾ ಕೋಡ್ ಬೇಕು, ಇದನ್ನು ಈ ಆ್ಯಪ್ ಇನ್ನೂ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಡೀಲರ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿ."
+    "mfaUnsupported": "ಈ ಖಾತೆಗೆ ಭದ್ರತಾ ಕೋಡ್ ಬೇಕು, ಇದನ್ನು ಈ ಆ್ಯಪ್ ಇನ್ನೂ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಡೀಲರ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "ಎಂದಿಗೂ ಇಲ್ಲ",

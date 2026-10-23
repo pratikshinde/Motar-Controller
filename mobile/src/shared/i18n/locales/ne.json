@@ -234,7 +234,10 @@
     "contract": "सर्भरले एपले बुझ्न नसक्ने जानकारी पठायो। कृपया एप अपडेट गर्नुहोस्।",
     "deviceSuspended": "यो पम्पको रिमोट कन्ट्रोल रोकिएको छ। कृपया आफ्नो डिलरलाई सम्पर्क गर्नुहोस्।",
     "siteExists": "यही नामको समूह तपाईंसँग पहिले नै छ।",
-    "mfaUnsupported": "यो खातालाई सुरक्षा कोड चाहिन्छ, जुन यो एपले अहिले चलाउँदैन। कृपया आफ्नो डिलरलाई सम्पर्क गर्नुहोस्।"
+    "mfaUnsupported": "यो खातालाई सुरक्षा कोड चाहिन्छ, जुन यो एपले अहिले चलाउँदैन। कृपया आफ्नो डिलरलाई सम्पर्क गर्नुहोस्।",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "कहिल्यै होइन",

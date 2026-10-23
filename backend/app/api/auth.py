@@ -43,6 +43,7 @@ from app.schemas.farmer import (
     SessionsResponse, DeletionRequestIn, DeletionRequestOut, DeletionRequestState, ExportResponse,
 )
 from app.core.errors import AppError
+from app.services.brand_service import current_brand
 
 MFA_MAX_ATTEMPTS = 5
 
@@ -155,6 +156,21 @@ def _mfa_challenge_response(user: User) -> dict:
         "temp_token": temp_token,
         "user": format_user_response(user),
     }
+
+
+def _enforce_brand(user: User) -> None:
+    """A partner account (manufacturer / distributor / dealer / support) belongs to one brand's tree and signs in to that
+    brand's app only: a Swati dealer cannot use the Ajanta app. Farmers and the platform's super admin are not tied to a
+    brand (a farmer's pumps decide what each app shows). No brand on the request, or none on the account: no check."""
+    brand = current_brand.get()
+    if brand is None or user.brand_id is None or user.brand_id == brand.id:
+        return
+    if normalize_role(user.role) in (ROLE_END_USER, ROLE_SUPER_ADMIN):
+        return
+    raise AppError(
+        code="WRONG_BRAND_APP", message_key="errors.wrong_brand_app", status_code=status.HTTP_403_FORBIDDEN,
+        detail="This account belongs to a different app. Please use the app your dealer gave you.",
+    )
 
 
 def _needs_mfa_challenge(user: User) -> bool:
@@ -451,6 +467,8 @@ def verify_otp(req: Union[OtpVerifyIn, VerifyOtpRequest], db: Session = Depends(
             detail="Your account is suspended. Please contact your administrator."
         )
 
+    _enforce_brand(user)
+
     # 8. SUPER ADMIN REQUIREMENT: Super Admin MUST complete Authenticator App MFA
     if normalize_role(user.role) == ROLE_SUPER_ADMIN:
         challenge_id = str(uuid.uuid4())
@@ -610,6 +628,7 @@ def login_password(req: LoginPasswordRequest, db: Session = Depends(get_db)):
 
     if user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
         raise HTTPException(status_code=403, detail="Account suspended")
+    _enforce_brand(user)
 
     if _needs_mfa_challenge(user):
         return _mfa_challenge_response(user)
@@ -1154,6 +1173,7 @@ def register_verify(req: RegisterVerifyIn, db: Session = Depends(get_db)):
         if existing.status == "SUSPENDED" or existing.account_status == "SUSPENDED":
             db.commit()
             raise HTTPException(status_code=403, detail="Your account is suspended. Please contact your administrator.")
+        _enforce_brand(existing)
         if normalize_role(existing.role) == ROLE_SUPER_ADMIN or _needs_mfa_challenge(existing):
             db.commit()
             return _mfa_challenge_response(existing)

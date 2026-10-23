@@ -62,6 +62,10 @@ class Settings(BaseSettings):
     # password-reset call that was meant to use it must ask the phone to re-verify.
     PHONE_VERIFICATION_TTL_SECONDS: int = 600
 
+    # The brand (manufacturer's app) that new devices and partner accounts belong to when nothing says otherwise, e.g. a
+    # pump registered by the platform's super admin without naming a brand. See alembic phase5_brands.
+    DEFAULT_BRAND_KEY: str = "ajanta"
+
     # Manufacturer / distributor escalation shown after the servicing dealer in the farmer app.
     # Empty = not configured (the app hides the row rather than showing a placeholder number).
     SUPPORT_ESCALATION_NAME: str = ""

@@ -234,7 +234,10 @@
     "contract": "செயலிக்குப் புரியாத தகவலை சர்வர் அனுப்பியது. தயவுசெய்து செயலியைப் புதுப்பிக்கவும்.",
     "deviceSuspended": "இந்த பம்பின் தொலைவழிக் கட்டுப்பாடு நிறுத்தப்பட்டுள்ளது. தயவுசெய்து உங்கள் டீலரைத் தொடர்பு கொள்ளுங்கள்.",
     "siteExists": "இந்தப் பெயரில் குழு உங்களிடம் ஏற்கனவே உள்ளது.",
-    "mfaUnsupported": "இந்தக் கணக்குக்குப் பாதுகாப்புக் குறியீடு தேவை, இந்தச் செயலி அதை இன்னும் ஆதரிக்கவில்லை. தயவுசெய்து உங்கள் டீலரைத் தொடர்பு கொள்ளுங்கள்."
+    "mfaUnsupported": "இந்தக் கணக்குக்குப் பாதுகாப்புக் குறியீடு தேவை, இந்தச் செயலி அதை இன்னும் ஆதரிக்கவில்லை. தயவுசெய்து உங்கள் டீலரைத் தொடர்பு கொள்ளுங்கள்.",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "இதுவரை இல்லை",

@@ -21,6 +21,7 @@ from app.models.user import User
 from app.models import AuditLog
 from app.schemas.user import UserCreate, UserCreateInOrg, UserUpdate
 from app.services.cache_service import cache_service
+from app.services import brand_service
 from app.services.jwt_auth import hash_secret
 
 
@@ -185,6 +186,7 @@ class UserService:
             org_id=org.id,
             hierarchy_path=user_path,
             parent_user_id=actor.id if actor else None,
+            brand_id=brand_service.brand_id_for_new_account(db, db_role, parent=None, creator=actor),
             dealer_depth=dealer_depth,
             account_status=UserStatus.ACTIVE.value,
             locale=data.locale or "en",

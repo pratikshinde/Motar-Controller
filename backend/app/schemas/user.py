@@ -19,6 +19,7 @@ class UserCreate(BaseModel):
     membership: Optional[str] = Field(None, description="Staff membership flag")
     locale: Optional[str] = Field("en", description="User preferred locale")
     is_active: bool = Field(True, description="Whether user account is active")
+    brand: Optional[str] = Field(None, description="Brand key for a new partner account (super admin only; else inherited)")
     phone_verification_token: Optional[str] = Field(None, description="Ticket from POST /auth/verify-phone/confirm")
 
     @model_validator(mode='after')

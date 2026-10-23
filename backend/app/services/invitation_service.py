@@ -29,6 +29,7 @@ from app.services.phone_verification import (
     start_phone_verification, confirm_phone_verification, redeem_phone_verification
 )
 from app.api.auth import _issue_session
+from app.services import brand_service
 from app.api.deps import set_db_actor_context
 
 logger = logging.getLogger("agripump.invitations")
@@ -347,6 +348,9 @@ class InvitationService:
             org_id=target_org.id if target_org else None,
             hierarchy_path=f"{parent_h_path.rstrip('/')}/{new_user_id}",
             parent_user_id=parent_user.id if parent_user else None,
+            brand_id=brand_service.brand_id_for_new_account(
+                db, db_role, parent=parent_user,
+                creator=db.query(User).filter(User.id == inv.created_by).first() if inv.created_by else None),
             account_status=UserStatus.ACTIVE.value,
             is_active=True,
             is_verified=True,

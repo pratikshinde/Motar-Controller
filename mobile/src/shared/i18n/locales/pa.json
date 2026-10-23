@@ -234,7 +234,10 @@
     "contract": "ਸਰਵਰ ਨੇ ਐਪ ਨੂੰ ਨਾ ਸਮਝ ਆਉਣ ਵਾਲੀ ਜਾਣਕਾਰੀ ਭੇਜੀ। ਕਿਰਪਾ ਕਰਕੇ ਐਪ ਅੱਪਡੇਟ ਕਰੋ।",
     "deviceSuspended": "ਇਸ ਪੰਪ ਦਾ ਰਿਮੋਟ ਕੰਟਰੋਲ ਰੋਕਿਆ ਗਿਆ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।",
     "siteExists": "ਇਸ ਨਾਂ ਦਾ ਸਮੂਹ ਤੁਹਾਡੇ ਕੋਲ ਪਹਿਲਾਂ ਹੀ ਹੈ।",
-    "mfaUnsupported": "ਇਸ ਖਾਤੇ ਲਈ ਸੁਰੱਖਿਆ ਕੋਡ ਚਾਹੀਦਾ ਹੈ, ਜੋ ਇਹ ਐਪ ਅਜੇ ਨਹੀਂ ਚਲਾਉਂਦੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।"
+    "mfaUnsupported": "ਇਸ ਖਾਤੇ ਲਈ ਸੁਰੱਖਿਆ ਕੋਡ ਚਾਹੀਦਾ ਹੈ, ਜੋ ਇਹ ਐਪ ਅਜੇ ਨਹੀਂ ਚਲਾਉਂਦੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।",
+    "wrongBrandApp": "This account belongs to a different app. Please use the app your dealer gave you.",
+    "brandDisabled": "This app has been switched off. Please contact your dealer.",
+    "brandUnknown": "This app is not set up on the server yet. Please contact your dealer."
   },
   "time": {
     "never": "ਕਦੇ ਨਹੀਂ",

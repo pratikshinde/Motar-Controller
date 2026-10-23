@@ -23,6 +23,7 @@ from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.services.cache_service import cache_service
 from app.services.jwt_auth import hash_secret
 from app.services.phone_verification import redeem_phone_verification
+from app.services import brand_service
 
 logger = logging.getLogger("agripump.users")
 router = APIRouter(tags=["Users"])
@@ -210,6 +211,7 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
         dealer_depth=depth,
         org_node_id=org_node,
         org_role=org_role,
+        brand_id=brand_service.brand_id_for_new_account(db, role, parent=parent, creator=current_user, requested_key=req.brand),
         is_active=req.is_active,
         is_verified=phone_verified,
     )

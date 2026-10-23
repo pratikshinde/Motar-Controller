@@ -117,6 +117,8 @@ class PumpCreate(BaseModel):
     hp_rating: float = 10.0
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    # Which manufacturer's device this is. Partners get their own brand; only the platform's super admin names one.
+    brand: Optional[str] = None
 
 class PumpUpdate(BaseModel):
     name: Optional[str] = None
