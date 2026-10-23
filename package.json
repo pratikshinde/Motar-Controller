@@ -1,0 +1,11 @@
+{
+  "name": "iot-agri-pump-control-and-monitoring",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root runner scripts for IoT Agri Pump Control and Monitoring",
+  "scripts": {
+    "dev": "npm --prefix web run dev",
+    "build": "npm --prefix web run build",
+    "preview": "npm --prefix web run preview"
+  }
+}
