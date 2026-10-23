@@ -8,6 +8,7 @@ from app.core.errors import AppError
 from app.database import get_db
 from app.models import User, Pump
 from app.services.jwt_auth import verify_token, verify_secret
+from app.services import view_as
 from app.repositories.pump_repository import PumpRepository
 
 from app.services.cache_service import cache_service
@@ -129,6 +130,19 @@ def get_current_user(
         )
 
     set_db_actor_context(db, user=user)
+
+    # The platform owner looking at one manufacturer's portal: served as that manufacturer, read-only (view_as.py).
+    view_key = request.headers.get(view_as.HEADER)
+    if view_key and view_as.applies_to(request.url.path):
+        from app.core.roles import to_db_role
+        if to_db_role(user.role) == "superadmin":
+            view_as.refuse_write(request.method)
+            principal = view_as.principal_for(db, view_key)
+            # Forget everything of the real caller before taking the manufacturer's scope, so no part of it carries over.
+            db.execute(text("RESET ALL"))
+            set_db_actor_context(db, user=principal)
+            request.state.viewing_as = {"manufacturer": view_key.strip().lower(), "by": str(user.id)}
+            return principal
     return user
 
 def require_roles(allowed_roles: Union[List[str], str]):

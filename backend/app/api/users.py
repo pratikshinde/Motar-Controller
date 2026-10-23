@@ -17,7 +17,7 @@ from app.api.deps import get_current_user, require_roles
 from app.core.phone import normalize_phone
 from app.core.scope import in_subtree, path_in_scope
 from app.database import get_db
-from app.models import AuditLog, Pump
+from app.models import AppBrand, AuditLog, Pump
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.services.cache_service import cache_service
@@ -211,13 +211,19 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
         dealer_depth=depth,
         org_node_id=org_node,
         org_role=org_role,
-        brand_id=brand_service.brand_id_for_new_account(db, role, parent=parent, creator=current_user, requested_key=req.brand),
+        brand_id=brand_service.brand_id_for_new_account(db, role, parent=parent, creator=current_user, requested_key=req.brand,
+                                                         explicit_for_manufacturer=True),
         is_active=req.is_active,
         is_verified=phone_verified,
     )
     db.add(user)
     try:
         db.flush()
+        if role == "manufacturer" and not staff and user.brand_id is not None:
+            # The first manufacturer account of a brand IS that manufacturer (its tree is the manufacturer's dashboard).
+            brand_row = db.query(AppBrand).filter(AppBrand.id == user.brand_id, AppBrand.owner_user_id.is_(None)).first()
+            if brand_row is not None:
+                brand_row.owner_user_id = user.id
         _audit(db, current_user, user.id, "USER_CREATED", after={"role": role, "parent": str(parent.id), "staff": staff})
         db.commit()
     except IntegrityError:

@@ -327,5 +327,156 @@ class TestPerBrandSenders(BrandBase):
         self.assertEqual(sent["payload"]["template"]["language"]["code"], "hi")
 
 
+class TestManufacturerPortals(BrandBase):
+    """The platform owner above the manufacturers, each manufacturer with its own tree, and a wall between them.
+
+    super admin -> manufacturer (the brand's owner account) -> dealer -> farmer -> pump, once per brand."""
+
+    def tree(self, brand, tag):
+        from types import SimpleNamespace
+        mfr = self.partner("manufacturer", f"mfr-{tag}", brand)
+        dealer = self.partner("dealer", f"dlr-{tag}", brand, parent=mfr)
+        farmer = self.db.query(User).filter(User.id == self.make_user("customer", f"frm-{tag}").id).one()
+        farmer.hierarchy_path, farmer.parent_user_id = f"{dealer.hierarchy_path}/{farmer.id}", dealer.id
+        self.db.commit()
+        pump = self.pump(farmer, brand)
+        self.db.query(AppBrand).filter(AppBrand.id == brand.id).update({"owner_user_id": mfr.id})
+        self.db.commit()
+        return SimpleNamespace(mfr=mfr, dealer=dealer, farmer=farmer, pump=pump)
+
+    def setUp(self):
+        self.a = self.tree(self.brand_a, "a")
+        self.b = self.tree(self.brand_b, "b")
+        self.sa = _partner(self, "superadmin", "sa-portal")
+
+    @staticmethod
+    def viewing(user, key):
+        return {**_h(user), "X-View-Manufacturer": key}
+
+    def view_pumps(self, user, key):
+        r = client.get("/api/v1/pumps", headers=self.viewing(user, key))
+        self.assertEqual(r.status_code, 200, r.text)
+        return {p["id"] for p in r.json()["pumps"]}
+
+    def test_the_super_admin_opening_a_manufacturer_sees_exactly_that_manufacturers_tree(self):
+        mine = {self.a.pump, self.b.pump}
+        self.assertEqual(self.view_pumps(self.sa, self.brand_a.key) & mine, {self.a.pump})
+        self.assertEqual(self.view_pumps(self.sa, self.brand_b.key) & mine, {self.b.pump})
+        self.assertTrue(mine <= self.listed(self.sa), "without the header the platform owner still sees everything")
+        users = client.get("/api/v1/users", headers=self.viewing(self.sa, self.brand_a.key)).json()
+        phones = {u["phone"] for u in users}
+        self.assertIn(self.a.dealer.phone, phones)
+        self.assertNotIn(self.b.dealer.phone, phones)
+        self.assertNotIn(self.b.farmer.phone, phones)
+        fleet = client.get("/api/v1/fleet/dashboard", headers=self.viewing(self.sa, self.brand_b.key)).json()
+        self.assertEqual(fleet["summary"]["total"], 1)
+
+    def test_viewing_is_read_only(self):
+        h = self.viewing(self.sa, self.brand_a.key)
+        refused = client.post("/api/v1/pumps", json={"id": f"X{self.sfx}", "name": "No"}, headers=h)
+        self.assertEqual((refused.status_code, refused.json()["error"]["code"]), (403, "VIEW_ONLY"))
+        self.assertEqual(client.post(f"/api/v1/pumps/{self.a.pump}/commands", json={"action": "START"}, headers=h).status_code, 403)
+        self.assertEqual(client.get(f"/api/v1/pumps/{self.a.pump}", headers=h).status_code, 200)
+
+    def test_only_the_super_admin_can_use_the_header(self):
+        # A manufacturer or dealer sending another manufacturer's key still only gets its own tree.
+        for who in (self.a.mfr, self.a.dealer):
+            ids = self.view_pumps(who, self.brand_b.key)
+            self.assertIn(self.a.pump, ids)
+            self.assertNotIn(self.b.pump, ids)
+        self.assertEqual(client.get(f"/api/v1/pumps/{self.b.pump}", headers=self.viewing(self.a.mfr, self.brand_b.key)).status_code, 404)
+
+    def test_an_unknown_manufacturer_or_one_without_an_account_is_refused_not_guessed(self):
+        unknown = client.get("/api/v1/pumps", headers=self.viewing(self.sa, "no-such-one"))
+        self.assertEqual((unknown.status_code, unknown.json()["error"]["code"]), (404, "MANUFACTURER_UNKNOWN"))
+        self.db.query(AppBrand).filter(AppBrand.id == self.brand_b.id).update({"owner_user_id": None})
+        self.db.commit()
+        empty = client.get("/api/v1/pumps", headers=self.viewing(self.sa, self.brand_b.key))
+        self.assertEqual((empty.status_code, empty.json()["error"]["code"]), (404, "MANUFACTURER_HAS_NO_ACCOUNT"))
+
+    def test_the_platforms_own_endpoints_ignore_the_view(self):
+        h = self.viewing(self.sa, self.brand_a.key)
+        self.assertEqual(client.get("/api/v1/auth/me", headers=h).json()["role"], "superadmin")
+        self.assertEqual(client.get("/api/v1/brands", headers=h).status_code, 200)
+        self.assertEqual(client.get("/api/v1/brands/overview", headers=h).status_code, 200)
+
+    def test_the_overview_measures_each_manufacturer_by_its_own_tree(self):
+        r = client.get("/api/v1/brands/overview", headers=_h(self.sa))
+        self.assertEqual(r.status_code, 200, r.text)
+        rows = {m["key"]: m for m in r.json()["manufacturers"]}
+        for brand, tree in ((self.brand_a, self.a), (self.brand_b, self.b)):
+            row = rows[brand.key]
+            self.assertEqual((row["farmers"], row["pumps"]["total"], row["team"]), (1, 1, 1), row)
+            self.assertEqual(row["owner"]["phone"], tree.mfr.phone)
+        self.assertEqual(client.get("/api/v1/brands/overview", headers=_h(self.a.mfr)).status_code, 403)
+        self.assertEqual(client.get("/api/v1/brands/overview").status_code, 401)
+        self.db.query(AppBrand).filter(AppBrand.id == self.brand_b.id).update({"owner_user_id": None})
+        self.db.commit()
+        rows = {m["key"]: m for m in client.get("/api/v1/brands/overview", headers=_h(self.sa)).json()["manufacturers"]}
+        self.assertEqual((rows[self.brand_b.key]["owner"], rows[self.brand_b.key]["pumps"]["total"]), (None, 0))
+
+    def test_a_new_manufacturer_must_name_its_brand_and_its_first_account_becomes_the_owner(self):
+        self.db.query(AppBrand).filter(AppBrand.id == self.brand_b.id).update({"owner_user_id": None})
+        self.db.commit()
+
+        def create(**extra):
+            phone = f"90{uuid.uuid4().int % 10**8:08d}"
+            body = {"full_name": "New Maker", "phone_number": phone, "role": "manufacturer", "password": "Strong-Pass-1",
+                    "phone_verification_token": _verify_phone(phone), **extra}
+            return client.post("/api/v1/users", json=body, headers=_h(self.sa))
+
+        without = create()
+        self.assertEqual(without.status_code, 422, "no silent filing under the default brand")
+        first = create(brand=self.brand_b.key)
+        self.assertEqual(first.status_code, 201, first.text)
+        type(self).user_ids.append(uuid.UUID(first.json()["user"]["id"]))
+        self.db.expire_all()
+        self.assertEqual(str(self.db.query(AppBrand).filter(AppBrand.id == self.brand_b.id).one().owner_user_id), first.json()["user"]["id"])
+        second = create(brand=self.brand_b.key)
+        self.assertEqual(second.status_code, 201, second.text)
+        type(self).user_ids.append(uuid.UUID(second.json()["user"]["id"]))
+        self.db.expire_all()
+        self.assertEqual(str(self.db.query(AppBrand).filter(AppBrand.id == self.brand_b.id).one().owner_user_id), first.json()["user"]["id"],
+                         "a later manufacturer account does not take over")
+
+    def test_the_owner_of_a_brand_must_be_a_manufacturer_account(self):
+        bad = client.put(f"/api/v1/brands/{self.brand_a.key}", json={"owner_user_id": str(self.a.farmer.id)}, headers=_h(self.sa))
+        self.assertEqual(bad.status_code, 422)
+        ok = client.put(f"/api/v1/brands/{self.brand_a.key}", json={"owner_user_id": str(self.a.mfr.id)}, headers=_h(self.sa))
+        self.assertEqual(ok.status_code, 200, ok.text)
+
+    def test_two_manufacturers_never_see_each_others_people_pumps_or_numbers(self):
+        endpoints = [
+            "/api/v1/pumps", "/api/v1/devices", "/api/v1/fleet/dashboard", "/api/v1/alerts", "/api/v1/sites", "/api/v1/organisations",
+            "/api/v1/users", "/api/v1/users/tree", "/api/v1/batches", "/api/v1/audit-log", "/api/v1/service-reports", "/api/v1/panels",
+            "/api/v1/config-templates", "/api/v1/dashboard/subtree", "/api/v1/dashboard/connectivity", "/api/v1/dashboard/faults",
+            "/api/v1/dashboard/top-faulting-devices", "/api/v1/dashboard/offline-devices", "/api/v1/dashboard/firmware-distribution",
+        ]
+        for own, other in ((self.a, self.b), (self.b, self.a)):
+            foreign = [other.pump, other.mfr.phone, other.dealer.phone, other.farmer.phone, str(other.mfr.id), str(other.dealer.id), str(other.farmer.id)]
+            seen_own = False
+            for path in endpoints:
+                r = client.get(path, headers=_h(own.mfr))
+                self.assertLess(r.status_code, 500, f"{path}: {r.text[:200]}")
+                for marker in foreign:
+                    self.assertNotIn(marker, r.text, f"{path} showed another manufacturer's {marker}")
+                seen_own = seen_own or own.pump in r.text or own.farmer.phone in r.text
+            self.assertTrue(seen_own, "the check is only meaningful if the manufacturer does see its own data")
+            self.assertEqual(client.get(f"/api/v1/pumps/{other.pump}", headers=_h(own.mfr)).status_code, 404)
+            self.assertEqual(client.get(f"/api/v1/pumps/{other.pump}", headers=_h(own.dealer)).status_code, 404)
+
+    def test_the_live_socket_follows_the_viewed_manufacturer(self):
+        from app.websockets.router import _load_identity
+        payload = {"sub": str(self.sa.id), "session_ver": 1}
+        plain = _load_identity(payload)
+        self.assertEqual(plain["role"], "superadmin")
+        viewed = _load_identity(payload, self.brand_a.key)
+        self.assertEqual((viewed["role"], viewed["hierarchy_path"]), ("manufacturer", self.a.mfr.hierarchy_path))
+        self.assertIsNone(_load_identity(payload, "no-such-one"))
+        # A manufacturer asking to view another brand is not given it.
+        own = _load_identity({"sub": str(self.a.mfr.id), "session_ver": 1}, self.brand_b.key)
+        self.assertEqual(own["hierarchy_path"], self.a.mfr.hierarchy_path)
+
+
 if __name__ == "__main__":
     unittest.main()

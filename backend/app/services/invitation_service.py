@@ -349,7 +349,7 @@ class InvitationService:
             hierarchy_path=f"{parent_h_path.rstrip('/')}/{new_user_id}",
             parent_user_id=parent_user.id if parent_user else None,
             brand_id=brand_service.brand_id_for_new_account(
-                db, db_role, parent=parent_user,
+                db, db_role, parent=parent_user, org=target_org,
                 creator=db.query(User).filter(User.id == inv.created_by).first() if inv.created_by else None),
             account_status=UserStatus.ACTIVE.value,
             is_active=True,

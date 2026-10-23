@@ -190,13 +190,23 @@ def brand_id_for_new_device(db, actor, requested_key: Optional[str] = None):
     return request_brand.id if request_brand is not None else _id_for_key(db, default_key())
 
 
-def brand_id_for_new_account(db, role: str, parent=None, creator=None, requested_key: Optional[str] = None):
+def brand_id_for_new_account(db, role: str, parent=None, creator=None, requested_key: Optional[str] = None,
+                             org=None, explicit_for_manufacturer: bool = False):
     """The brand of a new partner account: the one named (super admin only), else its parent's, else its creator's, else
-    the default brand. Farmers are not tied to a brand (None)."""
+    the default brand. Farmers are not tied to a brand (None).
+
+    A new manufacturer is a new business with its own app, so it is never silently filed under someone else's brand: its
+    brand is the one named, else the one attached to its own organisation (`org`), else none until one is linked. With
+    `explicit_for_manufacturer` (the web "Add manufacturer" flow) a missing brand is refused outright."""
     from fastapi import HTTPException
     if (role or "").lower() not in PARTNER_ROLES:
         return None
     creator_brand = getattr(creator, "brand_id", None)
+    if (role or "").lower() == "manufacturer" and not requested_key and creator_brand is None:
+        if explicit_for_manufacturer:
+            raise HTTPException(status_code=422, detail="A manufacturer account must say which brand it belongs to.")
+        row = db.query(AppBrand.id).filter(AppBrand.org_id == org.id).first() if org is not None else None
+        return row[0] if row else None
     if requested_key:
         wanted = _id_for_key(db, requested_key)
         if creator_brand is not None and wanted != creator_brand:

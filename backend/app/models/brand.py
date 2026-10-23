@@ -16,6 +16,8 @@ class AppBrand(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     key = Column(String(30), nullable=False, unique=True)
     org_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.organisations.id", ondelete="SET NULL"), nullable=True)
+    # The account that IS this manufacturer: its tree is the manufacturer's dashboard (services/view_as.py).
+    owner_user_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(100), nullable=False)
     short_name = Column(String(30), nullable=True)
     logo_url = Column(Text, nullable=True)

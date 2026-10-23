@@ -11,13 +11,16 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import distinct, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_roles
+from app.config import settings
 from app.database import get_db
-from app.models import AppBrand, AuditLog, Organisation, User
-from app.services import brand_service
+from app.models import Alert, AppBrand, AuditLog, Organisation, Pump, User
+from app.repositories.pump_repository import PumpRepository
+from app.services import brand_service, view_as
 
 router = APIRouter(tags=["Brands"])
 app_router = APIRouter(tags=["Brands"])
@@ -44,6 +47,7 @@ class BrandFields(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=100)
     short_name: Optional[str] = Field(None, max_length=30)
     org_id: Optional[uuid.UUID] = None
+    owner_user_id: Optional[uuid.UUID] = None
     logo_url: Optional[str] = Field(None, max_length=2000)
     primary_color: Optional[str] = None
     support_name: Optional[str] = Field(None, max_length=100)
@@ -98,7 +102,8 @@ class BrandUpdate(BrandFields):
 
 def _serialize(b: AppBrand) -> dict:
     return {
-        "id": str(b.id), "key": b.key, "org_id": str(b.org_id) if b.org_id else None, "name": b.name,
+        "id": str(b.id), "key": b.key, "org_id": str(b.org_id) if b.org_id else None,
+        "owner_user_id": str(b.owner_user_id) if b.owner_user_id else None, "name": b.name,
         "short_name": b.short_name, "logo_url": b.logo_url, "primary_color": b.primary_color,
         "support_name": b.support_name, "support_phone": b.support_phone, "support_email": b.support_email,
         "whatsapp_phone_id": b.whatsapp_phone_id, "whatsapp_template": b.whatsapp_template,
@@ -113,6 +118,15 @@ def _serialize(b: AppBrand) -> dict:
 def _audit(db: Session, actor: User, brand: AppBrand, action: str, after: dict) -> None:
     db.add(AuditLog(actor_id=actor.id, actor_role=actor.role, entity_type="brand", entity_id=brand.key,
                     action=action, after_json=after))
+
+
+def _check_owner(db: Session, owner_user_id: Optional[uuid.UUID]) -> None:
+    """The brand's owner must be a manufacturer account: its tree becomes the manufacturer's dashboard."""
+    if owner_user_id is None:
+        return
+    owner = db.query(User).filter(User.id == owner_user_id).first()
+    if not owner or (owner.role or "").lower() != "manufacturer":
+        raise HTTPException(status_code=422, detail="owner_user_id must be a manufacturer account")
 
 
 def _check_org(db: Session, org_id: Optional[uuid.UUID]) -> None:
@@ -139,6 +153,47 @@ def list_brands(current_user: User = Depends(require_roles(["superadmin"])), db:
     return {"brands": [_serialize(b) for b in db.query(AppBrand).order_by(AppBrand.key).all()]}
 
 
+@router.get("/overview")
+def overview(current_user: User = Depends(require_roles(["superadmin"])), db: Session = Depends(get_db)):
+    """The platform's main page: every manufacturer with its farmers, pumps and what is wrong right now.
+
+    Each manufacturer is measured exactly as its own dashboard measures it (its account's tree, the same pump buckets:
+    running / stopped / fault / offline / never reported), so the number the platform owner sees here is the number the
+    manufacturer sees."""
+    empty = {"total": 0, "running": 0, "stopped": 0, "fault": 0, "offline": 0, "no_data": 0}
+    rows = []
+    all_farmers = set()  # one person who farms with two manufacturers is still one farmer in the platform total
+    for b in db.query(AppBrand).order_by(AppBrand.name).all():
+        owner = db.query(User).filter(User.id == b.owner_user_id).first() if b.owner_user_id else None
+        counts, farmers, team, open_alerts = dict(empty), 0, 0, 0
+        if owner is not None:
+            repo = PumpRepository.for_actor(owner, db)
+            counts = repo.fleet_counts(settings.OFFLINE_AFTER_SECONDS)
+            in_tree = repo._base_query().with_entities(Pump.id).subquery()
+            owner_ids = {r[0] for r in db.query(distinct(Pump.owner_user_id)).filter(Pump.id.in_(db.query(in_tree.c.id))).all() if r[0]}
+            farmers = len(owner_ids)
+            all_farmers |= owner_ids
+            open_alerts = (
+                db.query(func.count(Alert.id))
+                .filter(Alert.resolved_at.is_(None), Alert.pump_id.in_(db.query(in_tree.c.id))).scalar() or 0
+            )
+            path = (owner.hierarchy_path or "").rstrip("/")
+            if path.count("/") >= 2:
+                team = db.query(func.count(User.id)).filter(
+                    (User.hierarchy_path == path) | User.hierarchy_path.like(path + "/%"), User.id != owner.id,
+                    func.lower(User.role) != "customer",
+                ).scalar() or 0
+        rows.append({
+            "key": b.key, "name": b.name, "short_name": b.short_name, "logo_url": b.logo_url,
+            "primary_color": b.primary_color, "status": b.status,
+            "owner": {"name": owner.full_name, "phone": owner.phone_number or owner.phone} if owner else None,
+            "farmers": int(farmers), "team": int(team), "open_alerts": int(open_alerts), "pumps": counts,
+        })
+    totals = {k: sum(r["pumps"][k] for r in rows) for k in empty}
+    totals.update(farmers=len(all_farmers), open_alerts=sum(r["open_alerts"] for r in rows))
+    return {"manufacturers": rows, "totals": totals}
+
+
 @router.get("/{key}")
 def get_brand(key: str, current_user: User = Depends(require_roles(["superadmin"])), db: Session = Depends(get_db)):
     brand = db.query(AppBrand).filter(AppBrand.key == key.lower()).first()
@@ -152,6 +207,7 @@ def create_brand(req: BrandCreate, current_user: User = Depends(require_roles(["
     if db.query(AppBrand.id).filter(AppBrand.key == req.key).first():
         raise HTTPException(status_code=409, detail="A brand with that key already exists")
     _check_org(db, req.org_id)
+    _check_owner(db, req.owner_user_id)
     brand = AppBrand(key=req.key, status="ACTIVE", features={})
     for name, value in req.model_dump(exclude={"key"}, exclude_unset=True).items():
         setattr(brand, name, value)
@@ -176,6 +232,8 @@ def update_brand(key: str, req: BrandUpdate, current_user: User = Depends(requir
     changes = req.model_dump(exclude_unset=True)
     if "org_id" in changes:
         _check_org(db, changes["org_id"])
+    if "owner_user_id" in changes:
+        _check_owner(db, changes["owner_user_id"])
     previous_status = brand.status
     for name, value in changes.items():
         if name == "features" and value is None:

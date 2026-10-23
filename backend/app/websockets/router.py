@@ -7,6 +7,8 @@ from sqlalchemy import text
 from app.database import SessionLocal
 from app.models import User
 from app.repositories import PumpRepository
+from app.core.errors import AppError
+from app.services import view_as
 from app.services.cache_service import cache_service
 from app.services.jwt_auth import verify_token
 from app.services.ws_hub import ws_hub
@@ -32,8 +34,11 @@ def _access_payload(token):
     return payload
 
 
-def _load_identity(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _load_identity(payload: Dict[str, Any], view_key: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Resolve a verified token into the connection's scope, from the database, not the token.
+
+    `view_key` is the super admin looking at one manufacturer's portal (see services/view_as.py): the connection then gets
+    that manufacturer's scope instead of the platform's, so live events of other manufacturers are not delivered.
 
     Applies the same gates as REST: the account must exist and be active, and the token's session
     version must not have been revoked. A farmer's scope is the set of pumps they own or were
@@ -51,6 +56,11 @@ def _load_identity(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                 return None
 
             set_db_actor_context(db, user=user)
+            if view_key and user.role == "superadmin":
+                try:
+                    user = view_as.principal_for(db, view_key)
+                except AppError:
+                    return None  # no such manufacturer / no account: the socket is refused like an unauthenticated one
             pump_ids = None
             if user.role == "customer":
                 pump_ids = set(PumpRepository.for_actor(actor=user, db=db).get_accessible_ids())
@@ -70,13 +80,14 @@ def _load_identity(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(None), view: str = Query(None)):
     await websocket.accept()
     state: Dict[str, Any] = {"meta": None, "payload": None, "heartbeat": False}
+    view_key = (view or "").strip().lower() or None
 
     async def authenticate(raw_token: Optional[str]) -> bool:
         payload = _access_payload(raw_token)
-        meta = await run_in_threadpool(_load_identity, payload) if payload else None
+        meta = await run_in_threadpool(_load_identity, payload, view_key) if payload else None
         if not meta:
             return False
         async with ws_hub.lock:
@@ -94,7 +105,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
             payload = state["payload"]
             if not payload:
                 continue
-            fresh = await run_in_threadpool(_load_identity, payload)
+            fresh = await run_in_threadpool(_load_identity, payload, view_key)
             if not fresh:
                 await websocket.close(code=4401, reason="Session ended")
                 return
