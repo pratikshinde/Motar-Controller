@@ -129,8 +129,11 @@ export const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
 
   const handleRedeemInvite = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inviteToken.trim()) {
-      navigate(`/invite/${encodeURIComponent(inviteToken.trim())}`);
+    // People paste the whole link ("https://host/invite/<token>") as often as just the code.
+    const pasted = inviteToken.trim();
+    const token = pasted.match(/\/invite\/([^/?#\s]+)/)?.[1] ?? pasted;
+    if (token) {
+      navigate(`/invite/${encodeURIComponent(token)}`);
     }
   };
 
@@ -422,7 +425,7 @@ export const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                   Farmer Mobile Activation
                 </Typography>
                 <Typography sx={{ fontSize: '0.84rem', color: '#64748B', mb: 2 }}>
-                  Verify your mobile number to view and control your connected pumps:
+                  Verify the mobile number your dealer registered for you to view and control your connected pumps.
                 </Typography>
 
                 <form onSubmit={handleVerifyFarmerOtp}>

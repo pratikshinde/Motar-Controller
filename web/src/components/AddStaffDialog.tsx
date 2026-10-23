@@ -4,8 +4,11 @@ import {
   Stack, Typography
 } from '@mui/material';
 import { createStaffUser } from '../api/users';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { PhoneVerifyField } from './PhoneVerifyField';
+
+// Mirrors MIN_PARTNER_PASSWORD on the server.
+const MIN_PASSWORD = 8;
 
 interface Props {
   open: boolean;
@@ -18,12 +21,13 @@ interface Props {
 // role, same device pool, no new hierarchy branch (Web_App_Pending_Items.md
 // §8.1.2). Deliberately no role picker — staff inherit the org's role.
 export const AddStaffDialog: React.FC<Props> = ({ open, onClose, onCreated, orgNodeId }) => {
-  const { user } = useAuth();
   const { showToast } = useToast();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [ticket, setTicket] = useState<string | null>(null);
+  const [verifyReset, setVerifyReset] = useState(0);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -31,10 +35,9 @@ export const AddStaffDialog: React.FC<Props> = ({ open, onClose, onCreated, orgN
       setName('');
       setPhone('');
       setPassword('');
+      setTicket(null);
     }
   }, [open]);
-
-  const needsPasswordField = user ? ['superadmin', 'manufacturer', 'distributor'].includes(user.role) : false;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,19 +46,31 @@ export const AddStaffDialog: React.FC<Props> = ({ open, onClose, onCreated, orgN
       showToast('Name and phone number are required', true);
       return;
     }
+    if (!ticket) {
+      showToast('Verify the mobile number first: send the WhatsApp code and enter what the person reads out', true);
+      return;
+    }
+    // Every staff login is a partner login: it signs in with a password.
+    if (password.trim().length < MIN_PASSWORD) {
+      showToast(`A password of at least ${MIN_PASSWORD} characters is required`, true);
+      return;
+    }
     setBusy(true);
     try {
       await createStaffUser({
         full_name: name.trim(),
         phone_number: phone.trim(),
         parent_user_id: orgNodeId,
-        password: password.trim() || undefined
+        password: password.trim(),
+        phone_verification_token: ticket
       });
       showToast(`Staff account "${name}" added — shares this organisation's device pool`);
       onCreated();
       onClose();
     } catch (err: any) {
       showToast(err.message || 'Could not add staff account', true);
+      // The server may have spent the ticket before it refused; ask for a fresh code.
+      setVerifyReset(n => n + 1);
     } finally {
       setBusy(false);
     }
@@ -73,21 +88,26 @@ export const AddStaffDialog: React.FC<Props> = ({ open, onClose, onCreated, orgN
           <Stack spacing={2}>
             <TextField label="Full name" value={name} onChange={e => setName(e.target.value)} required fullWidth autoFocus />
             <TextField label="Mobile phone (E.164 format)" placeholder="+91 XXXXX XXXXX" value={phone} onChange={e => setPhone(e.target.value)} required fullWidth />
-            {needsPasswordField && (
-              <TextField
-                label="Password (admin-tier accounts only)"
-                type="password"
-                placeholder="Leave blank for OTP-only login"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                fullWidth
-              />
-            )}
+            <PhoneVerifyField
+              phone={phone}
+              onTicket={setTicket}
+              disabled={busy}
+              resetKey={verifyReset}
+              hint="A one-time code goes to this number on WhatsApp. Ask the person to read it out to you."
+            />
+            <TextField
+              label={`Password (at least ${MIN_PASSWORD} characters)`}
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              fullWidth
+            />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained" disabled={busy}>
+          <Button type="submit" variant="contained" disabled={busy || !ticket}>
             Add staff
           </Button>
         </DialogActions>

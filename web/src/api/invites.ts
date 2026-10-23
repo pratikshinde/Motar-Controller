@@ -8,10 +8,21 @@ export async function createInvite(role: RoleTier, parentUserId?: string): Promi
 
 // Same persist-then-return contract as verifyOtp/loginWithPassword (api/auth.ts)
 // — this is a login path too, just one that also creates the account.
-export async function redeemInvite(token: string, fullName: string, phoneNumber: string, password?: string): Promise<LoginOutcome> {
+export async function redeemInvite(
+  token: string,
+  fullName: string,
+  phoneNumber: string,
+  password: string | undefined,
+  phoneVerificationToken: string
+): Promise<LoginOutcome> {
   const res = await apiFetch(`/invites/${encodeURIComponent(token)}/redeem`, {
     method: 'POST',
-    body: JSON.stringify({ full_name: fullName, phone_number: phoneNumber, password })
+    body: JSON.stringify({
+      full_name: fullName,
+      phone_number: phoneNumber,
+      password,
+      phone_verification_token: phoneVerificationToken
+    })
   });
   const body = (await res.json()) as LoginOutcome;
   if (!res.ok) throw new Error(messageFrom(body, 'Could not redeem invite'));

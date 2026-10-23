@@ -9,13 +9,7 @@ export interface AuthContextValue {
   organisation: string | null;
   permissions: string[];
   isAuthenticated: boolean;
-  isMfaRequired: boolean;
   mfaSetupRequired: boolean;
-  login: (phoneNumber: string) => Promise<any>;
-  requestOtp: (phoneNumber: string, isRegistration?: boolean, role?: RoleTier) => Promise<any>;
-  verifyOtp: (phoneNumber: string, otpCode: string, options?: any) => Promise<any>;
-  verifyMfa: (code: string) => Promise<any>;
-  register: (phoneNumber: string, role: RoleTier, fullName?: string, orgName?: string) => Promise<any>;
   setUser: (u: User) => void;
   handleAuthResult: (result: AuthResult) => void;
   clearMfaSetupRequired: () => void;
@@ -76,7 +70,6 @@ function getRolePermissions(role?: RoleTier | null): string[] {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUserState] = useState<User | null>(() => (hasSession() ? getStoredUser() : null));
   const [mfaSetupRequired, setMfaSetupRequired] = useState(false);
-  const [isMfaRequired, setIsMfaRequired] = useState(false);
 
   const role = useMemo<RoleTier | null>(() => user?.role ?? null, [user]);
   const organisation = useMemo<string | null>(() => user?.contract_notes ?? null, [user]);
@@ -87,51 +80,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleAuthResult = useCallback((result: AuthResult) => {
     setUserState(result.user);
     setMfaSetupRequired(Boolean(result.mfa_setup_required));
-    setIsMfaRequired(false);
   }, []);
 
   const clearMfaSetupRequired = useCallback(() => setMfaSetupRequired(false), []);
-
-  const login = useCallback(async (phoneNumber: string) => {
-    return authService.sendWhatsAppOtp(phoneNumber);
-  }, []);
-
-  const requestOtp = useCallback(async (phoneNumber: string, isRegistration?: boolean, roleTier?: RoleTier) => {
-    return authService.sendWhatsAppOtp(phoneNumber, { isRegistration, role: roleTier });
-  }, []);
-
-  const verifyOtp = useCallback(async (phoneNumber: string, otpCode: string, options?: any) => {
-    const outcome = await authService.verifyWhatsAppOtp(phoneNumber, otpCode, options);
-    if (outcome.requiresMfa) {
-      setIsMfaRequired(true);
-    } else if (outcome.authResult) {
-      handleAuthResult(outcome.authResult);
-    }
-    return outcome;
-  }, [handleAuthResult]);
-
-  const verifyMfa = useCallback(async (code: string) => {
-    const result = await authService.verifySuperAdminMfa(code);
-    handleAuthResult(result);
-    return result;
-  }, [handleAuthResult]);
-
-  const register = useCallback(async (phoneNumber: string, roleTier: RoleTier, fullName?: string, orgName?: string) => {
-    return authService.sendWhatsAppOtp(phoneNumber, { isRegistration: true, role: roleTier });
-  }, []);
 
   const logout = useCallback(async () => {
     await authService.logout();
     setUserState(null);
     setMfaSetupRequired(false);
-    setIsMfaRequired(false);
   }, []);
 
   const logoutAll = useCallback(async () => {
     await authService.logoutAll();
     setUserState(null);
     setMfaSetupRequired(false);
-    setIsMfaRequired(false);
   }, []);
 
   const refreshSession = useCallback(async (): Promise<boolean> => {
@@ -160,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const onExpired = () => {
       setUserState(null);
-      setIsMfaRequired(false);
     };
     const onMfaSetup = () => setMfaSetupRequired(true);
     window.addEventListener('agripump:session-expired', onExpired);
@@ -179,13 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         organisation,
         permissions,
         isAuthenticated: Boolean(user),
-        isMfaRequired,
         mfaSetupRequired,
-        login,
-        requestOtp,
-        verifyOtp,
-        verifyMfa,
-        register,
         setUser,
         handleAuthResult,
         clearMfaSetupRequired,

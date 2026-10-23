@@ -108,9 +108,17 @@ class ApiError extends Error {
 // Requests that are themselves part of signing in: a 401 there means "wrong credentials", not "session expired".
 const AUTH_ENTRY = ['/auth/login', '/auth/verify-otp', '/auth/send-otp', '/auth/refresh', '/auth/mfa/verify'];
 
+/** Auth + JSON headers merged with the caller's. A file upload (FormData) must not claim to be JSON: the browser has to
+ * set the multipart content type itself, boundary included. */
+function requestHeaders(options: RequestInit): Record<string, string> {
+  const merged = { ...authHeaders(), ...(options.headers as Record<string, string> | undefined) };
+  if (typeof FormData !== 'undefined' && options.body instanceof FormData) delete merged['Content-Type'];
+  return merged;
+}
+
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
-  const mergedHeaders = { ...authHeaders(), ...(options.headers as Record<string, string> | undefined) };
+  const mergedHeaders = requestHeaders(options);
   let response = await fetch(url, { ...options, headers: mergedHeaders });
 
   // A privileged account that has not set up TOTP yet may only do that: tell the shell to show the setup step.
@@ -135,8 +143,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
       const refreshed = await refreshInFlight;
       if (refreshed && refreshed.token) {
         persistTokens(refreshed);
-        const retryHeaders = { ...authHeaders(), ...(options.headers as Record<string, string> | undefined) };
-        return fetch(url, { ...options, headers: retryHeaders });
+        return fetch(url, { ...options, headers: requestHeaders(options) });
       }
     }
     // No way to renew the session: end it, so the portal shows the sign-in screen instead of an empty dashboard.

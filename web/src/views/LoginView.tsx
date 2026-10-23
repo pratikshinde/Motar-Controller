@@ -73,7 +73,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ defaultTab = 'login' }) =>
     <Box
       sx={{
         minHeight: '100vh',
-        width: '100vw',
+        // 100%, not 100vw: vw counts the scrollbar, so on a page tall enough to scroll the view was a scrollbar's width
+        // too wide and grew a horizontal scrollbar of its own.
+        width: '100%',
         bgcolor: '#FFFFFF',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },

@@ -20,6 +20,7 @@ import { ROLE_NAMES } from '../api/users';
 import { navItems } from './navItems';
 import { SettingsDialog } from './SettingsDialog';
 import { MfaSetupDialog } from './MfaSetupDialog';
+import { BrandLogo } from './brand/BrandLogo';
 
 const RAIL_WIDTH = 88;
 const DRAWER_WIDTH = 260;
@@ -117,24 +118,9 @@ export const AppShell: React.FC = () => {
               sx={{ width: 36, height: 36, borderRadius: 2.5, objectFit: 'contain' }}
             />
           ) : (
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 2.5,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.m3.tertiary})`,
-                display: 'grid',
-                placeItems: 'center'
-              }}
-            >
-              <ElectricBoltIcon sx={{ color: theme.palette.m3.onPrimary, fontSize: 20 }} />
-            </Box>
+            <BrandLogo size="small" light={mode === 'dark'} iconOnlyOnPhone />
           )}
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography variant="h6" component="div" noWrap>
-              {t.loginTitle}
-            </Typography>
-          </Box>
+          <Box sx={{ flexGrow: 1 }} />
 
           {user && (
             <Chip

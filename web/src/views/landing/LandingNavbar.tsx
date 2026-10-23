@@ -192,7 +192,8 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({ onOpenGetStarted }
             ))}
           </Menu>
 
-          {/* If already authenticated, show "Dashboard", else "Login" */}
+          {/* If already authenticated, show "Dashboard", else "Login". Hidden on a phone: the brand, this button and the menu
+              button do not fit side by side below ~420px, and the menu (and the hero) carry the same link. */}
           {isAuthenticated ? (
             <Button
               variant="outlined"
@@ -200,6 +201,7 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({ onOpenGetStarted }
               startIcon={<DashboardIcon sx={{ fontSize: 18 }} />}
               onClick={() => navigate('/dashboard')}
               sx={{
+                display: { xs: 'none', sm: 'inline-flex' },
                 textTransform: 'none',
                 fontWeight: 700,
                 fontSize: '0.88rem',
@@ -223,6 +225,7 @@ export const LandingNavbar: React.FC<LandingNavbarProps> = ({ onOpenGetStarted }
               size="medium"
               onClick={() => navigate('/login')}
               sx={{
+                display: { xs: 'none', sm: 'inline-flex' },
                 textTransform: 'none',
                 fontWeight: 600,
                 fontSize: '0.88rem',

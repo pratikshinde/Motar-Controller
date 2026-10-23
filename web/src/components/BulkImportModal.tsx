@@ -20,6 +20,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useToast } from '../context/ToastContext';
+import { apiFetch, messageFrom } from '../api/client';
 import { monoFont } from '../theme';
 
 interface BulkImportModalProps {
@@ -101,18 +102,13 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({ open, onClose,
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/pumps/bulk-import', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: formData
-      });
+      // Through apiFetch: it sends the session's token (the app keeps it under its own key, not "token") and renews it
+      // when it has expired mid-session.
+      const res = await apiFetch('/pumps/bulk-import', { method: 'POST', body: formData });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || 'Import failed');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(messageFrom(errData, 'Import failed'));
       }
 
       const data = await res.json();

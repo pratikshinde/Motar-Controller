@@ -26,6 +26,8 @@ export async function fetchUserTree(): Promise<{ tree: UserTreeNode[] }> {
   return apiJson('/users/tree');
 }
 
+// `phone_verification_token` is the ticket from api/phoneVerification.ts: the server refuses to create an account for a
+// number nobody has answered a WhatsApp code for.
 export async function createSubordinateUser(input: {
   full_name: string;
   phone_number: string;
@@ -33,6 +35,7 @@ export async function createSubordinateUser(input: {
   parent_user_id?: string;
   parent_hierarchy_path?: string;
   password?: string;
+  phone_verification_token?: string;
 }): Promise<{ message: string; user: User }> {
   return apiJson('/users', { method: 'POST', body: JSON.stringify(input) });
 }
@@ -46,6 +49,7 @@ export async function createStaffUser(input: {
   parent_user_id: string;
   org_role?: 'staff' | 'readonly';
   password?: string;
+  phone_verification_token?: string;
 }): Promise<{ message: string; user: User }> {
   return apiJson('/users', { method: 'POST', body: JSON.stringify({ ...input, membership: 'staff' }) });
 }

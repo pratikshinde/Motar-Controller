@@ -7,7 +7,10 @@ import { ambientBackgroundImage } from '../theme';
 import { previewInvite, redeemInvite, type InvitePreview } from '../api/invites';
 import { ROLE_NAMES } from '../api/users';
 import { useAuth } from '../context/AuthContext';
+import { PhoneVerifyField } from '../components/PhoneVerifyField';
 import { isMfaRequired } from '../types';
+
+const MIN_PASSWORD = 8;
 
 // FR-WEB-035 — the invited person lands here from a shared link, sets
 // their own phone number and a password (optional for a customer, who can use
@@ -25,6 +28,9 @@ export const InviteRedeemView: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState<InvitePreview | null>(null);
   const [linkError, setLinkError] = useState('');
+  // The ticket proving this phone answered a WhatsApp code; the server spends it when the account is created.
+  const [ticket, setTicket] = useState<string | null>(null);
+  const [verifyReset, setVerifyReset] = useState(0);
 
   // Ask the server what this link is for, so a link that is used up or expired is said so up front instead of
   // after the form has been filled in.
@@ -37,9 +43,17 @@ export const InviteRedeemView: React.FC = () => {
     e.preventDefault();
     if (!token) return;
     setError('');
+    if (!ticket) {
+      setError('Verify your mobile number first: send yourself a WhatsApp code and enter it.');
+      return;
+    }
+    if (info?.password_required && password.trim().length < MIN_PASSWORD) {
+      setError(`Choose a password of at least ${MIN_PASSWORD} characters.`);
+      return;
+    }
     setBusy(true);
     try {
-      const result = await redeemInvite(token, fullName.trim(), phone.trim(), password.trim() || undefined);
+      const result = await redeemInvite(token, fullName.trim(), phone.trim(), password.trim() || undefined, ticket);
       if (isMfaRequired(result)) {
         // A redeemed invite can only ever create a fresh, non-MFA account
         // (roles that require MFA don't reach this branch on first login),
@@ -51,6 +65,8 @@ export const InviteRedeemView: React.FC = () => {
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
       setError(err.message || 'Could not complete registration');
+      // The server may have spent the ticket before it refused: ask for a fresh code rather than resend a dead one.
+      setVerifyReset(n => n + 1);
     } finally {
       setBusy(false);
     }
@@ -119,6 +135,13 @@ export const InviteRedeemView: React.FC = () => {
                 fullWidth
                 type="tel"
               />
+              <PhoneVerifyField
+                phone={phone}
+                onTicket={setTicket}
+                disabled={busy}
+                resetKey={verifyReset}
+                hint="We send a one-time code to this number on WhatsApp to confirm it is yours."
+              />
               <TextField
                 label={info?.password_required ? 'Choose a password (at least 8 characters)' : 'Password (optional — leave blank for SMS-code login)'}
                 type="password"
@@ -127,7 +150,7 @@ export const InviteRedeemView: React.FC = () => {
                 required={Boolean(info?.password_required)}
                 fullWidth
               />
-              <Button type="submit" variant="contained" size="large" disabled={busy || !info}>
+              <Button type="submit" variant="contained" size="large" disabled={busy || !info || !ticket}>
                 Create account &amp; sign in
               </Button>
             </Stack>

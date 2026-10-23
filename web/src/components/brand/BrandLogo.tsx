@@ -5,6 +5,8 @@ interface BrandLogoProps {
   size?: 'small' | 'medium' | 'large';
   light?: boolean;
   withTagline?: boolean;
+  /** Show only the drop icon below the `sm` breakpoint, for toolbars that need the room for their buttons. */
+  iconOnlyOnPhone?: boolean;
   onClick?: () => void;
 }
 
@@ -12,6 +14,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   size = 'medium',
   light = false,
   withTagline = false,
+  iconOnlyOnPhone = false,
   onClick
 }) => {
   const iconSizes = {
@@ -100,7 +103,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       </Box>
 
       {/* Brand Typography */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+      <Box sx={{ display: iconOnlyOnPhone ? { xs: 'none', sm: 'flex' } : 'flex', flexDirection: 'column', lineHeight: 1 }}>
         <Typography
           component="span"
           sx={{

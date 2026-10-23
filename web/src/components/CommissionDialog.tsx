@@ -20,8 +20,9 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
   const { showToast } = useToast();
   const [id, setId] = useState('');
   const [name, setName] = useState('');
-  const [lat, setLat] = useState('19.9975');
-  const [lng, setLng] = useState('73.7898');
+  // Blank means "position unknown" - never a stand-in coordinate that would put a pump in some other place on the map.
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -29,19 +30,22 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
       if (editingPump) {
         setId(editingPump.id);
         setName(editingPump.name);
-        setLat(String(editingPump.latitude));
-        setLng(String(editingPump.longitude));
+        setLat(editingPump.latitude === null || editingPump.latitude === '' ? '' : String(editingPump.latitude));
+        setLng(editingPump.longitude === null || editingPump.longitude === '' ? '' : String(editingPump.longitude));
       } else {
         setId('');
         setName('');
-        setLat('19.9975');
-        setLng('73.7898');
+        setLat('');
+        setLng('');
       }
     }
   }, [open, editingPump]);
 
   function captureGps() {
-    if (!('geolocation' in navigator)) return;
+    if (!('geolocation' in navigator)) {
+      showToast('This browser cannot read your location. Type the latitude and longitude instead.', true);
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       pos => {
         setLat(pos.coords.latitude.toFixed(6));
@@ -49,8 +53,8 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
         showToast(`High-accuracy GPS captured (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`);
       },
       () => {
-        setLat('19.998200');
-        setLng('73.791500');
+        // Say so and leave the fields alone: a made-up position would be saved as if it were the pump's real one.
+        showToast('Could not read your location (permission denied or no signal). Type the latitude and longitude instead.', true);
       }
     );
   }
@@ -61,10 +65,22 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
       showToast('Pump name is required', true);
       return;
     }
+    const latitude = lat.trim() === '' ? undefined : Number(lat);
+    const longitude = lng.trim() === '' ? undefined : Number(lng);
+    const bad = (v: number | undefined, limit: number) => v !== undefined && (!Number.isFinite(v) || Math.abs(v) > limit);
+    if (bad(latitude, 90) || bad(longitude, 180) || (latitude === undefined) !== (longitude === undefined)) {
+      showToast('Enter both a latitude (-90 to 90) and a longitude (-180 to 180), or leave both blank if the position is not known yet', true);
+      return;
+    }
     setBusy(true);
     try {
       if (editingPump) {
-        await updatePumpLocation(editingPump.id, parseFloat(lat), parseFloat(lng));
+        if (latitude === undefined || longitude === undefined) {
+          showToast('Enter the latitude and longitude to update the location', true);
+          setBusy(false);
+          return;
+        }
+        await updatePumpLocation(editingPump.id, latitude, longitude);
         showToast(`Location updated for ${name}`);
       } else {
         const newId = id.trim() || `PUMP-4G-3P-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -74,8 +90,8 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
           supply_type: '3-phase',
           hp_rating: 15.0,
           // Left blank stays unknown: no invented position.
-          latitude: Number.isFinite(parseFloat(lat)) ? parseFloat(lat) : undefined,
-          longitude: Number.isFinite(parseFloat(lng)) ? parseFloat(lng) : undefined
+          latitude,
+          longitude
         });
         showToast(`Device ${name} created. Device key (save now, shown once): ${result.device_key}`);
       }
@@ -112,8 +128,8 @@ export const CommissionDialog: React.FC<Props> = ({ open, onClose, onSaved, edit
               fullWidth
             />
             <Box sx={{ display: 'flex', gap: 1.5 }}>
-              <TextField label="Latitude" value={lat} onChange={e => setLat(e.target.value)} fullWidth required />
-              <TextField label="Longitude" value={lng} onChange={e => setLng(e.target.value)} fullWidth required />
+              <TextField label="Latitude" value={lat} onChange={e => setLat(e.target.value)} placeholder="e.g. 19.9975" fullWidth />
+              <TextField label="Longitude" value={lng} onChange={e => setLng(e.target.value)} placeholder="e.g. 73.7898" fullWidth />
             </Box>
             <Button variant="tonal" startIcon={<MyLocationIcon />} onClick={captureGps} type="button">
               Use current location (smartphone GPS)

@@ -9,11 +9,8 @@ import {
   IconButton,
   InputAdornment,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Link
+  Link,
+  Chip
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -31,6 +28,7 @@ import { sendSmsOtp, verifyOtp, loginWithPassword } from '../../api/auth';
 import { verifyMfa } from '../../api/mfa';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { ResetPasswordDialog } from '../../components/ResetPasswordDialog';
 import { isMfaRequired } from '../../types';
 
 interface LoginFormProps {
@@ -39,6 +37,21 @@ interface LoginFormProps {
 }
 
 type AuthMode = 'password' | 'otp';
+
+// Shortcuts for a developer's machine only (`npm run dev`): the seeded demo accounts and their published password.
+// `import.meta.env.DEV` is a literal `false` in a production build, so none of this - the accounts, the password, the
+// panel that shows them - reaches the bundle that gets deployed.
+const DEV_HELPERS = import.meta.env.DEV;
+const DEMO_ACCOUNTS = DEV_HELPERS
+  ? [
+      { label: 'Super Admin', phone: '9999900001', role: 'Super Admin', pass: 'Admin@123' },
+      { label: 'Manufacturer', phone: '9999900002', role: 'OEM', pass: 'Admin@123' },
+      { label: 'Distributor', phone: '9999900003', role: 'Regional', pass: 'Admin@123' },
+      { label: 'Dealer', phone: '9999900004', role: 'Installer', pass: 'Admin@123' },
+      { label: 'Support', phone: '9999900005', role: 'Engineer', pass: 'Admin@123' },
+      { label: 'Farmer', phone: '9999900006', role: 'Customer', pass: 'Admin@123' }
+    ]
+  : [];
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSelectRole }) => {
   const navigate = useNavigate();
@@ -62,6 +75,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState('');
 
+  const handleSelectDemoAccount = (acc: typeof DEMO_ACCOUNTS[number]) => {
+    setPhone(acc.phone);
+    setPassword(acc.pass);
+    if (mode === 'otp') {
+      setOtp('123456');
+      setOtpRequested(true);
+      setDevOtpNotice('[Dev test OTP: 123456 ready]');
+    }
+    setError('');
+  };
+
   const quickRoles = [
     { id: 'superadmin', label: 'Super Admin', sub: 'Platform administration', icon: <AdminPanelSettingsOutlinedIcon sx={{ fontSize: 20, color: '#475569' }} /> },
     { id: 'manufacturer', label: 'Manufacturer', sub: 'Manage products & fleets', icon: <PrecisionManufacturingIcon sx={{ fontSize: 20, color: '#2563EB' }} /> },
@@ -84,9 +108,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
         setDevOtpNotice(`[Dev test OTP: ${data.dev_otp}]`);
         setOtp(data.dev_otp);
       } else {
-        setDevOtpNotice(`SMS OTP sent to ${phone.trim()}`);
+        setDevOtpNotice(`SMS/WhatsApp OTP sent to ${phone.trim()}`);
       }
-      showToast(`SMS OTP challenge sent to ${phone.trim()}`);
+      showToast(`Verification code sent to ${phone.trim()}`);
     } catch (err: any) {
       showToast(err.message || 'OTP request failed', true);
       setError(err.message || 'OTP request failed');
@@ -107,6 +131,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
 
       if (isMfaRequired(result)) {
         setMfaToken(result.mfa_token);
+        setMfaCode(DEV_HELPERS ? '123456' : '');
         return;
       }
       handleAuthResult(result);
@@ -130,7 +155,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
       showToast(`Authenticated session active: ${result.user.full_name}`);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Incorrect verification code');
+      setError(err.message || 'Incorrect verification code. Check your authenticator app and try again.');
     } finally {
       setBusy(false);
     }
@@ -187,6 +212,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
             <Typography variant="body2" sx={{ color: '#64748B', maxWidth: 360 }}>
               Enter the 6-digit verification code from your authenticator application.
             </Typography>
+            {DEV_HELPERS && (
+              <Box sx={{ p: 1.5, bgcolor: '#EFF6FF', borderRadius: 2, border: '1px solid #BFDBFE', width: '100%' }}>
+                <Typography sx={{ fontSize: '0.8rem', color: '#1E40AF', fontWeight: 600 }}>
+                  💡 Dev Testing: Code <strong>123456</strong> or your Authenticator App TOTP code is accepted.
+                </Typography>
+              </Box>
+            )}
             <TextField
               label="Authenticator Code"
               placeholder="123456"
@@ -427,6 +459,38 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
         </form>
       )}
 
+      {/* Quick Test Accounts for instant role validation - development builds only */}
+      {DEV_HELPERS && (
+        <Box sx={{ mt: 3, p: 2, bgcolor: '#F8FAFC', borderRadius: 2.5, border: '1px solid #E2E8F0' }}>
+          <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Quick Test Accounts (Click to load role):
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            {DEMO_ACCOUNTS.map(acc => (
+              <Chip
+                key={acc.phone}
+                label={`${acc.label} (${acc.role})`}
+                size="small"
+                onClick={() => handleSelectDemoAccount(acc)}
+                sx={{
+                  bgcolor: phone === acc.phone ? '#EFF6FF' : '#FFFFFF',
+                  borderColor: phone === acc.phone ? '#2563EB' : '#CBD5E1',
+                  color: phone === acc.phone ? '#2563EB' : '#334155',
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                  border: '1px solid',
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: '#F1F5F9', borderColor: '#2563EB' }
+                }}
+              />
+            ))}
+          </Box>
+          <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', mt: 1 }}>
+            Default Password: <strong>Admin@123</strong> &bull; OTP: <strong>123456</strong>
+          </Typography>
+        </Box>
+      )}
+
       {/* Bottom Section: New to AgriPump? Role Preview Row */}
       <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #E2E8F0' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -449,11 +513,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
           </Button>
         </Box>
 
-        {/* Compact 5-Role Cards Row */}
+        {/* Role cards: as many per row as fit (five side by side on a wide form, two or three on a phone) */}
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))',
             gap: 1
           }}
         >
@@ -476,6 +540,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 0.5,
+                minWidth: 0,
                 '&:hover': {
                   borderColor: '#2563EB',
                   bgcolor: '#EFF6FF',
@@ -502,53 +567,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister, onSele
         </Box>
       </Box>
 
-      {/* Forgot Password Dialog */}
-      <Dialog
+      {/* Forgot password: a real reset (WhatsApp code, then a new password) */}
+      <ResetPasswordDialog
         open={forgotPasswordOpen}
         onClose={() => setForgotPasswordOpen(false)}
-        maxWidth="xs"
-        fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 3, p: 1 } } }}
-      >
-        <DialogTitle sx={{ fontWeight: 800, color: '#0F172A', fontSize: '1.2rem', pb: 1 }}>
-          Reset Password
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.55, mb: 2 }}>
-            To protect your agricultural infrastructure, passwords cannot be publicly reset without
-            identity verification.
-          </Typography>
-          <Box sx={{ p: 2, bgcolor: '#F8FAFC', borderRadius: 2, border: '1px solid #E2E8F0' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', mb: 0.5 }}>
-              Options to regain access:
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#64748B', display: 'block', mb: 1 }}>
-              1. <strong>Use SMS OTP:</strong> Switch to &quot;Sign in with OTP&quot; on the login screen.
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#64748B', display: 'block' }}>
-              2. <strong>Contact Administrator:</strong> Contact your organisation administrator or dealer to reissue credentials.
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => {
-              setForgotPasswordOpen(false);
-              setMode('otp');
-            }}
-            variant="contained"
-            sx={{ fontWeight: 700, textTransform: 'none', borderRadius: 2 }}
-          >
-            Switch to SMS OTP
-          </Button>
-          <Button
-            onClick={() => setForgotPasswordOpen(false)}
-            sx={{ color: '#64748B', fontWeight: 600, textTransform: 'none' }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+        initialPhone={phone}
+        onDone={resetPhone => {
+          setForgotPasswordOpen(false);
+          setPhone(resetPhone);
+          setPassword('');
+          setMode('password');
+          setError('');
+          showToast('Password updated. Sign in with your new password.');
+        }}
+      />
     </Box>
   );
 };

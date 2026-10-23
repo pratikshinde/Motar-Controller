@@ -24,14 +24,10 @@ import { ConfigTemplatesView } from './views/ConfigTemplatesView';
 import { ServiceReportsView } from './views/ServiceReportsView';
 import { AlertsView } from './views/AlertsView';
 import { LandingPageView } from './views/landing/LandingPageView';
-import { LoginPage } from './views/auth/LoginPage';
-import { VerifyOtpPage } from './views/auth/VerifyOtpPage';
-import { SuperAdminMfaPage } from './views/auth/SuperAdminMfaPage';
-import { RegisterRolePage } from './views/auth/RegisterRolePage';
-import { RegisterPhonePage } from './views/auth/RegisterPhonePage';
-import { RegisterVerifyOtpPage } from './views/auth/RegisterVerifyOtpPage';
-import { RegisterMfaSetupPage } from './views/auth/RegisterMfaSetupPage';
-import { RegisterSuccessPage } from './views/auth/RegisterSuccessPage';
+import { LightScope } from './theme/LightScope';
+
+// The public pages are drawn on a fixed light palette, so they always render with the light theme.
+const publicPage = (page: React.ReactElement) => <LightScope>{page}</LightScope>;
 
 const AuthenticatedApp: React.FC = () => (
   <Routes>
@@ -63,27 +59,22 @@ const Gate: React.FC = () => {
   const { isAuthenticated } = useAuth();
   return (
     <Routes>
-      <Route path="/" element={<LandingPageView />} />
+      <Route path="/" element={publicPage(<LandingPageView />)} />
 
-      {/* Authentication Flow: Mobile + WhatsApp OTP */}
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
-      <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
-      <Route path="/auth/verify-otp" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <VerifyOtpPage />} />
-      <Route path="/auth/mfa" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <SuperAdminMfaPage />} />
-
-      {/* Account Creation Flow: Role -> Phone -> WhatsApp OTP -> MFA (SuperAdmin only) -> Success */}
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterRolePage />} />
-      <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterRolePage />} />
-      <Route path="/auth/register/phone" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPhonePage />} />
-      <Route path="/auth/register/verify" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterVerifyOtpPage />} />
-      <Route path="/auth/register/mfa" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterMfaSetupPage />} />
-      <Route path="/auth/register/success" element={<RegisterSuccessPage />} />
+      {/* Authentication & Onboarding Portal */}
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/auth/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="register" />)} />
+      <Route path="/auth/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="register" />)} />
+      <Route path="/auth/register/*" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="register" />)} />
+      <Route path="/auth/verify-otp" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/auth/mfa" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : publicPage(<LoginView defaultTab="login" />)} />
 
       {/* Invite Redemption Token */}
       <Route path="/invite/:token" element={<InviteRedeemView />} />
 
       {/* Protected Dashboard */}
-      <Route path="/*" element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/auth/login" replace />} />
+      <Route path="/*" element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/login" replace />} />
     </Routes>
   );
 };
