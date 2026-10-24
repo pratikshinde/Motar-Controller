@@ -147,41 +147,94 @@ export const DeviceDetailView: React.FC = () => {
     : theme.palette.text.secondary;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Tooltip title="Back">
-          <IconButton onClick={() => navigate(-1)}>
-            <ArrowBackIcon />
-          </IconButton>
-        </Tooltip>
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography variant="h4" noWrap>
-            {pump.name}{' '}
-            <Typography component="span" variant="body2" color="text.secondary" sx={{ fontFamily: monoFont }}>
-              ({pump.hp_rating} HP · {pump.id})
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
+      {/* Detail Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0, flex: 1 }}>
+          <Tooltip title="Back to Registry">
+            <IconButton
+              size="small"
+              onClick={() => navigate(-1)}
+              sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 1.5, p: 0.75 }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h4" noWrap sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+                {pump.name}
+              </Typography>
+              <Chip
+                size="small"
+                label={pump.device_type === 'SOLAR_VFD' ? 'Solar VFD' : `${pump.hp_rating} HP`}
+                sx={{
+                  height: 20,
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  bgcolor: 'background.surfaceVariant',
+                  border: `1px solid ${theme.palette.divider}`
+                }}
+              />
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: monoFont, fontSize: '0.75rem' }}>
+              {pump.id} • Supply: {pump.supply_type}
             </Typography>
-          </Typography>
+          </Box>
         </Box>
-        <Chip
-          label={STATUS_LABEL[shownStatus]}
-          sx={{
-            bgcolor: theme.palette.mode === 'dark' ? `${statusColor}33` : `${statusColor}1F`,
-            color: statusColor,
-            fontFamily: monoFont,
-            fontWeight: 700
-          }}
-        />
-        <LiveStatusChip status={wsStatus} lastUpdated={lastUpdated} />
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Chip
+            size="small"
+            label={STATUS_LABEL[shownStatus]}
+            sx={{
+              height: 24,
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              bgcolor: theme.palette.mode === 'dark' ? `${statusColor}26` : `${statusColor}18`,
+              color: statusColor,
+              border: `1px solid ${statusColor}33`,
+              fontFamily: monoFont
+            }}
+          />
+          <LiveStatusChip status={wsStatus} lastUpdated={lastUpdated} />
+        </Box>
       </Box>
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      {/* Modern Workspace Tabs */}
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{
+          minHeight: 40,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          '& .MuiTab-root': {
+            minHeight: 40,
+            py: 1,
+            px: 2,
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            textTransform: 'none',
+            color: 'text.secondary',
+            '&.Mui-selected': {
+              color: 'primary.main'
+            }
+          },
+          '& .MuiTabs-indicator': {
+            height: 2.5,
+            borderRadius: '2.5px 2.5px 0 0'
+          }
+        }}
+      >
         <Tab label="Overview" value="overview" />
         <Tab label="Trends" value="trends" />
         <Tab label="Configuration" value="configuration" />
         <Tab label="Schedule" value="schedule" />
-        <Tab label="Events" value="events" />
-        <Tab label="Ownership" value="ownership" />
-        <Tab label="Diagnostics" value="diagnostics" />
+        <Tab label="Events & Logs" value="events" />
+        <Tab label="Ownership & Hierarchy" value="ownership" />
+        <Tab label="Diagnostics & Panel" value="diagnostics" />
       </Tabs>
 
       <Box sx={{ flex: 1, overflowY: 'auto', pt: 1 }}>

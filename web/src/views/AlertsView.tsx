@@ -88,22 +88,29 @@ export const AlertsView: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
-        <Typography variant="h4">Alerts</Typography>
-        <Stack direction="row" spacing={1.5}>
-          <FormControl size="small" sx={{ minWidth: 160 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+            Alerts &amp; Operational Incidents
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+            Automated fault escalation, offline anomaly detections, and field technician dispatch workflows
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel id="alert-status-label">Status</InputLabel>
             <Select labelId="alert-status-label" label="Status" value={status} onChange={e => setStatus(e.target.value as AlertFilters['status'])}>
               <MenuItem value="open">Open</MenuItem>
               <MenuItem value="acknowledged">Acknowledged</MenuItem>
               <MenuItem value="resolved">Resolved</MenuItem>
-              <MenuItem value="">All</MenuItem>
+              <MenuItem value="">All Statuses</MenuItem>
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 160 }}>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel id="alert-severity-label">Severity</InputLabel>
             <Select labelId="alert-severity-label" label="Severity" value={severity} onChange={e => setSeverity(e.target.value)}>
-              <MenuItem value="">All severities</MenuItem>
+              <MenuItem value="">All Severities</MenuItem>
               <MenuItem value="CRITICAL">Critical</MenuItem>
               <MenuItem value="HIGH">High</MenuItem>
               <MenuItem value="MEDIUM">Medium</MenuItem>
@@ -111,8 +118,8 @@ export const AlertsView: React.FC = () => {
             </Select>
           </FormControl>
           {canManageSubscriptions && (
-            <Button variant="tonal" onClick={() => setSubscriptionsOpen(true)}>
-              Manage Subscriptions
+            <Button variant="tonal" size="small" onClick={() => setSubscriptionsOpen(true)} sx={{ height: 36 }}>
+              Alert Subscriptions
             </Button>
           )}
         </Stack>
@@ -121,70 +128,118 @@ export const AlertsView: React.FC = () => {
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
         {loading ? (
           <Box sx={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-            <CircularProgress />
+            <CircularProgress size={36} />
           </Box>
         ) : alerts.length === 0 ? (
-          <Alert severity="success" variant="outlined">
-            No alerts match this filter.
-          </Alert>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 8,
+              border: theme => `1px dashed ${theme.palette.divider}`,
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+              No active incidents
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              All pump units in scope are operating within nominal electrical and connectivity parameters.
+            </Typography>
+          </Box>
         ) : (
           <Stack spacing={1.5}>
-            {alerts.map(a => (
-              <Alert
-                key={a.id}
-                severity={SEVERITY_MAP[a.severity] || 'info'}
-                variant="outlined"
-                action={
-                  <Stack direction="row" spacing={0.5}>
+            {alerts.map(a => {
+              const sev = a.severity || 'LOW';
+              const sevColor = sev === 'CRITICAL' || sev === 'HIGH' ? '#DC2626' : sev === 'MEDIUM' ? '#D97706' : '#2563EB';
+              return (
+                <Box
+                  key={a.id}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    justifyContent: 'space-between',
+                    gap: 1.5,
+                    p: 2,
+                    borderRadius: 2,
+                    border: theme => `1px solid ${theme.palette.divider}`,
+                    borderLeft: `4px solid ${sevColor}`,
+                    bgcolor: 'background.paper',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
+                      <Chip
+                        size="small"
+                        label={a.severity}
+                        sx={{
+                          height: 20,
+                          fontSize: '0.6875rem',
+                          fontWeight: 700,
+                          bgcolor: `${sevColor}18`,
+                          color: sevColor,
+                          border: `1px solid ${sevColor}33`,
+                          fontFamily: monoFont
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          color: 'primary.main',
+                          '&:hover': { textDecoration: 'underline' }
+                        }}
+                        onClick={() => navigate(`/devices/${encodeURIComponent(a.pump_id)}`)}
+                      >
+                        {a.pump_name}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label={a.alert_type === 'FAULT' ? a.fault_name || `Fault Code ${a.fault_code}` : 'Device Offline'}
+                        sx={{ height: 20, fontSize: '0.6875rem', fontFamily: monoFont, fontWeight: 600 }}
+                      />
+                      {a.occurrence_count > 1 && (
+                        <Chip size="small" label={`×${a.occurrence_count} events`} sx={{ height: 20, fontSize: '0.6875rem' }} />
+                      )}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: monoFont, display: 'block' }}>
+                      Reported: {new Date(a.last_occurred_at).toLocaleString()}
+                      {a.acknowledged_at && ` • Acknowledged by ${a.acknowledged_by_name || 'Staff'}`}
+                      {a.assigned_to_name && ` • Assigned to ${a.assigned_to_name}`}
+                      {a.resolved_at && ` • Resolved at ${new Date(a.resolved_at).toLocaleTimeString()}`}
+                    </Typography>
+                    {a.resolution_note && (
+                      <Typography variant="body2" sx={{ mt: 0.75, fontStyle: 'italic', color: 'text.secondary', bgcolor: 'background.surfaceVariant', p: 1, borderRadius: 1 }}>
+                        Resolution note: {a.resolution_note}
+                      </Typography>
+                    )}
+                  </Box>
+
+                  <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
                     {!a.acknowledged_at && (
-                      <Button size="small" onClick={() => handleAck(a.id)}>
-                        Ack
+                      <Button size="small" variant="outlined" onClick={() => handleAck(a.id)} sx={{ height: 30, fontSize: '0.75rem' }}>
+                        Acknowledge
                       </Button>
                     )}
                     {!a.resolved_at && (
-                      <Button size="small" onClick={() => setAssignTarget(a.id)}>
+                      <Button size="small" variant="outlined" onClick={() => setAssignTarget(a.id)} sx={{ height: 30, fontSize: '0.75rem' }}>
                         Assign
                       </Button>
                     )}
                     {!a.resolved_at && (
-                      <Button size="small" onClick={() => setResolveTarget(a.id)}>
+                      <Button size="small" variant="contained" onClick={() => setResolveTarget(a.id)} sx={{ height: 30, fontSize: '0.75rem' }}>
                         Resolve
                       </Button>
                     )}
                   </Stack>
-                }
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant="caption" sx={{ fontFamily: monoFont }}>
-                    {new Date(a.last_occurred_at).toLocaleString()}
-                  </Typography>
-                  <Chip
-                    size="small"
-                    label={a.pump_name}
-                    variant="outlined"
-                    onClick={() => navigate(`/devices/${encodeURIComponent(a.pump_id)}`)}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                  <Chip size="small" label={a.severity} color={SEVERITY_MAP[a.severity]} variant="outlined" />
-                  <Chip
-                    size="small"
-                    label={a.alert_type === 'FAULT' ? a.fault_name || `Code ${a.fault_code}` : 'Offline'}
-                    sx={{ fontFamily: monoFont }}
-                  />
-                  {a.occurrence_count > 1 && <Chip size="small" label={`×${a.occurrence_count}`} variant="outlined" />}
-                  {a.acknowledged_at && (
-                    <Chip size="small" color="success" variant="outlined" label={`Acked${a.acknowledged_by_name ? ' · ' + a.acknowledged_by_name : ''}`} />
-                  )}
-                  {a.assigned_to_name && <Chip size="small" variant="outlined" label={`Assigned · ${a.assigned_to_name}`} />}
-                  {a.resolved_at && <Chip size="small" color="success" label={`Resolved ${new Date(a.resolved_at).toLocaleString()}`} />}
                 </Box>
-                {a.resolution_note && (
-                  <Typography variant="body2" sx={{ mt: 0.5 }}>
-                    {a.resolution_note}
-                  </Typography>
-                )}
-              </Alert>
-            ))}
+              );
+            })}
           </Stack>
         )}
       </Box>

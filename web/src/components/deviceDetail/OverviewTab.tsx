@@ -28,11 +28,20 @@ function timeAgo(iso: string | null | undefined) {
 }
 
 const Tile: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <Box sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 1, textAlign: 'center' }}>
-    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+  <Box
+    sx={{
+      bgcolor: 'background.surfaceVariant',
+      border: theme => `1px solid ${theme.palette.divider}`,
+      borderRadius: 1.5,
+      py: 1,
+      px: 0.75,
+      textAlign: 'center'
+    }}
+  >
+    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.6875rem', fontWeight: 500 }} noWrap>
       {label}
     </Typography>
-    <Typography variant="body1" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
+    <Typography variant="body1" sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: '0.9375rem', mt: 0.25 }} noWrap>
       {value}
     </Typography>
   </Box>
@@ -111,50 +120,63 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
   const isStale = pump.last_seen_at ? Date.now() - new Date(pump.last_seen_at).getTime() > 15 * 60 * 1000 : true;
 
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-      <Card elevation={1}>
-        <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Typography variant="h6">Live Telemetry</Typography>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.1fr 0.9fr' }, gap: 2 }}>
+      {/* Live Telemetry Card */}
+      <Card elevation={1} sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2.5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9375rem' }}>
+              Real-Time Electrical Telemetry
+            </Typography>
+            <Chip
+              size="small"
+              label={pump.device_type === 'SOLAR_VFD' ? 'Solar VFD Mode' : 'AC 3-Phase Grid'}
+              sx={{ height: 22, fontSize: '0.6875rem', fontWeight: 600, bgcolor: 'background.surfaceVariant' }}
+            />
+          </Box>
+
           {pump.device_type === 'SOLAR_VFD' ? (
-            <>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-                <Tile label="Frequency" value={fmt(latest_telemetry?.vfd?.hz ?? latest_telemetry?.vfd_hz, 'Hz')} />
+                <Tile label="Drive Frequency" value={fmt(latest_telemetry?.vfd?.hz ?? latest_telemetry?.vfd_hz, 'Hz')} />
                 <Tile label="Motor Power" value={fmt(latest_telemetry?.vfd?.kw ?? latest_telemetry?.vfd_kw, 'kW')} />
                 <Tile label="DC Bus Voltage" value={fmt(latest_telemetry?.vfd?.v_dc ?? latest_telemetry?.vfd_v_dc, 'V')} />
               </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
-                <Tile label="Output A" value={fmt(latest_telemetry?.vfd?.i_out ?? latest_telemetry?.vfd_i_out, 'A')} />
-                <Tile label="AC Out V" value={fmt(latest_telemetry?.vfd?.v_ac ?? latest_telemetry?.vfd_v_ac, 'V')} />
+                <Tile label="Output Current" value={fmt(latest_telemetry?.vfd?.i_out ?? latest_telemetry?.vfd_i_out, 'A')} />
+                <Tile label="AC Output Voltage" value={fmt(latest_telemetry?.vfd?.v_ac ?? latest_telemetry?.vfd_v_ac, 'V')} />
                 <Tile label="VFD Status" value={(latest_telemetry?.vfd?.status ?? latest_telemetry?.vfd_status) || '—'} />
                 <Tile
-                  label="VFD Fault"
+                  label="VFD Fault Code"
                   value={
                     (latest_telemetry?.vfd?.fault_code ?? latest_telemetry?.vfd_fault_code)
-                      ? `Fault ${latest_telemetry?.vfd?.fault_code ?? latest_telemetry?.vfd_fault_code}`
-                      : ((latest_telemetry?.vfd?.fault_code ?? latest_telemetry?.vfd_fault_code) === 0 ? 'None' : '—')
+                      ? `#${latest_telemetry?.vfd?.fault_code ?? latest_telemetry?.vfd_fault_code}`
+                      : ((latest_telemetry?.vfd?.fault_code ?? latest_telemetry?.vfd_fault_code) === 0 ? 'Clear' : '—')
                   }
                 />
               </Box>
-            </>
+            </Box>
           ) : (
-            <>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-                <Tile label="Volt R-Y" value={fmt(latest_telemetry?.v_ry ?? null, 'V')} />
-                <Tile label="Volt Y-B" value={fmt(latest_telemetry?.v_yb ?? null, 'V')} />
-                <Tile label="Volt B-R" value={fmt(latest_telemetry?.v_br ?? null, 'V')} />
+                <Tile label="Phase R-Y" value={fmt(latest_telemetry?.v_ry ?? null, 'V')} />
+                <Tile label="Phase Y-B" value={fmt(latest_telemetry?.v_yb ?? null, 'V')} />
+                <Tile label="Phase B-R" value={fmt(latest_telemetry?.v_br ?? null, 'V')} />
               </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
                 <Tile label="Current R" value={fmt(latest_telemetry?.i_r ?? null, 'A')} />
                 <Tile label="Current Y" value={fmt(latest_telemetry?.i_y ?? null, 'A')} />
                 <Tile label="Current B" value={fmt(latest_telemetry?.i_b ?? null, 'A')} />
               </Box>
-            </>
+            </Box>
           )}
+
           {!latest_telemetry && !pump.v_ry && !pump.vfd_hz && (
-            <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-              No reading
+            <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', textAlign: 'center', py: 1 }}>
+              No telemetry reading received yet
             </Typography>
           )}
+
           {latest_telemetry?.ts_approx && (
             <Chip size="small" label="Approximate timestamp (replayed from offline buffer)" sx={{ alignSelf: 'flex-start' }} />
           )}
@@ -162,16 +184,28 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
             <Chip size="small" label="Buffered — reported after reconnect" sx={{ alignSelf: 'flex-start' }} />
           )}
 
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1 }}>
+          {/* Remote Switch Control Section */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mt: 1,
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: 'background.surfaceVariant',
+              border: theme => `1px solid ${theme.palette.divider}`
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                Remote Switch
+              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8125rem' }}>
+                Remote Motor Starter
               </Typography>
               {Boolean(cooldownRemaining) && (
                 <Chip
                   size="small"
-                  label={`⏳ ${cooldownRemaining}s`}
-                  sx={{ bgcolor: `${theme.palette.m3.tertiary}22`, color: theme.palette.m3.tertiary, fontFamily: monoFont }}
+                  label={`⏳ ${cooldownRemaining}s cooldown`}
+                  sx={{ bgcolor: 'tertiaryContainer', color: 'onTertiaryContainer', fontFamily: monoFont, fontWeight: 700, height: 22 }}
                 />
               )}
             </Box>
@@ -180,90 +214,104 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
         </CardContent>
       </Card>
 
-      <Card elevation={1}>
-        <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Typography variant="h6">Connectivity &amp; State</Typography>
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Lifecycle state
-            </Typography>
-            {canChangeLifecycle && nextStates.length > 0 ? (
-              <>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  disabled={lifecycleBusy}
-                  endIcon={<ArrowDropDownIcon />}
-                  onClick={e => setLifecycleMenuAnchor(e.currentTarget)}
-                >
-                  {pump.lifecycle_state}
-                </Button>
-                <Menu anchorEl={lifecycleMenuAnchor} open={Boolean(lifecycleMenuAnchor)} onClose={() => setLifecycleMenuAnchor(null)}>
-                  {nextStates.map(s => (
-                    <MenuItem key={s} onClick={() => handleLifecycleChange(s)}>
-                      → {s}
-                    </MenuItem>
-                  ))}
-                </Menu>
-              </>
-            ) : (
-              <Chip size="small" label={pump.lifecycle_state} />
-            )}
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Firmware version
-            </Typography>
-            <Typography variant="body2" sx={{ fontFamily: monoFont }}>
-              {pump.firmware_version || '—'}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Last seen
-            </Typography>
-            <Chip
-              size="small"
-              label={timeAgo(pump.last_seen_at)}
-              color={isStale ? 'warning' : 'success'}
-              variant={isStale ? 'outlined' : 'filled'}
-            />
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Open faults
-            </Typography>
-            <Chip size="small" label={open_fault_count} color={open_fault_count > 0 ? 'error' : 'success'} />
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              GPS location
-            </Typography>
-            <Typography variant="body2" sx={{ fontFamily: monoFont }}>
-              {formatCoords(pump.latitude, pump.longitude)}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Supply type
-            </Typography>
-            <Typography variant="body2">{pump.supply_type}</Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Total runtime
-            </Typography>
-            <Typography variant="body2" sx={{ fontFamily: monoFont }}>
-              {typeof pump.total_runtime_min === 'number'
-                ? `${Math.floor(pump.total_runtime_min / 60)} h ${pump.total_runtime_min % 60} min`
-                : '—'}
-            </Typography>
-          </Box>
-          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1 }}>
-            Runtime is what the pump itself reports (cumulative). Today's runtime is not shown until the daily summary is wired in.
+      {/* Connectivity & Operational State Card */}
+      <Card elevation={1} sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 2.5 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9375rem' }}>
+            Connectivity &amp; Hardware Status
           </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color="text.secondary">
+                Lifecycle State
+              </Typography>
+              {canChangeLifecycle && nextStates.length > 0 ? (
+                <>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={lifecycleBusy}
+                    endIcon={<ArrowDropDownIcon />}
+                    onClick={e => setLifecycleMenuAnchor(e.currentTarget)}
+                    sx={{ height: 28, fontSize: '0.75rem', fontWeight: 600 }}
+                  >
+                    {pump.lifecycle_state}
+                  </Button>
+                  <Menu anchorEl={lifecycleMenuAnchor} open={Boolean(lifecycleMenuAnchor)} onClose={() => setLifecycleMenuAnchor(null)}>
+                    {nextStates.map(s => (
+                      <MenuItem key={s} onClick={() => handleLifecycleChange(s)}>
+                        → {s}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </>
+              ) : (
+                <Chip size="small" label={pump.lifecycle_state} sx={{ height: 22, fontSize: '0.6875rem' }} />
+              )}
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color="text.secondary">
+                Firmware Version
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 600 }}>
+                {pump.firmware_version || '—'}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color="text.secondary">
+                Last Signal Received
+              </Typography>
+              <Chip
+                size="small"
+                label={timeAgo(pump.last_seen_at)}
+                color={isStale ? 'warning' : 'success'}
+                variant={isStale ? 'outlined' : 'filled'}
+                sx={{ height: 22, fontSize: '0.6875rem', fontWeight: 600 }}
+              />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color="text.secondary">
+                Active Fault Incidents
+              </Typography>
+              <Chip
+                size="small"
+                label={`${open_fault_count} Open`}
+                color={open_fault_count > 0 ? 'error' : 'success'}
+                sx={{ height: 22, fontSize: '0.6875rem', fontWeight: 600 }}
+              />
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color="text.secondary">
+                GPS Coordinates
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: monoFont }}>
+                {formatCoords(pump.latitude, pump.longitude)}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color="text.secondary">
+                Supply / Power Grid
+              </Typography>
+              <Typography variant="body2">{pump.supply_type}</Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5 }}>
+              <Typography variant="body2" color="text.secondary">
+                Total Cumulative Runtime
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 600 }}>
+                {typeof pump.total_runtime_min === 'number'
+                  ? `${Math.floor(pump.total_runtime_min / 60)} h ${pump.total_runtime_min % 60} min`
+                  : '—'}
+              </Typography>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
     </Box>

@@ -90,18 +90,20 @@ export const ConfigTemplatesView: React.FC = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', overflowY: 'auto' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, height: '100%', overflowY: 'auto' }}>
       <Box>
-        <Typography variant="h4">Configuration Templates</Typography>
-        <Typography variant="caption" color="text.secondary">
-          Named, reusable settings sets — applying one merges its keys into a device's existing configuration.
+        <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+          Configuration Templates &amp; Profiles
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+          Named, reusable operating profiles — applying a template merges desired register parameters into target fleet devices
         </Typography>
       </Box>
 
-      <Card elevation={1}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            New Template
+      <Card elevation={1} sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '0.9375rem', mb: 1.5 }}>
+            Create New Hardware Parameter Template
           </Typography>
           <Stack spacing={2} sx={{ mb: 2 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 2fr' }, gap: 2 }}>

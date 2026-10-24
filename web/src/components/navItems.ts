@@ -27,21 +27,49 @@ export interface NavItemDef {
   platformOnly?: boolean;
 }
 
+export interface NavSectionDef {
+  title: string;
+  items: NavItemDef[];
+}
+
 const PRIVILEGED: RoleTier[] = ['superadmin', 'manufacturer', 'distributor', 'dealer'];
 
-export const navItems: NavItemDef[] = [
-  { path: '/manufacturers', labelKey: 'navManufacturers', icon: BusinessIcon, roles: ['superadmin'], platformOnly: true },
-  { path: '/dashboard', labelKey: 'navTelemetry', icon: ElectricBoltIcon },
-  { path: '/fleet', labelKey: 'navFleet', icon: DashboardIcon, roles: PRIVILEGED },
-  { path: '/alerts', labelKey: 'navAlerts', icon: NotificationsActiveIcon },
-  { path: '/devices', labelKey: 'navDevices', icon: DevicesOtherIcon },
-  { path: '/hierarchy', labelKey: 'navHierarchy', icon: AccountTreeIcon, roles: PRIVILEGED },
-  { path: '/faults', labelKey: 'navFaultLogs', icon: ReportProblemIcon },
-  { path: '/map', labelKey: 'navMap', icon: MapIcon },
-  { path: '/config-templates', labelKey: 'navConfigTemplates', icon: TuneIcon, roles: PRIVILEGED },
-  { path: '/service-reports', labelKey: 'navServiceReports', icon: AssignmentIcon, roles: PRIVILEGED },
-  { path: '/audit', labelKey: 'navAudit', icon: HistoryIcon, roles: PRIVILEGED },
-  { path: '/factory', labelKey: 'navFactory', icon: PrecisionManufacturingIcon, roles: ['superadmin'], platformOnly: true },
-  { path: '/health', labelKey: 'navHealth', icon: MonitorHeartIcon, roles: ['superadmin'], platformOnly: true },
-  { path: '/support', labelKey: 'navSupport', icon: SupportAgentIcon, roles: ['superadmin'], platformOnly: true }
+export const navSections: NavSectionDef[] = [
+  {
+    title: 'Monitoring & Fleet',
+    items: [
+      { path: '/dashboard', labelKey: 'navTelemetry', icon: ElectricBoltIcon },
+      { path: '/fleet', labelKey: 'navFleet', icon: DashboardIcon, roles: PRIVILEGED },
+      { path: '/alerts', labelKey: 'navAlerts', icon: NotificationsActiveIcon },
+      { path: '/manufacturers', labelKey: 'navManufacturers', icon: BusinessIcon, roles: ['superadmin'], platformOnly: true }
+    ]
+  },
+  {
+    title: 'Hardware Operations',
+    items: [
+      { path: '/devices', labelKey: 'navDevices', icon: DevicesOtherIcon },
+      { path: '/map', labelKey: 'navMap', icon: MapIcon },
+      { path: '/faults', labelKey: 'navFaultLogs', icon: ReportProblemIcon },
+      { path: '/hierarchy', labelKey: 'navHierarchy', icon: AccountTreeIcon, roles: PRIVILEGED }
+    ]
+  },
+  {
+    title: 'Configuration & Service',
+    items: [
+      { path: '/config-templates', labelKey: 'navConfigTemplates', icon: TuneIcon, roles: PRIVILEGED },
+      { path: '/service-reports', labelKey: 'navServiceReports', icon: AssignmentIcon, roles: PRIVILEGED }
+    ]
+  },
+  {
+    title: 'Platform & Diagnostics',
+    items: [
+      { path: '/factory', labelKey: 'navFactory', icon: PrecisionManufacturingIcon, roles: ['superadmin'], platformOnly: true },
+      { path: '/health', labelKey: 'navHealth', icon: MonitorHeartIcon, roles: ['superadmin'], platformOnly: true },
+      { path: '/audit', labelKey: 'navAudit', icon: HistoryIcon, roles: PRIVILEGED },
+      { path: '/support', labelKey: 'navSupport', icon: SupportAgentIcon, roles: ['superadmin'], platformOnly: true }
+    ]
+  }
 ];
+
+export const navItems: NavItemDef[] = navSections.flatMap(section => section.items);
+

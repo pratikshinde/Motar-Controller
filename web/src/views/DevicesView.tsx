@@ -161,21 +161,41 @@ export const DevicesView: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Header with Title and Primary Actions */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
         <Box>
-          <Typography variant="h4">Hardware Device Registry &amp; Fleet Inventory</Typography>
-          <Typography variant="caption" color="text.secondary">
-            {isSuperadmin ? 'Superadmin mode: full create, edit and delete privileges' : isCustomer ? 'End customer view: assigned personal fleet' : 'Subordinate device assignment enabled'}
+          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+            Device Registry &amp; Fleet Inventory
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+            {isSuperadmin
+              ? 'Superadmin console: Full provisioning, batch configuration, and stock allocation'
+              : isCustomer
+              ? 'Customer workspace: Active pump assets assigned to your profile'
+              : 'Fleet operations: Hierarchy inventory management and provisioning'}
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
           {canAllocate && selectedIds.length > 0 && (
-            <Button variant="tonal" startIcon={<SwapHorizIcon />} onClick={() => setAllocateOpen(true)}>
+            <Button
+              variant="tonal"
+              size="small"
+              startIcon={<SwapHorizIcon />}
+              onClick={() => setAllocateOpen(true)}
+              sx={{ height: 34 }}
+            >
               Allocate ({selectedIds.length})
             </Button>
           )}
           {canApplyTemplate && selectedIds.length > 0 && (
-            <Button variant="tonal" startIcon={<TuneIcon />} onClick={() => setApplyTemplateOpen(true)}>
+            <Button
+              variant="tonal"
+              size="small"
+              startIcon={<TuneIcon />}
+              onClick={() => setApplyTemplateOpen(true)}
+              sx={{ height: 34 }}
+            >
               Apply Template ({selectedIds.length})
             </Button>
           )}
@@ -183,19 +203,22 @@ export const DevicesView: React.FC = () => {
             <>
               <Button
                 variant="outlined"
-                color="secondary"
+                size="small"
                 startIcon={<UploadFileIcon />}
                 onClick={() => setBulkImportOpen(true)}
+                sx={{ height: 34 }}
               >
                 Bulk Import CSV
               </Button>
               <Button
                 variant="contained"
+                size="small"
                 startIcon={<AddIcon />}
                 onClick={() => {
                   setEditingPump(null);
                   setCommissionOpen(true);
                 }}
+                sx={{ height: 34 }}
               >
                 Register Device
               </Button>
@@ -204,12 +227,34 @@ export const DevicesView: React.FC = () => {
         </Box>
       </Box>
 
+      {/* Segmented Filter Control */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
         <ToggleButtonGroup
           value={deviceTypeFilter}
           exclusive
           size="small"
           onChange={(_, val) => val && setDeviceTypeFilter(val)}
+          sx={{
+            bgcolor: 'background.surfaceVariant',
+            p: 0.5,
+            borderRadius: 2,
+            border: `1px solid ${theme.palette.divider}`,
+            '& .MuiToggleButton-root': {
+              border: 'none',
+              borderRadius: 1.5,
+              px: 2,
+              py: 0.5,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              color: 'text.secondary',
+              '&.Mui-selected': {
+                bgcolor: 'background.paper',
+                color: 'text.primary',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+              }
+            }
+          }}
         >
           <ToggleButton value="ALL">All ({pumps.length})</ToggleButton>
           <ToggleButton value="AC_3PH">
@@ -221,7 +266,8 @@ export const DevicesView: React.FC = () => {
         </ToggleButtonGroup>
       </Box>
 
-      <Card elevation={1} sx={{ flex: 1, overflow: 'hidden' }}>
+      {/* Modern DataGrid Container */}
+      <Card elevation={1} sx={{ flex: 1, overflow: 'hidden', borderRadius: 2 }}>
         <DataGrid
           rows={deviceTypeFilter === 'ALL' ? pumps : pumps.filter(p => (p.device_type || 'AC_3PH') === deviceTypeFilter)}
           columns={columns}
@@ -235,7 +281,15 @@ export const DevicesView: React.FC = () => {
           disableRowSelectionOnClick
           onRowClick={p => navigate(`/devices/${encodeURIComponent(p.row.id)}`)}
           showToolbar
-          sx={{ border: 'none', height: '100%', '& .MuiDataGrid-row': { cursor: 'pointer' } }}
+          sx={{
+            border: 'none',
+            height: '100%',
+            '& .MuiDataGrid-row': { cursor: 'pointer' },
+            '& .MuiDataGrid-footerContainer': {
+              borderTop: `1px solid ${theme.palette.divider}`,
+              minHeight: 44
+            }
+          }}
         />
       </Card>
 

@@ -87,58 +87,58 @@ export const AuditLogView: React.FC = () => {
       {/* Header Title & Subtitle */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5, flexShrink: 0 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, background: 'linear-gradient(45deg, #00E676 30%, #00B0FF 90%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            System Audit &amp; Governance Log
+          <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em' }}>
+            System Audit & Governance Log
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Immutable trace of security events, configuration modifications, user hierarchy changes, and device provisioning.
           </Typography>
         </Box>
         <Tooltip title="Refresh log feed">
-          <IconButton onClick={load} color="primary" sx={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 2 }}>
-            <RefreshIcon />
+          <IconButton onClick={load} color="primary" sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+            <RefreshIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </Box>
 
       {/* Summary Stat Cards Grid */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, flexShrink: 0 }}>
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.surfaceVariant', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'rgba(0, 230, 118, 0.15)', color: '#00E676' }}>
-            <HistoryIcon fontSize="medium" />
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 1.5, flexShrink: 0 }}>
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: 'primary.main', color: '#fff', opacity: 0.9 }}>
+            <HistoryIcon fontSize="small" />
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">Total Events Recorded</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Total Events Recorded</Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: monoFont }}>{stats.total}</Typography>
           </Box>
         </Paper>
 
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.surfaceVariant', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'rgba(0, 176, 255, 0.15)', color: '#00B0FF' }}>
-            <DevicesIcon fontSize="medium" />
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: '#2563EB', color: '#fff' }}>
+            <DevicesIcon fontSize="small" />
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">Device &amp; Config Audit</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Device & Config Audit</Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: monoFont }}>{stats.deviceEvents}</Typography>
           </Box>
         </Paper>
 
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.surfaceVariant', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'rgba(255, 171, 0, 0.15)', color: '#FFAB00' }}>
-            <PeopleIcon fontSize="medium" />
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: '#F59E0B', color: '#fff' }}>
+            <PeopleIcon fontSize="small" />
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">User &amp; Hierarchy Changes</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>User & Hierarchy Changes</Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: monoFont }}>{stats.userEvents}</Typography>
           </Box>
         </Paper>
 
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.surfaceVariant', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'rgba(213, 0, 249, 0.15)', color: '#D500F9' }}>
-            <SecurityIcon fontSize="medium" />
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: '#10B981', color: '#fff' }}>
+            <SecurityIcon fontSize="small" />
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">Manufacturing Batches</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Manufacturing Batches</Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: monoFont }}>{stats.batchEvents}</Typography>
           </Box>
         </Paper>

@@ -157,25 +157,33 @@ export const MapView: React.FC = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
       {/* Legend / stats bar */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="h5" sx={{ mr: 1 }}>Fleet Map</Typography>
-        <Chip size="small" label={`${statusCounts.running} Running`}    sx={{ bgcolor: '#2e7d3222', color: '#2e7d32', fontWeight: 700 }} />
-        <Chip size="small" label={`${statusCounts.fault}   Fault`}      sx={{ bgcolor: '#c6282822', color: '#c62828', fontWeight: 700 }} />
-        <Chip size="small" label={`${statusCounts.offline} Offline`}    sx={{ bgcolor: '#61616122', color: '#616161', fontWeight: 700 }} />
-        <Chip size="small" label={`${statusCounts.stopped} Stopped`}    sx={{ bgcolor: '#ef6c0022', color: '#ef6c00', fontWeight: 700 }} />
-        {statusCounts.noData > 0 && (
-          <Chip size="small" label={`${statusCounts.noData} No data yet`} sx={{ bgcolor: '#9e9e9e22', color: '#9e9e9e', fontWeight: 700 }} />
-        )}
-        {loading && <Typography variant="caption" color="text.secondary">Loading…</Typography>}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+            GIS Fleet Geospatial Map
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+            Geographic distribution of installed irrigation pumps and live connectivity status pins
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Chip size="small" label={`${statusCounts.running} Running`} sx={{ bgcolor: 'secondaryContainer', color: 'onSecondaryContainer', fontWeight: 700, height: 24 }} />
+          <Chip size="small" label={`${statusCounts.fault} Fault`} sx={{ bgcolor: 'errorContainer', color: 'onErrorContainer', fontWeight: 700, height: 24 }} />
+          <Chip size="small" label={`${statusCounts.offline} Offline`} sx={{ bgcolor: 'background.surfaceVariant', color: 'text.secondary', fontWeight: 700, height: 24 }} />
+          <Chip size="small" label={`${statusCounts.stopped} Stopped`} sx={{ bgcolor: 'tertiaryContainer', color: 'onTertiaryContainer', fontWeight: 700, height: 24 }} />
+          {statusCounts.noData > 0 && (
+            <Chip size="small" label={`${statusCounts.noData} No Signal`} sx={{ bgcolor: 'background.surfaceVariant', color: 'text.secondary', fontWeight: 700, height: 24 }} />
+          )}
+        </Box>
       </Box>
 
       {/* Map canvas */}
-      <Card elevation={1} sx={{ flex: 1, overflow: 'hidden' }}>
+      <Card elevation={1} sx={{ flex: 1, overflow: 'hidden', borderRadius: 2, border: theme => `1px solid ${theme.palette.divider}` }}>
         {pumps.length === 0 && !loading ? (
           <Box sx={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-            <Typography color="text.secondary">No devices in scope</Typography>
+            <Typography color="text.secondary">No GPS-enabled devices located in scope</Typography>
           </Box>
         ) : (
           <Box ref={containerRef} sx={{ width: '100%', height: '100%' }} />

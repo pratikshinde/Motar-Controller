@@ -75,78 +75,36 @@ export const FleetDashboardView: React.FC = () => {
   const total = Number(data.summary?.total ?? online + offline + neverSeen);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', overflowY: 'auto' }}>
-      <Typography variant="h4">Fleet Dashboard</Typography>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, height: '100%', overflowY: 'auto' }}>
+      <Box>
+        <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+          Fleet Analytics &amp; Operations Dashboard
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+          Real-time aggregated health metrics, connectivity status, and lifecycle distribution across active fleet devices
+        </Typography>
+      </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 1fr 1fr', md: '1fr 1fr 1fr 1fr 1fr 1fr' }, gap: 2 }}>
-        <Card elevation={1}>
-          <CardContent>
-            <Typography variant="caption" color="text.secondary">
-              Total devices
+      {/* KPI Summary Strip */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)', md: 'repeat(7, 1fr)' }, gap: 1.5 }}>
+        {[
+          { label: 'Total Fleet', value: total, color: theme.palette.primary.main, bg: 'primaryContainer' },
+          { label: 'Online (10m)', value: online, color: theme.palette.secondary.main, bg: 'secondaryContainer' },
+          { label: 'Offline', value: offline, color: theme.palette.text.secondary, bg: 'background.surfaceVariant' },
+          { label: 'Never Seen', value: neverSeen, color: theme.palette.text.secondary, bg: 'background.surfaceVariant' },
+          { label: 'Open Faults', value: activeFaults.reduce((sum, f) => sum + Number(f.count), 0), color: theme.palette.error.main, bg: 'errorContainer' },
+          { label: 'Faults Today', value: data.faults_today_count || 0, color: theme.palette.error.main, bg: 'errorContainer' },
+          { label: 'Warranty (30d)', value: warrantyExpiring.length, color: theme.palette.m3.tertiary, bg: 'tertiaryContainer' }
+        ].map(k => (
+          <Card key={k.label} elevation={1} sx={{ p: 1.5, borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', mb: 0.75 }}>
+              {k.label}
             </Typography>
-            <Typography variant="h3">{total}</Typography>
-          </CardContent>
-        </Card>
-        <Card elevation={1}>
-          <CardContent>
-            <Typography variant="caption" color="text.secondary">
-              Online (reported in the last 10 min)
+            <Typography variant="h4" sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: '1.35rem', color: k.color, lineHeight: 1 }}>
+              {k.value}
             </Typography>
-            <Typography variant="h3" sx={{ color: theme.palette.secondary.main }}>
-              {online}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card elevation={1}>
-          <CardContent>
-            <Typography variant="caption" color="text.secondary">
-              Offline
-            </Typography>
-            <Typography variant="h3" sx={{ color: theme.palette.text.secondary }}>
-              {offline}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card elevation={1}>
-          <CardContent>
-            <Typography variant="caption" color="text.secondary">
-              Never reported
-            </Typography>
-            <Typography variant="h3" sx={{ color: theme.palette.text.secondary }}>
-              {neverSeen}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card elevation={1}>
-          <CardContent>
-            <Typography variant="caption" color="text.secondary">
-              Open faults
-            </Typography>
-            <Typography variant="h3" sx={{ color: theme.palette.error.main }}>
-              {activeFaults.reduce((sum, f) => sum + Number(f.count), 0)}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card elevation={1}>
-          <CardContent>
-            <Typography variant="caption" color="text.secondary">
-              Faults today
-            </Typography>
-            <Typography variant="h3" sx={{ color: theme.palette.error.main }}>
-              {data.faults_today_count || 0}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card elevation={1}>
-          <CardContent>
-            <Typography variant="caption" color="text.secondary">
-              Warranty expiring (30d)
-            </Typography>
-            <Typography variant="h3" sx={{ color: theme.palette.m3.tertiary }}>
-              {warrantyExpiring.length}
-            </Typography>
-          </CardContent>
-        </Card>
+          </Card>
+        ))}
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 2 }}>

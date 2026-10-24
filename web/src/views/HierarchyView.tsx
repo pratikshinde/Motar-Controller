@@ -64,9 +64,16 @@ export const HierarchyView: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4">Multi-Tenant Account Hierarchy</Typography>
-        <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => openAddDialog()}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
+            Account Hierarchy &amp; Role Scoping
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+            Multi-tenant distributor tree, dealer territory assignments, and staff organization node access
+          </Typography>
+        </Box>
+        <Button variant="contained" size="small" startIcon={<PersonAddIcon />} onClick={() => openAddDialog()} sx={{ height: 34 }}>
           Add Subordinate Account
         </Button>
       </Box>

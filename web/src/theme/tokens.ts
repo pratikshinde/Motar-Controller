@@ -50,64 +50,63 @@ export interface M3ColorRoles {
   shadow: string;
 }
 
-// Light scheme — derived from seed #0B5FA5 (primary) / #386A20 (secondary,
-// agri green) / #7A5900 (tertiary, amber for warnings/fault accents).
+// Light scheme — Apple & Linear inspired clean workspace palette
 export const lightRoles: M3ColorRoles = {
-  primary: '#2563EB', // Vibrant Blue
+  primary: '#2563EB', // Technical Blue
   onPrimary: '#FFFFFF',
-  primaryContainer: '#DBEAFE',
-  onPrimaryContainer: '#1E3A8A',
+  primaryContainer: '#EFF6FF',
+  onPrimaryContainer: '#1D4ED8',
 
-  secondary: '#059669', // Vibrant Emerald
+  secondary: '#059669', // Healthy emerald
   onSecondary: '#FFFFFF',
-  secondaryContainer: '#D1FAE5',
-  onSecondaryContainer: '#064E3B',
+  secondaryContainer: '#ECFDF5',
+  onSecondaryContainer: '#047857',
 
-  tertiary: '#D97706', // Vibrant Amber
+  tertiary: '#D97706', // Warning amber
   onTertiary: '#FFFFFF',
-  tertiaryContainer: '#FEF3C7',
-  onTertiaryContainer: '#78350F',
+  tertiaryContainer: '#FFFBEB',
+  onTertiaryContainer: '#B45309',
 
-  error: '#DC2626',
+  error: '#DC2626', // Fault crimson
   onError: '#FFFFFF',
-  errorContainer: '#FEE2E2',
-  onErrorContainer: '#7F1D1D',
+  errorContainer: '#FEF2F2',
+  onErrorContainer: '#B91C1C',
 
-  background: '#F8FAFC', // Slate 50
-  onBackground: '#0F172A', // Slate 900
+  background: '#F8FAFC', // Slate 50 workspace background
+  onBackground: '#0F172A', // Slate 900 primary text
 
   surface: '#FFFFFF',
   onSurface: '#0F172A',
-  surfaceVariant: '#E2E8F0',
-  onSurfaceVariant: '#475569',
+  surfaceVariant: '#F1F5F9', // Slate 100
+  onSurfaceVariant: '#475569', // Slate 600 secondary text
   surfaceContainerLowest: '#FFFFFF',
   surfaceContainerLow: '#F8FAFC',
-  surfaceContainer: '#F1F5F9',
-  surfaceContainerHigh: '#E2E8F0',
-  surfaceContainerHighest: '#CBD5E1',
+  surfaceContainer: '#FFFFFF',
+  surfaceContainerHigh: '#F1F5F9',
+  surfaceContainerHighest: '#E2E8F0',
 
-  outline: '#94A3B8',
-  outlineVariant: '#CBD5E1',
-  inverseSurface: '#1E293B',
+  outline: '#CBD5E1', // Slate 300
+  outlineVariant: '#E2E8F0', // Slate 200 hairline border
+  inverseSurface: '#0F172A',
   inverseOnSurface: '#F8FAFC',
   inversePrimary: '#93C5FD',
   scrim: '#000000',
-  shadow: '#000000'
+  shadow: 'rgba(15, 23, 42, 0.08)'
 };
 
-// Dark scheme — same seed, tonal roles inverted per M3 dark-theme rules.
+// Dark scheme — Linear / macOS dark mode precision palette
 export const darkRoles: M3ColorRoles = {
   primary: '#3B82F6', // Electric Blue
   onPrimary: '#FFFFFF',
   primaryContainer: '#1E3A8A',
   onPrimaryContainer: '#DBEAFE',
 
-  secondary: '#10B981', // Neon Emerald
+  secondary: '#10B981', // Clean Emerald
   onSecondary: '#FFFFFF',
   secondaryContainer: '#064E3B',
-  onSecondaryContainer: '#D1FAE5',
+  onSecondaryContainer: '#A7F3D0',
 
-  tertiary: '#F59E0B', // Glowing Amber
+  tertiary: '#F59E0B', // Crisp Amber
   onTertiary: '#FFFFFF',
   tertiaryContainer: '#78350F',
   onTertiaryContainer: '#FEF3C7',
@@ -117,36 +116,36 @@ export const darkRoles: M3ColorRoles = {
   errorContainer: '#7F1D1D',
   onErrorContainer: '#FEE2E2',
 
-  background: '#09090B', // Deepest Zinc
-  onBackground: '#FAFAFA',
+  background: '#090D16', // Deep workspace canvas
+  onBackground: '#F8FAFC',
 
-  surface: '#0F172A', // Deep Slate
+  surface: '#0F172A', // Slate 900 cards & panels
   onSurface: '#F8FAFC',
-  surfaceVariant: '#334155',
-  onSurfaceVariant: '#CBD5E1',
-  surfaceContainerLowest: '#020617',
-  surfaceContainerLow: '#0F172A',
-  surfaceContainer: '#1E293B',
-  surfaceContainerHigh: '#334155',
-  surfaceContainerHighest: '#475569',
+  surfaceVariant: '#1E293B',
+  onSurfaceVariant: '#94A3B8',
+  surfaceContainerLowest: '#050811',
+  surfaceContainerLow: '#0B1120',
+  surfaceContainer: '#0F172A',
+  surfaceContainerHigh: '#1E293B',
+  surfaceContainerHighest: '#334155',
 
-  outline: '#64748B',
-  outlineVariant: '#334155',
+  outline: '#475569',
+  outlineVariant: '#1E293B',
   inverseSurface: '#F8FAFC',
   inverseOnSurface: '#0F172A',
   inversePrimary: '#1E3A8A',
   scrim: '#000000',
-  shadow: '#000000'
+  shadow: 'rgba(0, 0, 0, 0.4)'
 };
 
-// M3 shape scale (corner radius, px)
+// Refined application shape scale (corner radius, px)
 export const shape = {
   none: 0,
   extraSmall: 4,
-  small: 8,
-  medium: 12,
-  large: 16,
-  extraLarge: 28,
+  small: 6,
+  medium: 10,
+  large: 14,
+  extraLarge: 20,
   full: 999
 };
 

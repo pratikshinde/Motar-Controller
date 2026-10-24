@@ -95,45 +95,82 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
 
   return (
     <Card
-      elevation={pump.status === 'FAULT' ? 3 : 1}
+      elevation={1}
       onClick={() => navigate(`/devices/${encodeURIComponent(pump.id)}`)}
-      sx={{ cursor: 'pointer', ...(pump.status === 'FAULT' ? { borderColor: theme.palette.error.main } : {}) }}
+      sx={{
+        cursor: 'pointer',
+        borderRadius: 2,
+        border: `1px solid ${pump.status === 'FAULT' ? theme.palette.error.main : theme.palette.divider}`,
+        transition: 'all 0.15s ease',
+        '&:hover': {
+          borderColor: pump.status === 'FAULT' ? theme.palette.error.main : 'primary.main',
+          boxShadow: theme.palette.mode === 'dark' ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(15,23,42,0.06)'
+        }
+      }}
     >
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h6" noWrap>
-              {pump.name} ({pump.hp_rating} HP)
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: monoFont }}>
-              {pump.supply_type} • {pump.id}
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 }, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        {/* Header: Title, Specs, and Status Chip */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" noWrap sx={{ fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.3 }}>
+                {pump.name}
+              </Typography>
+              <Chip
+                size="small"
+                label={`${pump.hp_rating} HP`}
+                sx={{
+                  height: 20,
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  bgcolor: 'background.surfaceVariant',
+                  border: `1px solid ${theme.palette.divider}`
+                }}
+              />
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: monoFont, fontSize: '0.75rem', display: 'block', mt: 0.25 }}>
+              {pump.device_type === 'SOLAR_VFD' ? 'Solar VFD' : pump.supply_type} • {pump.id}
             </Typography>
           </Box>
           <Chip
             size="small"
             label={statusLabel}
             sx={{
-              bgcolor: theme.palette.mode === 'dark' ? `${statusColor(status, theme)}33` : `${statusColor(status, theme)}1F`,
+              height: 22,
+              fontSize: '0.6875rem',
+              fontWeight: 700,
+              bgcolor: theme.palette.mode === 'dark' ? `${statusColor(status, theme)}26` : `${statusColor(status, theme)}18`,
               color: statusColor(status, theme),
-              fontFamily: monoFont,
-              fontWeight: 700
+              border: `1px solid ${statusColor(status, theme)}33`,
+              fontFamily: monoFont
             }}
           />
         </Box>
 
+        {/* Telemetry Metric Readouts */}
         {pump.device_type === 'SOLAR_VFD' ? (
-          <>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
               {[
                 ['Frequency', pump.vfd_hz ?? pump.vfd?.hz, 'Hz'],
                 ['Power', pump.vfd_kw ?? pump.vfd?.kw, 'kW'],
                 ['DC Bus', pump.vfd_v_dc ?? pump.vfd?.v_dc, 'V']
               ].map(([label, value, unit]) => (
-                <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                <Box
+                  key={label}
+                  sx={{
+                    bgcolor: 'background.surfaceVariant',
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 1.5,
+                    py: 0.75,
+                    px: 0.5,
+                    textAlign: 'center'
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.6875rem', fontWeight: 500 }}>
                     {label}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
+                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: '0.8125rem' }}>
                     {fmt(value as string | number | null, unit as string)}
                   </Typography>
                 </Box>
@@ -146,30 +183,50 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
                 ['VFD Status', pump.vfd_status ?? pump.vfd?.status, ''],
                 ['VFD Fault', (pump.vfd_fault_code ?? pump.vfd?.fault_code) ? `#${pump.vfd_fault_code ?? pump.vfd?.fault_code}` : ((pump.vfd_fault_code ?? pump.vfd?.fault_code) === 0 ? 'None' : null), '']
               ].map(([label, value, unit]) => (
-                <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
+                <Box
+                  key={label}
+                  sx={{
+                    bgcolor: 'background.surfaceVariant',
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 1.5,
+                    py: 0.75,
+                    px: 0.25,
+                    textAlign: 'center'
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.625rem', fontWeight: 500 }} noWrap>
                     {label}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: '0.8rem' }} noWrap>
+                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: '0.75rem' }} noWrap>
                     {unit ? fmt(value as string | number | null, unit as string) : (value ? String(value) : '—')}
                   </Typography>
                 </Box>
               ))}
             </Box>
-          </>
+          </Box>
         ) : (
-          <>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
               {[
                 ['R-Y', pump.v_ry, 'V'],
                 ['Y-B', pump.v_yb, 'V'],
                 ['B-R', pump.v_br, 'V']
               ].map(([label, value, unit]) => (
-                <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                <Box
+                  key={label}
+                  sx={{
+                    bgcolor: 'background.surfaceVariant',
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 1.5,
+                    py: 0.75,
+                    px: 0.5,
+                    textAlign: 'center'
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.6875rem', fontWeight: 500 }}>
                     {label}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
+                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: '0.8125rem' }}>
                     {fmt(value as string | null, unit as string)}
                   </Typography>
                 </Box>
@@ -181,26 +238,36 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
                 ['I·Y', pump.i_y, 'A'],
                 ['I·B', pump.i_b, 'A']
               ].map(([label, value, unit]) => (
-                <Box key={label} sx={{ bgcolor: 'background.surfaceVariant', borderRadius: 2, py: 0.75, textAlign: 'center' }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                <Box
+                  key={label}
+                  sx={{
+                    bgcolor: 'background.surfaceVariant',
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 1.5,
+                    py: 0.75,
+                    px: 0.5,
+                    textAlign: 'center'
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.6875rem', fontWeight: 500 }}>
                     {label}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700 }}>
+                  <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: '0.8125rem' }}>
                     {fmt(value as string | null, unit as string)}
                   </Typography>
                 </Box>
               ))}
             </Box>
-          </>
+          </Box>
         )}
 
         {!pump.telemetry_recorded_at && !pump.v_ry && !pump.i_r && !pump.vfd_hz && !pump.vfd?.hz && (
-          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            No reading
+          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', textAlign: 'center', py: 0.5 }}>
+            No recent telemetry signal
           </Typography>
         )}
 
-        {/* Subscription expiry warning (FR-WEB) */}
+        {/* Subscription Expiry Warning */}
         {(() => {
           const exp = (pump as any).subscription_expires_at;
           if (!exp) return null;
@@ -212,44 +279,71 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
               label={daysLeft <= 0 ? 'Subscription expired' : `Subscription expires in ${daysLeft}d`}
               color={daysLeft <= 0 ? 'error' : 'warning'}
               variant="outlined"
-              sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
+              sx={{ alignSelf: 'flex-start', fontWeight: 600, height: 20, fontSize: '0.6875rem' }}
             />
           );
         })()}
 
-        <Box
-          onClick={e => e.stopPropagation()}
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'background.surfaceVariant', borderRadius: 2, px: 1.5, py: 0.75 }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
-            <PlaceIcon fontSize="inherit" sx={{ color: 'text.secondary' }} />
-            <Typography variant="caption" sx={{ fontFamily: monoFont }} noWrap>
-              {formatCoords(pump.latitude, pump.longitude)}
-            </Typography>
-          </Box>
-          {isSuperadmin && (
-            <Tooltip title="Edit location">
-              <IconButton size="small" onClick={() => onEditLocation(pump)}>
-                <EditIcon fontSize="inherit" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-
-        <Box onClick={e => e.stopPropagation()} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-              {t.lblRemoteSwitch}
-            </Typography>
-            {Boolean(cooldownRemaining) && (
-              <Chip size="small" label={`⏳ ${cooldownRemaining}s`} sx={{ bgcolor: `${theme.palette.m3.tertiary}22`, color: theme.palette.m3.tertiary, fontFamily: monoFont }} />
+        {/* Footer: GPS Location and Control Switch */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pt: 0.5, borderTop: `1px solid ${theme.palette.divider}` }}>
+          <Box
+            onClick={e => e.stopPropagation()}
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+              <PlaceIcon sx={{ fontSize: 15, color: 'text.secondary' }} />
+              <Typography variant="caption" sx={{ fontFamily: monoFont, fontSize: '0.75rem', color: 'text.secondary' }} noWrap>
+                {formatCoords(pump.latitude, pump.longitude)}
+              </Typography>
+            </Box>
+            {isSuperadmin && (
+              <Tooltip title="Edit location">
+                <IconButton size="small" onClick={() => onEditLocation(pump)} sx={{ p: 0.5 }}>
+                  <EditIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
             )}
           </Box>
-          <Switch
-            checked={isOn}
-            disabled={busy || Boolean(cooldownRemaining)}
-            onChange={e => handleToggle(e.target.checked)}
-          />
+
+          <Box
+            onClick={e => e.stopPropagation()}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 1.25,
+              py: 0.5,
+              borderRadius: 1.5,
+              bgcolor: 'background.surfaceVariant',
+              border: `1px solid ${theme.palette.divider}`
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, fontSize: '0.75rem', color: 'text.primary' }}>
+                {t.lblRemoteSwitch}
+              </Typography>
+              {Boolean(cooldownRemaining) && (
+                <Chip
+                  size="small"
+                  label={`⏳ ${cooldownRemaining}s`}
+                  sx={{
+                    height: 18,
+                    fontSize: '0.625rem',
+                    bgcolor: 'tertiaryContainer',
+                    color: 'onTertiaryContainer',
+                    fontFamily: monoFont,
+                    fontWeight: 700
+                  }}
+                />
+              )}
+            </Box>
+            <Switch
+              size="small"
+              checked={isOn}
+              disabled={busy || Boolean(cooldownRemaining)}
+              onChange={e => handleToggle(e.target.checked)}
+            />
+          </Box>
         </Box>
       </CardContent>
     </Card>

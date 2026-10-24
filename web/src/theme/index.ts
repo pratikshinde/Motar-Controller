@@ -43,43 +43,38 @@ function buildPalette(mode: PaletteMode, customRoles?: M3ColorRoles) {
 // product's existing brand identity (Space Grotesk for display/headline,
 // Plus Jakarta Sans for UI text, JetBrains Mono for telemetry figures)
 // while the metrics (size/line-height/weight/tracking) follow the M3 spec.
-const displayFont = "'Space Grotesk', 'Plus Jakarta Sans', sans-serif";
-const bodyFont = "'Plus Jakarta Sans', sans-serif";
-export const monoFont = "'JetBrains Mono', ui-monospace, monospace";
+// Professional modern application font stack
+const displayFont = "-apple-system, BlinkMacSystemFont, 'Inter', 'Plus Jakarta Sans', 'Segoe UI', Roboto, sans-serif";
+const bodyFont = "-apple-system, BlinkMacSystemFont, 'Inter', 'Plus Jakarta Sans', 'Segoe UI', Roboto, sans-serif";
+export const monoFont = "'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace";
 
 /**
- * The app's ambient brand-colour wash — two soft radial gradients in the primary/secondary hues. Applied to
- * `body` below so every themed page gets it "for free". A page that fills the viewport with its own
- * `position: fixed` Box (the login screen, the invite sign-up page — both reached before there is any
- * session to render the normal app shell over) sits in front of `body` and hides it, so those two screens
- * need the same recipe applied to their own background explicitly, or the very first page a person sees
- * looks flat next to the rest of the app.
+ * Clean workspace background - neutral canvas with subtle micro-tint
  */
 export function ambientBackgroundImage(mode: PaletteMode, roles: M3ColorRoles): string {
-  const strength = mode === 'dark' ? 0.08 : 0.04;
-  return `radial-gradient(circle at 10% 20%, ${alpha(roles.primary, strength)}, transparent 40%), radial-gradient(circle at 90% 80%, ${alpha(roles.secondary, strength)}, transparent 40%)`;
+  if (mode === 'dark') {
+    return `radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37, 99, 235, 0.12), transparent)`;
+  }
+  return `linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)`;
 }
 
 const typography: ThemeOptions['typography'] = {
   fontFamily: bodyFont,
-  h1: { fontFamily: displayFont, fontSize: '2rem', lineHeight: 2.5 / 2, fontWeight: 400 }, // headlineLarge
-  h2: { fontFamily: displayFont, fontSize: '1.75rem', lineHeight: 2.25 / 1.75, fontWeight: 400 }, // headlineMedium
-  h3: { fontFamily: displayFont, fontSize: '1.5rem', lineHeight: 2 / 1.5, fontWeight: 400 }, // headlineSmall
-  h4: { fontFamily: displayFont, fontSize: '1.375rem', lineHeight: 1.75 / 1.375, fontWeight: 500 }, // titleLarge
-  h5: { fontFamily: bodyFont, fontSize: '1rem', lineHeight: 1.5, fontWeight: 600, letterSpacing: 0.15 }, // titleMedium
-  h6: { fontFamily: bodyFont, fontSize: '0.875rem', lineHeight: 1.25 / 0.875, fontWeight: 600, letterSpacing: 0.1 }, // titleSmall
-  subtitle1: { fontFamily: bodyFont, fontSize: '1rem', lineHeight: 1.5, fontWeight: 500, letterSpacing: 0.15 },
-  subtitle2: { fontFamily: bodyFont, fontSize: '0.875rem', lineHeight: 1.25 / 0.875, fontWeight: 500, letterSpacing: 0.1 },
-  body1: { fontFamily: bodyFont, fontSize: '1rem', lineHeight: 1.5, fontWeight: 400, letterSpacing: 0.5 }, // bodyLarge
-  body2: { fontFamily: bodyFont, fontSize: '0.875rem', lineHeight: 1.25 / 0.875, fontWeight: 400, letterSpacing: 0.25 }, // bodyMedium
-  caption: { fontFamily: bodyFont, fontSize: '0.75rem', lineHeight: 1, fontWeight: 400, letterSpacing: 0.4 }, // bodySmall
-  overline: { fontFamily: bodyFont, fontSize: '0.6875rem', lineHeight: 1, fontWeight: 600, letterSpacing: 0.5, textTransform: 'uppercase' }, // labelSmall
-  button: { fontFamily: bodyFont, fontSize: '0.875rem', lineHeight: 1.25 / 0.875, fontWeight: 600, letterSpacing: 0.1, textTransform: 'none' } // labelLarge — M3 buttons are not uppercase
+  h1: { fontFamily: displayFont, fontSize: '1.875rem', lineHeight: 1.25, fontWeight: 700, letterSpacing: '-0.025em' },
+  h2: { fontFamily: displayFont, fontSize: '1.5rem', lineHeight: 1.3, fontWeight: 700, letterSpacing: '-0.02em' },
+  h3: { fontFamily: displayFont, fontSize: '1.25rem', lineHeight: 1.35, fontWeight: 600, letterSpacing: '-0.015em' },
+  h4: { fontFamily: displayFont, fontSize: '1.125rem', lineHeight: 1.4, fontWeight: 600, letterSpacing: '-0.01em' },
+  h5: { fontFamily: bodyFont, fontSize: '0.9375rem', lineHeight: 1.45, fontWeight: 600, letterSpacing: '-0.005em' },
+  h6: { fontFamily: bodyFont, fontSize: '0.875rem', lineHeight: 1.4, fontWeight: 600 },
+  subtitle1: { fontFamily: bodyFont, fontSize: '0.875rem', lineHeight: 1.45, fontWeight: 500 },
+  subtitle2: { fontFamily: bodyFont, fontSize: '0.8125rem', lineHeight: 1.4, fontWeight: 500 },
+  body1: { fontFamily: bodyFont, fontSize: '0.875rem', lineHeight: 1.5, fontWeight: 400 },
+  body2: { fontFamily: bodyFont, fontSize: '0.8125rem', lineHeight: 1.45, fontWeight: 400 },
+  caption: { fontFamily: bodyFont, fontSize: '0.75rem', lineHeight: 1.35, fontWeight: 400 },
+  overline: { fontFamily: bodyFont, fontSize: '0.6875rem', lineHeight: 1.2, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' },
+  button: { fontFamily: bodyFont, fontSize: '0.8125rem', lineHeight: 1.3, fontWeight: 600, letterSpacing: '0.01em', textTransform: 'none' }
 };
 
-// `brandRoles` is the per-partner palette resolved from FR-WEB-036
-// branding (see theme/dynamicPalette.ts) — omitted, the app renders its
-// own default AgriPump seed exactly as before.
 export function buildAppTheme(mode: PaletteMode, brandRoles?: M3ColorRoles) {
   const roles = brandRoles || (mode === 'dark' ? darkRoles : lightRoles);
   const palette = buildPalette(mode, brandRoles);
@@ -92,122 +87,217 @@ export function buildAppTheme(mode: PaletteMode, brandRoles?: M3ColorRoles) {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
-          body: { 
-            backgroundColor: roles.background, 
+          body: {
+            backgroundColor: roles.background,
             colorScheme: mode,
             backgroundImage: ambientBackgroundImage(mode, roles),
             backgroundAttachment: 'fixed',
-            minHeight: '100vh'
+            minHeight: '100vh',
+            color: roles.onBackground,
+            letterSpacing: '-0.006em'
           }
         }
       },
-      // M3 tonal elevation: a primary-tinted wash over the surface, layered
-      // with a soft shadow, instead of a flat darker/lighter box-shadow.
       MuiPaper: {
         styleOverrides: {
-          root: { backgroundImage: 'none' },
-          elevation0: { backgroundColor: roles.surface },
+          root: {
+            backgroundImage: 'none',
+            borderRadius: shape.medium,
+            border: `1px solid ${roles.outlineVariant}`
+          },
+          elevation0: {
+            backgroundColor: roles.surface,
+            boxShadow: 'none',
+            border: `1px solid ${roles.outlineVariant}`
+          },
           elevation1: {
-            backgroundImage: `linear-gradient(${alpha(roles.primary, elevationTintOpacity[1])}, ${alpha(roles.primary, elevationTintOpacity[1])})`,
-            backgroundColor: roles.surfaceContainerLow,
-            boxShadow: mode === 'dark' ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 3px rgba(0,0,0,0.12)'
+            backgroundColor: roles.surface,
+            boxShadow: mode === 'dark'
+              ? '0 1px 2px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2)'
+              : '0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03)'
           },
           elevation2: {
-            backgroundImage: `linear-gradient(${alpha(roles.primary, elevationTintOpacity[2])}, ${alpha(roles.primary, elevationTintOpacity[2])})`,
-            backgroundColor: roles.surfaceContainer,
-            boxShadow: mode === 'dark' ? '0 2px 6px rgba(0,0,0,0.55)' : '0 2px 6px rgba(0,0,0,0.14)'
+            backgroundColor: roles.surface,
+            boxShadow: mode === 'dark'
+              ? '0 4px 8px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3)'
+              : '0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05)'
           },
           elevation3: {
-            backgroundImage: `linear-gradient(${alpha(roles.primary, elevationTintOpacity[3])}, ${alpha(roles.primary, elevationTintOpacity[3])})`,
-            backgroundColor: roles.surfaceContainerHigh,
-            boxShadow: mode === 'dark' ? '0 4px 10px rgba(0,0,0,0.6)' : '0 4px 10px rgba(0,0,0,0.16)'
+            backgroundColor: roles.surface,
+            boxShadow: mode === 'dark'
+              ? '0 8px 16px rgba(0,0,0,0.6)'
+              : '0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04)'
           }
         }
       },
       MuiCard: {
         defaultProps: { elevation: 1 },
         styleOverrides: {
-          root: { 
-            borderRadius: shape.medium, 
-            border: `1px solid ${alpha(roles.outlineVariant, 0.4)}`,
-            backgroundColor: alpha(roles.surface, 0.8),
-            backdropFilter: 'blur(16px)',
-            transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: mode === 'dark' ? '0 8px 16px rgba(0,0,0,0.5)' : '0 8px 16px rgba(0,0,0,0.1)'
-            }
+          root: {
+            borderRadius: shape.medium,
+            border: `1px solid ${roles.outlineVariant}`,
+            backgroundColor: roles.surface,
+            transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
           }
         }
       },
       MuiButton: {
         styleOverrides: {
-          root: { borderRadius: shape.full, paddingInline: 20, textTransform: 'none' },
-          outlined: { borderColor: roles.outline }
+          root: {
+            borderRadius: shape.small,
+            paddingInline: 14,
+            paddingBlock: 6,
+            textTransform: 'none',
+            fontWeight: 600,
+            transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+          },
+          contained: {
+            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+            '&:hover': {
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+            }
+          },
+          outlined: {
+            borderColor: roles.outlineVariant,
+            backgroundColor: alpha(roles.surface, 0.5),
+            '&:hover': {
+              borderColor: roles.outline,
+              backgroundColor: roles.surfaceVariant
+            }
+          }
         },
         variants: [
           {
-            // M3 "tonal" filled button — MUI has no native variant for this,
-            // so it's added as a custom variant on top of contained/outlined/text.
             props: { variant: 'tonal' as never },
             style: {
-              backgroundColor: roles.secondaryContainer,
-              color: roles.onSecondaryContainer,
-              '&:hover': { backgroundColor: alpha(roles.secondaryContainer, 0.9) }
+              backgroundColor: roles.primaryContainer,
+              color: roles.onPrimaryContainer,
+              border: `1px solid ${alpha(roles.primary, 0.15)}`,
+              '&:hover': {
+                backgroundColor: alpha(roles.primaryContainer, 0.8)
+              }
             }
           }
         ]
       },
       MuiChip: {
-        styleOverrides: { root: { borderRadius: shape.full, fontWeight: 600 } }
+        styleOverrides: {
+          root: {
+            borderRadius: shape.small,
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            height: 24
+          }
+        }
       },
       MuiDialog: {
-        styleOverrides: { paper: { borderRadius: shape.extraLarge } }
+        styleOverrides: {
+          paper: {
+            borderRadius: shape.large,
+            border: `1px solid ${roles.outlineVariant}`,
+            boxShadow: mode === 'dark' ? '0 20px 25px -5px rgba(0, 0, 0, 0.7)' : '0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05)'
+          }
+        }
       },
       MuiTextField: {
-        defaultProps: { variant: 'outlined' }
+        defaultProps: { variant: 'outlined', size: 'small' }
       },
       MuiOutlinedInput: {
-        styleOverrides: { root: { borderRadius: shape.small } }
+        styleOverrides: {
+          root: {
+            borderRadius: shape.small,
+            backgroundColor: roles.surface,
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: roles.outline
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: roles.primary,
+              borderWidth: 1.5
+            }
+          },
+          notchedOutline: {
+            borderColor: roles.outlineVariant
+          }
+        }
       },
       MuiAppBar: {
         styleOverrides: {
           root: {
-            backgroundColor: alpha(roles.surfaceContainer, 0.8),
-            backdropFilter: 'blur(20px)',
+            backgroundColor: alpha(roles.surface, 0.92),
+            backdropFilter: 'blur(12px)',
             color: roles.onSurface,
             boxShadow: 'none',
-            borderBottom: `1px solid ${alpha(roles.outlineVariant, 0.3)}`
+            borderBottom: `1px solid ${roles.outlineVariant}`
           }
         }
       },
       MuiDrawer: {
         styleOverrides: {
-          paper: { backgroundColor: roles.surfaceContainerLow, borderRight: `1px solid ${roles.outlineVariant}` }
+          paper: {
+            backgroundColor: roles.surface,
+            borderRight: `1px solid ${roles.outlineVariant}`
+          }
         }
       },
       MuiListItemButton: {
         styleOverrides: {
           root: {
-            borderRadius: shape.full,
-            transition: 'all 0.2s ease-in-out',
+            borderRadius: shape.small,
+            marginBlock: 2,
+            transition: 'background-color 0.12s ease',
             '&:hover': {
-              transform: 'translateX(4px)'
+              backgroundColor: roles.surfaceVariant
             },
             '&.Mui-selected': {
-              backgroundColor: roles.secondaryContainer,
-              color: roles.onSecondaryContainer,
-              '& .MuiListItemIcon-root': { color: roles.onSecondaryContainer }
+              backgroundColor: roles.primaryContainer,
+              color: roles.onPrimaryContainer,
+              fontWeight: 600,
+              '& .MuiListItemIcon-root': { color: roles.onPrimaryContainer },
+              '&:hover': {
+                backgroundColor: alpha(roles.primaryContainer, 0.85)
+              }
             }
           }
         }
       },
       MuiTableCell: {
-        styleOverrides: { root: { borderColor: roles.outlineVariant } }
+        styleOverrides: {
+          root: {
+            borderColor: roles.outlineVariant,
+            paddingTop: 10,
+            paddingBottom: 10,
+            fontSize: '0.8125rem'
+          },
+          head: {
+            fontWeight: 600,
+            backgroundColor: roles.surfaceVariant,
+            color: roles.onSurfaceVariant
+          }
+        }
       },
       MuiDataGrid: {
         styleOverrides: {
-          root: { border: `1px solid ${roles.outlineVariant}`, borderRadius: shape.medium }
+          root: {
+            border: `1px solid ${roles.outlineVariant}`,
+            borderRadius: shape.medium,
+            backgroundColor: roles.surface,
+            '& .MuiDataGrid-columnHeaders': {
+              backgroundColor: roles.surfaceVariant,
+              borderBottom: `1px solid ${roles.outlineVariant}`,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              color: roles.onSurfaceVariant
+            },
+            '& .MuiDataGrid-row:hover': {
+              backgroundColor: alpha(roles.surfaceVariant, 0.6)
+            },
+            '& .MuiDataGrid-cell': {
+              borderBottom: `1px solid ${roles.outlineVariant}`,
+              fontSize: '0.8125rem'
+            }
+          }
         }
       }
     }
