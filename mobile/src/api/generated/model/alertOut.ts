@@ -11,6 +11,7 @@ export interface AlertOut {
   alert_type: string;
   assigned_to?: string | null;
   fault_code?: number;
+  fault_name?: string | null;
   first_occurred_at?: string | null;
   id: string;
   last_occurred_at?: string | null;

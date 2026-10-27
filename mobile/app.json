@@ -16,6 +16,11 @@
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": ["expo-router", "expo-localization", "expo-secure-store", "expo-status-bar"]
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-secure-store",
+      "expo-status-bar"
+    ]
   }
 }

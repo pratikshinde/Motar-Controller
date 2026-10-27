@@ -4,12 +4,14 @@
  * AgriPump farmer app API
  * OpenAPI spec version: 2.0.0
  */
+import type { PumpResponseVfd } from './pumpResponseVfd';
 
 export interface PumpResponse {
   access_role?: string | null;
   connectivity?: string | null;
   created_at?: string | null;
   device_key?: string | null;
+  device_type?: string | null;
   display_name?: string | null;
   fault_active?: boolean | null;
   fault_code?: number | null;
@@ -43,15 +45,15 @@ export interface PumpResponse {
   v_br?: number | null;
   v_ry?: number | null;
   v_yb?: number | null;
-  warranty_period_months?: number | null;
-  warranty_start_at?: string | null;
-  device_type?: 'AC_3PH' | 'SOLAR_VFD' | null;
+  vfd?: PumpResponseVfd;
+  vfd_fault_code?: number | null;
   vfd_hz?: number | null;
   vfd_i_out?: number | null;
-  vfd_v_ac?: number | null;
-  vfd_v_dc?: number | null;
   vfd_kw?: number | null;
   vfd_status?: string | null;
-  vfd_fault_code?: number | null;
+  vfd_v_ac?: number | null;
+  vfd_v_dc?: number | null;
+  warranty_period_months?: number | null;
+  warranty_start_at?: string | null;
   [key: string]: unknown;
  }

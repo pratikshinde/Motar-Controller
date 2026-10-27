@@ -69,6 +69,17 @@
             "title": "Fault Code",
             "type": "integer"
           },
+          "fault_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fault Name"
+          },
           "first_occurred_at": {
             "anyOf": [
               {
@@ -700,6 +711,17 @@
             ],
             "title": "Fault Description"
           },
+          "fault_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fault Name"
+          },
           "i_b": {
             "anyOf": [
               {
@@ -758,6 +780,17 @@
               }
             ],
             "title": "Resolved At"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
           },
           "v_br": {
             "anyOf": [
@@ -1067,6 +1100,83 @@
               }
             ],
             "title": "V Yb"
+          },
+          "vfd_fault_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Fault Code"
+          },
+          "vfd_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Hz"
+          },
+          "vfd_i_out": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd I Out"
+          },
+          "vfd_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Kw"
+          },
+          "vfd_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Status"
+          },
+          "vfd_v_ac": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd V Ac"
+          },
+          "vfd_v_dc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd V Dc"
           }
         },
         "title": "HistoryPoint",
@@ -1459,6 +1569,18 @@
             ],
             "title": "Device Key"
           },
+          "device_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "AC_3PH",
+            "title": "Device Type"
+          },
           "display_name": {
             "anyOf": [
               {
@@ -1780,6 +1902,95 @@
             ],
             "title": "V Yb"
           },
+          "vfd": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd"
+          },
+          "vfd_fault_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Fault Code"
+          },
+          "vfd_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Hz"
+          },
+          "vfd_i_out": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd I Out"
+          },
+          "vfd_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Kw"
+          },
+          "vfd_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Status"
+          },
+          "vfd_v_ac": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd V Ac"
+          },
+          "vfd_v_dc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd V Dc"
+          },
           "warranty_period_months": {
             "anyOf": [
               {
@@ -1865,6 +2076,285 @@
           "refresh_token"
         ],
         "title": "RefreshTokenRequest",
+        "type": "object"
+      },
+      "ScheduleEntryIn": {
+        "properties": {
+          "day_of_week": {
+            "description": "0 = Monday ... 6 = Sunday",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Day Of Week",
+            "type": "integer"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "off_time": {
+            "description": "HH:MM, later the same day",
+            "title": "Off Time",
+            "type": "string"
+          },
+          "on_time": {
+            "description": "HH:MM, 24-hour, in the schedule's time zone",
+            "title": "On Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day_of_week",
+          "on_time",
+          "off_time"
+        ],
+        "title": "ScheduleEntryIn",
+        "type": "object"
+      },
+      "ScheduleEntryOut": {
+        "properties": {
+          "day_of_week": {
+            "title": "Day Of Week",
+            "type": "integer"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "off_time": {
+            "title": "Off Time",
+            "type": "string"
+          },
+          "on_time": {
+            "title": "On Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "day_of_week",
+          "on_time",
+          "off_time",
+          "enabled"
+        ],
+        "title": "ScheduleEntryOut",
+        "type": "object"
+      },
+      "ScheduleIn": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntryIn"
+            },
+            "maxItems": 50,
+            "title": "Entries",
+            "type": "array"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "IANA name; keeps the current one (default Asia/Kolkata)",
+            "title": "Timezone"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "ScheduleIn",
+        "type": "object"
+      },
+      "ScheduleLimitsOut": {
+        "properties": {
+          "max_rows": {
+            "title": "Max Rows",
+            "type": "integer"
+          },
+          "min_gap_minutes": {
+            "title": "Min Gap Minutes",
+            "type": "integer"
+          },
+          "min_window_minutes": {
+            "title": "Min Window Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min_window_minutes",
+          "min_gap_minutes",
+          "max_rows"
+        ],
+        "title": "ScheduleLimitsOut",
+        "type": "object"
+      },
+      "ScheduleNextOut": {
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "day_of_week": {
+            "description": "0 = Monday ... 6 = Sunday, in the schedule's time zone",
+            "title": "Day Of Week",
+            "type": "integer"
+          },
+          "kind": {
+            "description": "START (switch ON) or STOP (switch OFF)",
+            "title": "Kind",
+            "type": "string"
+          },
+          "local": {
+            "description": "e.g. 'Mon 11:00', in the schedule's time zone (English, ready to show)",
+            "title": "Local",
+            "type": "string"
+          },
+          "time": {
+            "description": "HH:MM in the schedule's time zone",
+            "title": "Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "at",
+          "local",
+          "day_of_week",
+          "time"
+        ],
+        "title": "ScheduleNextOut",
+        "type": "object"
+      },
+      "ScheduleOut": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntryOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/ScheduleLimitsOut"
+          },
+          "next": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleNextOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pump_id": {
+            "title": "Pump Id",
+            "type": "string"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleRunOut"
+            },
+            "title": "Recent",
+            "type": "array"
+          },
+          "server_time": {
+            "title": "Server Time",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pump_id",
+          "enabled",
+          "timezone",
+          "entries",
+          "recent",
+          "limits",
+          "server_time"
+        ],
+        "title": "ScheduleOut",
+        "type": "object"
+      },
+      "ScheduleRunOut": {
+        "properties": {
+          "command_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "the START / STOP command's own state, once one was sent",
+            "title": "Command Status"
+          },
+          "day_of_week": {
+            "title": "Day Of Week",
+            "type": "integer"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "due_at": {
+            "title": "Due At",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "local": {
+            "title": "Local",
+            "type": "string"
+          },
+          "outcome": {
+            "description": "PENDING, SENT, ALREADY_ON, ALREADY_OFF, SKIPPED_FAULT, BLOCKED, MISSED, GAVE_UP or CANCELLED",
+            "title": "Outcome",
+            "type": "string"
+          },
+          "time": {
+            "title": "Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "due_at",
+          "local",
+          "day_of_week",
+          "time",
+          "outcome"
+        ],
+        "title": "ScheduleRunOut",
         "type": "object"
       },
       "SessionOut": {
@@ -2300,6 +2790,95 @@
               }
             ],
             "title": "V Yb"
+          },
+          "vfd": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd"
+          },
+          "vfd_fault_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Fault Code"
+          },
+          "vfd_hz": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Hz"
+          },
+          "vfd_i_out": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd I Out"
+          },
+          "vfd_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Kw"
+          },
+          "vfd_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd Status"
+          },
+          "vfd_v_ac": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd V Ac"
+          },
+          "vfd_v_dc": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vfd V Dc"
           }
         },
         "title": "TelemetrySnapshot",
@@ -3663,6 +4242,108 @@
           }
         ],
         "summary": "Update Pump My Settings",
+        "tags": [
+          "farmer"
+        ]
+      }
+    },
+    "/pumps/{id}/schedule": {
+      "get": {
+        "operationId": "getPumpSchedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Pump Schedule",
+        "tags": [
+          "farmer"
+        ]
+      },
+      "put": {
+        "operationId": "setPumpSchedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Put Pump Schedule",
         "tags": [
           "farmer"
         ]

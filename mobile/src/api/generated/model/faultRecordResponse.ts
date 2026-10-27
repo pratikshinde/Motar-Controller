@@ -9,12 +9,14 @@ export interface FaultRecordResponse {
   ack_at?: string | null;
   fault_code?: number | null;
   fault_description?: string | null;
+  fault_name?: string | null;
   i_b?: number | null;
   i_r?: number | null;
   i_y?: number | null;
   id: number;
   occurred_at?: string | null;
   resolved_at?: string | null;
+  severity?: string | null;
   v_br?: number | null;
   v_ry?: number | null;
   v_yb?: number | null;

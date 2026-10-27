@@ -28,6 +28,7 @@ export const ListAlertsResponse = zod.object({
   "alert_type": zod.string(),
   "assigned_to": zod.union([zod.string(),zod.null()]).optional(),
   "fault_code": zod.int().default(listAlertsResponseAlertsItemFaultCodeDefault),
+  "fault_name": zod.union([zod.string(),zod.null()]).optional(),
   "first_occurred_at": zod.union([zod.string(),zod.null()]).optional(),
   "id": zod.string(),
   "last_occurred_at": zod.union([zod.string(),zod.null()]).optional(),
@@ -44,6 +45,7 @@ export const ListAlertsResponse = zod.object({
   "alert_type": zod.string(),
   "assigned_to": zod.union([zod.string(),zod.null()]).optional(),
   "fault_code": zod.int().default(listAlertsResponseDataItemFaultCodeDefault),
+  "fault_name": zod.union([zod.string(),zod.null()]).optional(),
   "first_occurred_at": zod.union([zod.string(),zod.null()]).optional(),
   "id": zod.string(),
   "last_occurred_at": zod.union([zod.string(),zod.null()]).optional(),
@@ -314,8 +316,10 @@ export const ListPumpsQueryParams = zod.object({
   "status": zod.union([zod.string(),zod.null()]).optional()
 })
 
+export const listPumpsResponseDataItemDeviceTypeDefault = `AC_3PH`;
 export const listPumpsResponseMetaStatsOneNoDataDefault = 0;
 export const listPumpsResponseMetaStatsOneStoppedDefault = 0;
+export const listPumpsResponsePumpsItemDeviceTypeDefault = `AC_3PH`;
 
 export const ListPumpsResponse = zod.object({
   "data": zod.array(zod.object({
@@ -323,6 +327,7 @@ export const ListPumpsResponse = zod.object({
   "connectivity": zod.union([zod.string(),zod.null()]).optional(),
   "created_at": zod.union([zod.string(),zod.null()]).optional(),
   "device_key": zod.union([zod.string(),zod.null()]).optional(),
+  "device_type": zod.union([zod.string(),zod.null()]).default(listPumpsResponseDataItemDeviceTypeDefault),
   "display_name": zod.union([zod.string(),zod.null()]).optional(),
   "fault_active": zod.union([zod.boolean(),zod.null()]).optional(),
   "fault_code": zod.union([zod.int(),zod.null()]).optional(),
@@ -356,6 +361,14 @@ export const ListPumpsResponse = zod.object({
   "v_br": zod.union([zod.number(),zod.null()]).optional(),
   "v_ry": zod.union([zod.number(),zod.null()]).optional(),
   "v_yb": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).optional(),
+  "vfd_fault_code": zod.union([zod.int(),zod.null()]).optional(),
+  "vfd_hz": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_i_out": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_kw": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_status": zod.union([zod.string(),zod.null()]).optional(),
+  "vfd_v_ac": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_v_dc": zod.union([zod.number(),zod.null()]).optional(),
   "warranty_period_months": zod.union([zod.int(),zod.null()]).optional(),
   "warranty_start_at": zod.union([zod.string(),zod.null()]).optional()
 })),
@@ -379,6 +392,7 @@ export const ListPumpsResponse = zod.object({
   "connectivity": zod.union([zod.string(),zod.null()]).optional(),
   "created_at": zod.union([zod.string(),zod.null()]).optional(),
   "device_key": zod.union([zod.string(),zod.null()]).optional(),
+  "device_type": zod.union([zod.string(),zod.null()]).default(listPumpsResponsePumpsItemDeviceTypeDefault),
   "display_name": zod.union([zod.string(),zod.null()]).optional(),
   "fault_active": zod.union([zod.boolean(),zod.null()]).optional(),
   "fault_code": zod.union([zod.int(),zod.null()]).optional(),
@@ -412,6 +426,14 @@ export const ListPumpsResponse = zod.object({
   "v_br": zod.union([zod.number(),zod.null()]).optional(),
   "v_ry": zod.union([zod.number(),zod.null()]).optional(),
   "v_yb": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).optional(),
+  "vfd_fault_code": zod.union([zod.int(),zod.null()]).optional(),
+  "vfd_hz": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_i_out": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_kw": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_status": zod.union([zod.string(),zod.null()]).optional(),
+  "vfd_v_ac": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_v_dc": zod.union([zod.number(),zod.null()]).optional(),
   "warranty_period_months": zod.union([zod.int(),zod.null()]).optional(),
   "warranty_start_at": zod.union([zod.string(),zod.null()]).optional()
 }))
@@ -426,6 +448,7 @@ export const GetPumpParams = zod.object({
 })
 
 export const getPumpResponseOpenFaultCountDefault = 0;
+export const getPumpResponsePumpDeviceTypeDefault = `AC_3PH`;
 
 export const GetPumpResponse = zod.object({
   "config": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).optional(),
@@ -442,7 +465,15 @@ export const GetPumpResponse = zod.object({
   "signal_dbm": zod.union([zod.int(),zod.null()]).optional(),
   "v_br": zod.union([zod.number(),zod.null()]).optional(),
   "v_ry": zod.union([zod.number(),zod.null()]).optional(),
-  "v_yb": zod.union([zod.number(),zod.null()]).optional()
+  "v_yb": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).optional(),
+  "vfd_fault_code": zod.union([zod.int(),zod.null()]).optional(),
+  "vfd_hz": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_i_out": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_kw": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_status": zod.union([zod.string(),zod.null()]).optional(),
+  "vfd_v_ac": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_v_dc": zod.union([zod.number(),zod.null()]).optional()
 }),zod.null()]).optional(),
   "open_fault_count": zod.int().default(getPumpResponseOpenFaultCountDefault),
   "pump": zod.object({
@@ -450,6 +481,7 @@ export const GetPumpResponse = zod.object({
   "connectivity": zod.union([zod.string(),zod.null()]).optional(),
   "created_at": zod.union([zod.string(),zod.null()]).optional(),
   "device_key": zod.union([zod.string(),zod.null()]).optional(),
+  "device_type": zod.union([zod.string(),zod.null()]).default(getPumpResponsePumpDeviceTypeDefault),
   "display_name": zod.union([zod.string(),zod.null()]).optional(),
   "fault_active": zod.union([zod.boolean(),zod.null()]).optional(),
   "fault_code": zod.union([zod.int(),zod.null()]).optional(),
@@ -483,6 +515,14 @@ export const GetPumpResponse = zod.object({
   "v_br": zod.union([zod.number(),zod.null()]).optional(),
   "v_ry": zod.union([zod.number(),zod.null()]).optional(),
   "v_yb": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd": zod.union([zod.record(zod.string(), zod.unknown()),zod.null()]).optional(),
+  "vfd_fault_code": zod.union([zod.int(),zod.null()]).optional(),
+  "vfd_hz": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_i_out": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_kw": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_status": zod.union([zod.string(),zod.null()]).optional(),
+  "vfd_v_ac": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_v_dc": zod.union([zod.number(),zod.null()]).optional(),
   "warranty_period_months": zod.union([zod.int(),zod.null()]).optional(),
   "warranty_start_at": zod.union([zod.string(),zod.null()]).optional()
 })
@@ -563,12 +603,14 @@ export const ListPumpFaultsResponseItem = zod.object({
   "ack_at": zod.union([zod.string(),zod.null()]).optional(),
   "fault_code": zod.union([zod.int(),zod.null()]).optional(),
   "fault_description": zod.union([zod.string(),zod.null()]).optional(),
+  "fault_name": zod.union([zod.string(),zod.null()]).optional(),
   "i_b": zod.union([zod.number(),zod.null()]).optional(),
   "i_r": zod.union([zod.number(),zod.null()]).optional(),
   "i_y": zod.union([zod.number(),zod.null()]).optional(),
   "id": zod.int(),
   "occurred_at": zod.union([zod.string(),zod.null()]).optional(),
   "resolved_at": zod.union([zod.string(),zod.null()]).optional(),
+  "severity": zod.union([zod.string(),zod.null()]).optional(),
   "v_br": zod.union([zod.number(),zod.null()]).optional(),
   "v_ry": zod.union([zod.number(),zod.null()]).optional(),
   "v_yb": zod.union([zod.number(),zod.null()]).optional()
@@ -637,7 +679,14 @@ export const GetPumpHistoryResponse = zod.object({
   "v_mean": zod.union([zod.number(),zod.null()]).optional(),
   "v_min": zod.union([zod.number(),zod.null()]).optional(),
   "v_ry": zod.union([zod.number(),zod.null()]).optional(),
-  "v_yb": zod.union([zod.number(),zod.null()]).optional()
+  "v_yb": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_fault_code": zod.union([zod.int(),zod.null()]).optional(),
+  "vfd_hz": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_i_out": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_kw": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_status": zod.union([zod.string(),zod.null()]).optional(),
+  "vfd_v_ac": zod.union([zod.number(),zod.null()]).optional(),
+  "vfd_v_dc": zod.union([zod.number(),zod.null()]).optional()
 }))
 })
 
@@ -670,6 +719,113 @@ export const UpdatePumpSettingsResponse = zod.object({
   "role": zod.string().default(updatePumpSettingsResponseRoleDefault),
   "site_id": zod.union([zod.string(),zod.null()]).optional(),
   "sort_order": zod.int().default(updatePumpSettingsResponseSortOrderDefault)
+})
+
+
+/**
+ * @summary Get Pump Schedule
+ */
+export const GetPumpScheduleParams = zod.object({
+  "id": zod.string()
+})
+
+export const GetPumpScheduleResponse = zod.object({
+  "enabled": zod.boolean(),
+  "entries": zod.array(zod.object({
+  "day_of_week": zod.int(),
+  "enabled": zod.boolean(),
+  "id": zod.string(),
+  "off_time": zod.string(),
+  "on_time": zod.string()
+})),
+  "limits": zod.object({
+  "max_rows": zod.int(),
+  "min_gap_minutes": zod.int(),
+  "min_window_minutes": zod.int()
+}),
+  "next": zod.union([zod.object({
+  "at": zod.string(),
+  "day_of_week": zod.int().describe('0 = Monday ... 6 = Sunday, in the schedule\'s time zone'),
+  "kind": zod.string().describe('START (switch ON) or STOP (switch OFF)'),
+  "local": zod.string().describe('e.g. \'Mon 11:00\', in the schedule\'s time zone (English, ready to show)'),
+  "time": zod.string().describe('HH:MM in the schedule\'s time zone')
+}),zod.null()]).optional(),
+  "pump_id": zod.string(),
+  "recent": zod.array(zod.object({
+  "command_status": zod.union([zod.string(),zod.null()]).optional().describe('the START / STOP command\'s own state, once one was sent'),
+  "day_of_week": zod.int(),
+  "detail": zod.union([zod.string(),zod.null()]).optional(),
+  "due_at": zod.string(),
+  "kind": zod.string(),
+  "local": zod.string(),
+  "outcome": zod.string().describe('PENDING, SENT, ALREADY_ON, ALREADY_OFF, SKIPPED_FAULT, BLOCKED, MISSED, GAVE_UP or CANCELLED'),
+  "time": zod.string()
+})),
+  "server_time": zod.string(),
+  "timezone": zod.string()
+})
+
+
+/**
+ * @summary Put Pump Schedule
+ */
+export const SetPumpScheduleParams = zod.object({
+  "id": zod.string()
+})
+
+export const setPumpScheduleBodyEntriesItemDayOfWeekMin = 0;
+export const setPumpScheduleBodyEntriesItemDayOfWeekMax = 6;
+
+export const setPumpScheduleBodyEntriesItemEnabledDefault = true;
+export const setPumpScheduleBodyEntriesMax = 50;
+
+
+
+export const SetPumpScheduleBody = zod.object({
+  "enabled": zod.boolean(),
+  "entries": zod.array(zod.object({
+  "day_of_week": zod.int().min(setPumpScheduleBodyEntriesItemDayOfWeekMin).max(setPumpScheduleBodyEntriesItemDayOfWeekMax).describe('0 = Monday ... 6 = Sunday'),
+  "enabled": zod.boolean().default(setPumpScheduleBodyEntriesItemEnabledDefault),
+  "off_time": zod.string().describe('HH:MM, later the same day'),
+  "on_time": zod.string().describe('HH:MM, 24-hour, in the schedule\'s time zone')
+})).max(setPumpScheduleBodyEntriesMax).optional(),
+  "timezone": zod.union([zod.string(),zod.null()]).optional().describe('IANA name; keeps the current one (default Asia/Kolkata)')
+})
+
+export const SetPumpScheduleResponse = zod.object({
+  "enabled": zod.boolean(),
+  "entries": zod.array(zod.object({
+  "day_of_week": zod.int(),
+  "enabled": zod.boolean(),
+  "id": zod.string(),
+  "off_time": zod.string(),
+  "on_time": zod.string()
+})),
+  "limits": zod.object({
+  "max_rows": zod.int(),
+  "min_gap_minutes": zod.int(),
+  "min_window_minutes": zod.int()
+}),
+  "next": zod.union([zod.object({
+  "at": zod.string(),
+  "day_of_week": zod.int().describe('0 = Monday ... 6 = Sunday, in the schedule\'s time zone'),
+  "kind": zod.string().describe('START (switch ON) or STOP (switch OFF)'),
+  "local": zod.string().describe('e.g. \'Mon 11:00\', in the schedule\'s time zone (English, ready to show)'),
+  "time": zod.string().describe('HH:MM in the schedule\'s time zone')
+}),zod.null()]).optional(),
+  "pump_id": zod.string(),
+  "recent": zod.array(zod.object({
+  "command_status": zod.union([zod.string(),zod.null()]).optional().describe('the START / STOP command\'s own state, once one was sent'),
+  "day_of_week": zod.int(),
+  "detail": zod.union([zod.string(),zod.null()]).optional(),
+  "due_at": zod.string(),
+  "kind": zod.string(),
+  "local": zod.string(),
+  "outcome": zod.string().describe('PENDING, SENT, ALREADY_ON, ALREADY_OFF, SKIPPED_FAULT, BLOCKED, MISSED, GAVE_UP or CANCELLED'),
+  "time": zod.string()
+})),
+  "server_time": zod.string(),
+  "timezone": zod.string()
 })
 
 

@@ -35,6 +35,13 @@
         "BRAND": "swati"
       }
     },
+    "swati-usb": {
+      "extends": "swati-preview",
+      "env": {
+        "BRAND": "swati",
+        "EXPO_PUBLIC_API_URL": "http://localhost:5000"
+      }
+    },
     "swati-production": {
       "extends": "production",
       "env": {

@@ -2,7 +2,7 @@
 
 The farmer's app for the AgriPump controller, built once per manufacturer (Ajanta, Swati, ...) - see
 [Brands](#brands): see whether each pump is running, start and stop it, set a run
-timer, read what is wrong and what to do, and call the dealer. Expo SDK 54, React Native 0.81, TypeScript, Expo Router.
+timer, read what is wrong and what to do, and call the dealer. Expo SDK 57, React Native 0.86, TypeScript, Expo Router.
 
 ## Run it
 
@@ -38,9 +38,14 @@ npm start          # Expo Go / emulator (uses the live server unless EXPO_PUBLIC
   fails loudly instead of showing a blank value.
 - `src/realtime/` the WebSocket client (auth-first, one subscription per pump, backoff with jitter, heartbeat,
   pauses in the background) and the code that folds live events into the query cache.
-- `src/features/` one folder per feature (pumps, pump, commands, timer, history, faults, alerts, manage, settings,
-  support). Pure rules (what state a pump is in, when a command counts as done, timer limits) live in plain
+- `src/features/` one folder per feature (pumps, pump, commands, timer, schedule, history, faults, alerts, manage,
+  settings, support). Pure rules (what state a pump is in, when a command counts as done, timer limits) live in plain
   `.ts` files with tests, apart from the screens.
+- **Weekly schedule** (`src/features/schedule`, opened from the Timer page): a table of days with an ON and an OFF time
+  ("Monday 11:00 AM on, 1:00 PM off"). The controller has no clock, so the app only edits the table; the **server** keeps
+  the calendar and sends the start and the stop (`backend/app/services/schedule_runner.py`). The pump must be online at
+  those times, which the screen says. A new endpoint in the app means adding it to `CONTRACTS` in `src/api/http.ts`, or
+  its answers are not checked.
 - `src/shared/` design tokens, UI components, i18n.
 - Offline: the query cache is saved to the phone for 24 hours and shown with an offline banner; commands are never
   queued while offline (a start must not fire minutes later).

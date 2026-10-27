@@ -104,6 +104,8 @@ const CONTRACTS: [string, RegExp, ZodType][] = [
   ['GET', /^\/pumps\/[^/]+\/commands\/[^/]+$/, contract.GetPumpCommandResponse],
   ['GET', /^\/pumps\/[^/]+\/timer$/, contract.GetPumpTimerResponse],
   ['PUT', /^\/pumps\/[^/]+\/timer$/, contract.SetPumpTimerResponse],
+  ['GET', /^\/pumps\/[^/]+\/schedule$/, contract.GetPumpScheduleResponse],
+  ['PUT', /^\/pumps\/[^/]+\/schedule$/, contract.SetPumpScheduleResponse],
   ['GET', /^\/pumps\/[^/]+\/history$/, contract.GetPumpHistoryResponse],
   ['GET', /^\/pumps\/[^/]+\/faults$/, contract.ListPumpFaultsResponse],
   ['GET', /^\/pumps\/[^/]+\/support-contact$/, contract.GetSupportContactResponse],

@@ -1,8 +1,10 @@
 import React from 'react';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StateView } from '@/shared/ui/StateView';
 import { SwatiPage } from '@/shared/ui/SwatiPage';
 import { useCurrentPump } from '@/features/pumps/useCurrentPump';
+import { ScheduleEntryCard } from '@/features/schedule/ScheduleEntryCard';
 import { TimerTab } from './TimerTab';
 
 /**
@@ -20,7 +22,10 @@ export const TimerScreen: React.FC = () => {
       ) : failed ? (
         <StateView kind="error" title={t('common.serverUnreachableTitle')} actionLabel={t('common.retry')} onAction={refetch} />
       ) : pump ? (
-        <TimerTab pump={pump} />
+        <View style={{ gap: 16 }}>
+          <ScheduleEntryCard pump={pump} />
+          <TimerTab pump={pump} />
+        </View>
       ) : (
         <StateView kind="empty" title={t('pumps.emptyTitle')} message={t('pumps.emptyMessage')} />
       )}

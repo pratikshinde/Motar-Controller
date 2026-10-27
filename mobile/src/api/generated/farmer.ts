@@ -50,6 +50,8 @@ import type {
   PumpListResponse,
   RefreshResponse,
   RefreshTokenRequest,
+  ScheduleIn,
+  ScheduleOut,
   SessionsResponse,
   SiteIn,
   SiteListResponse,
@@ -1796,6 +1798,168 @@ export const useUpdatePumpSettings = <TError = ErrorType<HTTPValidationError>,
         TContext
       > => {
       return useMutation(getUpdatePumpSettingsMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Get Pump Schedule
+ */
+export const getPumpSchedule = (
+    id: string,
+ options?: SecondParameter<typeof httpRequest>,signal?: AbortSignal
+) => {
+
+
+      return httpRequest<ScheduleOut>(
+      {url: `/pumps/${id}/schedule`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetPumpScheduleQueryKey = (id: string,) => {
+    return [
+    `/pumps/${id}/schedule`
+    ] as const;
+    }
+
+
+export const getGetPumpScheduleQueryOptions = <TData = Awaited<ReturnType<typeof getPumpSchedule>>, TError = ErrorType<HTTPValidationError>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPumpSchedule>>, TError, TData>>, request?: SecondParameter<typeof httpRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPumpScheduleQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPumpSchedule>>> = ({ signal }) => getPumpSchedule(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPumpSchedule>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPumpScheduleQueryResult = NonNullable<Awaited<ReturnType<typeof getPumpSchedule>>>
+export type GetPumpScheduleQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetPumpSchedule<TData = Awaited<ReturnType<typeof getPumpSchedule>>, TError = ErrorType<HTTPValidationError>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPumpSchedule>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPumpSchedule>>,
+          TError,
+          Awaited<ReturnType<typeof getPumpSchedule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof httpRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPumpSchedule<TData = Awaited<ReturnType<typeof getPumpSchedule>>, TError = ErrorType<HTTPValidationError>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPumpSchedule>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPumpSchedule>>,
+          TError,
+          Awaited<ReturnType<typeof getPumpSchedule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof httpRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPumpSchedule<TData = Awaited<ReturnType<typeof getPumpSchedule>>, TError = ErrorType<HTTPValidationError>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPumpSchedule>>, TError, TData>>, request?: SecondParameter<typeof httpRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Pump Schedule
+ */
+
+export function useGetPumpSchedule<TData = Awaited<ReturnType<typeof getPumpSchedule>>, TError = ErrorType<HTTPValidationError>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPumpSchedule>>, TError, TData>>, request?: SecondParameter<typeof httpRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPumpScheduleQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Put Pump Schedule
+ */
+export const setPumpSchedule = (
+    id: string,
+    scheduleIn: BodyType<ScheduleIn>,
+ options?: SecondParameter<typeof httpRequest>,signal?: AbortSignal
+) => {
+
+
+      return httpRequest<ScheduleOut>(
+      {url: `/pumps/${id}/schedule`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: scheduleIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getSetPumpScheduleMutationKey = () => ['setPumpSchedule'] as const;
+
+export const getSetPumpScheduleMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPumpSchedule>>, TError,SetPumpScheduleMutationVariables, TContext>, request?: SecondParameter<typeof httpRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof setPumpSchedule>>, TError,SetPumpScheduleMutationVariables, TContext> => {
+
+const mutationKey = getSetPumpScheduleMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setPumpSchedule>>, SetPumpScheduleMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  setPumpSchedule(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetPumpScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof setPumpSchedule>>>
+    export type SetPumpScheduleMutationBody = BodyType<ScheduleIn>
+    export type SetPumpScheduleMutationError = ErrorType<HTTPValidationError>
+    export type SetPumpScheduleMutationVariables = {id: string;data: BodyType<ScheduleIn>}
+
+    /**
+ * @summary Put Pump Schedule
+ */
+export const useSetPumpSchedule = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPumpSchedule>>, TError,SetPumpScheduleMutationVariables, TContext>, request?: SecondParameter<typeof httpRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setPumpSchedule>>,
+        TError,
+        SetPumpScheduleMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetPumpScheduleMutationOptions(options), queryClient);
     }
 
 /**

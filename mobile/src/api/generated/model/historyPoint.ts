@@ -29,5 +29,12 @@ export interface HistoryPoint {
   v_min?: number | null;
   v_ry?: number | null;
   v_yb?: number | null;
+  vfd_fault_code?: number | null;
+  vfd_hz?: number | null;
+  vfd_i_out?: number | null;
+  vfd_kw?: number | null;
+  vfd_status?: string | null;
+  vfd_v_ac?: number | null;
+  vfd_v_dc?: number | null;
   [key: string]: unknown;
  }

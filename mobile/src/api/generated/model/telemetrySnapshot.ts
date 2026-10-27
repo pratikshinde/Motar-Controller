@@ -4,6 +4,7 @@
  * AgriPump farmer app API
  * OpenAPI spec version: 2.0.0
  */
+import type { TelemetrySnapshotVfd } from './telemetrySnapshotVfd';
 
 export interface TelemetrySnapshot {
   fault_active?: boolean | null;
@@ -19,12 +20,12 @@ export interface TelemetrySnapshot {
   v_br?: number | null;
   v_ry?: number | null;
   v_yb?: number | null;
-  device_type?: 'AC_3PH' | 'SOLAR_VFD' | null;
+  vfd?: TelemetrySnapshotVfd;
+  vfd_fault_code?: number | null;
   vfd_hz?: number | null;
   vfd_i_out?: number | null;
-  vfd_v_ac?: number | null;
-  vfd_v_dc?: number | null;
   vfd_kw?: number | null;
   vfd_status?: string | null;
-  vfd_fault_code?: number | null;
+  vfd_v_ac?: number | null;
+  vfd_v_dc?: number | null;
 }

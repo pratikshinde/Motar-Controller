@@ -41,14 +41,14 @@ export const TabBarSwati: React.FC<TabBarProps> = ({ state, navigation }) => {
                 const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
                 if (!on && !event.defaultPrevented) navigation.navigate(route.name);
               }}
-              activeOpacity={0.75}
+              activeOpacity={0.78}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
               accessibilityLabel={label}
               testID={`tab-${route.name}`}
             >
               <View style={[styles.iconWrap, on && styles.iconWrapOn]}>
-                <Icon size={24} color={on ? '#1565C0' : '#64748B'} />
+                <Icon size={22} color={on ? '#0D47A1' : '#64748B'} />
               </View>
               <Text style={[styles.label, on && styles.labelOn]} numberOfLines={1}>
                 {label}
@@ -62,19 +62,21 @@ export const TabBarSwati: React.FC<TabBarProps> = ({ state, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  safe: { backgroundColor: '#FFFFFF' },
+  safe: {
+    backgroundColor: '#FFFFFF',
+  },
   bar: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
+    borderTopWidth: 1.5,
     borderTopColor: '#E2E8F0',
     paddingTop: 8,
-    paddingBottom: 8,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: -2 },
+    paddingBottom: 6,
+    elevation: 12,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -4 },
   },
   item: {
     flex: 1,
@@ -83,14 +85,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   iconWrap: {
-    width: 48,
-    height: 30,
-    borderRadius: 15,
+    width: 52,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapOn: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#E0F2FE',
   },
   label: {
     fontSize: 12,
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   labelOn: {
-    color: '#1565C0',
-    fontWeight: '800',
+    color: '#0D47A1',
+    fontWeight: '900',
   },
 });
