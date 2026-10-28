@@ -45,6 +45,20 @@ mobile/.env
 .jwt-secret
 backend/.jwt-secret
 
+# Certificates, private keys and AWS credentials (never commit)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+.aws/
+
+# Device firmware workspace (A7672S modem SDK): it holds a live AWS IoT device private key and a 690 MB SDK archive,
+# and it has its own repository.
+A7672S_MQTT/
+
 # Build outputs & logs
 build/
 *.log
