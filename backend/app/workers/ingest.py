@@ -53,7 +53,8 @@ logger = logging.getLogger("agripump.ingest")
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-SQS_INGEST_URL: str = os.environ.get("SQS_INGEST_URL", "")
+# The environment wins; otherwise backend/.env (loaded into `settings`, not into the process environment).
+SQS_INGEST_URL: str = os.environ.get("SQS_INGEST_URL") or settings.SQS_INGEST_URL
 SQS_BATCH_SIZE: int = int(os.environ.get("SQS_BATCH_SIZE", "10"))
 SQS_VISIBILITY_TIMEOUT: int = int(os.environ.get("SQS_VISIBILITY_TIMEOUT", "60"))
 INGEST_BATCH_SIZE: int = int(os.environ.get("INGEST_BATCH_SIZE", "50"))
@@ -80,6 +81,8 @@ class NormalisedTelemetry:
     buffered: bool = False
     fault_code: Optional[int] = None
     runtime_minutes: Optional[int] = None
+    # A solar drive's readings (SRS Addendum A1): hz, i_out, v_ac, v_dc, kw, status, fault_code. None for an AC panel.
+    vfd: Optional[Dict[str, Any]] = None
     # Raw payload kept for forensics
     raw: Dict[str, Any] = field(default_factory=dict)
 
@@ -101,19 +104,64 @@ def _safe_int(val: Any) -> Optional[int]:
         return None
 
 
+# Ranges /api/telemetry enforces for a drive's readings (and what telemetry_history can hold).
+_VFD_LIMITS = {"hz": (0.0, 500.0), "i_out": (0.0, 500.0), "v_ac": (0.0, 1000.0), "v_dc": (0.0, 1500.0), "kw": (0.0, 500.0)}
+
+
+def parse_vfd(raw: Any) -> Optional[Dict[str, Any]]:
+    """The `vfd` object of a status frame, cleaned; None when it holds nothing usable.
+
+    /api/telemetry answers 400 to an out-of-range value. A frame that has already travelled through AWS cannot be
+    refused, so here the bad value alone is dropped and the rest of the reading is kept.
+    """
+    if not isinstance(raw, dict):
+        return None
+    out: Dict[str, Any] = {}
+    for key, (low, high) in _VFD_LIMITS.items():
+        value = _safe_float(raw.get(key))
+        out[key] = value if value is not None and low <= value <= high else None
+    status = raw.get("status")
+    out["status"] = str(status).strip()[:30] if status not in (None, "") else None
+    code = _safe_int(raw.get("fault_code"))
+    out["fault_code"] = code if code is not None and 0 <= code <= 9999 else None
+    return out if any(value is not None for value in out.values()) else None
+
+
+def _motor_and_fault(mot: Any, fault: Optional[int], vfd: Optional[Dict[str, Any]]) -> Tuple[bool, Optional[int]]:
+    """(motor on, effective fault code or None). The same rules as /api/telemetry.
+
+    A solar drive reports through `vfd`: with no `mot` the drive's own status (RUNNING) or its output frequency decides,
+    and a non-zero drive fault code wins over the device's own `flt`."""
+    drive = vfd or {}
+    if mot is not None:
+        on = mot == 1
+    elif drive.get("status"):
+        on = str(drive["status"]).upper() == "RUNNING"
+    elif drive.get("hz") is not None:
+        on = drive["hz"] > 0.5
+    else:
+        on = False
+    drive_fault = drive.get("fault_code") or 0
+    code = drive_fault if drive_fault > 0 else (fault if fault and fault > 0 else None)
+    return bool(on), code
+
+
 # Uplink frames that only say "I am here" (SRS §6.3). They carry no readings.
 LIVENESS_FRAMES = {"heartbeat", "pong", "ping", "net_status", "reg_ack"}
 
 
 def frame_kind(body: Dict[str, Any]) -> str:
-    """What an uplink frame is: `telemetry`, `registration`, `liveness` or `unknown`.
+    """What an uplink frame is: `telemetry`, `fault`, `registration`, `liveness` or `unknown`.
 
     Only `status` frames (and the v1 envelope, which has no `cmd`) carry readings. Storing a heartbeat as a reading
     would put a row of blanks in the history and mark a running pump as stopped. Acks are routed before this.
+    A `fault` frame (layer A) or a `TRIP` event (layer B) reports a trip the moment it happens, between status frames.
     """
     if isinstance(body.get("v"), int) and "st" in body:
         return "telemetry"
     cmd = str(body.get("cmd") or "").strip().lower()
+    if cmd == "fault" or str(body.get("type") or "").strip().upper() in ("TRIP", "FAULT"):
+        return "fault"
     if cmd in ("", "status"):
         return "telemetry"
     if cmd == "reg":
@@ -121,6 +169,32 @@ def frame_kind(body: Dict[str, Any]) -> str:
     if cmd in LIVENESS_FRAMES:
         return "liveness"
     return "unknown"
+
+
+def parse_fault(body: Dict[str, Any], now: datetime) -> Optional[Tuple[int, Tuple[float, ...], datetime]]:
+    """A trip report in either shape, as (code, (v_ry, v_yb, v_br, i_r, i_y, i_b), occurred_at); None if it names no code.
+
+    layer A  {"cmd":"fault","code":5,"desc":"DryRun","vl":[415,0,410],"i":[2,0,2]}
+    layer B  {"v":1,"ts":<epoch>,"type":"TRIP","code":5,"name":"DryRun","snapshot":{"vl":[...],"i":[...]}}
+    Layer A carries no clock and the device's own is not trusted, so a trip without `ts` is stamped on arrival.
+    """
+    code = _safe_int(body.get("code"))
+    if code is None or not 1 <= code <= 255:
+        return None
+    snap = body.get("snapshot") if isinstance(body.get("snapshot"), dict) else body
+    vl = snap.get("vl") or []
+    amps = snap.get("i") or []
+    readings = tuple(
+        (_safe_float(arr[idx]) or 0.0) if len(arr) > idx else 0.0
+        for arr in (vl, amps) for idx in range(3)
+    )
+    occurred_at = now
+    if body.get("ts"):
+        try:
+            occurred_at = datetime.fromtimestamp(float(body["ts"]), tz=timezone.utc)
+        except (OSError, ValueError, OverflowError):
+            pass
+    return code, readings, occurred_at
 
 
 def normalise(payload: Dict[str, Any], client_id: str) -> Tuple[NormalisedTelemetry, bool]:
@@ -179,9 +253,9 @@ def _normalise_v1(
 
     vl = el.get("vl") or []
     i_arr = el.get("i") or []
-    fault_code_raw = _safe_int(st.get("fault"))
-    fault_active = bool(fault_code_raw and fault_code_raw > 0)
-    pump_on = bool(st.get("mot") == 1)
+    vfd = parse_vfd(p.get("vfd"))
+    pump_on, fault_code = _motor_and_fault(st.get("mot"), _safe_int(st.get("fault")), vfd)
+    fault_active = fault_code is not None
 
     return NormalisedTelemetry(
         device_id=client_id,                   # always use the verified client_id
@@ -198,8 +272,9 @@ def _normalise_v1(
         seq=_safe_int(p.get("seq")),
         ts_approx=bool(p.get("tsApprox", False)),
         buffered=bool(p.get("buf", False)),
-        fault_code=fault_code_raw if fault_active else None,
+        fault_code=fault_code,
         runtime_minutes=_safe_int(rt.get("totalMin")),
+        vfd=vfd,
         raw=p,
     ), spoofed
 
@@ -220,9 +295,9 @@ def _normalise_legacy(
 
     vl = p.get("vl") or []
     i_arr = p.get("i") or []
-    fault_code_raw = _safe_int(p.get("flt"))
-    fault_active = bool(fault_code_raw and fault_code_raw > 0)
-    pump_on = bool(p.get("mot") == 1)
+    vfd = parse_vfd(p.get("vfd"))
+    pump_on, fault_code = _motor_and_fault(p.get("mot"), _safe_int(p.get("flt")), vfd)
+    fault_active = fault_code is not None
 
     return NormalisedTelemetry(
         device_id=client_id,
@@ -239,8 +314,9 @@ def _normalise_legacy(
         seq=_safe_int(p.get("seq")),
         ts_approx=bool(p.get("tsApprox", False)),
         buffered=bool(p.get("buf", False)),
-        fault_code=fault_code_raw if fault_active else None,
+        fault_code=fault_code,
         runtime_minutes=_safe_int(p.get("rt")),
+        vfd=vfd,
         raw=p,
     ), spoofed
 
@@ -334,6 +410,33 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 logger.warning("Ignoring '%s' frame from '%s': not a reading", body.get("cmd"), client_id)
                 handled_receipts.append(receipt)
                 continue
+            if kind == "fault":
+                # A trip arrives on its own topic the moment it happens; waiting for the next status frame would
+                # delay the alert by up to the idle reporting interval (300 s). It is a fault, not a reading: no
+                # telemetry row, and the pump's latest readings stay as the last status frame left them.
+                claimed_id = str(body.get("dev_id") or body.get("id") or "").strip()
+                if claimed_id and claimed_id != client_id:       # FR-SEC-032, as for readings
+                    logger.warning("FR-SEC-032 violation: fault dev_id='%s' != client_id='%s' — rejected", claimed_id, client_id)
+                    handled_receipts.append(receipt)
+                    continue
+                trip = parse_fault(body, datetime.now(timezone.utc))
+                trip_pump = db.query(Pump).filter(Pump.id == client_id).first()
+                if trip is None:
+                    logger.warning("Ignoring fault frame from '%s': no usable code", client_id)
+                elif not trip_pump:
+                    logger.warning("Unknown device '%s', skipping its fault", client_id)
+                elif trip_pump.status in ("SUSPENDED", "RETIRED", "RMA"):
+                    logger.info("Ignoring fault from %s device '%s'", trip_pump.status, client_id)
+                elif not db.query(FaultCodeCatalog).filter(FaultCodeCatalog.code == trip[0]).first():
+                    # The code must be in the catalog (SRS 6.2 FR-CON-033): a code nobody has defined has no severity
+                    logger.warning("Fault code %s from '%s' is not in the catalog, skipped", trip[0], client_id)
+                else:
+                    code, (v_ry, v_yb, v_br, i_r, i_y, i_b), occurred_at = trip
+                    fault_events.append((client_id, code, v_ry, v_yb, v_br, i_r, i_y, i_b, occurred_at))
+                    trip_pump.status = "FAULT"
+                    trip_pump.last_seen_at = datetime.now(timezone.utc)
+                handled_receipts.append(receipt)
+                continue
 
             telem, spoofed = normalise(body, client_id)
 
@@ -364,6 +467,13 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 handled_receipts.append(receipt)
                 continue
 
+            # A drive's readings belong to a solar pump only, as in /api/telemetry
+            device_type = getattr(pump, "device_type", "AC_3PH") or "AC_3PH"
+            if telem.vfd is not None and device_type != "SOLAR_VFD":
+                logger.warning("Ignoring the vfd readings from '%s': it is a %s pump, not SOLAR_VFD", telem.device_id, device_type)
+                telem.vfd = None
+            drive = telem.vfd or {}
+
             # Build ORM row; ON CONFLICT DO NOTHING handles dedup (FR-CLD-026)
             row = TelemetryHistory(
                 pump_id=telem.device_id,
@@ -373,6 +483,13 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 i_r=telem.i_r,
                 i_y=telem.i_y,
                 i_b=telem.i_b,
+                vfd_hz=drive.get("hz"),
+                vfd_i_out=drive.get("i_out"),
+                vfd_v_ac=drive.get("v_ac"),
+                vfd_v_dc=drive.get("v_dc"),
+                vfd_kw=drive.get("kw"),
+                vfd_status=drive.get("status"),
+                vfd_fault_code=drive.get("fault_code"),
                 pump_on=telem.pump_on,
                 fault_active=telem.fault_active,
                 gsm_rssi=telem.gsm_rssi,
@@ -400,6 +517,16 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 # Cumulative run time as the device reports it; buffered (replayed) rows are old.
                 "total_runtime_min": None if telem.buffered else telem.runtime_minutes,
                 "status": status,
+                "device_type": device_type,
+                # The same keys /api/telemetry broadcasts, so a solar pump's live card updates from either path
+                "vfd": telem.vfd,
+                "vfd_hz": drive.get("hz"),
+                "vfd_i_out": drive.get("i_out"),
+                "vfd_v_ac": drive.get("v_ac"),
+                "vfd_v_dc": drive.get("v_dc"),
+                "vfd_kw": drive.get("kw"),
+                "vfd_status": drive.get("status"),
+                "vfd_fault_code": drive.get("fault_code"),
                 "recorded_at": telem.recorded_at.isoformat(),
             }
             pump_updates[telem.device_id] = (status, pump.hierarchy_path, snapshot)
@@ -437,9 +564,11 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 sa_text("""
                     INSERT INTO agripump.telemetry_history
                         (pump_id, v_ry, v_yb, v_br, i_r, i_y, i_b,
+                         vfd_hz, vfd_i_out, vfd_v_ac, vfd_v_dc, vfd_kw, vfd_status, vfd_fault_code,
                          pump_on, fault_active, gsm_rssi, seq, ts_approx, buffered, recorded_at)
                     VALUES
                         (:pump_id, :v_ry, :v_yb, :v_br, :i_r, :i_y, :i_b,
+                         :vfd_hz, :vfd_i_out, :vfd_v_ac, :vfd_v_dc, :vfd_kw, :vfd_status, :vfd_fault_code,
                          :pump_on, :fault_active, :gsm_rssi, :seq, :ts_approx, :buffered, :recorded_at)
                     ON CONFLICT (pump_id, seq) WHERE seq IS NOT NULL
                     DO NOTHING
@@ -531,6 +660,9 @@ async def _sqs_consumer_loop() -> None:
     Long-poll SQS for telemetry messages and process them in batches.
     Requires boto3 and SQS_INGEST_URL to be set.
     """
+    from app.services.iot_publisher import apply_network_preference
+
+    apply_network_preference()  # IOT_FORCE_IPV4: no 20 s wait for IPv6 on a network without it
     try:
         import boto3  # type: ignore
     except ImportError:

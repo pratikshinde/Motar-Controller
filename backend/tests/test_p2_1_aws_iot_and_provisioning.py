@@ -80,14 +80,32 @@ class TestP2_1FleetProvisioning(unittest.TestCase):
         )
         cls.db.add(cls.imei_revoked)
 
+        # A unit listed with its MCU UID: the UID is the id the device presents (SRS 5.2.1)
+        cls.uid_serial = f"0123456789ABCDEF{cls.suffix.upper()}"
+        cls.db.add(BatchImei(
+            batch_id=cls.batch_valid.id,
+            imei=f"8600777777{cls.suffix[:4]}",
+            mcu_uid=cls.uid_serial,
+            claimed=False
+        ))
+
+        # The same UID listed twice (mcu_uid is not unique in the table)
+        cls.dup_uid = f"FEDCBA9876543210{cls.suffix.upper()}"
+        for n in ("5", "6"):
+            cls.db.add(BatchImei(
+                batch_id=cls.batch_valid.id,
+                imei=f"860055555{n}{cls.suffix[:4]}",
+                mcu_uid=cls.dup_uid,
+                claimed=False
+            ))
+
         cls.db.commit()
 
     @classmethod
     def tearDownClass(cls):
         try:
             cls.db.execute(text("SET app.bypass_rls = 'on';"))
-            pump_id = f"PUMP-{cls.valid_serial}"
-            cls.db.query(Pump).filter(Pump.id == pump_id).delete()
+            cls.db.query(Pump).filter(Pump.id.in_([cls.valid_serial, cls.uid_serial])).delete(synchronize_session=False)
             cls.db.query(BatchImei).filter(BatchImei.batch_id.in_([cls.batch_valid.id, cls.batch_revoked.id])).delete()
             cls.db.query(DeviceBatch).filter(DeviceBatch.id.in_([cls.batch_valid.id, cls.batch_revoked.id])).delete()
             cls.db.commit()
@@ -109,11 +127,12 @@ class TestP2_1FleetProvisioning(unittest.TestCase):
         data = resp.json()
 
         self.assertTrue(data["allowProvisioning"])
-        self.assertEqual(data["parameterOverrides"]["ThingName"], f"PUMP-{self.valid_serial}")
+        # The thing name is the serial itself: it is also the MQTT client id, and the ingest worker finds the pump by it
+        self.assertEqual(data["parameterOverrides"]["ThingName"], self.valid_serial)
         self.assertEqual(data["parameterOverrides"]["ThingGroupName"], "production")
 
-        # Verify device record is created in state COMMISSIONED
-        pump = self.db.query(Pump).filter(Pump.id == f"PUMP-{self.valid_serial}").first()
+        # Verify device record is created in state COMMISSIONED, under the same id
+        pump = self.db.query(Pump).filter(Pump.id == data["parameterOverrides"]["ThingName"]).first()
         self.assertIsNotNone(pump)
         self.assertEqual(pump.lifecycle_state, "COMMISSIONED")
         print(f"\n[PASS] Pre-provisioning hook approved valid device {self.valid_serial} and commissioned {pump.id}!")
@@ -171,6 +190,40 @@ class TestP2_1FleetProvisioning(unittest.TestCase):
         self.assertFalse(data["allowProvisioning"])
         self.assertIn("not in factory whitelist", data.get("error", ""))
         print("[PASS] Unknown device blocked: Unwhitelisted serial denied provisioning!")
+
+    def _hook(self, serial):
+        return client.post("/api/v1/batches/provisioning/pre-hook", json={
+            "claimCertificateId": "claim-cert-mock-123",
+            "parameters": {"SerialNumber": serial},
+        })
+
+    def test_05_mcu_uid_is_the_identity(self):
+        """A unit presenting its MCU UID is provisioned under that exact id (thing name == dev_id == pump id)."""
+        resp = self._hook(self.uid_serial)
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+
+        self.assertTrue(data["allowProvisioning"], data)
+        self.assertEqual(data["parameterOverrides"]["ThingName"], self.uid_serial)
+        self.assertIsNotNone(self.db.query(Pump).filter(Pump.id == self.uid_serial).first())
+
+        # and a second attempt is a replay, as for an IMEI
+        again = self._hook(self.uid_serial).json()
+        self.assertFalse(again["allowProvisioning"])
+        self.assertIn("already been claimed", again.get("error", ""))
+
+    def test_06_mcu_uid_listed_twice_is_refused(self):
+        """mcu_uid is not unique in the table: guessing which entry is meant would hand out the wrong identity."""
+        data = self._hook(self.dup_uid).json()
+        self.assertFalse(data["allowProvisioning"])
+        self.assertIn("more than one", data.get("error", ""))
+
+    def test_07_serial_that_cannot_be_a_thing_name_is_refused(self):
+        """A bad inventory value fails here, legibly, instead of as an opaque AWS error mid-provisioning."""
+        for bad in ("has space", "semi;colon", "x" * 51):
+            data = self._hook(bad).json()
+            self.assertFalse(data["allowProvisioning"], bad)
+            self.assertIn("valid thing name", data.get("error", ""), bad)
 
 if __name__ == "__main__":
     unittest.main()

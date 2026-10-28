@@ -17,6 +17,10 @@ TICK_SECONDS = float(os.environ.get("TICK_SECONDS", "3.0"))
 #   f2      firmware F2: layer-B answers that carry the command's cid, "delivered" then "acknowledged"
 #   silent  receives commands and never answers (what a pump with a dead controller looks like)
 SIM_FIRMWARE = os.environ.get("SIM_FIRMWARE", "legacy").lower()
+# Random faults (about 2% of ticks while a pump runs) are for exercising the alert screens. They are OFF unless
+# SIM_RANDOM_FAULTS=on, because each one raises an alert that stays open until someone resolves it: left running, a demo
+# pump collects dozens a day and the app's bell shows a number nobody can account for.
+SIM_RANDOM_FAULTS = os.environ.get("SIM_RANDOM_FAULTS", "off").strip().lower() in ("1", "on", "true", "yes")
 
 PUMP_DEVICES = [
     {"id": "PUMP-4G-3P-8821", "hp": 15.0, "is_running": True, "seq": 1000, "rt": 1450, "profile": "ac_3ph"},
@@ -135,7 +139,8 @@ def answer_commands(client, pump, fault):
 def simulate_loop():
     print(f"📡 Starting AgriPump Multi-Device Simulator...")
     print(f"Target API: {API_BASE}/telemetry | Tick rate: {TICK_SECONDS}s per fleet cycle")
-    print(f"Simulating {len(PUMP_DEVICES)} devices: {[p['id'] for p in PUMP_DEVICES]}\n")
+    print(f"Simulating {len(PUMP_DEVICES)} devices: {[p['id'] for p in PUMP_DEVICES]}")
+    print(f"Random faults: {'ON' if SIM_RANDOM_FAULTS else 'off (set SIM_RANDOM_FAULTS=on to exercise alerts)'}\n")
     
     # Sequence numbers are de-duplicated per device by the API: start from the clock so a restart never reuses them.
     for p in PUMP_DEVICES:
@@ -154,7 +159,7 @@ def simulate_loop():
                 if has_command_channel:
                     has_command_channel = answer_commands(client, p, active_faults[pid])
                     if not has_command_channel:
-                        print("ℹ️ API has no device command channel (IOT_PUBLISH_MODE is not outbox): commands will not be collected.")
+                        print("ℹ️ API has no device command channel (IOT_PUBLISH_MODE is not outbox or both): commands will not be collected.")
                 
                 profile = p.get("profile", "ac_3ph")
                 is_running = p["is_running"]
@@ -164,7 +169,7 @@ def simulate_loop():
                     sun_factor = get_sun_factor()
 
                     # 2% chance of random VFD fault injection while running in daylight
-                    if is_running and sun_factor > 0.02 and random.random() < 0.02 and fault == 0:
+                    if SIM_RANDOM_FAULTS and is_running and sun_factor > 0.02 and random.random() < 0.02 and fault == 0:
                         f_item = random.choice(VFD_FAULT_CODES)
                         fault = f_item["code"]
                         active_faults[pid] = fault
@@ -240,7 +245,7 @@ def simulate_loop():
                         i_r, i_y, i_b = 0.0, 0.0, 0.0
 
                     # 2% chance of random fault injection while running
-                    if is_running and random.random() < 0.02 and fault == 0:
+                    if SIM_RANDOM_FAULTS and is_running and random.random() < 0.02 and fault == 0:
                         f_item = random.choice(FAULT_CODES)
                         fault = f_item["code"]
                         active_faults[pid] = fault

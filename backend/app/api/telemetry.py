@@ -245,7 +245,7 @@ def ingest_telemetry(
 # with the same ack frame it would publish. Both go through the exact same lifecycle code.
 # ---------------------------------------------------------------------------
 def _outbox_device(db: Session, x_device_id: Optional[str], x_device_key: Optional[str]) -> Pump:
-    if settings.publish_mode() != "outbox":
+    if settings.publish_mode() not in ("outbox", "both"):
         raise HTTPException(status_code=404, detail="Not found")
     if not x_device_id:
         raise HTTPException(status_code=400, detail="X-Device-Id is required")

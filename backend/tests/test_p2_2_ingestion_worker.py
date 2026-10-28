@@ -26,7 +26,7 @@ from app.models import (
     Pump, TelemetryHistory, FaultLog, User, DeviceBatch, BatchImei,
     FaultCodeCatalog,
 )
-from app.workers.ingest import frame_kind, normalise, process_batch
+from app.workers.ingest import frame_kind, normalise, parse_fault, parse_vfd, process_batch
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 TEST_DEVICE_ID = "IMEI_TEST_INGEST_001"
@@ -132,8 +132,123 @@ class TestFrameKinds:
         assert frame_kind({"cmd": "reg", "dev_id": "0123456789ABCDEF01234567", "fw": "1.0.367"}) == "registration"
         for cmd in ("heartbeat", "pong", "ping", "net_status", "reg_ack", "HEARTBEAT"):
             assert frame_kind({"cmd": cmd}) == "liveness", cmd
-        for cmd in ("fault", "settings", "nonsense"):
+        for cmd in ("settings", "nonsense"):
             assert frame_kind({"cmd": cmd}) == "unknown", cmd
+
+    def test_a_trip_is_a_fault_in_either_shape_and_not_a_reading(self):
+        assert frame_kind({"cmd": "fault", "code": 5, "vl": [415, 0, 410], "i": [2, 0, 2]}) == "fault"
+        assert frame_kind({"v": 1, "ts": 1766001234, "type": "TRIP", "code": 5}) == "fault"   # layer B event: no `cmd`
+
+
+SOLAR_FRAME = {"cmd": "status", "mot": 1, "st": 2, "flt": 0, "rt": 600,
+               "vfd": {"hz": 49.8, "i_out": 10.9, "v_ac": 412.5, "v_dc": 679.0, "kw": 5.45, "status": "RUNNING", "fault_code": 0}}
+
+
+class TestSolarReadings:
+    """A solar drive's `vfd` object, no DB needed."""
+
+    def test_the_drive_is_read_from_a_legacy_frame_and_from_the_v1_envelope(self):
+        legacy, _ = normalise(SOLAR_FRAME, TEST_CLIENT_ID)
+        assert legacy.vfd == {"hz": 49.8, "i_out": 10.9, "v_ac": 412.5, "v_dc": 679.0, "kw": 5.45, "status": "RUNNING", "fault_code": 0}
+        assert legacy.v_ry is None, "a solar pump sends no three-phase voltages"
+        v1, _ = normalise({"v": 1, "ts": 1766000000, "seq": 9, "st": {"mot": 1, "state": 2, "fault": 0}, "vfd": SOLAR_FRAME["vfd"]}, TEST_CLIENT_ID)
+        assert v1.vfd["kw"] == 5.45 and v1.pump_on is True
+
+    def test_a_bad_value_is_dropped_and_the_rest_of_the_reading_is_kept(self):
+        vfd = parse_vfd({"hz": 49.8, "kw": 9999, "v_dc": "abc", "i_out": -3, "status": "RUNNING", "fault_code": 123456})
+        assert vfd == {"hz": 49.8, "i_out": None, "v_ac": None, "v_dc": None, "kw": None, "status": "RUNNING", "fault_code": None}
+
+    def test_nothing_usable_means_no_vfd(self):
+        for raw in (None, "x", [], {}, {"kw": "n/a"}):
+            assert parse_vfd(raw) is None, raw
+
+    def test_without_mot_the_drive_decides_whether_the_motor_is_on(self):
+        running, _ = normalise({"cmd": "status", "vfd": {"status": "RUNNING", "hz": 0}}, TEST_CLIENT_ID)
+        stopped, _ = normalise({"cmd": "status", "vfd": {"status": "STOPPED", "hz": 50}}, TEST_CLIENT_ID)
+        by_frequency, _ = normalise({"cmd": "status", "vfd": {"hz": 30.0}}, TEST_CLIENT_ID)
+        assert (running.pump_on, stopped.pump_on, by_frequency.pump_on) == (True, False, True)
+
+    def test_a_drive_fault_code_wins_over_the_devices_own_flt(self):
+        telemetry, _ = normalise({**SOLAR_FRAME, "mot": 0, "flt": 3, "vfd": {**SOLAR_FRAME["vfd"], "fault_code": 105}}, TEST_CLIENT_ID)
+        assert (telemetry.fault_active, telemetry.fault_code) == (True, 105)
+        plain, _ = normalise({**SOLAR_FRAME, "flt": 3}, TEST_CLIENT_ID)
+        assert plain.fault_code == 3, "no drive fault: the device's own code stands"
+
+
+class TestSolarPumpThroughTheWorker:
+    """process_batch with a SOLAR_VFD pump and an AC pump: the readings reach telemetry_history and the live snapshot."""
+
+    SOLAR_ID = "IMEI_TEST_SOLAR_001"
+
+    @classmethod
+    def setup_class(cls):
+        from sqlalchemy import text as _text
+        cls.db: Session = SessionLocal()
+        cls.db.execute(_text("SET app.bypass_rls = 'on';"))
+        owner = cls.db.query(User).filter(User.role == "superadmin").first()
+        cls.db.query(Pump).filter(Pump.id == cls.SOLAR_ID).delete()
+        cls.db.add(Pump(id=cls.SOLAR_ID, name="Solar ingest test", status="STOPPED", owner_user_id=owner.id, hierarchy_path="SA",
+                        device_type="SOLAR_VFD"))
+        cls.db.commit()
+
+    @classmethod
+    def teardown_class(cls):
+        cls.db.query(TelemetryHistory).filter(TelemetryHistory.pump_id == cls.SOLAR_ID).delete()
+        cls.db.query(Pump).filter(Pump.id == cls.SOLAR_ID).delete()
+        cls.db.commit()
+        cls.db.close()
+
+    def test_the_drive_readings_are_stored_and_the_pump_is_running(self):
+        frame = {**SOLAR_FRAME, "seq": 424242}
+        handled = asyncio.run(process_batch([_make_sqs_msg(frame, client_id=self.SOLAR_ID, receipt="r_solar")]))
+        assert handled == ["r_solar"]
+        self.db.expire_all()
+        row = self.db.query(TelemetryHistory).filter(TelemetryHistory.pump_id == self.SOLAR_ID, TelemetryHistory.seq == 424242).one()
+        assert (float(row.vfd_hz), float(row.vfd_kw), float(row.vfd_v_dc), row.vfd_status, row.vfd_fault_code) == (49.8, 5.45, 679.0, "RUNNING", 0)
+        assert row.v_ry is None and row.pump_on is True
+        assert self.db.query(Pump).filter(Pump.id == self.SOLAR_ID).one().status == "RUNNING"
+
+    def test_a_drive_fault_makes_the_pump_faulted(self):
+        frame = {**SOLAR_FRAME, "mot": 0, "seq": 424243, "vfd": {**SOLAR_FRAME["vfd"], "hz": 0, "kw": 0, "status": "FAULT", "fault_code": 104}}
+        asyncio.run(process_batch([_make_sqs_msg(frame, client_id=self.SOLAR_ID, receipt="r_solar_fault")]))
+        self.db.expire_all()
+        assert self.db.query(Pump).filter(Pump.id == self.SOLAR_ID).one().status == "FAULT"
+
+    def test_an_ac_pump_ignores_a_vfd_object(self):
+        TestProcessBatch.setup_class()
+        try:
+            asyncio.run(process_batch([_make_sqs_msg({**SOLAR_FRAME, "seq": 424244, "dev_id": TEST_DEVICE_ID}, receipt="r_ac_with_vfd")]))
+            db = TestProcessBatch.db
+            db.expire_all()
+            row = db.query(TelemetryHistory).filter(TelemetryHistory.pump_id == TEST_DEVICE_ID, TelemetryHistory.seq == 424244).one()
+            assert row.vfd_hz is None and row.vfd_kw is None
+        finally:
+            TestProcessBatch.teardown_class()
+
+
+class TestParseFault:
+    """The two trip shapes, no DB needed."""
+
+    NOW = datetime(2026, 10, 28, 6, 0, tzinfo=timezone.utc)
+
+    def test_layer_a(self):
+        code, readings, at = parse_fault({"cmd": "fault", "code": 5, "desc": "DryRun", "vl": [415, 0, 410], "i": [2, 0, 2]}, self.NOW)
+        assert code == 5
+        assert readings == (415.0, 0.0, 410.0, 2.0, 0.0, 2.0)
+        assert at == self.NOW, "layer A has no clock: stamped on arrival"
+
+    def test_layer_b_event_uses_its_own_timestamp_and_snapshot(self):
+        code, readings, at = parse_fault(
+            {"v": 1, "ts": 1766001234, "type": "TRIP", "code": 8, "snapshot": {"vl": [400, 401, 402], "i": [30, 29, 31]}}, self.NOW)
+        assert code == 8
+        assert readings == (400.0, 401.0, 402.0, 30.0, 29.0, 31.0)
+        assert at == datetime.fromtimestamp(1766001234, tz=timezone.utc)
+
+    def test_missing_short_or_garbage_readings_become_zero_and_a_bad_code_is_refused(self):
+        _, readings, _ = parse_fault({"cmd": "fault", "code": 3, "vl": [415], "i": ["x"]}, self.NOW)
+        assert readings == (415.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        for bad in ({"cmd": "fault"}, {"cmd": "fault", "code": 0}, {"cmd": "fault", "code": 999}, {"cmd": "fault", "code": "abc"}):
+            assert parse_fault(bad, self.NOW) is None, bad
 
 
 class TestProcessBatch:
@@ -255,6 +370,46 @@ class TestProcessBatch:
         handled = self._run(process_batch([_make_sqs_msg({**LEGACY_PAYLOAD, "cmd": "status", "seq": 8801}, receipt="r_status")]))
         assert handled == ["r_status"]
         assert self._rows() == 1
+        assert self._pump().status == "RUNNING"
+
+    def _faults(self):
+        self.db.expire_all()
+        return self.db.query(FaultLog).filter(FaultLog.pump_id == TEST_DEVICE_ID).order_by(FaultLog.id).all()
+
+    def test_a_fault_frame_logs_the_trip_at_once_and_marks_the_pump_faulted(self):
+        self.db.query(FaultLog).filter(FaultLog.pump_id == TEST_DEVICE_ID).delete()
+        self._reset(status="RUNNING")
+        frame = {"cmd": "fault", "code": 5, "desc": "DryRun", "vl": [415, 0, 410], "i": [2, 0, 2]}
+        handled = self._run(process_batch([_make_sqs_msg(frame, receipt="r_trip")]))
+        assert handled == ["r_trip"]
+        rows = self._faults()
+        assert [(r.fault_code, float(r.v_yb), float(r.i_r)) for r in rows] == [(5, 0.0, 2.0)]
+        assert self._pump().status == "FAULT"
+        assert self._rows() == 0, "a trip is not a telemetry row"
+
+    def test_a_layer_b_trip_event_keeps_its_own_time(self):
+        self.db.query(FaultLog).filter(FaultLog.pump_id == TEST_DEVICE_ID).delete()
+        self._reset(status="RUNNING")
+        event = {"v": 1, "ts": 1766001234, "type": "TRIP", "code": 5, "snapshot": {"vl": [415, 0, 410], "i": [2, 0, 2]}}
+        self._run(process_batch([_make_sqs_msg(event, receipt="r_trip_b")]))
+        (row,) = self._faults()
+        assert row.occurred_at == datetime.fromtimestamp(1766001234, tz=timezone.utc)
+
+    def test_a_fault_with_a_code_nobody_defined_is_consumed_and_changes_nothing(self):
+        self.db.query(FaultLog).filter(FaultLog.pump_id == TEST_DEVICE_ID).delete()
+        self._reset(status="RUNNING")
+        handled = self._run(process_batch([_make_sqs_msg({"cmd": "fault", "code": 200}, receipt="r_trip_x")]))
+        assert handled == ["r_trip_x"], "consumed, so it is not delivered again"
+        assert self._faults() == []
+        assert self._pump().status == "RUNNING"
+
+    def test_a_fault_naming_another_device_is_rejected(self):
+        self.db.query(FaultLog).filter(FaultLog.pump_id == TEST_DEVICE_ID).delete()
+        self._reset(status="RUNNING")
+        frame = {"cmd": "fault", "code": 5, "dev_id": "EVIL_DEVICE"}
+        handled = self._run(process_batch([_make_sqs_msg(frame, receipt="r_trip_spoof")]))
+        assert handled == ["r_trip_spoof"]
+        assert self._faults() == []
         assert self._pump().status == "RUNNING"
 
     def test_valid_v1_message_inserted(self):

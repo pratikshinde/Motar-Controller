@@ -11,6 +11,7 @@ The topic and message follow SRS §6.3 (layer B):
 Which channel is used is `settings.publish_mode()`:
     aws     AWS IoT Core data plane (boto3 `iot-data`, credentials from the environment / instance role)
     outbox  nothing leaves the server; the local simulator collects commands over HTTP (development only)
+    both    AWS IoT Core as above AND the outbox, so a simulated pump answers while AWS sees the command (development only)
     off     nothing is sent and the command ends FAILED: the pump was never asked
 """
 from __future__ import annotations
@@ -64,6 +65,14 @@ class Publisher(Protocol):
         """Hands `message` to the broker. Raises PublishError if the broker did not take it."""
 
 
+def apply_network_preference() -> None:
+    """IOT_FORCE_IPV4: make urllib3 (which boto3 uses) resolve IPv4 only. Call before the first AWS connection."""
+    if settings.IOT_FORCE_IPV4:
+        import urllib3.util.connection as urllib3_connection
+
+        urllib3_connection.HAS_IPV6 = False
+
+
 class AwsIotPublisher:
     """AWS IoT Core data plane. The client is built on first use so the app starts without AWS configured."""
 
@@ -73,6 +82,7 @@ class AwsIotPublisher:
     def _get_client(self):
         if self._client is None:
             try:
+                apply_network_preference()
                 import boto3
 
                 kwargs: Dict[str, Any] = {"region_name": settings.AWS_REGION}
@@ -101,6 +111,21 @@ class OutboxPublisher:
         logger.info("Outbox: %s <- %s", topic, message)
 
 
+class BothPublisher:
+    """Development: publishes to AWS IoT Core and also leaves the command in the outbox for the local simulator.
+
+    AWS is tried first and its refusal fails the command, exactly as in `aws` mode. The simulator's answer travels over
+    HTTP, not through AWS, so this shows a command reaching AWS but does not prove the return path."""
+
+    def __init__(self, aws: Optional[Publisher] = None) -> None:
+        self._aws = aws or AwsIotPublisher()
+        self._outbox = OutboxPublisher()
+
+    def publish(self, topic: str, message: Dict[str, Any]) -> None:
+        self._aws.publish(topic, message)
+        self._outbox.publish(topic, message)
+
+
 class DisabledPublisher:
     def publish(self, topic: str, message: Dict[str, Any]) -> None:
         raise PublishError("publisher_disabled", "IOT_PUBLISH_MODE is off: no command channel to pumps is configured")
@@ -113,7 +138,7 @@ def get_publisher() -> Publisher:
     global _publisher
     if _publisher is None:
         mode = settings.publish_mode()
-        _publisher = {"aws": AwsIotPublisher, "outbox": OutboxPublisher, "off": DisabledPublisher}[mode]()
+        _publisher = {"aws": AwsIotPublisher, "outbox": OutboxPublisher, "both": BothPublisher, "off": DisabledPublisher}[mode]()
         logger.info("Command publisher: %s", mode)
     return _publisher
 

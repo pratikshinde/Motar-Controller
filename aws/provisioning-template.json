@@ -1,0 +1,34 @@
+{
+  "Parameters": {
+    "SerialNumber": { "Type": "String" },
+    "ThingName": { "Type": "String" },
+    "ThingGroupName": { "Type": "String" },
+    "AWS::IoT::Certificate::Id": { "Type": "String" }
+  },
+  "Resources": {
+    "certificate": {
+      "Type": "AWS::IoT::Certificate",
+      "Properties": {
+        "CertificateId": { "Ref": "AWS::IoT::Certificate::Id" },
+        "Status": "ACTIVE"
+      }
+    },
+    "policy": {
+      "Type": "AWS::IoT::Policy",
+      "Properties": { "PolicyName": "agripump-device-policy" }
+    },
+    "thing": {
+      "Type": "AWS::IoT::Thing",
+      "OverrideSettings": {
+        "AttributePayload": "MERGE",
+        "ThingGroups": "DO_NOTHING",
+        "ThingTypeName": "REPLACE"
+      },
+      "Properties": {
+        "ThingName": { "Ref": "ThingName" },
+        "AttributePayload": { "serial": { "Ref": "SerialNumber" } },
+        "ThingGroups": [{ "Ref": "ThingGroupName" }]
+      }
+    }
+  }
+}

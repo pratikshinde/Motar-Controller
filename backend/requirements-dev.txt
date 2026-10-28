@@ -4,3 +4,4 @@ ruff>=0.6.0
 pip-audit>=2.7.0
 alembic>=1.13.0
 mypy>=1.11.0
+paho-mqtt>=2.0.0     # simulator/virtual_pump.py: MQTT over mutual TLS to AWS IoT Core

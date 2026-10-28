@@ -21,7 +21,9 @@ from app.database import SessionLocal
 from app.models import AuditLog, Command, Pump, TelemetryHistory, User
 from app.services import command_service as cs
 from app.services.command_dispatch import announcements
-from app.services.iot_publisher import PublishError, build_envelope, command_topic, set_publisher
+from app.services.iot_publisher import (
+    BothPublisher, PublishError, apply_network_preference, build_envelope, command_topic, set_publisher,
+)
 from app.services.jwt_auth import hash_secret, sign_token
 from app.workers.ingest import process_batch
 
@@ -550,6 +552,28 @@ class TestDeviceChannelAndIngest(LifecycleBase):
         self.assertEqual(client.get("/api/v1/telemetry/commands", headers={"X-Device-Id": pump.id}).status_code, 404)
         self.assertEqual(client.post("/api/v1/telemetry/ack", json={"cmd": "ack", "ok": 1}, headers={"X-Device-Id": pump.id}).status_code, 404)
 
+    def test_both_mode_publishes_to_aws_and_keeps_the_simulator_channel(self):
+        settings.IOT_PUBLISH_MODE = "both"
+        aws = RecordingPublisher()
+        set_publisher(BothPublisher(aws=aws))
+        pump = self.new_pump()
+        cid = self.send(pump, "STOP").json()["command"]["cid"]
+        self.assertEqual(self.row(cid).status, cs.SENT)
+        self.assertEqual([(topic, message["cid"]) for topic, message in aws.sent], [(command_topic(pump.id), cid)])
+        got = client.get("/api/v1/telemetry/commands", headers={"X-Device-Id": pump.id})
+        self.assertEqual(got.status_code, 200, got.text)
+        self.assertEqual([m["cid"] for m in got.json()["commands"]], [cid])
+
+    def test_both_mode_fails_the_command_when_aws_refuses_it(self):
+        settings.IOT_PUBLISH_MODE = "both"
+        set_publisher(BothPublisher(aws=RecordingPublisher(fail_with="publish_failed")))
+        pump = self.new_pump()
+        cid = self.send(pump, "STOP").json()["command"]["cid"]
+        row = self.row(cid)
+        self.assertEqual((row.status, row.failure_reason), (cs.FAILED, "publish_failed"))
+        got = client.get("/api/v1/telemetry/commands", headers={"X-Device-Id": pump.id})
+        self.assertEqual(got.json()["commands"], [], "a command AWS refused is not offered to the simulator either")
+
     def test_ack_endpoint_refuses_frames_that_are_not_acks(self):
         settings.IOT_PUBLISH_MODE = "outbox"
         pump = self.new_pump()
@@ -604,6 +628,33 @@ class TestStatusEndpoints(LifecycleBase):
         self.assertEqual(env["actor"], "system")
         self.assertEqual(env["params"], {"on_duration_minutes": 5})
         self.assertEqual(command_topic("ABC"), "devices/ABC/commands")
+
+
+class TestPublisherSettings(unittest.TestCase):
+    def test_both_is_a_development_convenience_only(self):
+        saved = (settings.IOT_PUBLISH_MODE, settings.ENV)
+        try:
+            settings.IOT_PUBLISH_MODE = "both"
+            settings.ENV = "development"
+            self.assertEqual(settings.publish_mode(), "both")
+            settings.ENV = "test"
+            self.assertEqual(settings.publish_mode(), "aws", "anywhere but development, 'both' means the real broker only")
+        finally:
+            settings.IOT_PUBLISH_MODE, settings.ENV = saved
+
+    def test_force_ipv4_makes_urllib3_skip_ipv6(self):
+        import urllib3.util.connection as urllib3_connection
+
+        saved = (settings.IOT_FORCE_IPV4, urllib3_connection.HAS_IPV6)
+        try:
+            settings.IOT_FORCE_IPV4, urllib3_connection.HAS_IPV6 = False, True
+            apply_network_preference()
+            self.assertTrue(urllib3_connection.HAS_IPV6, "off by default: nothing changes")
+            settings.IOT_FORCE_IPV4 = True
+            apply_network_preference()
+            self.assertFalse(urllib3_connection.HAS_IPV6)
+        finally:
+            settings.IOT_FORCE_IPV4, urllib3_connection.HAS_IPV6 = saved
 
 
 if __name__ == "__main__":

@@ -91,8 +91,16 @@ class Settings(BaseSettings):
 
     # Commands to pumps (P2.4).
     # IOT_PUBLISH_MODE: "aws" = AWS IoT Core data plane; "outbox" = held for the local simulator to collect over HTTP
-    # (development only); "off" = nothing is sent and every command ends FAILED. Empty: outbox in development, else aws.
+    # (development only); "both" = publish to AWS AND hold for the local simulator, so a demo pump without hardware still
+    # answers while the command is visible in AWS (development only; anywhere else it means "aws");
+    # "off" = nothing is sent and every command ends FAILED. Empty: outbox in development, else aws.
     IOT_PUBLISH_MODE: str = ""
+    # AWS endpoints are dual-stack. On a network with no working IPv6 the first connection waits about 20 s for IPv6 to
+    # time out before falling back to IPv4, so a command reaches AWS 20 s late. True makes the AWS clients use IPv4 only.
+    IOT_FORCE_IPV4: bool = False
+    # The SQS queue the IoT Rule fills with device messages; python -m app.workers.ingest reads it (an environment
+    # variable of the same name wins).
+    SQS_INGEST_URL: str = ""
     AWS_REGION: str = "ap-south-1"
     IOT_DATA_ENDPOINT: str = ""          # e.g. xxxxxxxx-ats.iot.ap-south-1.amazonaws.com (optional; boto3 finds it otherwise)
     COMMAND_TTL_SECONDS: int = 120       # how long a command stays valid; the bridge refuses it after `expiry`
@@ -121,6 +129,8 @@ class Settings(BaseSettings):
         mode = (self.IOT_PUBLISH_MODE or "").strip().lower()
         if mode in ("aws", "outbox", "off"):
             return mode
+        if mode == "both" and self.ENV == "development":
+            return "both"
         return "outbox" if self.ENV == "development" else "aws"
 
     def get_database_url(self) -> str:

@@ -1,6 +1,7 @@
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import hmac
+import re
 from fastapi import APIRouter, Depends, HTTPException, Body, Header
 from app.config import settings
 from sqlalchemy.orm import Session
@@ -11,6 +12,10 @@ from app.api.deps import get_current_user
 from app.services import brand_service
 
 router = APIRouter(tags=["Factory Batches & Provisioning"])
+
+# The serial a device presents becomes its IoT thing name, its MQTT client id and `pumps.id` (SRS 6.7 / FR-SEC-030).
+# AWS allows these characters in a thing name; pumps.id is 50 characters.
+_THING_NAME = re.compile(r"^[A-Za-z0-9:_-]{1,50}$")
 
 def serialize_batch(b: DeviceBatch, db: Session) -> Dict[str, Any]:
     imported_count = db.query(func.count(BatchImei.id)).filter(BatchImei.batch_id == b.id).scalar() or 0
@@ -186,6 +191,10 @@ def fleet_provisioning_pre_hook(
     AWS IoT Fleet Provisioning pre-provisioning hook (SRS §5.2.1 / P2.1).
     Validates that the connecting device's serial exists in whitelist batch,
     is not revoked, and has not already been claimed.
+
+    Identity: the serial the device presents is its `dev_id`, and it is used verbatim as the thing name, the MQTT client
+    id and the pump id. It is matched against the factory whitelist by MCU UID first (SRS 5.2.1) and by IMEI second.
+    The ingest worker looks a pump up by the authenticated client id, so these four must be one string.
     """
     # Otherwise this is a public oracle for which serial numbers are valid. Outside development the hook's own
     # secret is mandatory: the Lambda that calls it sends it in X-Hook-Secret.
@@ -195,7 +204,7 @@ def fleet_provisioning_pre_hook(
             raise HTTPException(status_code=401, detail="Invalid provisioning hook credentials")
 
     params = payload.get("parameters", {})
-    serial = params.get("SerialNumber") or params.get("serial") or params.get("imei")
+    serial = str(params.get("SerialNumber") or params.get("serial") or params.get("imei") or "").strip()
 
     if not serial:
         return {
@@ -204,8 +213,25 @@ def fleet_provisioning_pre_hook(
             "error": "Missing SerialNumber in provisioning parameters"
         }
 
-    # Query factory whitelist
-    imei_record = db.query(BatchImei).filter(BatchImei.imei == serial).first()
+    if not _THING_NAME.match(serial):
+        return {
+            "allowProvisioning": False,
+            "parameterOverrides": {},
+            "error": "Serial is not a valid thing name (letters, digits, ':', '_' and '-' only, at most 50 characters)"
+        }
+
+    # Query factory whitelist: the MCU UID is the device's own id; the IMEI is the fallback for units listed by IMEI.
+    # mcu_uid is not unique in the table, so a UID listed twice is refused rather than guessed at.
+    matches = db.query(BatchImei).filter(BatchImei.mcu_uid == serial).all()
+    if not matches:
+        matches = db.query(BatchImei).filter(BatchImei.imei == serial).all()
+    if len(matches) > 1:
+        return {
+            "allowProvisioning": False,
+            "parameterOverrides": {},
+            "error": f"Device serial '{serial}' matches more than one whitelist entry"
+        }
+    imei_record = matches[0] if matches else None
     if not imei_record:
         return {
             "allowProvisioning": False,
@@ -234,7 +260,7 @@ def fleet_provisioning_pre_hook(
     db.execute(text("SET app.bypass_rls = 'on';"))
 
     # Ensure pump record exists in state COMMISSIONED first to satisfy FK constraint
-    pump_id = f"PUMP-{serial}"
+    pump_id = serial
     pump = db.query(Pump).filter(Pump.id == pump_id).first()
     if not pump:
         owner_id = batch.created_by
