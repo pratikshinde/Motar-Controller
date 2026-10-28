@@ -119,7 +119,7 @@ def _seed_swati(db, orgs, by_phone, pass_hash):
     ajanta = db.query(AppBrand).filter(AppBrand.key == "ajanta").one()
     swati = db.query(AppBrand).filter(AppBrand.key == "swati").first()
     if swati is None:
-        swati = AppBrand(key="swati", name="Swati Pump Controller", short_name="SWATI", android_package="com.swati.pumpcontroller",
+        swati = AppBrand(key="swati", name="SolarLogger", short_name="SolarLogger", android_package="com.swati.pumpcontroller",
                          primary_color="#1B4FB8", features={})
         db.add(swati)
         db.flush()

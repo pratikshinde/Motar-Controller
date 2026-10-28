@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Rect, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { SwatiLogo } from '../shared/ui/SwatiLogo';
+import { brand } from '@/config/brand';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -89,10 +90,10 @@ export const SplashScreenSwati: React.FC<SplashScreenProps> = ({ onFinish }) => 
       </View>
 
       <SafeAreaView style={styles.safe}>
-        {/* Top Swati Branding */}
+        {/* Top brand mark */}
         <View style={styles.topSection}>
           <SwatiLogo size={74} />
-          <Text style={styles.brandTitle}>SWATI</Text>
+          <Text style={styles.brandTitle}>{brand.shortName}</Text>
           <Text style={styles.tagline}>{t('splash.tagline')}</Text>
         </View>
 

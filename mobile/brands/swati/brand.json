@@ -1,9 +1,9 @@
 {
   "key": "swati",
-  "appName": "Swati Pump Controller",
-  "shortName": "SWATI",
-  "titleLine1": "SWATI",
-  "titleLine2": "PUMP CONTROLLER",
+  "appName": "SolarLogger",
+  "shortName": "SolarLogger",
+  "titleLine1": "SOLAR",
+  "titleLine2": "LOGGER",
   "design": "swati",
   "colors": {
     "primary": "#1565C0",

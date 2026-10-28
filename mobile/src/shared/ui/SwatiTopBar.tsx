@@ -3,6 +3,7 @@ import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Bell, Sparkles, User } from 'lucide-react-native';
 import { SwatiLogo } from './SwatiLogo';
+import { brand } from '@/config/brand';
 
 interface SwatiTopBarProps {
   farmerName?: string;
@@ -28,10 +29,7 @@ export const SwatiTopBar: React.FC<SwatiTopBarProps> = ({
           </View>
           <View>
             <View style={styles.brandTitleRow}>
-              <Text style={styles.brandTitle}>SWATI</Text>
-              <View style={styles.brandSubBadge}>
-                <Text style={styles.brandSubBadgeText}>SOLAR</Text>
-              </View>
+              <Text style={styles.brandTitle}>{brand.shortName}</Text>
             </View>
             <Text style={styles.brandTagline}>SMART PUMP CONTROLLER</Text>
           </View>
@@ -121,18 +119,6 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: '900',
     letterSpacing: 1.8,
-  },
-  brandSubBadge: {
-    backgroundColor: '#F59E0B',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 6,
-  },
-  brandSubBadgeText: {
-    color: '#78350F',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.5,
   },
   brandTagline: {
     color: '#93C5FD',

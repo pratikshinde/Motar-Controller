@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { brand } from '@/config/brand';
 
 interface SwatiLogoProps {
   size?: number;
@@ -51,7 +52,7 @@ export const SwatiLogo: React.FC<SwatiLogoProps> = ({
 
       {showText && (
         <View style={styles.textWrap}>
-          <Text style={[styles.brandText, { color: textColor }]}>SWATI</Text>
+          <Text style={[styles.brandText, { color: textColor }]}>{brand.shortName}</Text>
           {tagline ? <Text style={styles.tagline}>{tagline}</Text> : null}
         </View>
       )}

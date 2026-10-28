@@ -16,6 +16,7 @@ import { radius, space, cardShadow } from '@/shared/theme';
 import { useDirection } from '@/shared/i18n/useDirection';
 import { useTranslation } from 'react-i18next';
 import { SwatiLogo } from '@/shared/ui/SwatiLogo';
+import { brand } from '@/config/brand';
 
 interface AuthShellProps {
   onBack?: () => void;
@@ -69,7 +70,7 @@ export const AuthShellSwati: React.FC<AuthShellProps> = ({ onBack, showLogo = tr
           {showLogo && (
             <View style={styles.brandHero}>
               <SwatiLogo size={62} />
-              <Text style={styles.brandTitle}>SWATI</Text>
+              <Text style={styles.brandTitle}>{brand.shortName}</Text>
               <Text style={styles.brandSubtitle}>{t('splash.tagline')}</Text>
             </View>
           )}
