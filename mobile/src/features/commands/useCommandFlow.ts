@@ -12,6 +12,7 @@ import type { PumpResponse } from '@/api/generated/model';
 import { CommandAction, cooldownSecondsLeft, useCommands } from '@/state/commands';
 import { cooldownSecondsFrom } from '@/shared/i18n/errors';
 import { useNow } from '@/shared/hooks/useOnline';
+import { pumpState } from '@/features/pumps/model';
 import { commandProgress, isFinished, Progress } from './progress';
 
 /** The server's own pause between two commands to one pump (command_service.COMMAND_COOLDOWN_SECONDS). */
@@ -34,7 +35,9 @@ export interface CommandFlow {
   dismiss: () => void;
 }
 
-export function useCommandFlow(pump: Pick<PumpResponse, 'id' | 'pump_on' | 'last_seen_at'>): CommandFlow {
+export function useCommandFlow(
+  pump: Pick<PumpResponse, 'id' | 'pump_on' | 'last_seen_at' | 'status' | 'fault_active'>,
+): CommandFlow {
   const qc = useQueryClient();
   const attempt = useCommands((s) => s.attempts[pump.id]);
   const cooldownUntil = useCommands((s) => s.cooldownUntil[pump.id]);
@@ -60,8 +63,9 @@ export function useCommandFlow(pump: Pick<PumpResponse, 'id' | 'pump_on' | 'last
       expectedPumpOn: attempt.action === 'START',
       pumpOn: pump.pump_on,
       lastReadingAtMs: ms(pump.last_seen_at),
+      pumpFaulted: pumpState(pump, now) === 'fault',
     });
-  }, [attempt, cmd.data, now, pump.pump_on, pump.last_seen_at]);
+  }, [attempt, cmd.data, now, pump]);
 
   // The pump's own data refreshes slowly and the live push may not reach this phone, so the screen would show
   // "done" next to the old state. Re-read the pump with every command poll, and again shortly after the end

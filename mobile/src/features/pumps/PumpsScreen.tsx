@@ -3,6 +3,7 @@ import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useRealtimeStatus } from '@/realtime/RealtimeProvider';
 import { AlertTriangle, ChevronRight, Droplets, Settings2, WifiOff, Wifi } from 'lucide-react-native';
 import { useListPumps } from '@/api/generated/farmer';
 import type { PumpResponse } from '@/api/generated/model';
@@ -18,9 +19,9 @@ import { formatMinutes, timeAgo } from '@/shared/i18n/format';
 import { useDirection } from '@/shared/i18n/useDirection';
 import { useNow } from '@/shared/hooks/useOnline';
 import { useStatusBar } from '@/shared/hooks/useStatusBar';
-import { useRealtimeStatus } from '@/realtime/RealtimeProvider';
 import { PumpScreen } from '@/features/pump/PumpScreen';
 import { brand } from '@/config/brand';
+import { ajantaHome } from '@/config/ajantaHome';
 import { useSelectedPump } from '@/state/selectedPump';
 import { PumpState, displayName, groupBySite, pumpState } from './model';
 
@@ -83,11 +84,11 @@ const PumpCard: React.FC<{ pump: PumpResponse; now: number; onOpen: () => void }
 export const PumpsScreen: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
-  const rt = useRealtimeStatus();
   const now = useNow(30_000);
   const [refreshing, setRefreshing] = useState(false);
   // Live updates arrive over the socket; poll only while it is down.
-  const q = useListPumps(undefined, { query: { refetchInterval: rt === 'open' ? false : 30_000 } });
+  const rt = useRealtimeStatus();
+  const q = useListPumps(undefined, { query: { refetchInterval: 12_000 } });
   useStatusBar('light');
   const selectedId = useSelectedPump((st) => st.id);
 
@@ -142,8 +143,8 @@ export const PumpsScreen: React.FC = () => {
   }
 
   if (pumps.length === 1) return <PumpScreen id={pumps[0].id} embedded />;
-  // Swati's home is always one pump (tap its card to switch); the list is the "My pumps" page.
-  if (brand.design === 'swati') return <PumpScreen key={selectedId ?? 'first'} id={pumps.find((p) => p.id === selectedId)?.id ?? pumps[0].id} embedded />;
+  // Swati's and Ajanta's home is always one pump (tap its card to switch); the list is the "My pumps" page.
+  if (brand.design === 'swati' || ajantaHome) return <PumpScreen key={selectedId ?? 'first'} id={pumps.find((p) => p.id === selectedId)?.id ?? pumps[0].id} embedded />;
 
   const showTitles = sections.some((s) => s.title);
   return (

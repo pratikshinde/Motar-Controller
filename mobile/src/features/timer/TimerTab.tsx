@@ -15,6 +15,8 @@ import { NumberField } from '@/shared/ui/NumberField';
 import { friendlyError, cooldownSecondsFrom } from '@/shared/i18n/errors';
 import { useNow, useOnline } from '@/shared/hooks/useOnline';
 import { canControl, displayName } from '@/features/pumps/model';
+import { ajantaHome } from '@/config/ajantaHome';
+import { AjantaTimerForm } from './TimerForm.ajanta';
 import { cooldownSecondsLeft, useCommands } from '@/state/commands';
 import { TIMER_LIMITS, TimerForm, TimerValue, clampTo, parseTimer, timerToRequest } from './validation';
 
@@ -121,56 +123,75 @@ export const TimerTab: React.FC<{ pump: PumpResponse }> = ({ pump }) => {
       {!canControl(pump) ? <Banner tone="danger" text={t('timer.remoteBlocked')} /> : null}
       {!online ? <Banner tone="warn" text={t('command.offlineBlock')} /> : null}
 
-      <Card>
-        <CardTitle icon={TimerIcon} title={t('timer.title')} />
-        <Text style={styles.intro}>{t('timer.intro')}</Text>
-        <View style={styles.fields}>
-          <NumberField
-            testID="timer-on"
-            label={t('timer.onLabel')}
-            hint={t('timer.range', TIMER_LIMITS.on)}
-            value={form.on}
-            onChange={(v) => set('on', v)}
-            onStep={(d) => step('on', d)}
-            error={errors.on ? t('timer.errorOn') : undefined}
-            lessLabel={t('common.less')}
-            moreLabel={t('common.more')}
-          />
-          <NumberField
-            testID="timer-off"
-            label={t('timer.offLabel')}
-            hint={t('timer.range', TIMER_LIMITS.off)}
-            value={form.off}
-            onChange={(v) => set('off', v)}
-            onStep={(d) => step('off', d)}
-            error={errors.off ? t('timer.errorOff') : undefined}
-            lessLabel={t('common.less')}
-            moreLabel={t('common.more')}
-          />
-          <NumberField
-            testID="timer-cycles"
-            label={t('timer.cyclesLabel')}
-            hint={`${t('timer.range', TIMER_LIMITS.cycles)} · ${t('timer.cyclesHint')}`}
-            value={form.cycles}
-            onChange={(v) => set('cycles', v)}
-            onStep={(d) => step('cycles', d)}
-            error={errors.cycles ? t('timer.errorCycles') : undefined}
-            lessLabel={t('common.less')}
-            moreLabel={t('common.more')}
-          />
-        </View>
-        {summary ? <Text style={styles.summary}>{t(summary.key, summary.params)}</Text> : null}
-        {failure ? <Banner tone="danger" text={friendlyError(failure, t, 'command')} testID="timer-error" /> : null}
-        {sentAt ? <Banner tone="info" text={t('timer.sentUnconfirmed')} testID="timer-sent" /> : null}
-        <View style={styles.action}>
-          <BigActionButton
-            testID="timer-save"
-            label={cooldownLeft > 0 ? t('command.cooldown', { seconds: cooldownLeft }) : t('timer.save')}
-            onPress={review}
-            disabled={blocked || cooldownLeft > 0}
-          />
-        </View>
-      </Card>
+      {ajantaHome ? (
+        <AjantaTimerForm
+          form={form}
+          errors={errors}
+          onChange={set}
+          onStep={step}
+          summary={summary ? t(summary.key, summary.params) : null}
+          saveLabel={cooldownLeft > 0 ? t('command.cooldown', { seconds: cooldownLeft }) : t('timer.save')}
+          saveDisabled={blocked || cooldownLeft > 0}
+          onSave={review}
+          notices={
+            <>
+              {failure ? <Banner tone="danger" text={friendlyError(failure, t, 'command')} testID="timer-error" /> : null}
+              {sentAt ? <Banner tone="info" text={t('timer.sentUnconfirmed')} testID="timer-sent" /> : null}
+            </>
+          }
+        />
+      ) : (
+        <Card>
+          <CardTitle icon={TimerIcon} title={t('timer.title')} />
+          <Text style={styles.intro}>{t('timer.intro')}</Text>
+          <View style={styles.fields}>
+            <NumberField
+              testID="timer-on"
+              label={t('timer.onLabel')}
+              hint={t('timer.range', TIMER_LIMITS.on)}
+              value={form.on}
+              onChange={(v) => set('on', v)}
+              onStep={(d) => step('on', d)}
+              error={errors.on ? t('timer.errorOn') : undefined}
+              lessLabel={t('common.less')}
+              moreLabel={t('common.more')}
+            />
+            <NumberField
+              testID="timer-off"
+              label={t('timer.offLabel')}
+              hint={t('timer.range', TIMER_LIMITS.off)}
+              value={form.off}
+              onChange={(v) => set('off', v)}
+              onStep={(d) => step('off', d)}
+              error={errors.off ? t('timer.errorOff') : undefined}
+              lessLabel={t('common.less')}
+              moreLabel={t('common.more')}
+            />
+            <NumberField
+              testID="timer-cycles"
+              label={t('timer.cyclesLabel')}
+              hint={`${t('timer.range', TIMER_LIMITS.cycles)} · ${t('timer.cyclesHint')}`}
+              value={form.cycles}
+              onChange={(v) => set('cycles', v)}
+              onStep={(d) => step('cycles', d)}
+              error={errors.cycles ? t('timer.errorCycles') : undefined}
+              lessLabel={t('common.less')}
+              moreLabel={t('common.more')}
+            />
+          </View>
+          {summary ? <Text style={styles.summary}>{t(summary.key, summary.params)}</Text> : null}
+          {failure ? <Banner tone="danger" text={friendlyError(failure, t, 'command')} testID="timer-error" /> : null}
+          {sentAt ? <Banner tone="info" text={t('timer.sentUnconfirmed')} testID="timer-sent" /> : null}
+          <View style={styles.action}>
+            <BigActionButton
+              testID="timer-save"
+              label={cooldownLeft > 0 ? t('command.cooldown', { seconds: cooldownLeft }) : t('timer.save')}
+              onPress={review}
+              disabled={blocked || cooldownLeft > 0}
+            />
+          </View>
+        </Card>
+      )}
 
       <Card>
         <CardTitle title={t('timer.current')} />

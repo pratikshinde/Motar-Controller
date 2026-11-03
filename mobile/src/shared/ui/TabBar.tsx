@@ -1,4 +1,5 @@
 import { brand } from '@/config/brand';
+import { ajantaHome } from '@/config/ajantaHome';
 import { TabBarSwati } from './TabBar.swati';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -105,4 +106,4 @@ const styles = StyleSheet.create({
 });
 
 
-export const TabBar: typeof TabBarClassic = brand.design === 'swati' ? TabBarSwati : TabBarClassic;
+export const TabBar: typeof TabBarClassic = brand.design === 'swati' || ajantaHome ? TabBarSwati : TabBarClassic;

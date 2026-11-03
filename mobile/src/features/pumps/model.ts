@@ -90,6 +90,20 @@ export function signalBars(dbm: number | null | undefined): number | null {
   return Math.max(0, Math.min(5, Math.floor((dbm + 110) / 12)));
 }
 
+export type GsmQuality = 'excellent' | 'good' | 'fair' | 'poor' | 'none';
+
+/**
+ * The module's own signal (dBm = -113 + 2 x CSQ), as the four bars a phone shows for GSM: -89 or better is full,
+ * then -97, -105 and -113. A pump that has not reported a signal has none.
+ */
+export function gsmLevel(dbm: number | null | undefined): { bars: 0 | 1 | 2 | 3 | 4; quality: GsmQuality } {
+  if (typeof dbm !== 'number' || !Number.isFinite(dbm) || dbm <= -113 || dbm >= 0) return { bars: 0, quality: 'none' };
+  if (dbm >= -89) return { bars: 4, quality: 'excellent' };
+  if (dbm >= -97) return { bars: 3, quality: 'good' };
+  if (dbm >= -105) return { bars: 2, quality: 'fair' };
+  return { bars: 1, quality: 'poor' };
+}
+
 export const EXPIRY_WARNING_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BLOCKED_LIFECYCLES = ['SUSPENDED', 'RMA', 'RETIRED'];

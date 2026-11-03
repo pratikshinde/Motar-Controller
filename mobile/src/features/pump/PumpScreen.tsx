@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Edge, SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, ChevronLeft, Droplets, RefreshCw } from 'lucide-react-native';
-import { useGetPump, useListAlerts } from '@/api/generated/farmer';
-import { useRealtimeStatus } from '@/realtime/RealtimeProvider';
+import { useGetPump, useListAlerts, useListPumps } from '@/api/generated/farmer';
 import { colors, font, TOUCH } from '@/shared/theme';
 import { StateView } from '@/shared/ui/StateView';
 import { OfflineBanner } from '@/shared/ui/OfflineBanner';
@@ -19,10 +18,16 @@ import { FaultsTab } from '@/features/faults/FaultsTab';
 import { HistoryTab } from '@/features/history/HistoryTab';
 import { TimerTab } from '@/features/timer/TimerTab';
 import { SwatiTopBar } from '@/shared/ui/SwatiTopBar';
+import { AjantaBanner } from '@/shared/ui/AjantaScreen';
 import { useAuth } from '@/state/auth';
 import { brand } from '@/config/brand';
+import { ajantaHome } from '@/config/ajantaHome';
 import { useSelectedPump } from '@/state/selectedPump';
 import { LiveTab } from './LiveTab';
+
+/** How often the Home screen reads the pump again by itself (10 to 15 s), and while the motor is running. */
+const REFRESH_MS = 12_000;
+const REFRESH_RUNNING_MS = 3_000;
 
 export type PumpTab = 'live' | 'timer' | 'history' | 'faults';
 export const isPumpTab = (v: unknown): v is PumpTab =>
@@ -41,10 +46,16 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
   const [tab, setTab] = useState<PumpTab>(initialTab ?? 'live');
   // The other Swati screens (timer, history, technical details) are about the pump the farmer is looking at.
   useEffect(() => useSelectedPump.getState().select(id), [id]);
-  const rt = useRealtimeStatus();
-  const q = useGetPump(id, { query: { refetchInterval: rt === 'open' ? 60_000 : 5_000 } });
-  const alertsQ = useListAlerts({ unresolved_only: true });
+  // The screen refreshes itself: every 3 s while the motor runs (the farmer is watching the voltages and currents come in)
+  // and every 12 s otherwise, whether or not the live push is open: the push may not reach this phone.
+  const q = useGetPump(id, {
+    query: { refetchInterval: (query) => (query.state.data?.pump?.pump_on ? REFRESH_RUNNING_MS : REFRESH_MS) },
+  });
+  const alertsQ = useListAlerts({ unresolved_only: true }, { query: { refetchInterval: REFRESH_MS } });
   const openAlerts = (alertsQ.data?.alerts ?? []).length;
+  // Ajanta's home only offers "My pumps" when there is more than one pump to switch to.
+  const pumpsQ = useListPumps(undefined, { query: { enabled: ajantaHome && !!embedded } });
+  const canSwitchPump = ajantaHome && !!embedded && (pumpsQ.data?.pumps.length ?? 0) > 1;
   const [refreshing, setRefreshing] = useState(false);
   useStatusBar('light');
 
@@ -62,8 +73,11 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
   // Swati's design greets the farmer by name and puts the bell and profile in its own header (embedded = the home tab).
   const swatiHeader = brand.design === 'swati' && !!embedded;
   const farmerFirstName = user?.full_name ? user.full_name.split(' ')[0] : '';
+  // Ajanta's banner draws under the status bar itself, so its screen does not reserve that space.
+  const ajantaHeader = ajantaHome && !!embedded;
+  const safeEdges: Edge[] = ajantaHeader ? [] : ['top'];
 
-  const defaultTopBar = (
+  const classicTopBar = (
     <View style={styles.top}>
       <View style={styles.side}>
         {back ? (
@@ -95,9 +109,21 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
     </View>
   );
 
+  const defaultTopBar = ajantaHeader ? (
+    <AjantaBanner
+      title={t('nav.home')}
+      scene="home"
+      unreadAlerts={openAlerts}
+      onPressAlerts={() => router.push('/alerts')}
+      onPressProfile={() => router.push('/settings')}
+    />
+  ) : (
+    classicTopBar
+  );
+
   if (q.isLoading && !q.data) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={styles.safe} edges={safeEdges}>
         {swatiHeader ? (
           <SwatiTopBar
             farmerName={farmerFirstName}
@@ -115,7 +141,7 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
 
   if (!pump) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={styles.safe} edges={safeEdges}>
         {swatiHeader ? (
           <SwatiTopBar
             farmerName={farmerFirstName}
@@ -139,7 +165,7 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={safeEdges}>
       {swatiHeader ? (
         <SwatiTopBar
           farmerName={farmerFirstName}
@@ -178,6 +204,7 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
               onOpenHistory={() => router.push('/history')}
               refreshFailed={q.isError}
               onRefresh={() => void refresh()}
+              canSwitchPump={canSwitchPump}
             />
           ) : null}
           {tab === 'timer' ? <TimerTab pump={pump} /> : null}

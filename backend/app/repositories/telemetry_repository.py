@@ -49,8 +49,8 @@ class TelemetryRepository:
 
         - fault_code: only while the latest reading reports a fault, taken from the newest
           unresolved fault log (falling back to the newest unresolved alert). Never guessed.
-        - runtime_today_min: running rows since local midnight (IST), one row ~ one minute
-          (the same estimate the nightly rollup uses until the device reports intervals).
+        - runtime_today_min: the time the pump was reported running since local midnight (IST): each reading counts
+          for the time until the next one (at most 3 minutes), the newest one up to now.
         """
         if not pump_ids:
             return {}
@@ -69,11 +69,23 @@ class TelemetryRepository:
                 WHERE pump_id = ANY(:p_ids)
                 ORDER BY pump_id, recorded_at DESC
             ),
-            today AS (
-                SELECT pump_id, COUNT(*) FILTER (WHERE pump_on) AS on_rows
+            last_reading AS (
+                SELECT DISTINCT ON (pump_id) pump_id, v_ry, v_yb, v_br, i_r, i_y, i_b, recorded_at
                 FROM agripump.telemetry_history
-                WHERE pump_id = ANY(:p_ids)
-                  AND recorded_at >= (date_trunc('day', timezone('Asia/Kolkata', now())) AT TIME ZONE 'Asia/Kolkata')
+                WHERE pump_id = ANY(:p_ids) AND v_ry IS NOT NULL
+                ORDER BY pump_id, recorded_at DESC
+            ),
+            today AS (
+                SELECT pump_id,
+                       COALESCE(SUM(LEAST(EXTRACT(EPOCH FROM (COALESCE(next_at, now()) - recorded_at)), 180))
+                                FILTER (WHERE pump_on), 0) / 60.0 AS on_minutes
+                FROM (
+                    SELECT pump_id, pump_on, recorded_at,
+                           LEAD(recorded_at) OVER (PARTITION BY pump_id ORDER BY recorded_at) AS next_at
+                    FROM agripump.telemetry_history
+                    WHERE pump_id = ANY(:p_ids)
+                      AND recorded_at >= (date_trunc('day', timezone('Asia/Kolkata', now())) AT TIME ZONE 'Asia/Kolkata')
+                ) seg
                 GROUP BY pump_id
             ),
             open_fault AS (
@@ -88,12 +100,15 @@ class TelemetryRepository:
                 WHERE pump_id = ANY(:p_ids) AND resolved_at IS NULL AND fault_code IS NOT NULL AND fault_code > 0
                 ORDER BY pump_id, last_occurred_at DESC
             )
-            SELECT l.pump_id, l.v_ry, l.v_yb, l.v_br, l.i_r, l.i_y, l.i_b,
+            SELECT l.pump_id,
+                   COALESCE(l.v_ry, rd.v_ry), COALESCE(l.v_yb, rd.v_yb), COALESCE(l.v_br, rd.v_br),
+                   COALESCE(l.i_r, rd.i_r), COALESCE(l.i_y, rd.i_y), COALESCE(l.i_b, rd.i_b),
                    l.pump_on, l.fault_active, l.gsm_rssi, l.recorded_at,
-                   COALESCE(t.on_rows, 0) AS on_rows,
+                   COALESCE(t.on_minutes, 0) AS on_minutes,
                    CASE WHEN l.fault_active THEN COALESCE(f.fault_code, a.fault_code, l.vfd_fault_code) END AS fault_code,
                    l.vfd_hz, l.vfd_i_out, l.vfd_v_ac, l.vfd_v_dc, l.vfd_kw, l.vfd_status, l.vfd_fault_code
             FROM latest l
+            LEFT JOIN last_reading rd ON rd.pump_id = l.pump_id AND rd.recorded_at >= l.recorded_at - INTERVAL '10 minutes'
             LEFT JOIN today t      ON t.pump_id = l.pump_id
             LEFT JOIN open_fault f ON f.pump_id = l.pump_id
             LEFT JOIN open_alert a ON a.pump_id = l.pump_id
@@ -132,7 +147,7 @@ class TelemetryRepository:
                 "gsm_rssi": r[9],
                 "signal_dbm": r[9],
                 "recorded_at": r[10].isoformat() if r[10] else None,
-                "runtime_today_min": int(r[11] or 0),
+                "runtime_today_min": int(round(float(r[11] or 0))),
                 "fault_code": int(r[12]) if r[12] is not None else None,
                 "vfd": vfd_dict,
                 "vfd_hz": vfd_hz,

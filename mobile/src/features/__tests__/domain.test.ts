@@ -4,6 +4,7 @@ import { faultInfoKeys, FAULT_CODES, isKnownFault } from '../faults/info';
 import { dailyBars, hourlyBars, sumMinutes } from '../history/buckets';
 import {
   groupBySite,
+  gsmLevel,
   hasKnownFault,
   isKnownHealthy,
   isSuspended,
@@ -172,6 +173,28 @@ describe('command progress: a step is ticked only when it happened', () => {
       'inProgress',
     );
   });
+  it('a START the pump answers with a fault ends at once, without waiting for the 60 s', () => {
+    const start = { ...base, expectedPumpOn: true, waitedMs: 4_000 };
+    const p = commandProgress({ ...start, status: 'ACKNOWLEDGED', pumpFaulted: true, lastReadingAtMs: NOW + 2_000 });
+    expect(p).toEqual({ kind: 'faulted' });
+    expect(isFinished(p)).toBe(true);
+    // before the first answer too, and over a "could not confirm" from the server
+    expect(commandProgress({ ...start, status: 'DELIVERED', pumpFaulted: true, lastReadingAtMs: NOW + 1_000 }).kind).toBe('faulted');
+    expect(commandProgress({ ...start, status: 'NOT_CONFIRMED', pumpFaulted: true, lastReadingAtMs: NOW + 1_000 }).kind).toBe('faulted');
+  });
+  it('a fault from before the command, or on a STOP, or a pump that is not faulted, changes nothing', () => {
+    const start = { ...base, expectedPumpOn: true, status: 'ACKNOWLEDGED' };
+    expect(commandProgress({ ...start, pumpFaulted: true, lastReadingAtMs: NOW - 60_000 }).kind).toBe('inProgress');
+    expect(commandProgress({ ...start, pumpFaulted: false, lastReadingAtMs: NOW + 2_000 }).kind).toBe('inProgress');
+    expect(commandProgress({ ...base, expectedPumpOn: false, status: 'ACKNOWLEDGED', pumpFaulted: true, lastReadingAtMs: NOW + 2_000 }).kind).toBe(
+      'inProgress',
+    );
+  });
+  it('the server saying APPLIED still wins over a fault', () => {
+    expect(
+      commandProgress({ ...base, expectedPumpOn: true, status: 'APPLIED', pumpFaulted: true, lastReadingAtMs: NOW + 2_000 }),
+    ).toEqual({ kind: 'done' });
+  });
   it('rejections and expiries keep their reason', () => {
     expect(commandProgress({ ...base, status: 'REJECTED', rejectReason: 'FAULT_ACTIVE' })).toEqual({
       kind: 'rejected',
@@ -179,6 +202,19 @@ describe('command progress: a step is ticked only when it happened', () => {
     });
     expect(commandProgress({ ...base, status: 'EXPIRED' }).kind).toBe('expired');
     expect(isFinished({ kind: 'rejected', reason: null })).toBe(true);
+  });
+});
+
+describe('gsm signal', () => {
+  it('turns the module dBm into the four bars a phone shows', () => {
+    expect(gsmLevel(-63)).toEqual({ bars: 4, quality: 'excellent' });
+    expect(gsmLevel(-89).bars).toBe(4);
+    expect(gsmLevel(-93)).toEqual({ bars: 3, quality: 'good' });
+    expect(gsmLevel(-101)).toEqual({ bars: 2, quality: 'fair' });
+    expect(gsmLevel(-109)).toEqual({ bars: 1, quality: 'poor' });
+  });
+  it('has no bars for a signal that is not known or not real', () => {
+    for (const v of [null, undefined, -113, -999, 0, 25, Number.NaN]) expect(gsmLevel(v)).toEqual({ bars: 0, quality: 'none' });
   });
 });
 

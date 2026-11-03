@@ -29,7 +29,7 @@ export async function pickVoiceLanguage(candidates: string[]): Promise<string | 
  * sent to a server; where the phone has no voice for the language it says so instead of speaking
  * in the wrong accent.
  */
-export const ListenButton: React.FC<{ getText: () => string; testID?: string }> = ({ getText, testID }) => {
+export const ListenButton: React.FC<{ getText: () => string; testID?: string; iconOnly?: boolean }> = ({ getText, testID, iconOnly }) => {
   const { t, i18n } = useTranslation();
   const [speaking, setSpeaking] = useState(false);
 
@@ -63,19 +63,27 @@ export const ListenButton: React.FC<{ getText: () => string; testID?: string }> 
     <TouchableOpacity
       testID={testID}
       onPress={toggle}
-      style={styles.btn}
+      style={iconOnly ? styles.iconBtn : styles.btn}
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: speaking }}
     >
       <Icon size={20} color={colors.primary} />
-      <Text style={styles.text}>{label}</Text>
+      {iconOnly ? null : <Text style={styles.text}>{label}</Text>}
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   btn: {
     minHeight: TOUCH - 8,
     flexDirection: 'row',

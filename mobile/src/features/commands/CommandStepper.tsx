@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Check, Circle, XCircle } from 'lucide-react-native';
+import { AlertTriangle, Check, CheckCheck, Circle, Play, Power, Radio, Send, Square, XCircle } from 'lucide-react-native';
 import { colors, font, space } from '@/shared/theme';
 import { Card, CardTitle } from '@/shared/ui/Card';
 import { BigActionButton } from '@/shared/ui/BigActionButton';
@@ -22,7 +22,9 @@ export const CommandStepper: React.FC<{
   sendFailed?: boolean;
   onRetry?: () => void;
   onDismiss: () => void;
-}> = ({ action, progress, sendFailed, onRetry, onDismiss }) => {
+  /** Icons only, in one row (Ajanta's home): the same four steps, no words except a failure's message. */
+  compact?: boolean;
+}> = ({ action, progress, sendFailed, onRetry, onDismiss, compact }) => {
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -43,11 +45,43 @@ export const CommandStepper: React.FC<{
 
   return (
     <Card>
-      <CardTitle title={t(action === 'START' ? 'command.titleStart' : 'command.titleStop')} />
+      {compact ? null : <CardTitle title={t(action === 'START' ? 'command.titleStart' : 'command.titleStop')} />}
       {sendFailed ? (
         <View style={styles.note}>
           <AlertTriangle size={20} color={colors.warn} />
           <Text style={[styles.noteText, { color: colors.warn }]}>{t('errors.network')}</Text>
+        </View>
+      ) : compact ? (
+        <View accessibilityRole="progressbar" style={styles.cRow} testID="command-steps">
+          <View style={styles.cAction} accessible accessibilityLabel={t(action === 'START' ? 'command.titleStart' : 'command.titleStop')}>
+            {action === 'START' ? <Play size={18} color="#FFFFFF" fill="#FFFFFF" /> : <Square size={16} color="#FFFFFF" fill="#FFFFFF" />}
+          </View>
+          {STEPS.map((key, i) => {
+            const done = finished || i <= reached;
+            const waiting = !done && i === reached + 1 && !stalled && progress?.kind === 'inProgress';
+            const stuck = !done && i === reached + 1 && stalled;
+            const StepIcon = [Send, Radio, CheckCheck, Power][i];
+            return (
+              <React.Fragment key={key}>
+                <View style={[styles.cLine, done && styles.cLineDone]} />
+                <View
+                  style={[styles.cStep, done ? styles.cStepDone : waiting ? styles.cStepWait : stuck ? styles.cStepStuck : styles.cStepIdle]}
+                  accessible
+                  accessibilityLabel={`${t(`command.step.${key}`)}${done ? ' ✓' : ''}`}
+                >
+                  {done ? (
+                    <Check size={18} color="#FFFFFF" strokeWidth={3.2} />
+                  ) : waiting ? (
+                    <ActivityIndicator size="small" color="#1E6FE8" />
+                  ) : stuck ? (
+                    <AlertTriangle size={17} color="#B45309" />
+                  ) : (
+                    <StepIcon size={17} color="#94A3B8" />
+                  )}
+                </View>
+              </React.Fragment>
+            );
+          })}
         </View>
       ) : (
         <View accessibilityRole="progressbar" style={styles.steps}>
@@ -93,6 +127,12 @@ export const CommandStepper: React.FC<{
           </Text>
         </View>
       ) : null}
+      {progress?.kind === 'faulted' ? (
+        <View style={styles.note}>
+          <AlertTriangle size={20} color={colors.danger} />
+          <Text style={[styles.noteText, { color: colors.danger }]}>{t('command.faulted')}</Text>
+        </View>
+      ) : null}
       {progress?.kind === 'expired' ? (
         <Text style={[styles.message, { color: colors.danger }]}>{t('command.expired')}</Text>
       ) : null}
@@ -113,6 +153,15 @@ export const CommandStepper: React.FC<{
 };
 
 const styles = StyleSheet.create({
+  cRow: { flexDirection: 'row', alignItems: 'center' },
+  cAction: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#1E6FE8', alignItems: 'center', justifyContent: 'center' },
+  cLine: { flex: 1, height: 3, borderRadius: 2, backgroundColor: '#E2E8F0', marginHorizontal: 4 },
+  cLineDone: { backgroundColor: '#0AA24A' },
+  cStep: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  cStepDone: { backgroundColor: '#0AA24A' },
+  cStepWait: { backgroundColor: '#DCEBFF', borderWidth: 2, borderColor: '#1E6FE8' },
+  cStepStuck: { backgroundColor: '#FEF3C7', borderWidth: 2, borderColor: '#F59E0B' },
+  cStepIdle: { backgroundColor: '#F1F5F9' },
   steps: { gap: 10 },
   step: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   icon: { width: 26, alignItems: 'center' },

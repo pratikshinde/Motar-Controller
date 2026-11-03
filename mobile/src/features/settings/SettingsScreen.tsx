@@ -1,5 +1,7 @@
 import { brand } from '@/config/brand';
 import { SettingsScreenSwati } from './SettingsScreen.swati';
+import { SettingsScreenAjanta } from './SettingsScreen.ajanta';
+import { ajantaHome } from '@/config/ajantaHome';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -358,4 +360,5 @@ const styles = StyleSheet.create({
 });
 
 
-export const SettingsScreen = brand.design === 'swati' ? SettingsScreenSwati : SettingsScreenClassic;
+export const SettingsScreen =
+  brand.design === 'swati' ? SettingsScreenSwati : ajantaHome ? SettingsScreenAjanta : SettingsScreenClassic;

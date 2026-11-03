@@ -27,9 +27,12 @@ import { formatHM, formatMinutes, formatReading, timeAgo } from '@/shared/i18n/f
 import { useNow, useOnline } from '@/shared/hooks/useOnline';
 import { CommandStepper } from '@/features/commands/CommandStepper';
 import { useCommandFlow } from '@/features/commands/useCommandFlow';
+import { faultKind } from '@/features/faults/info';
+import { useFaultCode } from '@/features/faults/useFaultCode';
 import { isFinished } from '@/features/commands/progress';
 import { useGetPumpTimer } from '@/api/generated/farmer';
 import { brand } from '@/config/brand';
+import { ajantaHome } from '@/config/ajantaHome';
 import {
   canControl,
   displayName,
@@ -42,6 +45,7 @@ import type { CommandAction } from '@/state/commands';
 import { VoltageRing } from './Gauges';
 import { PlanBanner } from './PlanBanner';
 import { PowerHero } from './PowerHero';
+import { AjantaCards, AjantaFaultBanner, AjantaHero } from './LiveCards.ajanta';
 
 const AMP_FULL_SCALE = 20;
 
@@ -78,7 +82,9 @@ export const LiveTab: React.FC<{
   refreshFailed?: boolean;
   /** Read the pump again (the "check again" / "try again" buttons). */
   onRefresh?: () => void;
-}> = ({ pump, onOpenFaults, onOpenTimer, onOpenHistory, refreshFailed, onRefresh }) => {
+  /** Ajanta's home: the farmer has more than one pump, so the pump's name opens "My pumps". */
+  canSwitchPump?: boolean;
+}> = ({ pump, onOpenFaults, onOpenTimer, onOpenHistory, refreshFailed, onRefresh, canSwitchPump }) => {
   const { t } = useTranslation();
   const router = useRouter();
   const online = useOnline();
@@ -98,9 +104,13 @@ export const LiveTab: React.FC<{
   const healthy = isKnownHealthy(pump, now);
   const rotation = phaseIndicator(pump);
   const hasFault = hasKnownFault(pump, now);
+  // The code of a fresh trip can be missing from the pump's reading for minutes: the open fault record has it at once.
+  const faultCode = useFaultCode(pump, now);
 
   const isSolar = pump.device_type === 'SOLAR_VFD';
   const swati = brand.design === 'swati';
+  // Ajanta's own Live screen (the mockup); a solar drive keeps the card it always had.
+  const ajanta = ajantaHome && !isSolar;
 
   // The command the farmer sent that is still being carried out (Swati's home shows "starting..." / "stopping...").
   const pending: 'START' | 'STOP' | null = flow.sending
@@ -126,7 +136,7 @@ export const LiveTab: React.FC<{
       state === 'fault'
         ? t('speech.fault', {
             name,
-            fault: pump.fault_code ? faultName(t, pump.fault_code) : t('faultInfo.unknown.cause'),
+            fault: faultCode ? faultName(t, faultCode) : t('faultInfo.unknown.cause'),
           })
         : t(state === 'running' ? 'speech.running' : 'speech.stopped', { name });
     const parts = [head];
@@ -138,9 +148,19 @@ export const LiveTab: React.FC<{
     if (pump.runtime_today_min != null)
       parts.push(t('speech.runtime', { time: formatMinutes(t, pump.runtime_today_min) }));
     return parts.join(' ');
-  }, [state, name, ago, pump, t]);
+  }, [state, name, ago, pump, faultCode, t]);
 
-  const askPower = () => setTarget(state === 'running' ? 'STOP' : 'START');
+  // The starter only takes a remote START when it is idle: after a trip it ignores one (it still says "ok"), so sending it
+  // would only wait for a minute and end "not confirmed". Ajanta's home says what to do instead.
+  const [faultTapped, setFaultTapped] = useState(false);
+  if (state !== 'fault' && faultTapped) setFaultTapped(false);
+  const askPower = () => {
+    if (ajanta && state === 'fault') {
+      setFaultTapped(true);
+      return;
+    }
+    setTarget(state === 'running' ? 'STOP' : 'START');
+  };
   const confirm = () => {
     const action = target;
     setTarget(null);
@@ -148,7 +168,7 @@ export const LiveTab: React.FC<{
   };
 
   return (
-    <View style={styles.stack}>
+    <View style={[styles.stack, ajanta && styles.ajantaStack]}>
       <PlanBanner pump={pump} now={now} />
       {!online ? <Banner tone="warn" icon={WifiOff} text={t('command.offlineBlock')} testID="control-offline" /> : null}
       {state === 'nodata' ? <Banner tone="info" text={t('live.noDataYet')} testID="no-data" /> : null}
@@ -157,46 +177,77 @@ export const LiveTab: React.FC<{
       ) : null}
       {refreshFailed ? <Banner tone="warn" text={t('live.refreshFailed')} /> : null}
 
-      <PowerHero
-        name={name}
-        hp={pump.hp_rating}
-        supplyType={isSolar ? t('dashboard.solarSystem') : pump.supply_type}
-        rotation={isSolar ? null : rotation}
-        state={state}
-        signalDbm={pump.signal_dbm ?? pump.gsm_rssi}
-        busy={flow.sending}
-        disabled={powerDisabled}
-        cooldownLeft={flow.cooldownLeft}
-        isSolar={isSolar}
-        solarKw={pump.vfd_kw}
-        faultCode={pump.fault_code}
-        pending={pending}
-        lastUpdatedText={pump.last_seen_at ? timeAgo(t, pump.last_seen_at, now) : undefined}
-        runtimeTodayText={pump.runtime_today_min != null ? formatMinutes(t, pump.runtime_today_min) : undefined}
-        timerText={timerText}
-        solar={
-          isSolar
-            ? { hz: pump.vfd_hz, iOut: pump.vfd_i_out, vAc: pump.vfd_v_ac, vDc: pump.vfd_v_dc, kw: pump.vfd_kw, status: pump.vfd_status }
-            : null
-        }
-        onOpenTechnical={() => router.push('/technical')}
-        onPower={askPower}
-        onRetry={onRefresh}
-        onSelectPump={() => router.push('/pumps')}
-        onOpenTimer={onOpenTimer}
-        onOpenHistory={onOpenHistory}
-      />
+      {ajanta && hasFault ? <AjantaFaultBanner code={faultCode} onPress={onOpenFaults} /> : null}
 
-      <View style={styles.metaRow}>
-        {swati ? <View /> : <Text style={styles.updated}>{t('live.updated', { ago })}</Text>}
-        <ListenButton getText={speech} testID="listen" />
-      </View>
+      {ajanta ? (
+        <AjantaHero
+          name={name}
+          hp={pump.hp_rating}
+          state={state}
+          signalDbm={pump.signal_dbm ?? pump.gsm_rssi}
+          pending={pending}
+          disabled={powerDisabled}
+          cooldownLeft={flow.cooldownLeft}
+          lastSeenAgo={pump.last_seen_at ? ago : undefined}
+          faultStatus={hasFault ? 'fault' : healthy ? 'ok' : 'unknown'}
+          extra={<ListenButton getText={speech} testID="listen" iconOnly />}
+          onPower={askPower}
+          onSelectPump={canSwitchPump ? () => router.push('/pumps') : undefined}
+        />
+      ) : (
+        <PowerHero
+          name={name}
+          hp={pump.hp_rating}
+          supplyType={isSolar ? t('dashboard.solarSystem') : pump.supply_type}
+          rotation={isSolar ? null : rotation}
+          state={state}
+          signalDbm={pump.signal_dbm ?? pump.gsm_rssi}
+          busy={flow.sending}
+          disabled={powerDisabled}
+          cooldownLeft={flow.cooldownLeft}
+          isSolar={isSolar}
+          solarKw={pump.vfd_kw}
+          faultCode={faultCode}
+          pending={pending}
+          lastUpdatedText={pump.last_seen_at ? timeAgo(t, pump.last_seen_at, now) : undefined}
+          runtimeTodayText={pump.runtime_today_min != null ? formatMinutes(t, pump.runtime_today_min) : undefined}
+          timerText={timerText}
+          solar={
+            isSolar
+              ? { hz: pump.vfd_hz, iOut: pump.vfd_i_out, vAc: pump.vfd_v_ac, vDc: pump.vfd_v_dc, kw: pump.vfd_kw, status: pump.vfd_status }
+              : null
+          }
+          onOpenTechnical={() => router.push('/technical')}
+          onPower={askPower}
+          onRetry={onRefresh}
+          onSelectPump={() => router.push('/pumps')}
+          onOpenTimer={onOpenTimer}
+          onOpenHistory={onOpenHistory}
+        />
+      )}
+
+      {ajanta && faultTapped && state === 'fault' ? (
+        <Banner
+          tone="warn"
+          icon={AlertTriangle}
+          text={t(faultKind(faultCode) === 'voltage' ? 'command.faultVoltage' : 'command.faultCurrent')}
+          testID="fault-power-note"
+        />
+      ) : null}
+
+      {ajanta ? null : (
+        <View style={styles.metaRow}>
+          {swati ? <View /> : <Text style={styles.updated}>{t('live.updated', { ago })}</Text>}
+          <ListenButton getText={speech} testID="listen" />
+        </View>
+      )}
 
       {flow.error ? (
         <Banner tone="danger" text={friendlyError(flow.error, t, 'command')} testID="command-error" />
       ) : null}
       {flow.attempt ? (
         <CommandStepper
+          compact={ajanta}
           action={flow.attempt.action}
           progress={flow.progress}
           sendFailed={flow.attempt.failed}
@@ -205,7 +256,14 @@ export const LiveTab: React.FC<{
         />
       ) : null}
 
-      {swati ? null : (
+      {swati ? null : ajanta ? (
+        <AjantaCards
+          pump={pump}
+          state={state}
+          now={now}
+          onOpenHistory={onOpenHistory}
+        />
+      ) : (
         <>
       {isSolar ? (
         <Card>
@@ -321,7 +379,7 @@ export const LiveTab: React.FC<{
             <View style={styles.faultRowLeft}>
               <AlertTriangle size={20} color={colors.danger} />
               <Text style={styles.faultRowName} numberOfLines={1}>
-                {pump.fault_code ? faultName(t, pump.fault_code) : t('faultInfo.unknown.cause')}
+                {faultCode ? faultName(t, faultCode) : t('faultInfo.unknown.cause')}
               </Text>
             </View>
             <View style={styles.faultBadge}>
@@ -403,6 +461,7 @@ export const LiveTab: React.FC<{
 
 const styles = StyleSheet.create({
   stack: { gap: 16 },
+  ajantaStack: { gap: 12, paddingHorizontal: 12, paddingTop: 12 },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 },
   updated: { color: colors.textMuted, fontSize: font.caption + 1, fontWeight: '600', flexShrink: 1 },
   rings: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start' },

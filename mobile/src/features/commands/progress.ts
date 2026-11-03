@@ -10,6 +10,8 @@ export type Progress =
   /** The pump has not answered in time. Interim: it may still arrive, and it is not "failed". */
   | { kind: 'notConfirmed'; reached: number }
   | { kind: 'done' }
+  /** A START that the pump answered with a fault: the pump will not start, and the fault is shown on the screen. */
+  | { kind: 'faulted' }
   | { kind: 'rejected'; reason: string | null }
   | { kind: 'expired' }
   /** The server could not hand the command to the network: the pump was never asked, so it is safe to try again. */
@@ -33,6 +35,8 @@ export interface ProgressInput {
   /** Latest reading the pump sent, and when. */
   pumpOn?: boolean | null;
   lastReadingAtMs?: number | null;
+  /** The pump is reporting a fault right now (a tripped pump that has also gone quiet does not count). */
+  pumpFaulted?: boolean;
   confirmMs?: number;
 }
 
@@ -54,11 +58,13 @@ export function commandProgress(i: ProgressInput): Progress {
   if (EXPIRED.has(status)) return { kind: 'expired' };
   if (NOT_SENT.has(status)) return { kind: 'notSent' };
 
-  const observed =
-    i.pumpOn === i.expectedPumpOn &&
-    typeof i.lastReadingAtMs === 'number' &&
-    i.lastReadingAtMs >= i.issuedAtMs - TOLERANCE_MS;
-  if (APPLIED.has(status) || observed) return { kind: 'done' };
+  const newReading = typeof i.lastReadingAtMs === 'number' && i.lastReadingAtMs >= i.issuedAtMs - TOLERANCE_MS;
+  const observed = i.pumpOn === i.expectedPumpOn && newReading;
+  if (APPLIED.has(status)) return { kind: 'done' };
+  // A START that the pump answered with a fault will never be "applied": say so now, not after the wait runs out.
+  // An old fault (no report since the command) says nothing about this command.
+  if (i.expectedPumpOn && i.pumpFaulted && newReading) return { kind: 'faulted' };
+  if (observed) return { kind: 'done' };
 
   let reached = 0;
   if (DELIVERED.has(status) || i.deliveredAt) reached = 1;
@@ -71,4 +77,4 @@ export function commandProgress(i: ProgressInput): Progress {
 }
 
 export const isFinished = (p: Progress): boolean =>
-  p.kind === 'done' || p.kind === 'rejected' || p.kind === 'expired' || p.kind === 'notSent';
+  p.kind === 'done' || p.kind === 'faulted' || p.kind === 'rejected' || p.kind === 'expired' || p.kind === 'notSent';

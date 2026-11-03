@@ -1,4 +1,6 @@
 import { SplashScreenSwati } from './SplashScreen.swati';
+import { SplashScreenAjanta } from './SplashScreen.ajanta';
+import { ajantaHome } from '../config/ajantaHome';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { Droplets, Sprout } from 'lucide-react-native';
@@ -119,4 +121,5 @@ const styles = StyleSheet.create({
 });
 
 
-export const SplashScreen: typeof SplashScreenClassic = brand.design === 'swati' ? SplashScreenSwati : SplashScreenClassic;
+export const SplashScreen: typeof SplashScreenClassic =
+  brand.design === 'swati' ? SplashScreenSwati : ajantaHome ? SplashScreenAjanta : SplashScreenClassic;

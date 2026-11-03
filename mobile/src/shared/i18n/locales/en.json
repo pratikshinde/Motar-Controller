@@ -201,15 +201,15 @@
     "unitVac": "V AC"
   },
   "faults": {
-    "code1": "Y-phase fault",
-    "code2": "Phase missing (single phasing)",
-    "code3": "High voltage",
-    "code4": "Wrong phase order",
-    "code5": "Dry run (no water)",
-    "code6": "Cable open (all phases)",
-    "code7": "Cable partly open",
-    "code8": "Motor overload",
-    "code9": "Voltage imbalance",
+    "code1": "Phase Fail",
+    "code2": "Phase Fail",
+    "code3": "Over voltage",
+    "code4": "Line reverse: interchange R and B",
+    "code5": "Dry Run Fault",
+    "code6": "Cable open",
+    "code7": "Cable open (OR) Motor Faults",
+    "code8": "Over load",
+    "code9": "Motor Fault",
     "code10": "Low voltage",
     "unknown": "Fault (code {{code}})",
     "title": "Problems",
@@ -331,6 +331,9 @@
     "titleStart": "Start command",
     "titleStop": "Stop command",
     "notConfirmed": "Not confirmed yet. The pump has not answered. Check the pump, or try again in a while.",
+    "faulted": "The pump did not start because of a fault. The fault is shown at the top of the screen.",
+    "faultCurrent": "The starter stopped the pump because of a fault. Fix the problem, then reset the starter with its button. After that you can start the pump from here.",
+    "faultVoltage": "The starter stopped the pump because of a supply problem. It clears by itself when the supply is normal. After that you can start the pump from here.",
     "rejected": "The pump refused this command.",
     "rejectedWhy": "The pump refused: {{reason}}",
     "expired": "The command ran out of time before the pump received it.",
@@ -477,7 +480,7 @@
       "action": "Check the cable and joints from the panel to the motor. Call your dealer."
     },
     "code7": {
-      "cause": "The cable to the motor is partly broken, or a joint is loose on some phases.",
+      "cause": "The cable to the motor is partly broken, a joint is loose, or the motor winding is faulty.",
       "action": "Check the cable joints and terminals. Call your dealer."
     },
     "code8": {
@@ -485,8 +488,8 @@
       "action": "Check the pump for a blockage. Wait, then restart. Call your dealer if it repeats."
     },
     "code9": {
-      "cause": "The voltages of the three phases are very different from each other.",
-      "action": "Wait for the supply to balance. Tell the power company if it continues."
+      "cause": "The motor is drawing very different current on its three phases. This points to a motor or cable problem.",
+      "action": "Check the motor and the cable joints. Do not restart until it has been checked. Call your dealer."
     },
     "code10": {
       "cause": "The supply voltage is too low for the motor to run safely.",
@@ -647,5 +650,33 @@
     "filterAll": "All",
     "start": "Start",
     "driveStatus": "Drive status"
+  },
+  "home": {
+    "lineVoltages": "Line voltages",
+    "phaseCurrents": "Phase currents",
+    "phaseSequence": "Phase sequence",
+    "runTime": "Run time",
+    "pumpFaults": "Pump faults",
+    "statusOk": "OK",
+    "sequenceOk": "Correct sequence",
+    "controllerConnected": "Controller connected",
+    "lastRun": "Last run",
+    "noFaultsTitle": "No faults",
+    "noFaultsBody": "Everything is fine and the pump is working normally.",
+    "myDetails": "My details",
+    "myDetailsHint": "Your name and mobile number",
+    "sessionsHint": "Phones logged in to your account",
+    "help": "Help & support",
+    "helpHint": "Dealer contact and technical help",
+    "about": "About the app",
+    "aboutHint": "App name and version",
+    "timesShort": "times",
+    "faultKindCurrent": "Current fault",
+    "faultKindVoltage": "Voltage fault",
+    "signalExcellent": "Excellent",
+    "signalGood": "Good",
+    "signalFair": "Fair",
+    "signalPoor": "Poor",
+    "signalNone": "No signal"
   }
 }
