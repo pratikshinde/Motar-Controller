@@ -153,7 +153,7 @@ export const AlertsView: React.FC = () => {
           <Stack spacing={1.5}>
             {alerts.map(a => {
               const sev = a.severity || 'LOW';
-              const sevColor = sev === 'CRITICAL' || sev === 'HIGH' ? '#DC2626' : sev === 'MEDIUM' ? '#D97706' : '#2563EB';
+              const sevColor = sev === 'CRITICAL' || sev === 'HIGH' ? '#DC2626' : sev === 'MEDIUM' ? '#D97706' : '#0B7FC7';
               return (
                 <Box
                   key={a.id}

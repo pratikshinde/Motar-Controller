@@ -1,8 +1,9 @@
 /**
  * Material Design 3 tokens for AgriPump SmartSpace.
  *
- * Seed: a technical blue (control/telemetry) paired with an agricultural
- * green (running/healthy state) as the secondary role — both roles are
+ * Ajanta palette (the same three colours as the farmer's app): deep green (the land) as the primary, water blue (the pump,
+ * live data) as the secondary, sun amber for warnings. "Running" is its own success green (see statusColors). Earlier note: a technical blue paired with an agricultural
+ * green as the secondary role — both roles are
  * carried through the full M3 container/on-container pairing, not just
  * a single accent color per role, per Web_App_Pending_Items.md §11.1.
  */
@@ -52,59 +53,59 @@ export interface M3ColorRoles {
 
 // Light scheme — Apple & Linear inspired clean workspace palette
 export const lightRoles: M3ColorRoles = {
-  primary: '#2563EB', // Technical Blue
+  primary: '#0B7A3E', // Technical Blue
   onPrimary: '#FFFFFF',
-  primaryContainer: '#EFF6FF',
-  onPrimaryContainer: '#1D4ED8',
+  primaryContainer: '#E4F5EA',
+  onPrimaryContainer: '#064B27',
 
-  secondary: '#059669', // Healthy emerald
+  secondary: '#0B7FC7', // Healthy emerald
   onSecondary: '#FFFFFF',
-  secondaryContainer: '#ECFDF5',
-  onSecondaryContainer: '#047857',
+  secondaryContainer: '#E3F2FB',
+  onSecondaryContainer: '#075A8F',
 
-  tertiary: '#D97706', // Warning amber
+  tertiary: '#C77700', // Warning amber
   onTertiary: '#FFFFFF',
-  tertiaryContainer: '#FFFBEB',
-  onTertiaryContainer: '#B45309',
+  tertiaryContainer: '#FFF4DB',
+  onTertiaryContainer: '#8A5200',
 
   error: '#DC2626', // Fault crimson
   onError: '#FFFFFF',
   errorContainer: '#FEF2F2',
   onErrorContainer: '#B91C1C',
 
-  background: '#F8FAFC', // Slate 50 workspace background
-  onBackground: '#0F172A', // Slate 900 primary text
+  background: '#F5F9F6', // Slate 50 workspace background
+  onBackground: '#0F1A14', // Slate 900 primary text
 
   surface: '#FFFFFF',
-  onSurface: '#0F172A',
-  surfaceVariant: '#F1F5F9', // Slate 100
-  onSurfaceVariant: '#475569', // Slate 600 secondary text
+  onSurface: '#0F1A14',
+  surfaceVariant: '#ECF3EE', // Slate 100
+  onSurfaceVariant: '#46594E', // Slate 600 secondary text
   surfaceContainerLowest: '#FFFFFF',
-  surfaceContainerLow: '#F8FAFC',
+  surfaceContainerLow: '#F5F9F6',
   surfaceContainer: '#FFFFFF',
-  surfaceContainerHigh: '#F1F5F9',
-  surfaceContainerHighest: '#E2E8F0',
+  surfaceContainerHigh: '#ECF3EE',
+  surfaceContainerHighest: '#DFE9E3',
 
-  outline: '#CBD5E1', // Slate 300
-  outlineVariant: '#E2E8F0', // Slate 200 hairline border
-  inverseSurface: '#0F172A',
-  inverseOnSurface: '#F8FAFC',
-  inversePrimary: '#93C5FD',
+  outline: '#C3D0C8', // Slate 300
+  outlineVariant: '#DFE9E3', // Slate 200 hairline border
+  inverseSurface: '#0F1A14',
+  inverseOnSurface: '#F5F9F6',
+  inversePrimary: '#7FD7A2',
   scrim: '#000000',
-  shadow: 'rgba(15, 23, 42, 0.08)'
+  shadow: 'rgba(15, 26, 20, 0.08)'
 };
 
 // Dark scheme — Linear / macOS dark mode precision palette
 export const darkRoles: M3ColorRoles = {
-  primary: '#3B82F6', // Electric Blue
-  onPrimary: '#FFFFFF',
-  primaryContainer: '#1E3A8A',
-  onPrimaryContainer: '#DBEAFE',
+  primary: '#34C37A', // Electric Blue
+  onPrimary: '#04210F',
+  primaryContainer: '#0B3D24',
+  onPrimaryContainer: '#C9F2D8',
 
-  secondary: '#10B981', // Clean Emerald
-  onSecondary: '#FFFFFF',
-  secondaryContainer: '#064E3B',
-  onSecondaryContainer: '#A7F3D0',
+  secondary: '#38B6F5', // Clean Emerald
+  onSecondary: '#031B2B',
+  secondaryContainer: '#0A3552',
+  onSecondaryContainer: '#CDEBFC',
 
   tertiary: '#F59E0B', // Crisp Amber
   onTertiary: '#FFFFFF',
@@ -116,24 +117,24 @@ export const darkRoles: M3ColorRoles = {
   errorContainer: '#7F1D1D',
   onErrorContainer: '#FEE2E2',
 
-  background: '#090D16', // Deep workspace canvas
-  onBackground: '#F8FAFC',
+  background: '#08100C', // Deep workspace canvas
+  onBackground: '#EAF3ED',
 
-  surface: '#0F172A', // Slate 900 cards & panels
-  onSurface: '#F8FAFC',
-  surfaceVariant: '#1E293B',
-  onSurfaceVariant: '#94A3B8',
-  surfaceContainerLowest: '#050811',
-  surfaceContainerLow: '#0B1120',
-  surfaceContainer: '#0F172A',
-  surfaceContainerHigh: '#1E293B',
-  surfaceContainerHighest: '#334155',
+  surface: '#0E1813', // Slate 900 cards & panels
+  onSurface: '#EAF3ED',
+  surfaceVariant: '#1A2822',
+  onSurfaceVariant: '#9DB1A6',
+  surfaceContainerLowest: '#050A07',
+  surfaceContainerLow: '#0A130E',
+  surfaceContainer: '#0E1813',
+  surfaceContainerHigh: '#1A2822',
+  surfaceContainerHighest: '#2A3A32',
 
-  outline: '#475569',
-  outlineVariant: '#1E293B',
-  inverseSurface: '#F8FAFC',
-  inverseOnSurface: '#0F172A',
-  inversePrimary: '#1E3A8A',
+  outline: '#4A5C52',
+  outlineVariant: '#1E2E26',
+  inverseSurface: '#EAF3ED',
+  inverseOnSurface: '#0F1A14',
+  inversePrimary: '#0B7A3E',
   scrim: '#000000',
   shadow: 'rgba(0, 0, 0, 0.4)'
 };

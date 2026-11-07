@@ -1,5 +1,5 @@
 import { createTheme, alpha, type ThemeOptions, type PaletteMode } from '@mui/material/styles';
-import { lightRoles, darkRoles, shape, elevationTintOpacity, type M3ColorRoles } from './tokens';
+import { lightRoles, darkRoles, shape, elevationTintOpacity, statusColors, type M3ColorRoles } from './tokens';
 // Pulls in the `MuiDataGrid` key on the theme's `components` map — MUI X
 // ships this augmentation separately so apps that don't use DataGrid don't
 // pay for it.
@@ -33,6 +33,9 @@ function buildPalette(mode: PaletteMode, customRoles?: M3ColorRoles) {
     secondary: { main: roles.secondary, contrastText: roles.onSecondary },
     error: { main: roles.error, contrastText: roles.onError },
     warning: { main: roles.tertiary, contrastText: roles.onTertiary },
+    // A pump that is running: its own green, readable on both the light and the dark surface (not the brand's primary).
+    success: { main: mode === 'dark' ? statusColors.running.dark : statusColors.running.light, contrastText: '#FFFFFF' },
+    info: { main: roles.secondary, contrastText: roles.onSecondary },
     background: { default: roles.background, paper: roles.surface, surfaceVariant: roles.surfaceVariant },
     text: { primary: roles.onSurface, secondary: roles.onSurfaceVariant },
     divider: roles.outlineVariant
@@ -53,9 +56,9 @@ export const monoFont = "'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace
  */
 export function ambientBackgroundImage(mode: PaletteMode, roles: M3ColorRoles): string {
   if (mode === 'dark') {
-    return `radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37, 99, 235, 0.12), transparent)`;
+    return `radial-gradient(ellipse 80% 50% at 50% -20%, rgba(52, 195, 122, 0.10), transparent)`;
   }
-  return `linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)`;
+  return `linear-gradient(180deg, #F5F9F6 0%, #EDF3EF 100%)`;
 }
 
 const typography: ThemeOptions['typography'] = {

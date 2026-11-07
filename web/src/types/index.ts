@@ -77,6 +77,14 @@ export interface PumpListItem {
   i_y: string | null;
   i_b: string | null;
   gsm_rssi: number | null;
+  /** From the same latest reading, filled by the server (see backend get_latest_telemetry_map): */
+  signal_dbm?: number | null;
+  pump_on?: boolean | null;
+  fault_active?: boolean | null;
+  /** The starter's open fault code, only while the pump reports a fault. */
+  fault_code?: number | null;
+  /** Minutes the pump ran since midnight (IST). */
+  runtime_today_min?: number | null;
   telemetry_recorded_at: string | null;
   ts_approx: boolean | null;
   buffered: boolean | null;

@@ -17,8 +17,8 @@ export const ASSIGNABLE_ROLES: Record<RoleTier, RoleTier[]> = {
 
 export const ROLE_NAMES: Record<RoleTier, string> = {
   customer: 'End Customer / Farmer',
-  superadmin: 'Super Admin (Platform Owner)',
-  manufacturer: 'Panel Manufacturer',
+  superadmin: 'Super Admin (monitoring)',
+  manufacturer: 'Ajanta Admin',
   distributor: 'Regional Distributor',
   dealer: 'Dealer / Installer',
   support: 'Support Engineer'

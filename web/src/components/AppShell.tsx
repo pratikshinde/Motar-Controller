@@ -22,6 +22,9 @@ import { SettingsDialog } from './SettingsDialog';
 import { MfaSetupDialog } from './MfaSetupDialog';
 import { BrandLogo } from './brand/BrandLogo';
 import { ManufacturerSwitcher } from './ManufacturerSwitcher';
+import { AddFarmerDialog } from './AddFarmerDialog';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { fetchMyBrand } from '../api/brands';
 import { setViewing, useViewing } from '../api/viewing';
 
 const DRAWER_WIDTH = 256;
@@ -44,6 +47,30 @@ export const AppShell: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const viewing = useViewing();
   const viewingBannerHeight = viewing ? 34 : 0;
+
+  // The Ajanta admin registers a farmer from the Live Telemetry page: the form opens right there.
+  const [addFarmerOpen, setAddFarmerOpen] = useState(false);
+  const canAddFarmer = user?.role === 'manufacturer' && (location.pathname === '/dashboard' || location.pathname === '/telemetry');
+
+  // A manufacturer's distributors and dealers see their manufacturer's name (e.g. "Ajanta Pump Controller") in the header.
+  const [partnerName, setPartnerName] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setPartnerName(null);
+      return;
+    }
+    fetchMyBrand()
+      .then(res => {
+        if (!cancelled) setPartnerName(res.brand?.name ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setPartnerName(null); // cosmetic: the platform's own name stays
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const unsubAlert = subscribe('alert', msg => {
@@ -106,7 +133,7 @@ export const AppShell: React.FC = () => {
             sx={{ width: 30, height: 30, borderRadius: 1.5, objectFit: 'contain' }}
           />
         ) : (
-          <BrandLogo size="small" light={mode === 'dark'} iconOnlyOnPhone={!isExpanded} />
+          <BrandLogo size="small" light={mode === 'dark'} iconOnlyOnPhone={!isExpanded} partnerName={partnerName} />
         )}
       </Box>
 
@@ -282,7 +309,7 @@ export const AppShell: React.FC = () => {
         >
           {/* Mobile brand indicator */}
           {isCompact && (
-            <BrandLogo size="small" light={mode === 'dark'} iconOnlyOnPhone />
+            <BrandLogo size="small" light={mode === 'dark'} iconOnlyOnPhone partnerName={partnerName} />
           )}
 
           {/* Current Page Context / Breadcrumb */}
@@ -290,6 +317,17 @@ export const AppShell: React.FC = () => {
             <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.9375rem' }}>
               {pageTitle}
             </Typography>
+            {canAddFarmer && (
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<PersonAddIcon />}
+                onClick={() => setAddFarmerOpen(true)}
+                sx={{ ml: 1.5, textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
+              >
+                Add farmer
+              </Button>
+            )}
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
@@ -476,6 +514,14 @@ export const AppShell: React.FC = () => {
       )}
 
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      {canAddFarmer && (
+        <AddFarmerDialog
+          open={addFarmerOpen}
+          onClose={() => setAddFarmerOpen(false)}
+          // The pump list and the Farmers page pick the new farmer up straight away.
+          onRegistered={() => window.dispatchEvent(new Event('farmers-changed'))}
+        />
+      )}
       <MfaSetupDialog />
     </Box>
   );

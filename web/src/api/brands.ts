@@ -30,6 +30,11 @@ export interface ManufacturersOverview {
   totals: PumpBuckets & { farmers: number; open_alerts: number };
 }
 
+/** The manufacturer the signed-in partner belongs to (its name for the portal's header), or null for a super admin. */
+export function fetchMyBrand(): Promise<{ brand: { key: string; name: string; short_name: string | null; primary_color: string | null; logo_url: string | null } | null }> {
+  return apiJson('/brands/mine');
+}
+
 /** Super admin only: every manufacturer with its farmers, pumps and open problems. */
 export function fetchManufacturersOverview(): Promise<ManufacturersOverview> {
   return apiJson('/brands/overview');

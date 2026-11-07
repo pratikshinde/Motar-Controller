@@ -1,5 +1,6 @@
 import { outcomeOf, watchCommand } from '../../api/commands';
 import { formatCoords } from '../../utils/pumpStatus';
+import { faultText, formatMinutes, gsmLevel } from '../../utils/pumpMonitor';
 import React, { useState } from 'react';
 import { Box, Card, CardContent, Typography, Chip, Button, Menu, MenuItem } from '@mui/material';
 import Switch from '@mui/material/Switch';
@@ -272,6 +273,37 @@ export const OverviewTab: React.FC<{ detail: PumpDetail; onRefresh: () => void }
                 sx={{ height: 22, fontSize: '0.6875rem', fontWeight: 600 }}
               />
             </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color="text.secondary">
+                GSM Signal
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 600 }} data-testid="gsm-signal">
+                {typeof (pump.signal_dbm ?? pump.gsm_rssi) === 'number'
+                  ? `${gsmLevel(pump.signal_dbm ?? pump.gsm_rssi).quality} · ${pump.signal_dbm ?? pump.gsm_rssi} dBm`
+                  : 'No signal reported'}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              <Typography variant="body2" color="text.secondary">
+                Run Time Today
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: monoFont, fontWeight: 600 }}>
+                {formatMinutes(pump.runtime_today_min)}
+              </Typography>
+            </Box>
+
+            {pump.status === 'FAULT' && pump.connectivity !== 'OFFLINE' && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="body2" color="text.secondary">
+                  Starter Fault Now
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.warning.main }} data-testid="starter-fault">
+                  {faultText(pump.fault_code).name}
+                </Typography>
+              </Box>
+            )}
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
               <Typography variant="body2" color="text.secondary">

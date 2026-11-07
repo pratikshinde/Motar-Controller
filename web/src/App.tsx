@@ -10,7 +10,6 @@ import { AppShell } from './components/AppShell';
 import { LoginView } from './views/LoginView';
 import { TelemetryView } from './views/TelemetryView';
 import { DevicesView } from './views/DevicesView';
-import { HierarchyView } from './views/HierarchyView';
 import { FaultLogsView } from './views/FaultLogsView';
 import { MapView } from './views/MapView';
 import { DeviceDetailView } from './views/DeviceDetailView';
@@ -24,6 +23,7 @@ import { ConfigTemplatesView } from './views/ConfigTemplatesView';
 import { ServiceReportsView } from './views/ServiceReportsView';
 import { AlertsView } from './views/AlertsView';
 import { ManufacturersView } from './views/ManufacturersView';
+import { FarmersView } from './views/FarmersView';
 import { LandingPageView } from './views/landing/LandingPageView';
 import { LightScope } from './theme/LightScope';
 
@@ -39,12 +39,13 @@ const AuthenticatedApp: React.FC = () => {
   <Routes>
     <Route element={<AppShell />}>
       <Route path="/manufacturers" element={role === 'superadmin' ? <ManufacturersView /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/farmers" element={<FarmersView />} />
       <Route path="/dashboard" element={<TelemetryView />} />
       <Route path="/telemetry" element={<TelemetryView />} />
       <Route path="/fleet" element={<FleetDashboardView />} />
       <Route path="/devices" element={<DevicesView />} />
       <Route path="/devices/:id" element={<DeviceDetailView />} />
-      <Route path="/hierarchy" element={<HierarchyView />} />
+      <Route path="/hierarchy" element={<Navigate to="/dashboard" replace />} />
       <Route path="/faults" element={<FaultLogsView />} />
       <Route path="/map" element={<MapView />} />
       <Route path="/config-templates" element={<ConfigTemplatesView />} />
@@ -67,14 +68,14 @@ const Gate: React.FC = () => {
   const { isAuthenticated, role } = useAuth();
   return (
     <Routes>
-      <Route path="/" element={publicPage(<LandingPageView />)} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* Authentication & Onboarding Portal */}
       <Route path="/login" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
       <Route path="/auth/login" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="register" />)} />
-      <Route path="/auth/register" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="register" />)} />
-      <Route path="/auth/register/*" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="register" />)} />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
+      <Route path="/auth/register" element={<Navigate to="/login" replace />} />
+      <Route path="/auth/register/*" element={<Navigate to="/login" replace />} />
       <Route path="/auth/verify-otp" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
       <Route path="/auth/mfa" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
 

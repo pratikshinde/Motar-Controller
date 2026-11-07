@@ -35,7 +35,7 @@ export const TelemetryView: React.FC = () => {
 
   const kpis = [
     { key: 'ALL', label: 'Total Fleet', value: stats?.total ?? 0, icon: BoltIcon, color: theme.palette.primary.main, bg: 'primaryContainer' },
-    { key: 'RUNNING', label: 'Running', value: stats?.running ?? 0, icon: CheckCircleIcon, color: theme.palette.secondary.main, bg: 'secondaryContainer' },
+    { key: 'RUNNING', label: 'Running', value: stats?.running ?? 0, icon: CheckCircleIcon, color: theme.palette.success.main, bg: 'secondaryContainer' },
     { key: 'FAULT', label: 'Faults', value: stats?.fault ?? 0, icon: ErrorIcon, color: theme.palette.error.main, bg: 'errorContainer' },
     { key: 'STOPPED', label: 'Stopped', value: stats?.stopped ?? 0, icon: PauseCircleIcon, color: theme.palette.text.secondary, bg: 'background.surfaceVariant' },
     { key: 'OFFLINE', label: 'Offline', value: stats?.offline ?? 0, icon: WifiOffIcon, color: theme.palette.warning.main, bg: 'tertiaryContainer' },

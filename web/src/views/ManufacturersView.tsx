@@ -111,7 +111,7 @@ export const ManufacturersView: React.FC = () => {
           ['Manufacturers', data.manufacturers.length, undefined],
           ['Farmers', t.farmers, undefined],
           ['Pumps', t.total, undefined],
-          ['Running', t.running, theme.palette.secondary.main],
+          ['Running', t.running, theme.palette.success.main],
           ['Faults', t.fault, theme.palette.error.main],
           ['Offline', t.offline, theme.palette.text.secondary],
           ['Open alerts', t.open_alerts, theme.palette.error.main]
@@ -161,7 +161,7 @@ export const ManufacturersView: React.FC = () => {
                   <Stat label="Farmers" value={m.farmers} />
                   <Stat label="Team" value={m.team} />
                   <Stat label="Pumps" value={m.pumps.total} />
-                  <Stat label="Running" value={m.pumps.running} color={theme.palette.secondary.main} />
+                  <Stat label="Running" value={m.pumps.running} color={theme.palette.success.main} />
                   <Stat label="Faults" value={m.pumps.fault} color={m.pumps.fault ? theme.palette.error.main : undefined} />
                   <Stat label="Offline" value={m.pumps.offline} />
                   <Stat label="Open alerts" value={m.open_alerts} color={m.open_alerts ? theme.palette.error.main : undefined} />

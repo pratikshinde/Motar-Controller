@@ -114,7 +114,7 @@ export const AuditLogView: React.FC = () => {
         </Paper>
 
         <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: '#2563EB', color: '#fff' }}>
+          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: '#0B7A3E', color: '#fff' }}>
             <DevicesIcon fontSize="small" />
           </Box>
           <Box>

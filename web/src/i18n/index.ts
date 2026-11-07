@@ -24,6 +24,7 @@ export interface Dict {
   navServiceReports: string;
   navAlerts: string;
   navManufacturers: string;
+  navFarmers: string;
   heroTitle: string;
   kpiTotal: string;
   kpiRunning: string;
@@ -85,6 +86,7 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     navServiceReports: 'Service Reports',
     navAlerts: 'Alerts',
     navManufacturers: 'Manufacturers',
+    navFarmers: 'Farmers',
     heroTitle: '3-Phase Power Health Monitor',
     kpiTotal: 'Total',
     kpiRunning: 'Running',
@@ -136,6 +138,7 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     navServiceReports: 'सेवा रिपोर्ट',
     navAlerts: 'अलर्ट',
     navManufacturers: 'निर्माता',
+    navFarmers: 'किसान',
     heroTitle: '3-फेज मोटर बिजली स्वास्थ्य मॉनिटर',
     kpiTotal: 'कुल उपकरण',
     kpiRunning: 'चालू',

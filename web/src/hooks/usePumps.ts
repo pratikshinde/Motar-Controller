@@ -46,6 +46,12 @@ export function usePumps(search = '') {
     return () => clearInterval(id);
   }, [reload]);
 
+  // A farmer was registered (the starter now belongs to them): show the pump at once.
+  useEffect(() => {
+    window.addEventListener('farmers-changed', reload);
+    return () => window.removeEventListener('farmers-changed', reload);
+  }, [reload]);
+
   useEffect(() => {
     return subscribe('telemetry', msg => {
       // FastAPI ws_hub shape: { type:"telemetry", pump_id:"...", data:{v_ry,v_yb,v_br,i_r,i_y,i_b,status,...} }
@@ -56,9 +62,17 @@ export function usePumps(search = '') {
         const idx = prev.findIndex(p => p.id === pumpId);
         if (idx === -1) return prev; // out of the current page/scope — next poll will pick it up
         const next = [...prev];
+        const newStatus = src.status ?? next[idx].status;
+        // The starter's fault code and the day's run time are not in this message: when the pump starts or stops, or a
+        // fault appears or clears, fetch them a moment later instead of showing a stale name.
+        if (newStatus !== next[idx].status) setTimeout(() => void reload(), 4000);
         next[idx] = {
           ...next[idx],
-          status: src.status ?? next[idx].status,
+          // The pump has just been heard from, so it is online whatever the last list said.
+          connectivity: 'ONLINE',
+          signal_dbm: src.gsm_rssi ?? next[idx].signal_dbm,
+          fault_code: newStatus === 'FAULT' ? (src.fault_code ?? next[idx].fault_code) : null,
+          status: newStatus,
           v_ry: src.v_ry ?? next[idx].v_ry,
           v_yb: src.v_yb ?? next[idx].v_yb,
           v_br: src.v_br ?? next[idx].v_br,
@@ -73,7 +87,7 @@ export function usePumps(search = '') {
       });
       setLastUpdated(new Date());
     });
-  }, [subscribe]);
+  }, [subscribe, reload]);
 
   return { pumps, stats, loading, error, reload, lastUpdated, wsStatus };
 }

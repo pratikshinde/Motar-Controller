@@ -55,6 +55,16 @@ export async function loginWithPassword(phoneNumber: string, password: string): 
   return outcomeFrom(body);
 }
 
+export async function loginWithEmail(email: string, password: string): Promise<LoginOutcome> {
+  const res = await apiFetch('/auth/login-email', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim(), password })
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'Sign-in failed'));
+  return outcomeFrom(body);
+}
+
 export async function logout() {
   try {
     if (getAuthToken()) {

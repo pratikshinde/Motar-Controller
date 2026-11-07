@@ -111,7 +111,7 @@ export const FaultLogsView: React.FC = () => {
           <Stack spacing={1.5}>
             {safeFaults.map(f => {
               const sev = f.severity || 'LOW';
-              const sevColor = sev === 'CRITICAL' || sev === 'HIGH' ? '#DC2626' : sev === 'MEDIUM' ? '#D97706' : '#2563EB';
+              const sevColor = sev === 'CRITICAL' || sev === 'HIGH' ? '#DC2626' : sev === 'MEDIUM' ? '#D97706' : '#0B7FC7';
               return (
                 <Box
                   key={f.id}

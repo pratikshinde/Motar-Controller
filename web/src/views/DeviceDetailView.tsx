@@ -141,7 +141,7 @@ export const DeviceDetailView: React.FC = () => {
   const { pump } = detail;
   const shownStatus = effectiveStatus(pump);
   const statusColor =
-    shownStatus === 'RUNNING' ? theme.palette.secondary.main
+    shownStatus === 'RUNNING' ? theme.palette.success.main
     : shownStatus === 'FAULT' ? theme.palette.error.main
     : shownStatus === 'OFFLINE' ? theme.palette.warning.main
     : theme.palette.text.secondary;

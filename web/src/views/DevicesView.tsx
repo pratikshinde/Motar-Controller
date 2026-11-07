@@ -95,7 +95,7 @@ export const DevicesView: React.FC = () => {
         valueGetter: (_v, row) => effectiveStatus(row),
         renderCell: p => {
           const color =
-            p.value === 'RUNNING' ? theme.palette.secondary.main
+            p.value === 'RUNNING' ? theme.palette.success.main
             : p.value === 'FAULT' ? theme.palette.error.main
             : p.value === 'OFFLINE' ? theme.palette.warning.main
             : theme.palette.text.secondary;

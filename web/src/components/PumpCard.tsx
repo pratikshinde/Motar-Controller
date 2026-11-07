@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { dispatchCommand } from '../api/pumps';
 import { outcomeOf, watchCommand } from '../api/commands';
 import { effectiveStatus, formatCoords, STATUS_LABEL, type EffectiveStatus } from '../utils/pumpStatus';
+import { faultText, formatHM, formatMinutes, gsmLevel, heardAgo } from '../utils/pumpMonitor';
 import { useAuth } from '../context/AuthContext';
 import { useLocale } from '../context/LocaleContext';
 import { useToast } from '../context/ToastContext';
@@ -16,7 +17,7 @@ import { monoFont } from '../theme';
 import type { PumpListItem } from '../types';
 
 const statusColor = (status: EffectiveStatus, theme: any) => {
-  if (status === 'RUNNING') return theme.palette.secondary.main;
+  if (status === 'RUNNING') return theme.palette.success.main;
   if (status === 'FAULT') return theme.palette.error.main;
   if (status === 'OFFLINE') return theme.palette.warning.main;
   return theme.palette.text.secondary;
@@ -28,6 +29,33 @@ function fmt(value: string | number | null, unit: string) {
   if (value === null || value === undefined || value === '') return '—';
   return `${Number(value).toFixed(1)} ${unit}`;
 }
+
+/** Four bars for the modem's signal, filled by strength (the same levels the farmer's app shows). */
+const SignalBars: React.FC<{ dbm: number | null | undefined }> = ({ dbm }) => {
+  const theme = useTheme();
+  const { bars, quality } = gsmLevel(dbm);
+  return (
+    <Tooltip title={bars ? `GSM signal ${quality}: ${dbm} dBm` : 'No GSM signal reported'}>
+      <Box
+        data-testid="gsm-bars"
+        aria-label={bars ? `GSM signal ${quality}` : 'No GSM signal'}
+        sx={{ display: 'inline-flex', alignItems: 'flex-end', gap: '2px', height: 14 }}
+      >
+        {[1, 2, 3, 4].map(i => (
+          <Box
+            key={i}
+            sx={{
+              width: 3,
+              height: 3 + i * 2.5,
+              borderRadius: 0.5,
+              bgcolor: i <= bars ? theme.palette.secondary.main : theme.palette.divider
+            }}
+          />
+        ))}
+      </Box>
+    </Tooltip>
+  );
+};
 
 interface Props {
   pump: PumpListItem;
@@ -147,6 +175,44 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
           />
         </Box>
 
+        {/* A stopped-by-fault pump: the starter's own fault name, and what kind of fault it is (amber, a warning not a crash) */}
+        {pump.device_type !== 'SOLAR_VFD' && status === 'FAULT' && (() => {
+          const f = faultText(pump.fault_code);
+          return (
+            <Box
+              data-testid="fault-banner"
+              sx={{
+                px: 1.25,
+                py: 0.75,
+                borderRadius: 1.5,
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(245,158,11,0.16)' : 'rgba(245,158,11,0.12)',
+                border: `1px solid ${theme.palette.warning.main}`
+              }}
+            >
+              <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, color: theme.palette.warning.main }}>
+                {f.kind === 'voltage' ? 'VOLTAGE FAULT' : f.kind === 'current' ? 'CURRENT FAULT' : 'FAULT'}
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.875rem' }}>
+                {f.name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {f.action}
+              </Typography>
+            </Box>
+          );
+        })()}
+
+        {/* Pump not heard from: the farmer sees the same words */}
+        {pump.device_type !== 'SOLAR_VFD' && status === 'OFFLINE' && (
+          <Typography
+            data-testid="offline-note"
+            variant="caption"
+            sx={{ px: 1.25, py: 0.75, borderRadius: 1.5, border: `1px solid ${theme.palette.warning.main}`, color: 'text.secondary' }}
+          >
+            Not heard from for {heardAgo(pump.last_seen_at).replace(' ago', '')}. The power may be off, or there is no mobile signal.
+          </Typography>
+        )}
+
         {/* Telemetry Metric Readouts */}
         {pump.device_type === 'SOLAR_VFD' ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -258,6 +324,39 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
                 </Box>
               ))}
             </Box>
+          </Box>
+        )}
+
+        {/* The monitoring strip a farmer gets on the Home screen: signal, last heard, run time today and in total */}
+        {pump.device_type !== 'SOLAR_VFD' && (
+          <Box
+            data-testid="monitor-strip"
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 1,
+              px: 1.25,
+              py: 0.75,
+              borderRadius: 1.5,
+              bgcolor: 'background.surfaceVariant',
+              border: `1px solid ${theme.palette.divider}`
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <SignalBars dbm={pump.signal_dbm ?? pump.gsm_rssi} />
+              <Typography variant="caption" sx={{ fontFamily: monoFont }}>
+                {typeof (pump.signal_dbm ?? pump.gsm_rssi) === 'number' ? `${pump.signal_dbm ?? pump.gsm_rssi} dBm` : 'No signal'}
+              </Typography>
+            </Box>
+            <Typography variant="caption" sx={{ textAlign: 'right' }} color="text.secondary">
+              Heard {heardAgo(pump.last_seen_at)}
+            </Typography>
+            <Typography variant="caption">
+              Today: <b>{formatMinutes(pump.runtime_today_min)}</b>
+            </Typography>
+            <Typography variant="caption" sx={{ textAlign: 'right' }}>
+              Total: <b>{formatHM(pump.total_runtime_min)}</b>
+            </Typography>
           </Box>
         )}
 

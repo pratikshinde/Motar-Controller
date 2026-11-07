@@ -89,7 +89,7 @@ export const FleetDashboardView: React.FC = () => {
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)', md: 'repeat(7, 1fr)' }, gap: 1.5 }}>
         {[
           { label: 'Total Fleet', value: total, color: theme.palette.primary.main, bg: 'primaryContainer' },
-          { label: 'Online (10m)', value: online, color: theme.palette.secondary.main, bg: 'secondaryContainer' },
+          { label: 'Online (10m)', value: online, color: theme.palette.success.main, bg: 'secondaryContainer' },
           { label: 'Offline', value: offline, color: theme.palette.text.secondary, bg: 'background.surfaceVariant' },
           { label: 'Never Seen', value: neverSeen, color: theme.palette.text.secondary, bg: 'background.surfaceVariant' },
           { label: 'Open Faults', value: activeFaults.reduce((sum, f) => sum + Number(f.count), 0), color: theme.palette.error.main, bg: 'errorContainer' },

@@ -7,6 +7,8 @@ interface BrandLogoProps {
   withTagline?: boolean;
   /** Show only the drop icon below the `sm` breakpoint, for toolbars that need the room for their buttons. */
   iconOnlyOnPhone?: boolean;
+  /** A manufacturer's partner sees the manufacturer's name ("Ajanta Pump Controller") instead of the platform's. */
+  partnerName?: string | null;
   onClick?: () => void;
 }
 
@@ -15,8 +17,16 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   light = false,
   withTagline = false,
   iconOnlyOnPhone = false,
+  partnerName = null,
   onClick
 }) => {
+  // "Ajanta Pump Controller" is shown as "Ajanta" (bold) and "Pump Controller" (accent); a one-word name keeps one word.
+  const partnerWords: [string, string] | null = (() => {
+    const name = (partnerName || '').trim();
+    if (!name) return null;
+    const space = name.indexOf(' ');
+    return space === -1 ? [name, ''] : [name.slice(0, space), name.slice(space + 1)];
+  })();
   const iconSizes = {
     small: { w: 28, h: 28, svg: 28 },
     medium: { w: 36, h: 36, svg: 36 },
@@ -65,8 +75,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           <defs>
             <linearGradient id="dropGrad" x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="#38BDF8" />
-              <stop offset="50%" stopColor="#2563EB" />
-              <stop offset="100%" stopColor="#1D4ED8" />
+              <stop offset="50%" stopColor="#16A34A" />
+              <stop offset="100%" stopColor="#0B7A3E" />
             </linearGradient>
             <linearGradient id="leafGrad" x1="14" y1="12" x2="30" y2="34" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="#34D399" />
@@ -74,7 +84,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
               <stop offset="100%" stopColor="#059669" />
             </linearGradient>
             <filter id="subtleGlow" x="0" y="0" width="40" height="40" filterUnits="userSpaceOnUse">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#2563EB" floodOpacity="0.25" />
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#0B7A3E" floodOpacity="0.25" />
             </filter>
           </defs>
 
@@ -109,11 +119,12 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           sx={{
             fontFamily: "'Space Grotesk', 'Plus Jakarta Sans', sans-serif",
             fontWeight: 800,
-            fontSize: title,
+            fontSize: partnerWords ? '0.9rem' : title,
             letterSpacing: '-0.02em',
             display: 'flex',
             alignItems: 'center',
-            gap: '3px'
+            gap: '3px',
+            whiteSpace: 'nowrap'
           }}
         >
           <Box
@@ -123,16 +134,16 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
               fontWeight: 800
             }}
           >
-            AgriPump
+            {partnerWords ? partnerWords[0] : 'AgriPump'}
           </Box>
           <Box
             component="span"
             sx={{
-              color: '#2563EB',
+              color: light ? '#4ADE80' : '#0B7A3E',
               fontWeight: 700
             }}
           >
-            SmartSpace
+            {partnerWords ? partnerWords[1] : 'SmartSpace'}
           </Box>
         </Typography>
 

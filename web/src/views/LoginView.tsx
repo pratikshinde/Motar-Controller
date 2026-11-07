@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Tabs,
-  Tab,
   Button,
   Menu,
   MenuItem,
@@ -16,51 +14,20 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthHeroPanel } from './auth/AuthHeroPanel';
 import { LoginForm } from './auth/LoginForm';
-import { CreateAccountForm } from './auth/CreateAccountForm';
 import { BrandLogo } from '../components/brand/BrandLogo';
 import { useLocale } from '../context/LocaleContext';
 import { supportedLocales, localeLabels, type SupportedLocale } from '../i18n';
 
 interface LoginViewProps {
+  /** Kept so the old /register routes still render the page: there is no sign-up any more, only the sign-in. */
   defaultTab?: 'login' | 'register';
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ defaultTab = 'login' }) => {
+export const LoginView: React.FC<LoginViewProps> = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { locale, setLocale } = useLocale();
-
-  const [tab, setTab] = useState<'login' | 'register'>(
-    location.pathname.includes('/register') ? 'register' : defaultTab
-  );
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
-
-  // Sync tab if URL changes
-  useEffect(() => {
-    if (location.pathname.includes('/register')) {
-      setTab('register');
-    } else if (location.pathname.includes('/login')) {
-      setTab('login');
-    }
-  }, [location.pathname]);
-
-  const handleTabChange = (_: React.SyntheticEvent, newTab: 'login' | 'register') => {
-    setTab(newTab);
-    setSelectedRole(null);
-    if (newTab === 'register') {
-      window.history.replaceState(null, '', '/register');
-    } else {
-      window.history.replaceState(null, '', '/login');
-    }
-  };
-
-  const handleSelectRoleFromLogin = (roleId: string) => {
-    setSelectedRole(roleId);
-    setTab('register');
-    window.history.replaceState(null, '', '/register');
-  };
 
   // Language Menu dropdown
   const [langAnchor, setLangAnchor] = useState<null | HTMLElement>(null);
@@ -108,15 +75,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ defaultTab = 'login' }) =>
           bgcolor: '#FFFFFF'
         }}
       >
-        <BrandLogo size="small" onClick={() => navigate('/')} />
-        <Button
-          size="small"
-          onClick={() => navigate('/')}
-          startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
-          sx={{ textTransform: 'none', color: '#64748B', fontWeight: 600, fontSize: '0.82rem' }}
-        >
-          Home
-        </Button>
+        <BrandLogo size="small" partnerName="Ajanta Pump Controller" />
       </Box>
 
       {/* RIGHT COLUMN: Authentication Container */}
@@ -141,26 +100,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ defaultTab = 'login' }) =>
             mb: { xs: 2.5, md: 4 }
           }}
         >
-          {/* Back to Home link on desktop */}
-          <Button
-            size="small"
-            startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
-            onClick={() => navigate('/')}
-            sx={{
-              display: { xs: 'none', md: 'inline-flex' },
-              color: '#64748B',
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              '&:hover': { color: '#2563EB', bgcolor: 'transparent' }
-            }}
-          >
-            Back to Home
-          </Button>
+          <Box />
 
           {/* Desktop Right Column Brand (Subtle) */}
           <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-            <BrandLogo size="small" />
+            <BrandLogo size="small" partnerName="Ajanta Pump Controller" />
           </Box>
 
           {/* Language Selector */}
@@ -206,68 +150,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ defaultTab = 'login' }) =>
 
         {/* Center: Tabs & Main Form */}
         <Box sx={{ my: 'auto', py: { xs: 1, md: 2 } }}>
-          {/* Top Tabs: [ Login ]   [ Create Account ] */}
-          <Box sx={{ maxWidth: 460, mx: 'auto', mb: 3.5 }}>
-            <Tabs
-              value={tab}
-              onChange={handleTabChange}
-              variant="fullWidth"
-              sx={{
-                bgcolor: '#F1F5F9',
-                borderRadius: 2.5,
-                p: 0.5,
-                minHeight: 46,
-                '& .MuiTabs-indicator': {
-                  bgcolor: '#FFFFFF',
-                  height: '100%',
-                  borderRadius: 2,
-                  boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)'
-                },
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  color: '#64748B',
-                  minHeight: 38,
-                  zIndex: 1,
-                  borderRadius: 2,
-                  transition: 'all 0.2s ease',
-                  '&.Mui-selected': {
-                    color: '#0F172A',
-                    fontWeight: 700
-                  }
-                }
-              }}
-            >
-              <Tab label="Login" value="login" />
-              <Tab label="Create Account" value="register" />
-            </Tabs>
-          </Box>
-
-          {/* Form Switcher */}
-          {tab === 'login' ? (
-            <LoginForm
-              onSwitchToRegister={() => {
-                setTab('register');
-                window.history.replaceState(null, '', '/register');
-              }}
-              onSelectRole={handleSelectRoleFromLogin}
-            />
-          ) : (
-            <CreateAccountForm
-              onSwitchToLogin={() => {
-                setTab('login');
-                window.history.replaceState(null, '', '/login');
-              }}
-              initialRole={selectedRole}
-            />
-          )}
+          <LoginForm />
         </Box>
 
         {/* Bottom Security / Copyright Note */}
         <Box sx={{ textAlign: 'center', pt: 3, borderTop: '1px solid #F1F5F9' }}>
           <Typography sx={{ fontSize: '0.78rem', color: '#94A3B8' }}>
-            &copy; {new Date().getFullYear()} AgriPump SmartSpace &bull; Enterprise Agricultural IoT &bull; Secured with TLS &amp; TOTP
+            &copy; {new Date().getFullYear()} Ajanta Pump Controller &bull; Secured with TLS &amp; two-factor sign-in
           </Typography>
         </Box>
       </Box>
