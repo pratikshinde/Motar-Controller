@@ -36,11 +36,20 @@ def _send(channel: str, phone: str, code: str) -> dict:
     return send_whatsapp_otp(phone, code) if channel == "whatsapp" else send_sms_otp(phone, code)
 
 
+def _channel_for(channel: str) -> str:
+    """WhatsApp only while a WhatsApp Business account is set up; otherwise the code goes by SMS (the partner portal's account
+    creation and invites then work without WhatsApp)."""
+    if channel == "whatsapp" and not (settings.WHATSAPP_API_TOKEN and settings.WHATSAPP_PHONE_ID) and not settings.dev_codes_enabled:
+        return "sms"
+    return channel
+
+
 def start_phone_verification(db: Session, phone_number: str, purpose: str, channel: str = "whatsapp") -> dict:
     """Send a code. For `password_reset`, answers identically whether or not that phone belongs to a partner
     account — the caller cannot tell an unregistered number from one that just chose not to reveal it.
     """
     clean_phone = normalize_phone(phone_number)
+    channel = _channel_for(channel)
 
     eligible = True
     if purpose == "password_reset":
@@ -73,12 +82,15 @@ def start_phone_verification(db: Session, phone_number: str, purpose: str, chann
         code_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()
         expires_at = now_utc + timedelta(minutes=OTP_TTL_MINUTES)
 
-        send_result = _send(channel, clean_phone, code)
-        if send_result.get("status") not in ("dispatched", "mock_dispatched") and not is_dev:
+        if is_dev and not settings.OTP_SEND_IN_DEV:
+            send_result = {"status": "mock_dispatched"}  # developer machine: nothing goes out, the code is in the answer
+        else:
+            send_result = _send(channel, clean_phone, code)
+        if send_result.get("status") != "dispatched" and not is_dev:
             logger.warning("Phone verification send failed for purpose=%s channel=%s: %s", purpose, channel, send_result)
             raise HTTPException(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
-                "WhatsApp verification is not available right now. Please try again later or contact support.",
+                "We could not send a verification code right now. Please try again later or contact support.",
             )
 
         if existing:

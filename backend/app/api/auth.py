@@ -1,13 +1,16 @@
+import logging
 import uuid
 import random
 import hashlib
 import hmac
 from functools import lru_cache
 from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional, Union
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, text
 from app.config import settings
 from app.database import get_db
 from app.models import User, OtpChallenge, RefreshToken, Invite, DeviceAccess, AccountDeletionRequest, AuditLog, Alert, Organisation
@@ -24,7 +27,7 @@ from app.services.jwt_auth import (
 from app.services.totp_service import (
     generate_secret, build_otpauth_url, generate_qr_base64, verify_totp
 )
-from app.services.whatsapp_provider import get_whatsapp_provider
+from app.services.whatsapp_provider import get_whatsapp_provider  # noqa: F401  (kept: tests patch it here)
 from app.core.authorization import (
     can, can_create_role, normalize_role, is_super_admin,
     ROLE_SUPER_ADMIN, ROLE_PANEL_MANUFACTURER, ROLE_DISTRIBUTOR,
@@ -35,6 +38,11 @@ from app.services.phone_verification import (
     start_phone_verification, confirm_phone_verification, redeem_phone_verification,
 )
 from app.services.cache_service import cache_service
+from app.services import firebase_phone
+from app.schemas import ClaimRequest, FirebasePhoneRequest, LoginEmailRequest
+from app.models.farmer_claim import FarmerClaim
+from app.services import farmer_claims
+from app.core.phone import india_phone
 from app.api.deps import get_current_user, require_roles, set_db_actor_context, security, HTTPAuthorizationCredentials
 from app.repositories import PumpRepository
 from app.services.pump_view import build_user_views
@@ -48,6 +56,7 @@ from app.services.brand_service import current_brand
 MFA_MAX_ATTEMPTS = 5
 
 router = APIRouter(tags=["Authentication"])
+logger = logging.getLogger(__name__)
 
 def format_user_response(user: User):
     return {
@@ -196,27 +205,36 @@ def _login_fail_key(clean_phone: str) -> str:
 
 
 def _send_login_code(phone: str, code: str) -> bool:
-    """Deliver a sign-in code: WhatsApp first, SMS when WhatsApp is not set up or refuses. True when some channel took the
-    message (on a developer machine the console mock counts: that is how it "delivers"). False when nothing could send it,
-    so the caller can say so instead of telling the person a code is on its way when it is not."""
-    try:
-        sent = get_whatsapp_provider().send_otp(phone, code) or {}
-        if sent.get("status") not in ("not_configured", "send_failed"):
-            return True
-    except Exception:
-        pass
+    """Deliver a sign-in code by SMS (farmers sign in with a mobile number and an SMS code; no WhatsApp). True when the SMS
+    gateway took the message (on a developer machine the console mock counts: that is how it "delivers"). False when it
+    could not be sent, so the caller can say so instead of telling the person a code is on its way when it is not."""
+    if settings.dev_codes_enabled and not settings.OTP_SEND_IN_DEV:
+        return True  # developer machine: nothing goes out (tests and demo numbers must never cost money); 123456 works
     try:
         sent = send_sms_otp(phone, code) or {}
     except Exception:
         return False
+    state = sent.get("status")
+    # A gateway that refused the message: our own "send_failed", or Twilio's error body (its "status" is the HTTP code).
+    if state == "send_failed" or isinstance(state, int):
+        return False
     # send_sms_otp answers "mock_dispatched" when no gateway is configured at all.
-    return sent.get("status") != "mock_dispatched" or settings.dev_codes_enabled
+    return state != "mock_dispatched" or settings.dev_codes_enabled
+
+
+def _too_many_codes(clean_phone: str) -> bool:
+    """SMS costs money and an open sign-up is an invitation to run up the bill: one number gets only a few codes an hour.
+    Not applied on a developer machine, where nothing is sent."""
+    if settings.dev_codes_enabled:
+        return False
+    key = f"otp_hour:{normalize_phone(clean_phone)[-10:]}"
+    return cache_service.incr(key, ex=3600) > settings.OTP_MAX_PER_PHONE_PER_HOUR
 
 
 def _open_to_codes(db: Session, clean_phone: str) -> bool:
     """With self-registration closed (always, in production) a sign-in code is only useful to a number that already has an
     account. Sending one to any other number is how an OTP endpoint gets abused to message strangers, so those get no code."""
-    if settings.ALLOW_SELF_REGISTRATION:
+    if settings.phone_signup_open:
         return True
     return db.query(User.id).filter(User.phone.in_(get_phone_variants(clean_phone))).first() is not None
 
@@ -246,10 +264,10 @@ def send_otp(req: Union[OtpRequestIn, SendOtpRequest], db: Session = Depends(get
     if is_new_user and not _open_to_codes(db, clean_phone):
         return {
             "status": "OTP_REQUESTED",
-            "message": f"Verification code dispatched to {clean_phone} via WhatsApp",
+            "message": f"Verification code sent to {clean_phone} by SMS",
             "phone": clean_phone,
             "phone_number": clean_phone,
-            "channel": "whatsapp",
+            "channel": "sms",
             "cooldown_seconds": 30,
         }
 
@@ -269,6 +287,12 @@ def send_otp(req: Union[OtpRequestIn, SendOtpRequest], db: Session = Depends(get
                 detail=f"Please wait {retry_after} seconds before requesting another OTP."
             )
 
+    if _too_many_codes(clean_phone):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many codes were requested for this number. Please try again in an hour."
+        )
+
     is_dev = settings.dev_codes_enabled
     otp_code = "123456" if is_dev else str(random.randint(100000, 999999))
     otp_hash = hashlib.sha256(otp_code.encode("utf-8")).hexdigest()
@@ -282,7 +306,7 @@ def send_otp(req: Union[OtpRequestIn, SendOtpRequest], db: Session = Depends(get
     challenge = OtpChallenge(
         phone_number=clean_phone,
         purpose="login",
-        channel="whatsapp",
+        channel="sms",
         code_hash=otp_hash,
         expires_at=expires_at,
         attempts=0,
@@ -299,7 +323,7 @@ def send_otp(req: Union[OtpRequestIn, SendOtpRequest], db: Session = Depends(get
         "auth",
         clean_phone,
         "OTP_REQUESTED",
-        {"channel": "whatsapp", "is_new_user": is_new_user}
+        {"channel": "sms", "is_new_user": is_new_user}
     )
     db.commit()
 
@@ -314,10 +338,10 @@ def send_otp(req: Union[OtpRequestIn, SendOtpRequest], db: Session = Depends(get
 
     response_data = {
         "status": "OTP_REQUESTED",
-        "message": f"Verification code dispatched to {clean_phone} via WhatsApp",
+        "message": f"Verification code sent to {clean_phone} by SMS",
         "phone": clean_phone,
         "phone_number": clean_phone,
-        "channel": "whatsapp",
+        "channel": "sms",
         "cooldown_seconds": 30
     }
     # The code itself is only ever returned on a developer machine (ENV=development).
@@ -417,13 +441,19 @@ def verify_otp(req: Union[OtpVerifyIn, VerifyOtpRequest], db: Session = Depends(
     )
     db.commit()
 
+    return _finish_phone_sign_in(db, req, clean_phone, "sms")
+
+
+def _finish_phone_sign_in(db: Session, req, clean_phone: str, channel: str):
+    """What follows once a phone is proven (by our own SMS code or by Firebase): find or create the farmer, apply the account
+    rules (suspension, brand, super admin authenticator), redeem invites and open the session."""
     # 6. Lookup user
     user = db.query(User).filter(User.phone.in_(get_phone_variants(clean_phone))).first()
     is_new = False
     if not user:
         # A code only proves the person holds this phone. Creating an account from it is self-registration, which is
         # closed in production (onboarding is by dealer invite), so it must obey the same switch as /auth/register.
-        if not settings.ALLOW_SELF_REGISTRATION:
+        if not settings.phone_signup_open:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No account exists for this number. Accounts are created by your dealer."
@@ -446,7 +476,16 @@ def verify_otp(req: Union[OtpVerifyIn, VerifyOtpRequest], db: Session = Depends(
             created_at=datetime.utcnow()
         )
         db.add(user)
-        db.flush()
+        try:
+            db.flush()
+        except IntegrityError:
+            # Two requests for the same new number at once (a double tap, a retry after a slow answer): the other one made the
+            # account a moment ago. Carry on with that account instead of failing.
+            db.rollback()
+            user = db.query(User).filter(User.phone.in_(get_phone_variants(clean_phone))).first()
+            if user is None:
+                raise
+            is_new = False
 
     set_db_actor_context(db, user=user)
 
@@ -538,10 +577,69 @@ def verify_otp(req: Union[OtpVerifyIn, VerifyOtpRequest], db: Session = Depends(
         entity_type="user",
         entity_id=str(user.id),
         action="LOGIN_SUCCESS",
-        after_json={"channel": "whatsapp", "phone": clean_phone}
+        after_json={"channel": channel, "phone": clean_phone}
     ))
     db.commit()
     return session
+
+@router.post("/firebase-phone")
+def firebase_phone_sign_in(req: FirebasePhoneRequest, db: Session = Depends(get_db)):
+    """Sign in (or sign up) with Firebase Phone Authentication: the app got the SMS code from Firebase, the farmer typed it, and
+    Firebase gave the app a signed ID token. We only check that token (see services/firebase_phone.py) and then do exactly
+    what the SMS-code login does: same account rules, same session."""
+    try:
+        clean_phone = firebase_phone.verified_phone(req.id_token)
+    except firebase_phone.FirebaseNotConfigured:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Sign-in by phone is not set up on this server yet.")
+    except firebase_phone.FirebaseTokenError as exc:
+        logger.warning("Firebase phone sign-in refused: %s", exc)
+        _record_audit_log(db, None, None, "auth", "firebase", "OTP_FAILED", {"reason": "FIREBASE_TOKEN_REJECTED"})
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="We could not verify that phone number. Please try again.")
+    _record_audit_log(db, None, None, "auth", clean_phone, "OTP_VERIFIED", {"phone": clean_phone, "channel": "firebase"})
+    db.commit()
+    return _finish_phone_sign_in(db, req, clean_phone, "firebase")
+
+
+@router.post("/claim")
+def claim_with_qr(req: ClaimRequest, db: Session = Depends(get_db)):
+    """The farmer's first sign-in: they scanned the QR their dealer printed and typed the mobile number the dealer registered.
+    No OTP. The QR works once; five wrong numbers burn it."""
+    invalid = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="This QR code is not valid any more. Please ask your dealer for a new one.",
+    )
+    token = farmer_claims.token_from_payload(req.qr)
+    if not token:
+        raise invalid
+    claim = db.query(FarmerClaim).filter(FarmerClaim.token_hash == farmer_claims.hash_token(token)).first()
+    if farmer_claims.state_of(claim) != "PENDING":
+        raise invalid
+    farmer = db.query(User).filter(User.id == claim.user_id).first()
+    stored = (farmer.phone or farmer.phone_number or "") if farmer else ""
+    if not farmer or not stored:
+        raise invalid
+
+    typed = india_phone(req.phone)
+    if not typed or typed not in get_phone_variants(stored):
+        claim.attempts = (claim.attempts or 0) + 1
+        burned = claim.attempts >= farmer_claims.MAX_PHONE_ATTEMPTS
+        if burned:
+            claim.revoked_at = datetime.now(timezone.utc)
+        _record_audit_log(db, farmer.id, farmer.role, "user", str(farmer.id), "QR_CLAIM_FAILED", {"attempts": claim.attempts, "burned": burned})
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=("That number does not match the one your dealer registered."
+                    + (" This QR code is now blocked: please ask your dealer for a new one." if burned else "")),
+        )
+
+    claim.claimed_at = datetime.now(timezone.utc)
+    claim.claimed_install_id = (req.app_install_id or "")[:100] or None
+    _record_audit_log(db, farmer.id, farmer.role, "user", str(farmer.id), "QR_CLAIMED", {"channel": "qr"})
+    db.commit()
+    return _finish_phone_sign_in(db, req, stored, "qr")
+
 
 @router.post("/verify-phone/send")
 def verify_phone_send(req: PhoneVerificationSendRequest, db: Session = Depends(get_db)):
@@ -598,8 +696,28 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
 @router.post("/login-password", response_model=LoginResponse)
 def login_password(req: LoginPasswordRequest, db: Session = Depends(get_db)):
     clean_phone = req.phone_number.strip().replace(" ", "")
+    user = db.query(User).filter(
+        (User.phone.in_(get_phone_variants(clean_phone))) |
+        (User.phone_number.in_(get_phone_variants(clean_phone)))
+    ).first()
+    return _password_sign_in(
+        db, req, user, _login_fail_key(clean_phone), "Incorrect mobile number or password. Please check and try again."
+    )
 
-    fail_key = _login_fail_key(clean_phone)
+
+@router.post("/login-email", response_model=LoginResponse)
+def login_email(req: LoginEmailRequest, db: Session = Depends(get_db)):
+    """The website's sign-in: an email and a password (the Ajanta admin and the super admin). Same protections as the mobile
+    number sign-in: one password check is always paid for, "no such email" answers like "wrong password", and repeated wrong
+    passwords lock the email for a few minutes."""
+    email = req.email.strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == email).first() if email else None
+    return _password_sign_in(db, req, user, f"login_fail:email:{email}", "Incorrect email or password. Please check and try again.")
+
+
+def _password_sign_in(db: Session, req, user: Optional[User], fail_key: str, wrong_message: str):
+    """The shared part of a password sign-in (by mobile number or by email): lockout, the always-paid-for password check,
+    suspension, brand, authenticator challenge, session."""
     failures = int(cache_service.get(fail_key) or 0)
     if failures >= LOGIN_MAX_FAILURES:
         raise AppError(
@@ -608,22 +726,14 @@ def login_password(req: LoginPasswordRequest, db: Session = Depends(get_db)):
             headers={"Retry-After": str(LOGIN_LOCK_SECONDS)},
         )
 
-    user = db.query(User).filter(
-        (User.phone.in_(get_phone_variants(clean_phone))) |
-        (User.phone_number.in_(get_phone_variants(clean_phone)))
-    ).first()
-
-    # One password check is always paid for (against a dummy hash when there is no such account or no password), and
-    # "no such number" gets the same answer as "wrong password": neither the status code, the message nor the timing
-    # says which phone numbers have accounts.
+    # One password check is always paid for (against a dummy hash when there is no such account or no password), and "no such
+    # account" gets the same answer as "wrong password": neither the status code, the message nor the timing says which
+    # accounts exist.
     stored = user.password_hash if user and user.password_hash else None
     password_ok = verify_secret(req.password, stored or _dummy_password_hash()) and stored is not None
     if not user or not password_ok:
         cache_service.set(fail_key, failures + 1, ex=LOGIN_LOCK_SECONDS)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect mobile number or password. Please check and try again."
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=wrong_message)
     cache_service.delete(fail_key)
 
     if user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
@@ -1290,6 +1400,34 @@ def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user)):
     return format_user_response(current_user)
+
+class PushTokenRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=4096)
+    platform: str = Field(default="android", pattern="^(android|ios)$")
+
+
+@router.post("/me/push-token", response_model=MessageResponse)
+def register_push_token(req: PushTokenRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """The phone's Firebase registration token, so it gets this person's notifications. The same token moves to whoever signed in last."""
+    from app.models.push_token import PushToken
+
+    row = db.query(PushToken).filter(PushToken.token == req.token).first()
+    if row is None:
+        db.add(PushToken(user_id=current_user.id, token=req.token, platform=req.platform))
+    else:
+        row.user_id, row.platform, row.updated_at = current_user.id, req.platform, datetime.now(timezone.utc)
+    db.commit()
+    return {"message": "Notifications are on for this phone."}
+
+
+@router.delete("/me/push-token", response_model=MessageResponse)
+def remove_push_token(req: PushTokenRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.models.push_token import PushToken
+
+    db.query(PushToken).filter(PushToken.token == req.token, PushToken.user_id == current_user.id).delete()
+    db.commit()
+    return {"message": "Notifications are off for this phone."}
+
 
 # Languages the app UI is translated into (mobile/src/shared/i18n/languages.ts).
 SUPPORTED_LOCALES = ("en", "hi", "mr", "kn", "te", "ta", "gu", "pa", "bn", "as", "ne", "kok", "mai", "ks")

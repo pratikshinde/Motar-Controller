@@ -19,6 +19,21 @@ class OtpVerifyIn(BaseModel):
     app_install_id: Optional[str] = None
     device_info: Optional[str] = None
 
+class FirebasePhoneRequest(BaseModel):
+    """Sign in with the ID token Firebase Phone Authentication gave the app after the farmer typed the SMS code."""
+    id_token: str = Field(..., min_length=20, max_length=8192)
+    language: Optional[str] = None
+    app_install_id: Optional[str] = None
+    device_info: Optional[str] = None
+
+class ClaimRequest(BaseModel):
+    """The farmer scanned the QR their dealer gave them and typed the mobile number the dealer registered."""
+    qr: str = Field(..., min_length=20, max_length=200)
+    phone: str = Field(..., min_length=10, max_length=20)
+    language: Optional[str] = None
+    app_install_id: Optional[str] = None
+    device_info: Optional[str] = None
+
 class RegisterRequestIn(BaseModel):
     phone: Optional[str] = None
     phone_number: Optional[str] = None
@@ -69,6 +84,13 @@ class VerifyOtpRequest(BaseModel):
 class LoginPasswordRequest(BaseModel):
     phone_number: str
     password: str
+    app_install_id: Optional[str] = None
+    device_info: Optional[str] = None
+
+class LoginEmailRequest(BaseModel):
+    """The website's sign-in for the Ajanta admin and the super admin: an email and a password."""
+    email: str = Field(..., min_length=3, max_length=254)
+    password: str = Field(..., min_length=1, max_length=200)
     app_install_id: Optional[str] = None
     device_info: Optional[str] = None
 

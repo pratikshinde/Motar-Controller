@@ -327,11 +327,11 @@ class TestCodesAreOnlyForRealAccountsWhenRegistrationIsClosed(SignInBase):
     def test_no_code_is_sent_to_a_stranger_and_the_answer_does_not_say_so(self):
         known = self.make_user("customer", "known")
         stranger = self.fresh_phone()
-        with switches(ENV="development", ALLOW_SELF_REGISTRATION=False), no_messages() as (whatsapp, _sms, _ticket):
+        with switches(ENV="development", ALLOW_SELF_REGISTRATION=False, OPEN_PHONE_SIGNUP=False, OTP_SEND_IN_DEV=True), no_messages() as (_whatsapp, sms, _ticket):
             a = client.post("/api/v1/auth/send-otp", json={"phone": known.phone})
             b = client.post("/api/v1/auth/send-otp", json={"phone": stranger})
             c = client.post("/api/v1/auth/register/request", json={"phone": stranger, "role": "customer"})
-            sent_to = [call.args[0] for call in whatsapp.call_args_list]
+            sent_to = [call.args[0] for call in sms.call_args_list]
         self.assertEqual((a.status_code, b.status_code, c.status_code), (200, 200, 200))
         self.assertEqual(sent_to, [known.phone], "only the number with an account was messaged")
         self.assertEqual(set(a.json()) - {"dev_otp"}, set(b.json()), "the reply does not reveal which numbers have accounts")
@@ -344,7 +344,7 @@ class TestCodesAreOnlyForRealAccountsWhenRegistrationIsClosed(SignInBase):
             phone_number=stranger, purpose="login", channel="whatsapp", code_hash=hashlib.sha256(b"654321").hexdigest(),
             expires_at=datetime.utcnow() + timedelta(minutes=5), attempts=0, created_at=datetime.utcnow()))
         self.db.commit()
-        with switches(ENV="development", ALLOW_SELF_REGISTRATION=False):
+        with switches(ENV="development", ALLOW_SELF_REGISTRATION=False, OPEN_PHONE_SIGNUP=False):
             r = client.post("/api/v1/auth/verify-otp", json={"phone": stranger, "otp": "654321"})
         self.assertEqual(r.status_code, 403, r.text)
         self.assertEqual(self.db.query(User).filter(User.phone == stranger).count(), 0)
@@ -360,15 +360,16 @@ class TestCodesAreOnlyForRealAccountsWhenRegistrationIsClosed(SignInBase):
         self.assertEqual(self.db.query(OtpChallenge).filter(OtpChallenge.phone_number == known.phone).count(), 0,
                          "a code nobody can receive must not block the retry")
 
-    def test_sms_takes_over_when_whatsapp_is_not_set_up(self):
-        known = self.make_user("customer", "sms-fallback")
+    def test_the_code_goes_by_sms_and_whatsapp_is_never_asked(self):
+        known = self.make_user("customer", "sms-only")
         with switches(ENV="production"), \
                 patch("app.api.auth.get_whatsapp_provider") as whatsapp, patch("app.api.auth.send_sms_otp") as sms:
-            whatsapp.return_value.send_otp.return_value = {"status": "not_configured"}
-            sms.return_value = {"status": "queued"}
+            sms.return_value = {"status": "dispatched"}
             r = client.post("/api/v1/auth/send-otp", json={"phone": known.phone})
         self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["channel"], "sms")
         sms.assert_called_once()
+        whatsapp.assert_not_called()
 
 
 class TestAccountsMadeFromACode(SignInBase):

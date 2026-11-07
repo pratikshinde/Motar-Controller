@@ -1,11 +1,40 @@
+import logging
 import httpx
 from typing import Optional, Dict, Any
 from app.config import settings
 from app.services.brand_service import channel_setting, current_brand
 
+logger = logging.getLogger("agripump.sms_otp")
+
+
+def _send_msg91_otp(auth_key: str, template_id: str, phone_number: str, otp_code: str) -> Dict[str, Any]:
+    """MSG91's OTP product: our own code goes into the DLT-approved template (##OTP##). Answers `dispatched` when MSG91
+    took it, `send_failed` otherwise, so the caller never tells someone a code is coming when it is not."""
+    digits = "".join(ch for ch in phone_number if ch.isdigit())
+    if len(digits) == 11 and digits.startswith("0"):
+        digits = digits[1:]
+    if len(digits) == 10:
+        digits = "91" + digits
+    try:
+        with httpx.Client(timeout=8.0) as client:
+            res = client.post(
+                "https://control.msg91.com/api/v5/otp",
+                headers={"authkey": auth_key, "content-type": "application/json"},
+                params={"template_id": template_id, "mobile": digits, "otp": otp_code, "otp_expiry": 5},
+                json={},
+            )
+        body = res.json() if res.content else {}
+        if res.status_code < 300 and str(body.get("type", "")).lower() == "success":
+            return {"status": "dispatched", "provider": "msg91"}
+        logger.warning("MSG91 refused the OTP (%s): %s", res.status_code, str(body)[:200])
+    except Exception as exc:  # network, TLS, bad JSON: the caller reports that no code could be sent
+        logger.warning("MSG91 OTP could not be sent: %s", exc)
+    return {"status": "send_failed", "provider": "msg91"}
+
+
 def send_sms_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
     """
-    Sends real SMS OTP via Twilio, Fast2SMS, or MSG91 if credentials are set in backend/.env.
+    Sends real SMS OTP via MSG91 (OTP product), Twilio, Fast2SMS, or MSG91 flow if credentials are set in backend/.env.
     """
     # The code goes to the console on a developer machine only: anywhere else stdout ends up in shared logs, and a code in
     # a log is a sign-in for anyone who can read it.
@@ -20,6 +49,11 @@ def send_sms_otp(phone_number: str, otp_code: str) -> Dict[str, Any]:
     twilio_sid, twilio_token, twilio_from = (channel_setting(n) for n in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"))
     fast2sms_key = channel_setting("FAST2SMS_API_KEY")
     msg91_key, msg91_flow = channel_setting("MSG91_AUTH_KEY"), channel_setting("MSG91_FLOW_ID")
+    msg91_otp_template = channel_setting("MSG91_OTP_TEMPLATE_ID")
+
+    # 0. MSG91 OTP product (India, DLT): first, so leftover Twilio trial settings can never take the code.
+    if msg91_key and msg91_otp_template:
+        return _send_msg91_otp(msg91_key, msg91_otp_template, clean_num, otp_code)
 
     # 1. Twilio SMS Integration
     if twilio_sid and twilio_token and twilio_from:

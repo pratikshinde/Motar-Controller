@@ -18,6 +18,7 @@ from starlette.concurrency import run_in_threadpool
 from app.config import settings
 from app.database import system_session
 from app.models import Alert, Pump
+from app.services import pump_notify
 from app.services.alert_engine import get_dedup_bucket
 from app.services.ws_hub import ws_hub
 
@@ -95,8 +96,11 @@ def _sweep() -> List[Tuple[str, Dict[str, Any], Optional[str]]]:
         raised, resolved = sweep_connectivity(db)
         for alert in raised:
             logger.info("Pump %s stopped reporting: connectivity alert raised", alert.pump_id)
+            pump_notify.no_contact(db, alert.pump_id)
         for alert in resolved:
             logger.info("Pump %s: connectivity alert resolved (%s)", alert.pump_id, alert.resolution_note)
+            if alert.resolution_note and "reporting again" in alert.resolution_note:
+                pump_notify.back_online(db, alert.pump_id)
         return [_announcement(db, a) for a in raised + resolved]
 
 

@@ -39,6 +39,8 @@ class User(Base):
     account_status: Mapped[str] = mapped_column(String(10), default="ACTIVE", nullable=False)
     contract_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     device_quota: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # A farmer's address, as the dealer wrote it when registering them on the website.
+    address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

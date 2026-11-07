@@ -47,8 +47,31 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_PHONE_NUMBER: str = ""
+    # SMS alerts to a pump's owner (no contact, back online, fault). Off until switched on AND a Twilio account is set.
+    # ALERT_SMS_TO: while set, every alert goes to this one number instead of the owners (to try it on your own phone).
+    ALERT_SMS_ENABLED: bool = False
+    # Push notifications (Firebase Cloud Messaging): the path of the project's service-account key file. Empty = push is off.
+    FIREBASE_SERVICE_ACCOUNT_FILE: str = ""
+    # Firebase Phone Authentication (sign-in by the SMS code Firebase sends): the Firebase project that issues the ID tokens the
+    # backend accepts. Empty = taken from the service-account file above.
+    FIREBASE_PROJECT_ID: str = ""
+    ALERT_SMS_TO: str = ""
     MSG91_AUTH_KEY: str = ""
     MSG91_FLOW_ID: str = ""
+    # MSG91 OTP product: the DLT-approved OTP template (its text holds ##OTP##). When set with MSG91_AUTH_KEY, sign-in
+    # codes go through MSG91 first.
+    MSG91_OTP_TEMPLATE_ID: str = ""
+    # Farmers sign up with just a mobile number and an SMS code (no email, no password). Outside development the
+    # general self-registration switch is forced off, so this is the explicit opt-in that lets a new number get a code
+    # and an account. OTP_MAX_PER_PHONE_PER_HOUR caps the codes one number can be sent (SMS costs money).
+    OPEN_PHONE_SIGNUP: bool = False
+    OTP_MAX_PER_PHONE_PER_HOUR: int = 5
+    # On a developer machine (ENV=development) sign-in codes are not sent at all: the fixed code 123456 works and is returned
+    # in the answer. Set this to true to send real SMS from a developer machine, e.g. to try MSG91 on your own phone.
+    OTP_SEND_IN_DEV: bool = False
+    # The platform owner (super admin) only monitors: every request that changes something is refused with 403 (reads, and the
+    # sign-in / authenticator calls under /auth, still work). Set it to true on the server; the manufacturer's own admin makes the changes.
+    SUPERADMIN_MONITOR_ONLY: bool = False
 
     # WhatsApp OTP (Meta Cloud API), used only to prove a phone at registration and for a partner's forgot-
     # password — never for the everyday farmer login OTP, which stays SMS-only. Empty = not configured: the
@@ -58,6 +81,15 @@ class Settings(BaseSettings):
     WHATSAPP_PHONE_ID: str = ""
     WHATSAPP_OTP_TEMPLATE: str = "otp_verification"
     WHATSAPP_OTP_LANGUAGE: str = "en_US"
+    # WhatsApp ALERTS to a pump's owner (no contact, back online, fault stop) through the same Meta account. Each alert is an
+    # approved message template (wording in backend/WHATSAPP_ALERTS.md). Off until switched on AND the token and phone id are set.
+    # ALERT_WHATSAPP_TO: while set, every alert goes to this one number instead of the owners (Meta's testing stage).
+    ALERT_WHATSAPP_ENABLED: bool = False
+    ALERT_WHATSAPP_TO: str = ""
+    WHATSAPP_ALERT_LANGUAGE: str = "en"
+    WHATSAPP_TPL_NO_CONTACT: str = "pump_no_contact"
+    WHATSAPP_TPL_BACK_ONLINE: str = "pump_back_online"
+    WHATSAPP_TPL_FAULT: str = "pump_fault_stop"
     # How long a phone_verifications ticket is spendable after a correct OTP, before the account-creation /
     # password-reset call that was meant to use it must ask the phone to re-verify.
     PHONE_VERIFICATION_TTL_SECONDS: int = 600
@@ -87,7 +119,7 @@ class Settings(BaseSettings):
     PROVISIONING_HOOK_SECRET: str = ""
 
     # A pump that has reported before but not within this long is shown as Offline (never as Running / Stopped).
-    OFFLINE_AFTER_SECONDS: int = 600
+    OFFLINE_AFTER_SECONDS: int = 180  # three missed one-minute heartbeats: the pump is offline (and the power may be off)
 
     # Commands to pumps (P2.4).
     # IOT_PUBLISH_MODE: "aws" = AWS IoT Core data plane; "outbox" = held for the local simulator to collect over HTTP
@@ -148,6 +180,11 @@ class Settings(BaseSettings):
             elif url.startswith("postgresql+psycopg://"):
                 return url
         return f"postgresql+psycopg://{self.PGUSER}:{self.PGPASSWORD}@{self.PGHOST}:{self.PGPORT}/{self.PGDATABASE}"
+
+    @property
+    def phone_signup_open(self) -> bool:
+        """True when a mobile number that has no account yet may ask for a sign-in code and get an account from it."""
+        return bool(self.ALLOW_SELF_REGISTRATION or self.OPEN_PHONE_SIGNUP)
 
     @property
     def dev_codes_enabled(self) -> bool:

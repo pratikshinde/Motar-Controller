@@ -28,3 +28,17 @@ def get_phone_variants(phone: str) -> list[str]:
         variants.add("+91" + clean)
         variants.add("91" + clean)
     return list(variants)
+
+
+def india_phone(raw: str):
+    """An Indian mobile number in the stored form ("+91" and ten digits), or None when it is not one. Accepts "98765 43210",
+    "09876543210", "919876543210" and "+91 98765-43210"."""
+    clean = normalize_phone(raw or "")
+    digits = "".join(ch for ch in clean if ch.isdigit())
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+    elif len(digits) == 11 and digits.startswith("0"):
+        digits = digits[1:]
+    if len(digits) == 10 and digits[0] in "6789":
+        return "+91" + digits
+    return None

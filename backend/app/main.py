@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import SessionLocal, check_timescaledb_extension
-from app.api import auth, pumps, commands, fleet, telemetry, alerts, users, batches, templates, audit, health, branding, panels, service_reports, sites, invites, organisations, dashboard, brands
+from app.api import auth, pumps, commands, fleet, telemetry, alerts, users, farmers, batches, templates, audit, health, branding, panels, service_reports, sites, invites, organisations, dashboard, brands
 from app.websockets import router as ws_router
 from app.websockets import dashboard_ws as dashboard_ws_router
 
@@ -61,6 +61,13 @@ async def lifespan(app: FastAPI):
         init_sentry()
     except Exception as e:
         print(f"Notice: Sentry setup skipped: {e}")
+
+    # Startup: fetch Google's signing keys for Firebase phone sign-in in the background, so the first farmer to sign in does not wait.
+    try:
+        from app.services import firebase_phone
+        firebase_phone.warm_up()
+    except Exception as e:
+        print(f"Notice: Firebase key warm-up skipped: {e}")
 
     # Startup: close commands that ran out of time (EXPIRED / NOT_CONFIRMED). Safe with several API workers:
     # each sweep locks the rows it touches and skips the ones another worker holds.
@@ -187,6 +194,7 @@ for prefix in ["/api/v1", "/api"]:
     app.include_router(sites.router, prefix=f"{prefix}/sites")
     app.include_router(organisations.router, prefix=f"{prefix}/organisations")
     app.include_router(users.router, prefix=f"{prefix}/users")
+    app.include_router(farmers.router, prefix=f"{prefix}/farmers")
     app.include_router(invites.router, prefix=f"{prefix}/invites")
     app.include_router(invites.router, prefix=f"{prefix}/invitations")
     app.include_router(invites.organisations_router, prefix=f"{prefix}/organisations")

@@ -131,6 +131,13 @@ def get_current_user(
 
     set_db_actor_context(db, user=user)
 
+    # A monitoring-only platform owner: it can look at everything but change nothing (sign-in and authenticator calls under /auth are
+    # still allowed, so it can log in, refresh and set its authenticator up).
+    if settings.SUPERADMIN_MONITOR_ONLY and request.method.upper() not in ("GET", "HEAD", "OPTIONS") and "/auth/" not in request.url.path:
+        from app.core.roles import to_db_role as _db_role
+        if _db_role(user.role) == "superadmin":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The super admin account is for monitoring only.")
+
     # The platform owner looking at one manufacturer's portal: served as that manufacturer, read-only (view_as.py).
     view_key = request.headers.get(view_as.HEADER)
     if view_key and view_as.applies_to(request.url.path):

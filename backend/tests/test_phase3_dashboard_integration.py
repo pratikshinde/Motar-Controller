@@ -100,7 +100,7 @@ class _Fixture(unittest.TestCase):
         p("dlA1", cls.dealerA, cls.u_dealerA, f"/SA/MA{s}/DA/DLA/P1", "ACTIVE", ago(minutes=2), "1.0.4")
         p("dlA2", cls.dealerA, cls.u_dealerA, f"/SA/MA{s}/DA/DLA/P2", "ACTIVE", ago(hours=3), "1.0.3",
           warranty=(date.today() - timedelta(days=355), 12))          # ends in ~10 days
-        p("a2_1", cls.dealerA2, cls.u_dealerA, f"/SA/MA{s}/DA/DLA/DLA2/P1", "ACTIVE", ago(minutes=3), "1.0.4",
+        p("a2_1", cls.dealerA2, cls.u_dealerA, f"/SA/MA{s}/DA/DLA/DLA2/P1", "ACTIVE", ago(seconds=60), "1.0.4",
           latlng=(18.5204, 73.8567), subscription=NOW + timedelta(days=5))
         p("a3_1", cls.dealerA3, cls.u_dealerA3, f"/SA/MA{s}/DA/DLA/DLA2/DLA3/P1", "RMA", None, None)
         # Tree B.

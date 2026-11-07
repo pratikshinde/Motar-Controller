@@ -15,7 +15,7 @@ from sqlalchemy import distinct, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_roles
+from app.api.deps import get_current_user, require_roles
 from app.config import settings
 from app.database import get_db
 from app.models import Alert, AppBrand, AuditLog, Organisation, Pump, User
@@ -144,6 +144,21 @@ def app_config(request: Request):
     if brand is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The X-App-Brand header is required.")
     return {"brand": brand_service.public_config(brand)}
+
+
+@router.get("/mine")
+def my_brand(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """The manufacturer the signed-in partner belongs to (its name and colour for the portal's header), or null for a farmer
+    or the platform's super admin. Read-only, and only ever the caller's own brand."""
+    if (current_user.role or "").lower() == "customer":
+        return {"brand": None}
+    info = brand_service.info_for_id(db, getattr(current_user, "brand_id", None))
+    if not info:
+        return {"brand": None}
+    return {"brand": {
+        "key": info.key, "name": info.name, "short_name": info.short_name,
+        "primary_color": info.primary_color, "logo_url": info.logo_url,
+    }}
 
 
 # -- super admin -----------------------------------------------------------------------------------------------------

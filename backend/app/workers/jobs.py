@@ -121,10 +121,22 @@ def compact_yesterday(db: Session, target_day: Optional[date] = None) -> int:
         if not agg or agg.sample_count == 0:
             continue
 
-        # Estimate runtime_min: on_samples × avg reporting interval
-        # Without known interval, approximate as on_samples × 1 min (60 s interval)
-        # This is a conservative estimate; Track F1 will supply the real interval.
-        runtime_min = int(agg.on_samples or 0)  # 1 row ≈ 1 min at 60s interval
+        # Runtime: each running reading counts for the time until the next reading (at most 3 minutes, so a pump that
+        # went silent is not counted as running). The controller reports every few seconds after a start and every
+        # minute or five while idle, so counting one minute per row was wrong in both directions.
+        on_seconds = db.execute(text("""
+            SELECT COALESCE(SUM(LEAST(EXTRACT(EPOCH FROM (COALESCE(next_at, :day_end) - recorded_at)), 180))
+                            FILTER (WHERE pump_on), 0)
+            FROM (
+                SELECT pump_on, recorded_at,
+                       LEAD(recorded_at) OVER (ORDER BY recorded_at) AS next_at
+                FROM agripump.telemetry_history
+                WHERE pump_id = :device_id
+                  AND recorded_at >= :day_start
+                  AND recorded_at < :day_end
+            ) seg
+        """), {"device_id": device_id, "day_start": day_start, "day_end": day_end}).scalar()
+        runtime_min = int(round(float(on_seconds or 0) / 60.0))
 
         # Estimate offline_min: gap analysis
         # Minutes in the day minus runtime_min minus stopped_min = offline gaps

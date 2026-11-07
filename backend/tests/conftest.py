@@ -12,6 +12,10 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# The tests must not depend on what a developer put in backend/.env: the real server runs the platform owner as monitoring-only
+# (SUPERADMIN_MONITOR_ONLY=true), but most tests make changes as the super admin. The tests that are about the rule switch it on themselves.
+os.environ["SUPERADMIN_MONITOR_ONLY"] = "false"
+
 
 @pytest.fixture(autouse=True)
 def _fresh_rate_limit_budget():

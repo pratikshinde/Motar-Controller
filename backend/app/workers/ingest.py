@@ -42,6 +42,7 @@ from app.config import settings
 from app.core.logging import setup_structured_logging
 from app.database import SessionLocal
 from app.models import FaultCodeCatalog, FaultLog, Pump, TelemetryHistory
+from app.services import pump_notify
 from app.services.alert_engine import raise_alert
 from app.services.cache_service import cache_service
 from app.services.command_dispatch import announce as announce_commands, announcements as command_announcements
@@ -622,7 +623,7 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
 
         # Alert engine (async) — runs after commit so fault_log rows are visible
         for (pump_id, severity, fault_code, fault_log_id) in fault_log_ids:
-            raise_alert(
+            alert = raise_alert(
                 db=db,
                 pump_id=pump_id,
                 alert_type="FAULT",
@@ -630,6 +631,8 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 fault_code=fault_code,
                 source_fault_log_id=fault_log_id,
             )
+            if alert.occurrence_count == 1:  # the first of its kind in this window: one SMS, not one per repeat
+                pump_notify.fault(db, pump_id, fault_code)
 
     except Exception as exc:
         logger.exception("Batch processing failed, rolling back: %s", exc)
