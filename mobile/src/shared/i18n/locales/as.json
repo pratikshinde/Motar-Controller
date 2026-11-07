@@ -60,7 +60,13 @@
     "welcomeBackDesc": "Login to manage your pump remotely",
     "forgotPassword": "Forgot Password?",
     "createDesc": "Register using your WhatsApp number",
-    "sendOtpButton": "Send OTP on WhatsApp"
+    "sendOtpButton": "Send OTP on WhatsApp",
+    "smsDesc": "আপোনাৰ মোবাইল নম্বৰ দিয়ক। আমি SMS-ৰে ৬ অংকৰ কোড পঠাম। নতুন নম্বৰ? আপোনাৰ একাউণ্ট নিজে নিজে তৈয়াৰ হ'ব।",
+    "sendCodeButton": "SMS-ৰে কোড পঠাওক",
+    "changeNumber": "নম্বৰ সলনি কৰক",
+    "wrongCode": "এই কোডটো শুদ্ধ নহয়। অনুগ্ৰহ কৰি পৰীক্ষা কৰি পুনৰ চেষ্টা কৰক।",
+    "scanQr": "QR কোড স্কেন কৰক",
+    "useNumber": "আগতেই পঞ্জীয়ন কৰিছে? মোবাইল নম্বৰেৰে যাওক"
   },
   "nav": {
     "pumps": "মোৰ পাম্প",
@@ -677,6 +683,17 @@
     "signalGood": "ভাল",
     "signalFair": "মধ্যম",
     "signalPoor": "দুৰ্বল",
-    "signalNone": "ছিগনেল নাই"
+    "signalNone": "ছিগনেল নাই",
+    "offlineNote": "কেইমিনিটমান ধৰি পাম্পৰ পৰা কোনো বাৰ্তা অহা নাই। বিদ্যুৎ গৈছে বা মোবাইল ছিগনেল নাই হ'ব পাৰে।"
+  },
+  "claim": {
+    "title": "আপোনাৰ QR কোড স্কেন কৰক",
+    "help": "আপোনাৰ ডিলাৰৰ পৰা QR কোড লওক আৰু কেমেৰা তাৰ ফালে ধৰক।",
+    "allowCamera": "QR কোড স্কেন কৰিবলৈ কেমেৰাৰ অনুমতি দিয়ক।",
+    "allowCameraButton": "কেমেৰাৰ অনুমতি দিয়ক",
+    "notOurQr": "এইটো অজন্তাৰ QR কোড নহয়। অনুগ্ৰহ কৰি ডিলাৰে দিয়া কোড স্কেন কৰক।",
+    "numberHelp": "ডিলাৰে আপোনাৰ বাবে পঞ্জীয়ন কৰা মোবাইল নম্বৰ লিখক।",
+    "continue": "আগবাঢ়ক",
+    "scanAgain": "আকৌ স্কেন কৰক"
   }
 }

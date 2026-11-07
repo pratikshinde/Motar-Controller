@@ -79,8 +79,12 @@ export const TimerTab: React.FC<{ pump: PumpResponse }> = ({ pump }) => {
     set(f, String(clampTo((Number.isFinite(cur) ? cur : lim.min) + delta, lim)));
   };
 
+  // The starter repeats its ON/OFF timer until it is stopped and has no cycle count, so Ajanta's form has none: with a rest time
+  // the timer repeats forever (0 = no limit), without one it runs once and stops.
+  const effective = (f: TimerForm): TimerForm => (ajantaHome ? { ...f, cycles: Number(f.off) > 0 ? '0' : '1' } : f);
+
   const review = () => {
-    const parsed = parseTimer(form);
+    const parsed = parseTimer(effective(form));
     if (!parsed.ok) {
       setErrors(parsed.errors);
       return;
@@ -114,7 +118,7 @@ export const TimerTab: React.FC<{ pump: PumpResponse }> = ({ pump }) => {
   };
 
   const summary = useMemo(() => {
-    const p = parseTimer(form);
+    const p = parseTimer(effective(form));
     return p.ok ? summaryKey(p.value) : null;
   }, [form]);
 

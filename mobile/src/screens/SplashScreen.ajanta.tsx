@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Droplets } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { brand } from '../config/brand';
 import { tracking } from '../shared/i18n/languages';
-import { AJANTA_PAGE, AjantaScene } from '../shared/ui/AjantaScreen';
+import { AJANTA_PAGE, AjantaLogo, AjantaScene } from '../shared/ui/AjantaScreen';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -24,7 +23,7 @@ export const SplashScreenAjanta: React.FC<SplashScreenProps> = ({ onFinish }) =>
         <AjantaScene pump={false} align="xMaxYMid" />
         <View style={styles.brandBox}>
           <View style={styles.badge}>
-            <Droplets size={44} color="#1A56D6" />
+            <AjantaLogo size={46} />
           </View>
           <Text style={[styles.title, tracking(i18n.language, 2)]} numberOfLines={1} adjustsFontSizeToFit>
             {brand.titleLine1}
@@ -37,7 +36,7 @@ export const SplashScreenAjanta: React.FC<SplashScreenProps> = ({ onFinish }) =>
       <View style={styles.bottom}>
         <Text style={styles.tagline}>{t('splash.tagline')}</Text>
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#1A56D6" />
+          <ActivityIndicator size="large" color="#0B7A3E" />
           <Text style={styles.loaderText}>{t('splash.starting')}</Text>
         </View>
         <Text style={styles.footer}>{t('splash.footer')}</Text>
@@ -58,6 +57,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 18,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.55)',
     elevation: 4,
     shadowColor: '#0D1B2A',
     shadowOpacity: 0.2,
@@ -95,11 +96,11 @@ const styles = StyleSheet.create({
   },
   bottom: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, paddingBottom: 28, paddingHorizontal: 24 },
   tagline: {
-    color: '#14213D',
+    color: '#064B27',
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
-    backgroundColor: '#E7F0FF',
+    backgroundColor: '#E4F5EA',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,

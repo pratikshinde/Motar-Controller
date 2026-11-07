@@ -10,6 +10,7 @@ import {
 } from '@/api/session';
 import { clearCachedData } from '@/api/queryClient';
 import { logout as logoutRequest, loginWithPassword } from '@/api/generated/farmer';
+import { unregisterPush } from '@/services/push';
 import type { UserOut } from '@/api/generated/model';
 import { http } from '@/api/http';
 import { storage } from '@/services/storage';
@@ -32,6 +33,10 @@ interface AuthState {
   hydrate: () => Promise<void>;
   signIn: (phone: string, password: string) => Promise<SignInResult>;
   signInWithOtp: (phone: string, code: string) => Promise<SignInResult>;
+  /** Sign in with the ID token Firebase Phone Authentication gave the app after the farmer typed the SMS code it sent. */
+  signInWithFirebase: (idToken: string) => Promise<SignInResult>;
+  /** First sign-in with the QR code the dealer printed plus the mobile number the dealer registered (no OTP). */
+  signInWithQr: (qr: string, phone: string) => Promise<SignInResult>;
   sendOtp: (phone: string) => Promise<{ message: string; dev_otp?: string }>;
   verifyMfa: (tempToken: string, code: string) => Promise<UserOut>;
   adoptUser: (user: UserOut) => Promise<void>;
@@ -85,7 +90,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     const { data } = await http.post<{ message: string; dev_otp?: string }>('/auth/send-otp', {
       phone,
       phone_number: phone,
-      channel: 'whatsapp',
+      channel: 'sms',
     });
     return data;
   },
@@ -108,6 +113,41 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
     if (!data.access_token || !data.user) {
       throw new Error(data.message || data.detail || 'OTP verification failed');
+    }
+    await setTokens(data.access_token, data.refresh_token);
+    await get().adoptUser(data.user);
+    return { user: data.user, mfaRequired: false };
+  },
+
+  async signInWithQr(qr: string, phone: string) {
+    const { data } = await http.post<any>('/auth/claim', {
+      qr,
+      phone,
+      app_install_id: await getInstallId(),
+      device_info: 'AgriPump app',
+    });
+    if (data.mfa_required || data.status === 'MFA_REQUIRED' || data.requires_mfa) {
+      return { mfaRequired: true, tempToken: data.temp_token || data.challenge_id, user: data.user };
+    }
+    if (!data.access_token || !data.user) {
+      throw new Error(data.message || data.detail || 'Sign-in failed');
+    }
+    await setTokens(data.access_token, data.refresh_token);
+    await get().adoptUser(data.user);
+    return { user: data.user, mfaRequired: false };
+  },
+
+  async signInWithFirebase(idToken: string) {
+    const { data } = await http.post<any>('/auth/firebase-phone', {
+      id_token: idToken,
+      app_install_id: await getInstallId(),
+      device_info: 'AgriPump app',
+    });
+    if (data.mfa_required || data.status === 'MFA_REQUIRED' || data.requires_mfa) {
+      return { mfaRequired: true, tempToken: data.temp_token || data.challenge_id, user: data.user };
+    }
+    if (!data.access_token || !data.user) {
+      throw new Error(data.message || data.detail || 'Sign-in failed');
     }
     await setTokens(data.access_token, data.refresh_token);
     await get().adoptUser(data.user);
@@ -146,7 +186,8 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   async signOut() {
-    // Ends only THIS phone's session on the server; the farmer's other devices stay signed in.
+    // This phone stops getting this person's notifications; then it ends only THIS phone's session on the server (the other devices stay signed in).
+    await unregisterPush();
     const refresh = await getRefreshToken();
     if (refresh) {
       try {

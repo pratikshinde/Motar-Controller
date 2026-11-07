@@ -3,6 +3,8 @@ import { StyleSheet, Text, TouchableOpacity, View, Platform, StatusBar } from 'r
 import { ChevronLeft, RefreshCw } from 'lucide-react-native';
 import { colors, font, TOUCH } from '../theme';
 import { useDirection } from '../i18n/useDirection';
+import { brand } from '../../config/brand';
+import { AjantaSubHeader } from './AjantaScreen';
 
 /** Green top bar for the secondary screens (pump list, alerts). */
 export const ScreenHeader: React.FC<{
@@ -14,6 +16,9 @@ export const ScreenHeader: React.FC<{
   onRefresh?: () => void;
 }> = ({ title, subtitle, onBack, backLabel, refreshLabel, onRefresh }) => {
   const { flip } = useDirection();
+  if (brand.key === 'ajanta') {
+    return <AjantaSubHeader title={title} onBack={onBack} backLabel={backLabel} onRefresh={onRefresh} refreshLabel={refreshLabel} />;
+  }
   return (
     <View style={styles.bar}>
       <View style={styles.side}>

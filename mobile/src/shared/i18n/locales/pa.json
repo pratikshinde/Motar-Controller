@@ -60,7 +60,13 @@
     "welcomeBackDesc": "Login to manage your pump remotely",
     "forgotPassword": "Forgot Password?",
     "createDesc": "Register using your WhatsApp number",
-    "sendOtpButton": "Send OTP on WhatsApp"
+    "sendOtpButton": "Send OTP on WhatsApp",
+    "smsDesc": "ਆਪਣਾ ਮੋਬਾਈਲ ਨੰਬਰ ਪਾਓ। ਅਸੀਂ SMS ਰਾਹੀਂ 6 ਅੰਕਾਂ ਦਾ ਕੋਡ ਭੇਜਾਂਗੇ। ਨਵਾਂ ਨੰਬਰ? ਤੁਹਾਡਾ ਖਾਤਾ ਆਪਣੇ-ਆਪ ਬਣ ਜਾਵੇਗਾ।",
+    "sendCodeButton": "SMS ਰਾਹੀਂ ਕੋਡ ਭੇਜੋ",
+    "changeNumber": "ਨੰਬਰ ਬਦਲੋ",
+    "wrongCode": "ਇਹ ਕੋਡ ਸਹੀ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਜਾਂਚ ਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "scanQr": "QR ਕੋਡ ਸਕੈਨ ਕਰੋ",
+    "useNumber": "ਪਹਿਲਾਂ ਹੀ ਰਜਿਸਟਰ ਹੋ? ਮੋਬਾਈਲ ਨੰਬਰ ਨਾਲ ਜਾਓ"
   },
   "nav": {
     "pumps": "ਮੇਰੇ ਪੰਪ",
@@ -677,6 +683,17 @@
     "signalGood": "ਚੰਗਾ",
     "signalFair": "ਠੀਕ-ਠਾਕ",
     "signalPoor": "ਕਮਜ਼ੋਰ",
-    "signalNone": "ਸਿਗਨਲ ਨਹੀਂ"
+    "signalNone": "ਸਿਗਨਲ ਨਹੀਂ",
+    "offlineNote": "ਪੰਪ ਵੱਲੋਂ ਕੁਝ ਮਿੰਟਾਂ ਤੋਂ ਕੋਈ ਸੁਨੇਹਾ ਨਹੀਂ ਆਇਆ। ਹੋ ਸਕਦਾ ਹੈ ਬਿਜਲੀ ਬੰਦ ਹੋਵੇ ਜਾਂ ਮੋਬਾਈਲ ਸਿਗਨਲ ਨਾ ਹੋਵੇ।"
+  },
+  "claim": {
+    "title": "ਆਪਣਾ QR ਕੋਡ ਸਕੈਨ ਕਰੋ",
+    "help": "ਆਪਣੇ ਡੀਲਰ ਤੋਂ QR ਕੋਡ ਲਓ ਅਤੇ ਕੈਮਰਾ ਉਸ ਵੱਲ ਕਰੋ।",
+    "allowCamera": "QR ਕੋਡ ਸਕੈਨ ਕਰਨ ਲਈ ਕੈਮਰੇ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।",
+    "allowCameraButton": "ਕੈਮਰੇ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ",
+    "notOurQr": "ਇਹ ਅਜੰਤਾ ਦਾ QR ਕੋਡ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਡੀਲਰ ਦਾ ਦਿੱਤਾ ਕੋਡ ਸਕੈਨ ਕਰੋ।",
+    "numberHelp": "ਉਹ ਮੋਬਾਈਲ ਨੰਬਰ ਲਿਖੋ ਜੋ ਡੀਲਰ ਨੇ ਤੁਹਾਡੇ ਲਈ ਦਰਜ ਕੀਤਾ ਹੈ।",
+    "continue": "ਅੱਗੇ ਵਧੋ",
+    "scanAgain": "ਦੁਬਾਰਾ ਸਕੈਨ ਕਰੋ"
   }
 }

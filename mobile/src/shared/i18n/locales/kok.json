@@ -60,7 +60,13 @@
     "welcomeBackDesc": "Login to manage your pump remotely",
     "forgotPassword": "Forgot Password?",
     "createDesc": "Register using your WhatsApp number",
-    "sendOtpButton": "Send OTP on WhatsApp"
+    "sendOtpButton": "Send OTP on WhatsApp",
+    "smsDesc": "तुमचो मोबायल नंबर घाला. आमी SMS वरवीं 6 अंकी कोड धाडटले. नवो नंबर? तुमचें खातें आपसूक तयार जातलें.",
+    "sendCodeButton": "SMS वरवीं कोड धाडचो",
+    "changeNumber": "नंबर बदला",
+    "wrongCode": "हो कोड बरो ना. कृपया तपासून परत यत्न करात.",
+    "scanQr": "QR कोड स्कॅन करात",
+    "useNumber": "आदीं रजिस्टर केलां? मोबायल नंबरान वचात"
   },
   "nav": {
     "pumps": "म्हजे पंप",
@@ -677,6 +683,17 @@
     "signalGood": "बरें",
     "signalFair": "मध्यम",
     "signalPoor": "दुबळें",
-    "signalNone": "सिग्नल ना"
+    "signalNone": "सिग्नल ना",
+    "offlineNote": "थोडे मिनटां पसून पंपाकडल्यान कसलोच संदेश आयलो ना. वीज गेल्ली आसूंक शकता वा मोबाईल सिग्नल ना."
+  },
+  "claim": {
+    "title": "तुमचो QR कोड स्कॅन करात",
+    "help": "तुमच्या डीलराकडल्यान QR कोड घेयात आनी कॅमेरो ताचेर धरात.",
+    "allowCamera": "QR कोड स्कॅन करपाक कॅमेऱ्याक परवानगी दियात.",
+    "allowCameraButton": "कॅमेऱ्याक परवानगी दियात",
+    "notOurQr": "हो अजंताचो QR कोड ना. कृपया डीलरान दिल्लो कोड स्कॅन करात.",
+    "numberHelp": "डीलरान तुमकां लागून नोंदयिल्लो मोबायल नंबर बरयात.",
+    "continue": "फुडें वचात",
+    "scanAgain": "परत स्कॅन करात"
   }
 }

@@ -60,7 +60,13 @@
     "welcomeBackDesc": "Login to manage your pump remotely",
     "forgotPassword": "Forgot Password?",
     "createDesc": "Register using your WhatsApp number",
-    "sendOtpButton": "Send OTP on WhatsApp"
+    "sendOtpButton": "Send OTP on WhatsApp",
+    "smsDesc": "आफ्नो मोबाइल नम्बर राख्नुहोस्। हामी SMS मार्फत ६ अङ्कको कोड पठाउँछौं। नयाँ नम्बर? तपाईंको खाता आफैं बन्छ।",
+    "sendCodeButton": "SMS बाट कोड पठाउनुहोस्",
+    "changeNumber": "नम्बर बदल्नुहोस्",
+    "wrongCode": "यो कोड ठीक छैन। कृपया जाँचेर फेरि प्रयास गर्नुहोस्।",
+    "scanQr": "QR कोड स्क्यान गर्नुहोस्",
+    "useNumber": "पहिले नै दर्ता भइसक्यो? मोबाइल नम्बरबाट जानुहोस्"
   },
   "nav": {
     "pumps": "मेरा पम्प",
@@ -677,6 +683,17 @@
     "signalGood": "राम्रो",
     "signalFair": "ठीकै",
     "signalPoor": "कमजोर",
-    "signalNone": "सिग्नल छैन"
+    "signalNone": "सिग्नल छैन",
+    "offlineNote": "केही मिनेटदेखि पम्पबाट कुनै सन्देश आएको छैन। बिजुली गएको हुन सक्छ वा मोबाइल सिग्नल छैन।"
+  },
+  "claim": {
+    "title": "आफ्नो QR कोड स्क्यान गर्नुहोस्",
+    "help": "आफ्नो डिलरबाट QR कोड लिनुहोस् र क्यामेरा त्यसतर्फ देखाउनुहोस्।",
+    "allowCamera": "QR कोड स्क्यान गर्न क्यामेरालाई अनुमति दिनुहोस्।",
+    "allowCameraButton": "क्यामेरा अनुमति दिनुहोस्",
+    "notOurQr": "यो अजन्ताको QR कोड होइन। कृपया डिलरले दिएको कोड स्क्यान गर्नुहोस्।",
+    "numberHelp": "डिलरले तपाईंका लागि दर्ता गरेको मोबाइल नम्बर लेख्नुहोस्।",
+    "continue": "अगाडि बढ्नुहोस्",
+    "scanAgain": "फेरि स्क्यान गर्नुहोस्"
   }
 }

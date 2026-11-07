@@ -1,4 +1,5 @@
 import { AuthShellSwati, authStylesSwati } from './AuthShell.swati';
+import { AuthShellAjanta } from './AuthShell.ajanta';
 import React from 'react';
 import {
   KeyboardAvoidingView,
@@ -154,6 +155,7 @@ const authStylesClassic = StyleSheet.create({
 });
 
 
-export const AuthShell: typeof AuthShellClassic = brand.design === 'swati' ? AuthShellSwati : AuthShellClassic;
+export const AuthShell: typeof AuthShellClassic =
+  brand.design === 'swati' ? AuthShellSwati : brand.key === 'ajanta' ? AuthShellAjanta : AuthShellClassic;
 
 export const authStyles = brand.design === 'swati' ? authStylesSwati : authStylesClassic;

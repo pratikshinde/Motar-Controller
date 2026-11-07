@@ -60,7 +60,13 @@
     "welcomeBackDesc": "Login to manage your pump remotely",
     "forgotPassword": "Forgot Password?",
     "createDesc": "Register using your WhatsApp number",
-    "sendOtpButton": "Send OTP on WhatsApp"
+    "sendOtpButton": "Send OTP on WhatsApp",
+    "smsDesc": "તમારો મોબાઇલ નંબર નાખો. અમે SMS દ્વારા 6 અંકનો કોડ મોકલીશું. નવો નંબર? તમારું ખાતું આપોઆપ બની જશે.",
+    "sendCodeButton": "SMS દ્વારા કોડ મોકલો",
+    "changeNumber": "નંબર બદલો",
+    "wrongCode": "આ કોડ સાચો નથી. કૃપા કરીને તપાસીને ફરી પ્રયાસ કરો.",
+    "scanQr": "QR કોડ સ્કેન કરો",
+    "useNumber": "પહેલેથી નોંધણી કરી છે? મોબાઇલ નંબરથી આગળ વધો"
   },
   "nav": {
     "pumps": "મારા પંપ",
@@ -677,6 +683,17 @@
     "signalGood": "સારું",
     "signalFair": "મધ્યમ",
     "signalPoor": "નબળું",
-    "signalNone": "સિગ્નલ નથી"
+    "signalNone": "સિગ્નલ નથી",
+    "offlineNote": "પંપ તરફથી થોડી મિનિટથી કોઈ સંદેશ આવ્યો નથી. વીજળી ગઈ હોઈ શકે અથવા મોબાઇલ સિગ્નલ ન હોય."
+  },
+  "claim": {
+    "title": "તમારો QR કોડ સ્કેન કરો",
+    "help": "તમારા ડીલર પાસેથી QR કોડ લો અને કેમેરા તેના પર રાખો.",
+    "allowCamera": "QR કોડ સ્કેન કરવા કેમેરાને મંજૂરી આપો.",
+    "allowCameraButton": "કેમેરાને મંજૂરી આપો",
+    "notOurQr": "આ અજંતાનો QR કોડ નથી. કૃપા કરીને ડીલરે આપેલો કોડ સ્કેન કરો.",
+    "numberHelp": "ડીલરે તમારા માટે નોંધેલો મોબાઇલ નંબર લખો.",
+    "continue": "આગળ વધો",
+    "scanAgain": "ફરી સ્કેન કરો"
   }
 }

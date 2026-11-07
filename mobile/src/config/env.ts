@@ -12,7 +12,7 @@ export const API_ORIGIN: string =
 export const API_BASE_URL = `${API_ORIGIN}/api/v1`;
 export const WS_URL = `${API_ORIGIN.replace(/^http/, 'ws')}/ws`;
 
-/** A pump that has not reported for this long is shown as offline. */
-export const OFFLINE_AFTER_MS = 10 * 60 * 1000;
+/** A pump that has not reported for this long is shown as offline: three missed one-minute heartbeats (the backend uses the same 180 s). */
+export const OFFLINE_AFTER_MS = 3 * 60 * 1000;
 /** Show a "not confirmed" state if the pump has not confirmed a command within this time. */
 export const COMMAND_CONFIRM_MS = 60 * 1000;

@@ -38,3 +38,24 @@ jest.mock('expo-router', () => ({
 }));
 
 (global as unknown as { __DEV__: boolean }).__DEV__ = true;
+
+// The camera: a stand-in that keeps the props the screen gave it, so a test can "scan" a code by calling onBarcodeScanned.
+jest.mock('expo-camera', () => ({
+  CameraView: (props: unknown) => {
+    (globalThis as unknown as { __cameraProps: unknown }).__cameraProps = props;
+    return null;
+  },
+  useCameraPermissions: jest.fn(() => [{ granted: true }, jest.fn()]),
+}));
+
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn(async () => undefined),
+  getPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  getDevicePushTokenAsync: jest.fn(async () => ({ type: 'android', data: 'fcm-token-for-tests-0123456789' })),
+  getLastNotificationResponseAsync: jest.fn(async () => null),
+  addPushTokenListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  AndroidImportance: { HIGH: 4 },
+}));

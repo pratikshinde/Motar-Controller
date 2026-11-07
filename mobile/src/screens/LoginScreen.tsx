@@ -20,6 +20,7 @@ import {
   Globe,
   Sparkles,
   MessageSquare,
+  QrCode,
   RefreshCw,
 } from 'lucide-react-native';
 import { useAuth } from '@/state/auth';
@@ -28,12 +29,16 @@ import { normalizePhone } from '@/shared/phone';
 import { friendlyError } from '../shared/i18n/errors';
 import { AuthShell, authStyles as s } from './auth/AuthShell';
 import i18n, { LANGUAGES } from '@/shared/i18n';
+import { brand } from '@/config/brand';
+import { firebasePhoneSupported, firebaseProblem, startPhoneSignIn, type PhoneChallenge } from '@/services/firebasePhone';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
   onForgotPassword: () => void;
   onRegister: () => void;
   onChangeLanguage?: () => void;
+  /** Ajanta: opens the QR scanner (the farmer's first sign-in). */
+  onScanQr?: () => void;
 }
 
 // Shortcuts for a developer's machine only: the seeded demo accounts and their published password. Empty in a release
@@ -55,11 +60,30 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onForgotPassword,
   onRegister,
   onChangeLanguage,
+  onScanQr,
 }) => {
   const { t } = useTranslation();
   const expired = useAuth((st) => st.expired);
 
-  const [mode, setMode] = useState<'password' | 'otp'>('password');
+  // Ajanta's farmers have no password: a mobile number and the SMS code sent to it are the whole sign-in, and a number that has no
+  // account yet gets one the first time it is verified. The other brands keep their password / code tabs as they were.
+  const phoneOnly = brand.key === 'ajanta';
+  const [mode, setMode] = useState<'password' | 'otp'>(phoneOnly ? 'otp' : 'password');
+  // Where Firebase is set up (the Ajanta Android app) the SMS code comes from Firebase; elsewhere from our own backend.
+  const viaFirebase = phoneOnly && firebasePhoneSupported;
+  // A farmer's first visit is by QR code (given by the dealer); the mobile number + code below is for a farmer who is already
+  // registered and signing in again (a new phone, a reinstall). Without a scan screen (tests, web) the number form is all there is.
+  const [showPhone, setShowPhone] = useState(!phoneOnly || !onScanQr);
+  const [challenge, setChallenge] = useState<PhoneChallenge | null>(null);
+  const firebaseText = (err: unknown): string | null => {
+    if (!viaFirebase) return null;
+    const problem = firebaseProblem(err);
+    if (problem === 'wrongCode') return t('login.wrongCode');
+    if (problem === 'tooMany') return t('errors.tooMany');
+    if (problem === 'badPhone') return t('login.needPhone');
+    if (problem === 'network') return t('errors.network');
+    return null;
+  };
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -127,13 +151,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     const clean = normalizePhone(phone);
     setLoading(true);
     try {
+      if (viaFirebase) {
+        setChallenge(await startPhoneSignIn(clean));
+        setOtpSent(true);
+        setDevOtp(null);
+        setCooldown(30);
+        return;
+      }
       const res = await useAuth.getState().sendOtp(clean);
       setOtpSent(true);
       // The server returns the code only in development mode; never invent one to show.
       setDevOtp(res.dev_otp ?? null);
       setCooldown(30);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || friendlyError(err, t, 'login'));
+      setError(firebaseText(err) || err?.response?.data?.detail || friendlyError(err, t, 'login'));
     } finally {
       setLoading(false);
     }
@@ -147,7 +178,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
     setLoading(true);
     try {
-      const res = await useAuth.getState().signInWithOtp(clean, targetCode.trim());
+      const res = challenge
+        ? await useAuth.getState().signInWithFirebase(await challenge.confirm(targetCode.trim()))
+        : await useAuth.getState().signInWithOtp(clean, targetCode.trim());
       if (res.mfaRequired && res.tempToken) {
         setMfaPending(true);
         setTempToken(res.tempToken);
@@ -156,7 +189,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       }
       onLoginSuccess();
     } catch (err: any) {
-      setError(err?.response?.data?.detail || friendlyError(err, t, 'login'));
+      setError(firebaseText(err) || err?.response?.data?.detail || friendlyError(err, t, 'login'));
     } finally {
       setLoading(false);
     }
@@ -273,10 +306,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     );
   }
 
+  // --- VIEW 1b (Ajanta): the farmer's first visit: scan the QR code the dealer printed ---
+  if (phoneOnly && !showPhone) {
+    return (
+      <AuthShell rightAction={renderLanguagePill}>
+        <View style={localStyles.mfaHeader}>
+          <View style={localStyles.mfaIconWrap}>
+            <QrCode size={32} color={colors.primary} />
+          </View>
+          <Text style={s.title}>{t('login.welcomeBack')}</Text>
+          <Text style={s.desc}>{t('claim.help')}</Text>
+        </View>
+        <TouchableOpacity style={s.submitBtn} onPress={onScanQr} activeOpacity={0.85} accessibilityRole="button">
+          <QrCode size={20} color={colors.textOnPrimary} />
+          <Text style={s.submitBtnText}>{t('login.scanQr')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setShowPhone(true)} style={{ alignSelf: 'center', marginTop: space.lg }}>
+          <Text style={s.footerLink}>{t('login.useNumber')}</Text>
+        </TouchableOpacity>
+      </AuthShell>
+    );
+  }
+
   // --- VIEW 2: STANDARD LOGIN SCREEN (PASSWORD & OTP TABS) ---
   return (
     <AuthShell rightAction={renderLanguagePill}>
-      {/* Mode Switcher Tabs */}
+      {/* Mode Switcher Tabs (not for Ajanta: code only) */}
+      {!phoneOnly && (
       <View style={localStyles.tabBar}>
         <TouchableOpacity
           style={[localStyles.tabItem, mode === 'password' && localStyles.tabItemActive]}
@@ -306,6 +362,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           </Text>
         </TouchableOpacity>
       </View>
+      )}
 
       {/* Quick Test Accounts Bar - development builds only */}
       {DEMO_ACCOUNTS.length > 0 && (
@@ -344,7 +401,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
       <Text style={s.title}>{t('login.welcomeBack')}</Text>
       <Text style={s.desc}>
-        {mode === 'password' ? t('login.welcomeBackDesc') : 'Sign in securely with a one-time verification code.'}
+        {phoneOnly ? t('login.smsDesc') : mode === 'password' ? t('login.welcomeBackDesc') : 'Sign in securely with a one-time verification code.'}
       </Text>
 
       {error && (
@@ -436,7 +493,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 <ActivityIndicator color={colors.textOnPrimary} />
               ) : (
                 <>
-                  <Text style={s.submitBtnText}>Send Verification Code</Text>
+                  <Text style={s.submitBtnText}>{phoneOnly ? t('login.sendCodeButton') : 'Send Verification Code'}</Text>
                   <ArrowRight size={20} color={colors.textOnPrimary} />
                 </>
               )}
@@ -457,7 +514,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 </TouchableOpacity>
               )}
 
-              <Text style={s.label}>6-Digit OTP Code</Text>
+              <Text style={s.label}>{phoneOnly ? t('otp.title') : '6-Digit OTP Code'}</Text>
               <View style={s.inputWrap}>
                 <MessageSquare size={20} color={colors.textMuted} style={s.inputIcon} />
                 <TextInput
@@ -481,7 +538,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   <ActivityIndicator color={colors.textOnPrimary} />
                 ) : (
                   <>
-                    <Text style={s.submitBtnText}>Verify & Sign In</Text>
+                    <Text style={s.submitBtnText}>{phoneOnly ? t('otp.verifyButton') : 'Verify & Sign In'}</Text>
                     <ArrowRight size={20} color={colors.textOnPrimary} />
                   </>
                 )}
@@ -490,7 +547,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <View style={localStyles.resendRow}>
                 {cooldown > 0 ? (
                   <Text style={localStyles.cooldownText}>
-                    Resend code in {cooldown}s
+                    {phoneOnly ? `${t('otp.resendIn')} ${cooldown}s` : `Resend code in ${cooldown}s`}
                   </Text>
                 ) : (
                   <TouchableOpacity
@@ -499,7 +556,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     disabled={loading}
                   >
                     <RefreshCw size={14} color={colors.primaryDark} />
-                    <Text style={localStyles.resendBtnText}>Resend OTP</Text>
+                    <Text style={localStyles.resendBtnText}>{phoneOnly ? t('otp.resendButton') : 'Resend OTP'}</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
@@ -508,7 +565,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     setOtpCode('');
                   }}
                 >
-                  <Text style={s.footerLink}>Change number</Text>
+                  <Text style={s.footerLink}>{phoneOnly ? t('login.changeNumber') : 'Change number'}</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -517,12 +574,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       )}
 
       {/* Footer Register Link */}
-      <View style={s.footerRow}>
-        <Text style={s.footerText}>{t('login.newHere')}</Text>
-        <TouchableOpacity onPress={onRegister}>
-          <Text style={s.footerLink}>{t('login.createLink')}</Text>
+      {phoneOnly && onScanQr && (
+        <TouchableOpacity onPress={() => setShowPhone(false)} style={{ alignSelf: 'center', marginTop: space.lg }}>
+          <Text style={s.footerLink}>{t('login.scanQr')}</Text>
         </TouchableOpacity>
-      </View>
+      )}
+
+      {!phoneOnly && (
+        <View style={s.footerRow}>
+          <Text style={s.footerText}>{t('login.newHere')}</Text>
+          <TouchableOpacity onPress={onRegister}>
+            <Text style={s.footerLink}>{t('login.createLink')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </AuthShell>
   );
 };

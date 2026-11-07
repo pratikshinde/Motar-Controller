@@ -60,7 +60,13 @@
     "welcomeBackDesc": "Login to manage your pump remotely",
     "forgotPassword": "Forgot Password?",
     "createDesc": "Register using your WhatsApp number",
-    "sendOtpButton": "Send OTP on WhatsApp"
+    "sendOtpButton": "Send OTP on WhatsApp",
+    "smsDesc": "ನಿಮ್ಮ ಮೊಬೈಲ್ ನಂಬರ್ ಹಾಕಿ. ನಾವು SMS ಮೂಲಕ 6 ಅಂಕಿಯ ಕೋಡ್ ಕಳುಹಿಸುತ್ತೇವೆ. ಹೊಸ ನಂಬರ್? ನಿಮ್ಮ ಖಾತೆ ತಾನಾಗಿಯೇ ಆಗುತ್ತದೆ.",
+    "sendCodeButton": "SMS ಮೂಲಕ ಕೋಡ್ ಕಳುಹಿಸಿ",
+    "changeNumber": "ನಂಬರ್ ಬದಲಿಸಿ",
+    "wrongCode": "ಈ ಕೋಡ್ ಸರಿಯಿಲ್ಲ. ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    "scanQr": "QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
+    "useNumber": "ಈಗಾಗಲೇ ನೋಂದಾಯಿಸಿದ್ದೀರಾ? ಮೊಬೈಲ್ ನಂಬರ್ ಬಳಸಿ"
   },
   "nav": {
     "pumps": "ನನ್ನ ಪಂಪ್‌ಗಳು",
@@ -677,6 +683,17 @@
     "signalGood": "ಒಳ್ಳೆಯದು",
     "signalFair": "ಸಾಧಾರಣ",
     "signalPoor": "ದುರ್ಬಲ",
-    "signalNone": "ಸಿಗ್ನಲ್ ಇಲ್ಲ"
+    "signalNone": "ಸಿಗ್ನಲ್ ಇಲ್ಲ",
+    "offlineNote": "ಪಂಪ್‌ನಿಂದ ಕೆಲವು ನಿಮಿಷಗಳಿಂದ ಯಾವುದೇ ಸಂದೇಶ ಬಂದಿಲ್ಲ. ವಿದ್ಯುತ್ ಇಲ್ಲದಿರಬಹುದು ಅಥವಾ ಮೊಬೈಲ್ ಸಿಗ್ನಲ್ ಇಲ್ಲದಿರಬಹುದು."
+  },
+  "claim": {
+    "title": "ನಿಮ್ಮ QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
+    "help": "ನಿಮ್ಮ ಡೀಲರ್‌ನಿಂದ QR ಕೋಡ್ ಪಡೆದು ಕ್ಯಾಮೆರಾವನ್ನು ಅದರತ್ತ ಹಿಡಿಯಿರಿ.",
+    "allowCamera": "QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಲು ಕ್ಯಾಮೆರಾಗೆ ಅನುಮತಿ ನೀಡಿ.",
+    "allowCameraButton": "ಕ್ಯಾಮೆರಾ ಅನುಮತಿಸಿ",
+    "notOurQr": "ಇದು ಅಜಂತಾ QR ಕೋಡ್ ಅಲ್ಲ. ದಯವಿಟ್ಟು ಡೀಲರ್ ನೀಡಿದ ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ.",
+    "numberHelp": "ಡೀಲರ್ ನಿಮಗಾಗಿ ನೋಂದಾಯಿಸಿದ ಮೊಬೈಲ್ ನಂಬರ್ ಟೈಪ್ ಮಾಡಿ.",
+    "continue": "ಮುಂದುವರಿಸಿ",
+    "scanAgain": "ಮತ್ತೆ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ"
   }
 }

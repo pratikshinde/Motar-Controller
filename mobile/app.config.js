@@ -8,6 +8,8 @@
 // 2. Builds that are NOT a store "production" profile (development and the field-beta preview APK) may talk to the
 //    plain-HTTP server, which Android otherwise refuses. A production build must point EXPO_PUBLIC_API_URL at an HTTPS
 //    address instead. Profile names are "<profile>" or "<brand>-<profile>" (see eas.json).
+const fs = require('fs');
+const path = require('path');
 const brands = require('./brands/load');
 
 module.exports = ({ config }) => {
@@ -18,6 +20,15 @@ module.exports = ({ config }) => {
   const profile = process.env.EAS_BUILD_PROFILE || '';
   const production = profile === 'production' || profile.endsWith('-production');
   const plugins = [...(config.plugins ?? [])];
+  // Push notifications (Firebase Cloud Messaging): only where this app has its Firebase file. google-services.json belongs to
+  // one Android package (the Ajanta app's) and is kept out of git; a build without it simply has no push.
+  const googleServices = path.join(__dirname, 'google-services.json');
+  const push = fs.existsSync(googleServices) && key === 'ajanta';
+  // The same Firebase project also verifies phone numbers at sign-in (Firebase Phone Authentication): the library's plugin wires
+  // google-services.json into the Android build.
+  if (push) plugins.push('expo-notifications', '@react-native-firebase/app', './plugins/with-firebase-kotlin');
+  // The Ajanta farmer's first sign-in is scanning the QR code the dealer printed.
+  if (key === 'ajanta') plugins.push(['expo-camera', { cameraPermission: 'Allow $(PRODUCT_NAME) to use the camera to scan your QR code.' }]);
   if (!production) {
     plugins.push(['expo-build-properties', { android: { usesCleartextTraffic: true } }]);
   }
@@ -36,6 +47,7 @@ module.exports = ({ config }) => {
     android: {
       ...config.android,
       package: build.androidPackage,
+      ...(push ? { googleServicesFile: './google-services.json' } : {}),
       ...(adaptiveForeground
         ? {
             adaptiveIcon: {

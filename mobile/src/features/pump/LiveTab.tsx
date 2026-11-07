@@ -173,7 +173,7 @@ export const LiveTab: React.FC<{
       {!online ? <Banner tone="warn" icon={WifiOff} text={t('command.offlineBlock')} testID="control-offline" /> : null}
       {state === 'nodata' ? <Banner tone="info" text={t('live.noDataYet')} testID="no-data" /> : null}
       {state === 'offline' ? (
-        <Banner tone="warn" icon={WifiOff} text={t('live.stale', { ago })} testID="pump-offline" />
+        <Banner tone="warn" icon={WifiOff} text={ajanta ? t('home.offlineNote') : t('live.stale', { ago })} testID="pump-offline" />
       ) : null}
       {refreshFailed ? <Banner tone="warn" text={t('live.refreshFailed')} /> : null}
 

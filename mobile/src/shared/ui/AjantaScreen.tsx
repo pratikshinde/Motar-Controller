@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Bell, ChevronLeft, User } from 'lucide-react-native';
+import { Bell, ChevronLeft, RefreshCw, User } from 'lucide-react-native';
 import { brand } from '@/config/brand';
 import { useDirection } from '@/shared/i18n/useDirection';
 
@@ -217,6 +217,51 @@ export const AjantaBanner: React.FC<AjantaBannerProps> = ({
   );
 };
 
+interface AjantaSubHeaderProps {
+  title: string;
+  onBack?: () => void;
+  backLabel?: string;
+  /** Something small on the right (a button). */
+  right?: React.ReactNode;
+  onRefresh?: () => void;
+  refreshLabel?: string;
+}
+
+/**
+ * The header of Ajanta's secondary pages (History, Technical, Schedule, My Pumps, Problems, Manage): the same painted sky and farm as
+ * the Home, Timer and More pages, a back arrow, the title, and the rounded edge onto the page colour. It makes room for the status bar.
+ */
+export const AjantaSubHeader: React.FC<AjantaSubHeaderProps> = ({ title, onBack, backLabel, right, onRefresh, refreshLabel }) => {
+  const { flip } = useDirection();
+  const top = Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0;
+  return (
+    <View style={[styles.subBanner, { paddingTop: top }]}>
+      <AjantaScene pump={false} />
+      <View style={styles.subRow}>
+        <View style={styles.subSide}>
+          {onBack ? (
+            <TouchableOpacity style={styles.backBtn} onPress={onBack} accessibilityRole="button" accessibilityLabel={backLabel} activeOpacity={0.8}>
+              <ChevronLeft size={30} color="#FFFFFF" style={flip} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        <Text style={styles.subTitle} numberOfLines={1} accessibilityRole="header">
+          {title}
+        </Text>
+        <View style={[styles.subSide, { alignItems: 'flex-end' }]}>
+          {right ??
+            (onRefresh ? (
+              <TouchableOpacity style={styles.backBtn} onPress={onRefresh} accessibilityRole="button" accessibilityLabel={refreshLabel} activeOpacity={0.8}>
+                <RefreshCw size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+            ) : null)}
+        </View>
+      </View>
+      <View style={styles.subEdge} />
+    </View>
+  );
+};
+
 /** The frame of an Ajanta page: the banner, then a scrolling body on the page colour. */
 export const AjantaScreen: React.FC<{ banner: AjantaBannerProps; children: React.ReactNode }> = ({ banner, children }) => (
   <View style={styles.root}>
@@ -294,4 +339,18 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
   },
   edge: { height: 14, backgroundColor: AJANTA_PAGE, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  subBanner: { backgroundColor: '#1A56D6', overflow: 'hidden' },
+  subRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 24, minHeight: 78 },
+  subSide: { minWidth: 48 },
+  subTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '900',
+    textShadowColor: 'rgba(0,0,40,0.35)',
+    textShadowRadius: 6,
+    textShadowOffset: { width: 0, height: 1 },
+  },
+  subEdge: { position: 'absolute', start: 0, end: 0, bottom: 0, height: 14, backgroundColor: AJANTA_PAGE, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
 });

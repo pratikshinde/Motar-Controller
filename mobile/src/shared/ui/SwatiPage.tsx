@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react-native';
 import { colors } from '@/shared/theme';
 import { useDirection } from '@/shared/i18n/useDirection';
+import { brand } from '@/config/brand';
+import { AJANTA_PAGE, AjantaSubHeader } from '@/shared/ui/AjantaScreen';
 
 interface Props {
   title: string;
@@ -24,6 +26,23 @@ export const SwatiPage: React.FC<Props> = ({ title, right, noBack, refreshing, o
   const router = useRouter();
   const { flip } = useDirection();
   const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
+
+  // Ajanta's pages use Ajanta's own header (Swati keeps the plain white one).
+  if (brand.key === 'ajanta') {
+    return (
+      <View style={{ flex: 1, backgroundColor: AJANTA_PAGE }}>
+        <AjantaSubHeader title={title} onBack={noBack ? undefined : back} backLabel={t('common.back')} right={right} />
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} colors={[colors.primary]} /> : undefined}
+        >
+          {children}
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

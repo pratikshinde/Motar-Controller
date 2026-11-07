@@ -12,7 +12,10 @@ import i18n, { getSavedLanguage } from '@/shared/i18n';
 import { useDirection } from '@/shared/i18n/useDirection';
 import { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
 import { colors } from '@/shared/theme';
+import * as Notifications from 'expo-notifications';
 import { useAuth } from '@/state/auth';
+import { useSelectedPump } from '@/state/selectedPump';
+import { onPushTokenChanged, pumpOfNotification, pushSupported, registerPush, setupNotificationHandling } from '@/services/push';
 import pkg from '../package.json';
 
 const SIGNED_IN_AREAS = ['(tabs)', 'pump', 'manage'];
@@ -35,9 +38,38 @@ function useAuthRedirect() {
   }, [navReady, status, area, router]);
 }
 
+/** Push notifications: ask once signed in, keep the token fresh, and open the pump a tapped notification is about. */
+function usePushNotifications() {
+  const status = useAuth((s) => s.status);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!pushSupported) return undefined;
+    setupNotificationHandling();
+    const open = (response: Notifications.NotificationResponse | null) => {
+      const pumpId = pumpOfNotification(response);
+      if (!pumpId) return;
+      useSelectedPump.getState().select(pumpId);
+      router.replace('/(tabs)');
+    };
+    void Notifications.getLastNotificationResponseAsync().then(open).catch(() => undefined);
+    const tap = Notifications.addNotificationResponseReceivedListener(open);
+    const refresh = onPushTokenChanged();
+    return () => {
+      tap.remove();
+      refresh();
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (status === 'signedIn') void registerPush();
+  }, [status]);
+}
+
 export default function RootLayout() {
   const { dir } = useDirection(); // 'rtl' for Kashmiri: React Native mirrors every row inside it
   useAuthRedirect();
+  usePushNotifications();
 
   useEffect(() => {
     void useAuth.getState().hydrate();

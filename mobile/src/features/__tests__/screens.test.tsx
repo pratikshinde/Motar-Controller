@@ -9,6 +9,7 @@ import { PowerHero } from '../pump/PowerHero';
 import { LiveTab } from '../pump/LiveTab';
 import { TimerTab } from '../timer/TimerTab';
 import * as api from '@/api/generated/farmer';
+import { useCommands } from '@/state/commands';
 
 jest.mock('@/api/generated/farmer', () => ({
   ...jest.requireActual('@/api/generated/farmer'),
@@ -189,6 +190,19 @@ describe('TimerTab', () => {
     expect(screen.getByText('You have not sent a timer yet.')).toBeTruthy();
   });
 
+  it('has no cycle count (the starter repeats until stopped); with no rest time the timer runs once', async () => {
+    mount();
+    expect(screen.queryByTestId('timer-cycles')).toBeNull();
+    fireEvent.changeText(screen.getByTestId('timer-on'), '45');
+    fireEvent.changeText(screen.getByTestId('timer-off'), '0');
+    fireEvent.press(screen.getByTestId('timer-save'));
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('confirm-yes'));
+    });
+    expect(send.mock.calls[send.mock.calls.length - 1][1]).toEqual({ on_duration_minutes: 45, off_duration_minutes: 0, cycle_count: 1, mode: 'ON_TIMER' });
+    useCommands.getState().clearCooldown('P1'); // the next tests start without the 45 s wait this send began
+  });
+
   it('refuses out-of-range values with a message and does not ask to confirm', () => {
     mount();
     fireEvent.changeText(screen.getByTestId('timer-on'), '300');
@@ -199,9 +213,9 @@ describe('TimerTab', () => {
     fireEvent.press(screen.getByTestId('timer-save'));
     expect(screen.getByText('Enter 1 to 250 minutes')).toBeTruthy();
     fireEvent.changeText(screen.getByTestId('timer-on'), '30');
-    fireEvent.changeText(screen.getByTestId('timer-cycles'), '1000');
+    fireEvent.changeText(screen.getByTestId('timer-off'), '300');
     fireEvent.press(screen.getByTestId('timer-save'));
-    expect(screen.getByText('Enter 0 to 999')).toBeTruthy();
+    expect(screen.getByText('Enter 0 to 250 minutes')).toBeTruthy();
     expect(send).not.toHaveBeenCalled();
   });
 
@@ -209,7 +223,6 @@ describe('TimerTab', () => {
     mount();
     fireEvent.changeText(screen.getByTestId('timer-on'), '30');
     fireEvent.changeText(screen.getByTestId('timer-off'), '10');
-    fireEvent.changeText(screen.getByTestId('timer-cycles'), '3');
     fireEvent.press(screen.getByTestId('timer-save'));
     expect(screen.getByText('Set the timer on Borewell?')).toBeTruthy();
     await act(async () => {
@@ -218,7 +231,7 @@ describe('TimerTab', () => {
     expect(send).toHaveBeenCalledTimes(1);
     const [id, body, options] = send.mock.calls[0];
     expect(id).toBe('P1');
-    expect(body).toEqual({ on_duration_minutes: 30, off_duration_minutes: 10, cycle_count: 3, mode: 'CYCLIC' });
+    expect(body).toEqual({ on_duration_minutes: 30, off_duration_minutes: 10, cycle_count: 0, mode: 'CYCLIC' }); // a rest time: repeats until stopped
     expect(options.headers['Idempotency-Key']).toMatch(/[0-9a-f-]{20,}/);
     expect(screen.getByText(/not confirmed yet/)).toBeTruthy();
   });
@@ -328,6 +341,17 @@ describe('LiveTab (Solar VFD vs AC 3-Phase)', () => {
     expect(screen.getByLabelText('Y-B 0 V')).toBeTruthy();
     expect(screen.getByLabelText('B-R 0 V')).toBeTruthy();
     expect(screen.queryByLabelText('R-Y 415 V')).toBeNull();
+  });
+
+  it('a pump that has been quiet for a few minutes says the power may be off or there is no signal', () => {
+    renderAc({ ...acPump, last_seen_at: new Date(Date.now() - 4 * 60 * 1000).toISOString() });
+    expect(screen.getByTestId('pump-offline')).toBeTruthy();
+    expect(screen.getByText('The pump has not been heard from for a few minutes. The power may be off, or there is no mobile signal.')).toBeTruthy();
+  });
+
+  it('a pump heard from 2 minutes ago is still online', () => {
+    renderAc({ ...acPump, last_seen_at: new Date(Date.now() - 2 * 60 * 1000).toISOString() });
+    expect(screen.queryByTestId('pump-offline')).toBeNull();
   });
 
   it("shows the module's signal: bars, the word and the dBm it measured", () => {

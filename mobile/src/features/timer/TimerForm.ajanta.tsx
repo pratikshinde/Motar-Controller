@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
-import { Clock, Minus, Pause, Play, Plus, RefreshCw, Timer as TimerIcon } from 'lucide-react-native';
+import { Clock, Minus, Pause, Play, Plus, Timer as TimerIcon } from 'lucide-react-native';
 import { TIMER_LIMITS, TimerForm } from './validation';
 
 type Field = keyof TimerForm;
@@ -133,16 +133,6 @@ export const AjantaTimerForm: React.FC<Props> = ({ form, errors, onChange, onSte
       range: `${t('timer.range', TIMER_LIMITS.off)} ${min}`,
       error: t('timer.errorOff'),
     },
-    {
-      field: 'cycles',
-      icon: <RefreshCw size={26} color="#1565C0" />,
-      label: t('timer.cyclesLabel'),
-      unit: t('home.timesShort'),
-      max: TIMER_LIMITS.cycles.max,
-      range: `${t('timer.range', TIMER_LIMITS.cycles)} ${t('home.timesShort')}`,
-      extra: t('timer.cyclesHint'),
-      error: t('timer.errorCycles'),
-    },
   ];
 
   return (
@@ -173,7 +163,7 @@ export const AjantaTimerForm: React.FC<Props> = ({ form, errors, onChange, onSte
               </View>
             </View>
             <Dial
-              testID={`timer-${r.field === 'on' ? 'on' : r.field === 'off' ? 'off' : 'cycles'}`}
+              testID={`timer-${r.field === 'on' ? 'on' : 'off'}`}
               value={form[r.field]}
               max={r.max}
               unit={r.unit}
