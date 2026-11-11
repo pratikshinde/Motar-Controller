@@ -64,7 +64,22 @@ def upgrade() -> None:
         VALUES ('ajanta', 'Ajanta Pump Controller', 'AJANTA', 'com.agripump.farmer')
         ON CONFLICT (key) DO NOTHING
     """)
-    op.execute("UPDATE agripump.pumps SET brand_id = (SELECT id FROM agripump.brands WHERE key = 'ajanta') WHERE brand_id IS NULL")
+    # One row at a time: a database that later gets the "valid lifecycle state" rule (marked not yet validated) can still hold a pump in a
+    # state nothing defines, and any update of that row is refused. That pump keeps no brand and the rest are not held up by it.
+    op.execute("""
+        DO $mig$
+        DECLARE r record;
+        BEGIN
+            FOR r IN SELECT id FROM agripump.pumps WHERE brand_id IS NULL LOOP
+                BEGIN
+                    UPDATE agripump.pumps SET brand_id = (SELECT id FROM agripump.brands WHERE key = 'ajanta') WHERE id = r.id;
+                EXCEPTION WHEN check_violation THEN
+                    RAISE WARNING 'pump % left without a brand: its row breaks a rule (see the schema report)', r.id;
+                END;
+            END LOOP;
+        END
+        $mig$;
+    """)
     op.execute("UPDATE agripump.device_batches SET brand_id = (SELECT id FROM agripump.brands WHERE key = 'ajanta') WHERE brand_id IS NULL")
     op.execute("""
         UPDATE agripump.users SET brand_id = (SELECT id FROM agripump.brands WHERE key = 'ajanta')

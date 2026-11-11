@@ -167,14 +167,17 @@ def upgrade() -> None:
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         token_hash VARCHAR(255) UNIQUE NOT NULL,
         role VARCHAR(20) NOT NULL CHECK (role IN ('manufacturer', 'distributor', 'dealer', 'customer')),
-        parent_user_id UUID NOT NULL REFERENCES {S}.users(id) ON DELETE CASCADE,
-        parent_hierarchy_path TEXT NOT NULL,
+        parent_user_id UUID REFERENCES {S}.users(id) ON DELETE CASCADE,
+        parent_hierarchy_path TEXT,
         created_by UUID REFERENCES {S}.users(id) ON DELETE SET NULL,
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         expires_at TIMESTAMPTZ NOT NULL,
         used_at TIMESTAMPTZ,
         used_by_user_id UUID REFERENCES {S}.users(id) ON DELETE SET NULL
     )""")
+    # an invitation for a named organisation has no inviting user's path to record (the models allow both to be empty)
+    op.execute(f"ALTER TABLE {S}.invite_tokens ALTER COLUMN parent_user_id DROP NOT NULL")
+    op.execute(f"ALTER TABLE {S}.invite_tokens ALTER COLUMN parent_hierarchy_path DROP NOT NULL")
     op.execute(f"CREATE INDEX IF NOT EXISTS idx_invite_tokens_parent ON {S}.invite_tokens (parent_user_id, created_at DESC)")
     op.execute(f"""
     CREATE TABLE IF NOT EXISTS {S}.bridge_swap_log (
@@ -270,6 +273,11 @@ def upgrade() -> None:
     LOOP
         EXECUTE format('ALTER TABLE {S}.%I ALTER COLUMN %I SET DEFAULT gen_random_uuid()', r.tbl, r.col);
     END LOOP;""", declare="r record;")
+    # branding is keyed by org_id; its own id (referenced by organisations.branding_id) is unique, never empty, and generated too
+    do(f"""
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = '{S}' AND table_name = 'branding' AND column_name = 'id') THEN
+        ALTER TABLE {S}.branding ALTER COLUMN id SET DEFAULT gen_random_uuid();
+    END IF;""")
 
     defaults = [
         ("alert_subscriptions", "created_at", "CURRENT_TIMESTAMP"), ("alert_subscriptions", "muted", "false"),

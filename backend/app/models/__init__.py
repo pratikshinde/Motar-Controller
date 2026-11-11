@@ -357,7 +357,7 @@ class Branding(Base):
     __tablename__ = "branding"
     __table_args__ = {"schema": SCHEMA}
 
-    id = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True)
+    id = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
     org_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="CASCADE"), primary_key=True)
     theme_color = Column(String(7), nullable=True)
     logo_url = Column(Text, nullable=True)
@@ -567,3 +567,45 @@ class McuSwapLog(Base):
     reason = Column(Text, nullable=True)
     performed_by = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
     occurred_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+
+
+class DeviceOrgAllocationLog(Base):
+    """Who moved a pump between organisations, and when (created by the phase4 migration)."""
+    __tablename__ = "device_org_allocation_log"
+    __table_args__ = (
+        Index("idx_doal_device_id", "device_id"),
+        Index("idx_doal_occurred_at", "occurred_at"),
+        Index("idx_doal_to_org", "to_org_id"),
+        Index("idx_doal_from_org", "from_org_id"),
+        Index("idx_doal_idempotency", "idempotency_key"),
+        {"schema": SCHEMA},
+    )
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    device_id = Column(String(50), ForeignKey(f"{SCHEMA}.pumps.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    from_org_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.organisations.id", ondelete="SET NULL"), nullable=True)
+    to_org_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.organisations.id", ondelete="SET NULL"), nullable=True)
+    actor_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
+    action = Column(String(20), nullable=False, server_default="ALLOCATED")
+    note = Column(Text, nullable=True)
+    idempotency_key = Column(String(100), nullable=True)
+    occurred_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+
+
+class PanelBindingHistory(Base):
+    """Which control panel / starter was bound to a pump over time (created by the phase4 migration)."""
+    __tablename__ = "panel_binding_history"
+    __table_args__ = (Index("idx_pbh_device_id", "device_id"), {"schema": SCHEMA})
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    device_id = Column(String(50), ForeignKey(f"{SCHEMA}.pumps.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    panel_serial = Column(String(50), nullable=False)
+    motor_rating = Column(String(50), nullable=True)
+    starter_type = Column(String(30), nullable=True)
+    pump_make = Column(String(50), nullable=True)
+    pump_model = Column(String(50), nullable=True)
+    bound_by = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
+    bound_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    unbound_at = Column(DateTime(timezone=True), nullable=True)
+    unbound_by = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
+    note = Column(Text, nullable=True)

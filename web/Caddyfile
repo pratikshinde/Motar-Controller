@@ -1,0 +1,25 @@
+# SITE_ADDRESS is the domain (for example app.example.com) and Caddy then gets and renews its certificate by itself.
+# For a local test over plain HTTP set SITE_ADDRESS=:80.
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# The backend (REST at /api, live updates over WebSocket at /ws). WebSockets pass through without extra settings.
+	@backend path /api/* /ws /ws/*
+	handle @backend {
+		reverse_proxy api:5000
+	}
+
+	# The website: every other address is the single-page app.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

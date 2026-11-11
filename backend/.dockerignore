@@ -16,3 +16,9 @@ scratch*
 tests/
 Dockerfile*
 docker-compose*
+dev-admin-login.txt
+simulator/
+openapi.json
+*.pem
+*.key
+*.crt

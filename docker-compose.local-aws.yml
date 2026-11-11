@@ -1,0 +1,16 @@
+# For trying the containers on a developer PC against the real AWS account: gives the API and the ingest worker the AWS credentials from your
+# own ~/.aws folder (read-only). On a server, use an IAM role instead and do not use this file.
+#   docker compose -f docker-compose.yml -f docker-compose.local-aws.yml --profile db up -d --build
+services:
+  api:
+    volumes:
+      - ./secrets:/run/secrets:ro
+      - ${USERPROFILE:-~}/.aws:/home/agripump/.aws:ro
+    environment:
+      AWS_PROFILE: ${AWS_PROFILE:-default}
+  ingest:
+    volumes:
+      - ./secrets:/run/secrets:ro
+      - ${USERPROFILE:-~}/.aws:/home/agripump/.aws:ro
+    environment:
+      AWS_PROFILE: ${AWS_PROFILE:-default}

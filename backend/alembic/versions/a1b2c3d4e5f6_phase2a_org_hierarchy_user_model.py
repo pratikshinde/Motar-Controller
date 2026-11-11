@@ -25,6 +25,10 @@ SCHEMA = "agripump"
 
 
 def upgrade() -> None:
+    # 0. The Alembic baseline's branding table has no `id` (it is keyed by org_id); a database that began as schema.sql has one. Add it where it is
+    #    missing, so this migration also works on a database built from nothing. Where `id` exists already this changes nothing.
+    op.execute(f"ALTER TABLE {SCHEMA}.branding ADD COLUMN IF NOT EXISTS id UUID NOT NULL DEFAULT gen_random_uuid();")
+
     # 1. Ensure branding(id) has a unique constraint so it can be referenced by FK
     op.execute(f"""
         DO $$

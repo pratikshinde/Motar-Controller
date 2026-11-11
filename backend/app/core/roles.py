@@ -3,7 +3,7 @@ Centralized Role, Organisation Type, and Status Definitions
 Phase 2A: AgriPump SmartSpace Organisation Hierarchy & User/Role Data Model
 """
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 
 class UserRole(str, Enum):
