@@ -9,7 +9,6 @@ import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import BusinessIcon from '@mui/icons-material/Business';
 import TuneIcon from '@mui/icons-material/Tune';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
 import type { SvgIconComponent } from '@mui/icons-material';
@@ -54,10 +53,9 @@ export const navSections: NavSectionDef[] = [
     ]
   },
   {
-    title: 'Configuration & Service',
+    title: 'Configuration',
     items: [
-      { path: '/config-templates', labelKey: 'navConfigTemplates', icon: TuneIcon, roles: PRIVILEGED },
-      { path: '/service-reports', labelKey: 'navServiceReports', icon: AssignmentIcon, roles: PRIVILEGED }
+      { path: '/config-templates', labelKey: 'navConfigTemplates', icon: TuneIcon, roles: PRIVILEGED }
     ]
   },
   {

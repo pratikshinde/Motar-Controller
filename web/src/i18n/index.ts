@@ -120,7 +120,7 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     hierarchyTitle: 'Multi-Tenant Account Hierarchy',
     faultLogsTitle: 'Fleet Fault Incident & Protection Logs',
     settingsTitle: 'System & Interface Settings',
-    loginTitle: 'AgriPump SmartSpace',
+    loginTitle: 'Ajanta Pump Controller',
     loginSubtitle: 'Sign in to continue'
   },
   hi: {

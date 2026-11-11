@@ -14,7 +14,6 @@ import { useToast } from '../context/ToastContext';
 import { deletePump } from '../api/pumps';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { CommissionDialog } from '../components/CommissionDialog';
-import { AllocateDialog } from '../components/AllocateDialog';
 import { ApplyTemplateDialog } from '../components/ApplyTemplateDialog';
 import { BulkImportModal } from '../components/BulkImportModal';
 import { effectiveStatus, formatCoords, STATUS_LABEL } from '../utils/pumpStatus';
@@ -31,7 +30,6 @@ export const DevicesView: React.FC = () => {
   const [commissionOpen, setCommissionOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [editingPump, setEditingPump] = useState<PumpListItem | null>(null);
-  const [allocateOpen, setAllocateOpen] = useState(false);
   const [applyTemplateOpen, setApplyTemplateOpen] = useState(false);
   const [selection, setSelection] = useState<GridRowSelectionModel>({ type: 'include', ids: new Set() });
 
@@ -177,17 +175,6 @@ export const DevicesView: React.FC = () => {
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-          {canAllocate && selectedIds.length > 0 && (
-            <Button
-              variant="tonal"
-              size="small"
-              startIcon={<SwapHorizIcon />}
-              onClick={() => setAllocateOpen(true)}
-              sx={{ height: 34 }}
-            >
-              Allocate ({selectedIds.length})
-            </Button>
-          )}
           {canApplyTemplate && selectedIds.length > 0 && (
             <Button
               variant="tonal"
@@ -303,15 +290,6 @@ export const DevicesView: React.FC = () => {
         onClose={() => setCommissionOpen(false)}
         onSaved={reload}
         editingPump={editingPump}
-      />
-      <AllocateDialog
-        open={allocateOpen}
-        onClose={() => setAllocateOpen(false)}
-        onAllocated={() => {
-          reload();
-          setSelection({ type: 'include', ids: new Set() });
-        }}
-        pumpIds={selectedIds}
       />
       <ApplyTemplateDialog
         open={applyTemplateOpen}

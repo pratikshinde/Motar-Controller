@@ -5,7 +5,11 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import { fetchFarmers, newFarmerQr, type FarmerRow, type QrState, type FarmerRegistered } from '../api/farmers';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import BlockIcon from '@mui/icons-material/Block';
+import RestoreIcon from '@mui/icons-material/Restore';
+import { activateFarmer, deactivateFarmer, fetchFarmers, newFarmerQr, type FarmerRow, type QrState, type FarmerRegistered } from '../api/farmers';
+import { EditFarmerDialog } from '../components/EditFarmerDialog';
 import { FarmerQrCard } from '../components/FarmerQrCard';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +22,7 @@ const QR_CHIP: Record<QrState, { label: string; color: 'default' | 'success' | '
   NONE: { label: 'No QR yet', color: 'default' }
 };
 
-/** The dealer's farmers: who was registered, which starter each has, and whether the farmer scanned the QR yet. */
+/** The Ajanta admin's farmers: who was registered, which starter each has, and whether the farmer scanned the QR yet. */
 export const FarmersView: React.FC = () => {
   const { showToast } = useToast();
   // The Ajanta admin registers farmers; the super admin only monitors them.
@@ -30,6 +34,8 @@ export const FarmersView: React.FC = () => {
   const [search, setSearch] = useState('');
   const [qrFor, setQrFor] = useState<Pick<FarmerRegistered, 'farmer' | 'qr'> & { pump: FarmerRow['pumps'][number] | null } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<FarmerRow | null>(null);
+  const [stopping, setStopping] = useState<FarmerRow | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -64,6 +70,20 @@ export const FarmersView: React.FC = () => {
       showToast(err?.message || 'Could not make a new QR.', true);
     } finally {
       setBusyId(null);
+    }
+  }
+
+  async function setAccess(f: FarmerRow, stopped: boolean) {
+    setBusyId(f.id);
+    try {
+      await (stopped ? deactivateFarmer(f.id) : activateFarmer(f.id));
+      showToast(stopped ? `${f.full_name} can no longer use the app.` : `${f.full_name} can use the app again.`);
+      load();
+    } catch (err: any) {
+      showToast(err?.message || 'Could not change the farmer.', true);
+    } finally {
+      setBusyId(null);
+      setStopping(null);
     }
   }
 
@@ -103,12 +123,13 @@ export const FarmersView: React.FC = () => {
                 <TableCell>Mobile</TableCell>
                 <TableCell>Pump</TableCell>
                 <TableCell>App access</TableCell>
-                <TableCell align="right">QR</TableCell>
+                <TableCell align="right">{canEdit ? 'Actions' : ''}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {shown.map(f => {
-                const chip = QR_CHIP[f.qr.state];
+                const stopped = f.status === 'SUSPENDED';
+                const chip = stopped ? { label: 'Stopped', color: 'error' as const } : QR_CHIP[f.qr.state];
                 return (
                   <TableRow key={f.id} hover>
                     <TableCell>
@@ -123,12 +144,26 @@ export const FarmersView: React.FC = () => {
                         </Typography>
                       ))}
                     </TableCell>
-                    <TableCell><Chip size="small" label={chip.label} color={chip.color} variant={f.qr.state === 'CLAIMED' ? 'filled' : 'outlined'} /></TableCell>
+                    <TableCell><Chip size="small" label={chip.label} color={chip.color} variant={f.qr.state === 'CLAIMED' && !stopped ? 'filled' : 'outlined'} /></TableCell>
                     <TableCell align="right">
                       {canEdit && (
-                        <Button size="small" startIcon={<QrCode2Icon />} disabled={busyId === f.id} onClick={() => makeQr(f)}>
-                          New QR
-                        </Button>
+                        <Box sx={{ display: 'inline-flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                          <Button size="small" startIcon={<EditOutlinedIcon />} disabled={busyId === f.id} onClick={() => setEditing(f)}>
+                            Edit
+                          </Button>
+                          <Button size="small" startIcon={<QrCode2Icon />} disabled={busyId === f.id || stopped} onClick={() => makeQr(f)}>
+                            New QR
+                          </Button>
+                          {stopped ? (
+                            <Button size="small" color="success" startIcon={<RestoreIcon />} disabled={busyId === f.id} onClick={() => setAccess(f, false)}>
+                              Restore
+                            </Button>
+                          ) : (
+                            <Button size="small" color="error" startIcon={<BlockIcon />} disabled={busyId === f.id} onClick={() => setStopping(f)}>
+                              Stop
+                            </Button>
+                          )}
+                        </Box>
                       )}
                     </TableCell>
                   </TableRow>
@@ -138,6 +173,24 @@ export const FarmersView: React.FC = () => {
           </Table>
         </TableContainer>
       )}
+
+      <EditFarmerDialog farmer={editing} onClose={() => setEditing(null)} onSaved={load} />
+
+      <Dialog open={Boolean(stopping)} onClose={() => setStopping(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Stop {stopping?.full_name}?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            {stopping?.full_name} will be signed out and cannot use the app until you restore them. Their details, their pump and the pump's
+            history are kept.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStopping(null)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={() => stopping && setAccess(stopping, true)}>
+            Stop access
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={Boolean(qrFor)} onClose={() => setQrFor(null)} fullWidth maxWidth="xs">
         <DialogTitle>New QR code</DialogTitle>

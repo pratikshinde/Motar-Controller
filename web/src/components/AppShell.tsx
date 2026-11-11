@@ -27,6 +27,9 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { fetchMyBrand } from '../api/brands';
 import { setViewing, useViewing } from '../api/viewing';
 
+// The website is Ajanta's: this name shows until (and unless) the server names the signed-in person's manufacturer.
+const AJANTA_NAME = 'Ajanta Pump Controller';
+
 const DRAWER_WIDTH = 256;
 const RAIL_WIDTH = 76;
 const APPBAR_HEIGHT = 52;
@@ -53,19 +56,19 @@ export const AppShell: React.FC = () => {
   const canAddFarmer = user?.role === 'manufacturer' && (location.pathname === '/dashboard' || location.pathname === '/telemetry');
 
   // A manufacturer's distributors and dealers see their manufacturer's name (e.g. "Ajanta Pump Controller") in the header.
-  const [partnerName, setPartnerName] = useState<string | null>(null);
+  const [partnerName, setPartnerName] = useState<string | null>(AJANTA_NAME);
   useEffect(() => {
     let cancelled = false;
     if (!user) {
-      setPartnerName(null);
+      setPartnerName(AJANTA_NAME);
       return;
     }
     fetchMyBrand()
       .then(res => {
-        if (!cancelled) setPartnerName(res.brand?.name ?? null);
+        if (!cancelled) setPartnerName(res.brand?.name ?? AJANTA_NAME);
       })
       .catch(() => {
-        if (!cancelled) setPartnerName(null); // cosmetic: the platform's own name stays
+        if (!cancelled) setPartnerName(AJANTA_NAME); // cosmetic: the Ajanta name stays
       });
     return () => {
       cancelled = true;

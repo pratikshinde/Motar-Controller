@@ -23,6 +23,8 @@ export interface FarmerSummary {
   full_name: string;
   phone_number: string;
   address: string | null;
+  /** ACTIVE, or SUSPENDED when the Ajanta admin has stopped the farmer's access. */
+  status?: 'ACTIVE' | 'SUSPENDED';
 }
 
 export interface FarmerRow extends FarmerSummary {
@@ -58,4 +60,18 @@ export function fetchFarmers(): Promise<{ farmers: FarmerRow[] }> {
 /** A new QR for a farmer (lost phone, expired QR). The older ones stop working. */
 export function newFarmerQr(farmerId: string): Promise<{ message: string; farmer: FarmerSummary; qr: FarmerQr }> {
   return apiJson(`/farmers/${encodeURIComponent(farmerId)}/qr`, { method: 'POST' });
+}
+
+/** Fix a farmer's name, address or mobile number (only the fields given change). */
+export function updateFarmer(farmerId: string, changes: { full_name?: string; address?: string; phone?: string }): Promise<{ message: string; farmer: FarmerSummary }> {
+  return apiJson(`/farmers/${encodeURIComponent(farmerId)}`, { method: 'PATCH', body: JSON.stringify(changes) });
+}
+
+/** Stop a farmer's access (their phone is signed out); the farmer, the pump and the history are kept. */
+export function deactivateFarmer(farmerId: string): Promise<{ message: string; farmer: FarmerSummary }> {
+  return apiJson(`/farmers/${encodeURIComponent(farmerId)}/deactivate`, { method: 'POST' });
+}
+
+export function activateFarmer(farmerId: string): Promise<{ message: string; farmer: FarmerSummary }> {
+  return apiJson(`/farmers/${encodeURIComponent(farmerId)}/activate`, { method: 'POST' });
 }

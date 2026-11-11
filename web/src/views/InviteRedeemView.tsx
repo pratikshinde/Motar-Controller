@@ -103,7 +103,7 @@ export const InviteRedeemView: React.FC = () => {
             <GroupAddIcon sx={{ color: theme.palette.m3.onPrimary, fontSize: 28 }} />
           </Box>
           <Typography variant="h3" align="center" gutterBottom>
-            Join AgriPump SmartSpace
+            Join Ajanta Pump Controller
           </Typography>
           <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
             {info

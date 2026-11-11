@@ -60,7 +60,7 @@ export const CreateBatchDialog: React.FC<Props> = ({ open, onClose, onCreated })
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField label="Batch code" placeholder="e.g. BATCH-2026-08-A" value={batchCode} onChange={e => setBatchCode(e.target.value)} required fullWidth autoFocus />
-            <TextField label="Model" placeholder="e.g. AgriPump AP-15HP" value={model} onChange={e => setModel(e.target.value)} required fullWidth />
+            <TextField label="Model" placeholder="e.g. Ajanta AP-15HP" value={model} onChange={e => setModel(e.target.value)} required fullWidth />
             <Box sx={{ display: 'flex', gap: 1.5 }}>
               <TextField label="HW revision" value={hwRev} onChange={e => setHwRev(e.target.value)} fullWidth />
               <TextField label="Declared quantity" type="number" value={quantity} onChange={e => setQuantity(e.target.value)} fullWidth />

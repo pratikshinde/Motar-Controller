@@ -24,7 +24,6 @@ import { ServiceReportsView } from './views/ServiceReportsView';
 import { AlertsView } from './views/AlertsView';
 import { ManufacturersView } from './views/ManufacturersView';
 import { FarmersView } from './views/FarmersView';
-import { LandingPageView } from './views/landing/LandingPageView';
 import { LightScope } from './theme/LightScope';
 
 // The public pages are drawn on a fixed light palette, so they always render with the light theme.
