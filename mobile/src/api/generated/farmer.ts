@@ -1801,6 +1801,7 @@ export const useUpdatePumpSettings = <TError = ErrorType<HTTPValidationError>,
     }
 
 /**
+ * The pump's weekly schedule, when it runs next, and what happened to the last few times (the app's Timer page).
  * @summary Get Pump Schedule
  */
 export const getPumpSchedule = (
@@ -1894,6 +1895,7 @@ export function useGetPumpSchedule<TData = Awaited<ReturnType<typeof getPumpSche
 
 
 /**
+ * Replaces the pump's whole weekly schedule. The cloud then sends START and STOP at the set times.
  * @summary Put Pump Schedule
  */
 export const setPumpSchedule = (

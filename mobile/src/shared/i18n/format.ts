@@ -52,6 +52,19 @@ export function formatClock(lang: string, when: string | number | Date): string 
   return new Date(when).toLocaleTimeString(intlLocale(lang), { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+/**
+ * "6:42 AM" for something that happened today, "Tue, 6:42 AM" for an earlier day (12-hour, like the schedule's times).
+ * `now` is a parameter so a test can fix the day.
+ */
+export function formatWhen(lang: string, iso: string | null | undefined, now: Date = new Date()): string {
+  if (!iso) return '—';
+  const at = new Date(iso);
+  const loc = intlLocale(lang);
+  const time = at.toLocaleTimeString(loc, { hour: 'numeric', minute: '2-digit', hour12: true });
+  if (at.toDateString() === now.toDateString()) return time;
+  return `${at.toLocaleDateString(loc, { weekday: 'short' })}, ${time}`;
+}
+
 /** A reading shown to one decimal, or an em dash when the pump has not reported it. */
 export function formatReading(value: number | null | undefined, digits = 1): string {
   return value === null || value === undefined || Number.isNaN(value) ? '—' : value.toFixed(digits);

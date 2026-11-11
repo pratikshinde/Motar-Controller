@@ -42,7 +42,7 @@ from app.config import settings
 from app.core.logging import setup_structured_logging
 from app.database import SessionLocal
 from app.models import FaultCodeCatalog, FaultLog, Pump, TelemetryHistory
-from app.services import pump_notify
+from app.services import power_service, pump_notify
 from app.services.alert_engine import raise_alert
 from app.services.cache_service import cache_service
 from app.services.command_dispatch import announce as announce_commands, announcements as command_announcements
@@ -363,6 +363,8 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
     pump_updates: Dict[str, Tuple[str, str, Dict[str, Any]]] = {}  # pump_id → (status, h_path, snapshot)
     readings: List[Tuple[str, bool, bool]] = []   # (pump_id, pump_on, buffered): what settles START / STOP commands
     moved_commands: List[Any] = []                # commands whose state changed because of this batch
+    power_reads: Dict[str, Tuple[Any, Any, Any, bool]] = {}   # pump_id -> (v_ry, v_yb, v_br, buffered): what says whether the power is on
+    power_changes: List[Any] = []                 # the power came / went (announced after the commit)
     command_events: List[Any] = []                # their WebSocket announcements, built before the session closes
 
     db: Session = SessionLocal()
@@ -403,6 +405,7 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 alive = db.query(Pump).filter(Pump.id == client_id).first()
                 if alive:
                     alive.last_seen_at = datetime.now(timezone.utc)
+                    power_changes.append(power_service.observe_alive(db, alive))   # it was "off" only for being quiet: the power is back
                     if kind == "registration" and body.get("fw"):
                         alive.firmware_version = str(body["fw"]).strip()[:20]
                 handled_receipts.append(receipt)
@@ -532,6 +535,7 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
             }
             pump_updates[telem.device_id] = (status, pump.hierarchy_path, snapshot)
             readings.append((telem.device_id, bool(telem.pump_on), bool(telem.buffered)))
+            power_reads[telem.device_id] = (telem.v_ry, telem.v_yb, telem.v_br, bool(telem.buffered))
 
             if telem.fault_active and telem.fault_code is not None:
                 fault_events.append((
@@ -588,6 +592,9 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 pump.last_seen_at = datetime.now(timezone.utc)
                 if snapshot.get("total_runtime_min") is not None:
                     pump.total_runtime_min = snapshot["total_runtime_min"]
+                if pump_id in power_reads:
+                    change = power_service.observe_reading(db, pump, *power_reads[pump_id])
+                    power_changes.append(change or power_service.observe_alive(db, pump))
             _update_redis_latest(pump_id, snapshot)
 
         # ------------------------------------------------------------------
@@ -633,6 +640,10 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
             )
             if alert.occurrence_count == 1:  # the first of its kind in this window: one SMS, not one per repeat
                 pump_notify.fault(db, pump_id, fault_code)
+
+        # The power came / went: the one thing the farmer's phone is notified about.
+        for change in power_changes:
+            power_service.announce(db, change)
 
     except Exception as exc:
         logger.exception("Batch processing failed, rolling back: %s", exc)

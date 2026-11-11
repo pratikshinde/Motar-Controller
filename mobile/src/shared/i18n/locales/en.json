@@ -693,7 +693,11 @@
     "signalFair": "Fair",
     "signalPoor": "Poor",
     "signalNone": "No signal",
-    "offlineNote": "The pump has not been heard from for a few minutes. The power may be off, or there is no mobile signal."
+    "offlineNote": "The pump has not been heard from for a few minutes. The power may be off, or there is no mobile signal.",
+    "powerOn": "Power is ON",
+    "powerOff": "Power is OFF",
+    "powerMaybeOff": "Power may be off",
+    "powerSince": "Since {{when}}"
   },
   "claim": {
     "title": "Scan your QR code",

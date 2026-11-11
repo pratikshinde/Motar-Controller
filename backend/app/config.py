@@ -145,6 +145,8 @@ class Settings(BaseSettings):
     # trying a pump that is offline or cooling down before giving up on that time.
     SCHEDULE_RUN_INTERVAL_SECONDS: int = 30
     SCHEDULE_RETRY_MINUTES: int = 10
+    # Power is "off" when every line voltage the starter reports is under this many volts (the app's "No power" uses the same number).
+    POWER_ABSENT_VOLTS: float = 20.0
 
     # Dashboards (Phase 3). "Today" is a calendar day in DASHBOARD_TIMEZONE (an IANA name), never the browser's or
     # the server's local day. Results are cached briefly per scope; data older than DASHBOARD_STALE_AFTER_SECONDS

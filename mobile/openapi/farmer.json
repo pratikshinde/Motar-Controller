@@ -1762,6 +1762,39 @@
             ],
             "title": "Panel Serial"
           },
+          "power_changed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power Changed At"
+          },
+          "power_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power Source"
+          },
+          "power_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Power State"
+          },
           "pump_on": {
             "anyOf": [
               {
@@ -4249,6 +4282,7 @@
     },
     "/pumps/{id}/schedule": {
       "get": {
+        "description": "The pump's weekly schedule, when it runs next, and what happened to the last few times (the app's Timer page).",
         "operationId": "getPumpSchedule",
         "parameters": [
           {
@@ -4294,6 +4328,7 @@
         ]
       },
       "put": {
+        "description": "Replaces the pump's whole weekly schedule. The cloud then sends START and STOP at the set times.",
         "operationId": "setPumpSchedule",
         "parameters": [
           {

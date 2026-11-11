@@ -37,6 +37,8 @@ OPERATIONS = {
     ("get", "/pumps/{id}/commands/{cid}"): "getPumpCommand",
     ("get", "/pumps/{id}/timer"): "getPumpTimer",
     ("put", "/pumps/{id}/timer"): "setPumpTimer",
+    ("get", "/pumps/{id}/schedule"): "getPumpSchedule",
+    ("put", "/pumps/{id}/schedule"): "setPumpSchedule",
     ("get", "/pumps/{id}/history"): "getPumpHistory",
     ("get", "/pumps/{id}/faults"): "listPumpFaults",
     ("post", "/pumps/{id}/faults/{fault_id}/ack"): "ackPumpFault",

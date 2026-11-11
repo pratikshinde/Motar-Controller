@@ -63,6 +63,10 @@ export interface PumpListItem {
   /** ONLINE, OFFLINE (reported before, not recently) or NEVER_SEEN: judged by the server. */
   connectivity?: 'ONLINE' | 'OFFLINE' | 'NEVER_SEEN';
   total_runtime_min?: number | null;
+  /** Is the power on at the pump: ON / OFF (null until the first reading), since when, and what told us (VOLTAGE: the starter's own readings; CONTACT: it went quiet). */
+  power_state?: 'ON' | 'OFF' | null;
+  power_changed_at?: string | null;
+  power_source?: 'VOLTAGE' | 'CONTACT' | null;
   lifecycle_state: LifecycleState;
   firmware_version: string | null;
   last_seen_at: string | null;

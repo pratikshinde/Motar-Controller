@@ -347,6 +347,9 @@ export const ListPumpsResponse = zod.object({
   "nickname": zod.union([zod.string(),zod.null()]).optional(),
   "owner_user_id": zod.union([zod.string(),zod.null()]).optional(),
   "panel_serial": zod.union([zod.string(),zod.null()]).optional(),
+  "power_changed_at": zod.union([zod.string(),zod.null()]).optional(),
+  "power_source": zod.union([zod.string(),zod.null()]).optional(),
+  "power_state": zod.union([zod.string(),zod.null()]).optional(),
   "pump_on": zod.union([zod.boolean(),zod.null()]).optional(),
   "runtime_today_min": zod.union([zod.int(),zod.null()]).optional(),
   "signal_dbm": zod.union([zod.int(),zod.null()]).optional(),
@@ -412,6 +415,9 @@ export const ListPumpsResponse = zod.object({
   "nickname": zod.union([zod.string(),zod.null()]).optional(),
   "owner_user_id": zod.union([zod.string(),zod.null()]).optional(),
   "panel_serial": zod.union([zod.string(),zod.null()]).optional(),
+  "power_changed_at": zod.union([zod.string(),zod.null()]).optional(),
+  "power_source": zod.union([zod.string(),zod.null()]).optional(),
+  "power_state": zod.union([zod.string(),zod.null()]).optional(),
   "pump_on": zod.union([zod.boolean(),zod.null()]).optional(),
   "runtime_today_min": zod.union([zod.int(),zod.null()]).optional(),
   "signal_dbm": zod.union([zod.int(),zod.null()]).optional(),
@@ -501,6 +507,9 @@ export const GetPumpResponse = zod.object({
   "nickname": zod.union([zod.string(),zod.null()]).optional(),
   "owner_user_id": zod.union([zod.string(),zod.null()]).optional(),
   "panel_serial": zod.union([zod.string(),zod.null()]).optional(),
+  "power_changed_at": zod.union([zod.string(),zod.null()]).optional(),
+  "power_source": zod.union([zod.string(),zod.null()]).optional(),
+  "power_state": zod.union([zod.string(),zod.null()]).optional(),
   "pump_on": zod.union([zod.boolean(),zod.null()]).optional(),
   "runtime_today_min": zod.union([zod.int(),zod.null()]).optional(),
   "signal_dbm": zod.union([zod.int(),zod.null()]).optional(),
@@ -723,6 +732,7 @@ export const UpdatePumpSettingsResponse = zod.object({
 
 
 /**
+ * The pump's weekly schedule, when it runs next, and what happened to the last few times (the app's Timer page).
  * @summary Get Pump Schedule
  */
 export const GetPumpScheduleParams = zod.object({
@@ -767,6 +777,7 @@ export const GetPumpScheduleResponse = zod.object({
 
 
 /**
+ * Replaces the pump's whole weekly schedule. The cloud then sends START and STOP at the set times.
  * @summary Put Pump Schedule
  */
 export const SetPumpScheduleParams = zod.object({

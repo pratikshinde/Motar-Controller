@@ -5,7 +5,8 @@ import { httpRequest } from '@/api/http';
 
 /**
  * Push notifications through Firebase Cloud Messaging: the phone asks for permission, gets its registration token and gives it
- * to the backend, which then pushes "pump offline", "back online" and "pump stopped" messages. Only the Ajanta Android app
+ * to the backend, which then pushes "the power came" and "the power went" for the farmer's pumps, and nothing else (faults and
+ * every other alert are in the Alerts list). Only the Ajanta Android app
  * has a Firebase project (app.config.js adds it only when google-services.json is present); everywhere else this does nothing.
  * Push is best effort: any failure here must never get in the way of using the app.
  */
@@ -33,7 +34,7 @@ export async function registerPush(): Promise<void> {
   if (!pushSupported) return;
   try {
     await Notifications.setNotificationChannelAsync(ALERTS_CHANNEL, {
-      name: 'Pump alerts',
+      name: 'Power alerts',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
     });

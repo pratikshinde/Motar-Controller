@@ -17,10 +17,11 @@ import {
   Wifi,
   WifiOff,
   Zap,
+  ZapOff,
 } from 'lucide-react-native';
 import type { PumpResponse } from '@/api/generated/model';
 import { faultName } from '@/shared/i18n/faults';
-import { formatHM, formatMinutes } from '@/shared/i18n/format';
+import { formatHM, formatMinutes, formatWhen } from '@/shared/i18n/format';
 import { useDirection } from '@/shared/i18n/useDirection';
 import { PumpThumbnail } from '@/shared/ui/PumpThumbnail';
 import { faultInfoKeys, faultKind } from '@/features/faults/info';
@@ -336,6 +337,46 @@ export const AjantaHero: React.FC<AjantaHeroProps> = ({
             />
             {extra ? <View style={styles.pill}>{extra}</View> : null}
           </View>
+        </View>
+      </View>
+    </FadeIn>
+  );
+};
+
+interface AjantaPowerBannerProps {
+  /** "ON" or "OFF": whether the power is on at the pump. */
+  state: string;
+  /** When it last changed (ISO). */
+  since: string | null | undefined;
+  /** "VOLTAGE" (the starter said so) or "CONTACT" (it went quiet, so the power may be off). */
+  source: string | null | undefined;
+}
+
+/**
+ * The power at the pump, on the Home page: "Power is ON since 6:42 AM" (green) or "Power is OFF since 7:15 PM" (amber). It is what the
+ * phone's notification says too, so the notification and this page always agree. "May be off" when the pump simply stopped reporting.
+ */
+export const AjantaPowerBanner: React.FC<AjantaPowerBannerProps> = ({ state, since, source }) => {
+  const { t, i18n } = useTranslation();
+  const on = state === 'ON';
+  const title = on ? t('home.powerOn') : source === 'CONTACT' ? t('home.powerMaybeOff') : t('home.powerOff');
+  const when = since ? t('home.powerSince', { when: formatWhen(i18n.language, since) }) : null;
+  const Icon = on ? Zap : ZapOff;
+  return (
+    <FadeIn>
+      <View
+        testID="power-banner"
+        style={[styles.powerBanner, on ? styles.powerBannerOn : styles.powerBannerOff]}
+        accessible
+        accessibilityRole="summary"
+        accessibilityLabel={[title, when].filter(Boolean).join('. ')}
+      >
+        <View style={[styles.powerIcon, { backgroundColor: on ? colors.ok : AMBER }]}>
+          <Icon size={22} color="#FFFFFF" />
+        </View>
+        <View style={styles.powerText}>
+          <Text style={[styles.powerTitle, { color: on ? colors.ok : AMBER_DARK }]}>{title}</Text>
+          {when ? <Text style={styles.powerWhen}>{when}</Text> : null}
         </View>
       </View>
     </FadeIn>
@@ -676,6 +717,15 @@ const styles = StyleSheet.create({
   gsmStick: { width: 5, borderRadius: 2 },
   gsmOn: { backgroundColor: '#02A44E' },
   gsmOff: { backgroundColor: '#C9D6CE' },
+
+  /* Power banner */
+  powerBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, borderWidth: 1.5, paddingVertical: 10, paddingHorizontal: 12 },
+  powerBannerOn: { backgroundColor: colors.okSoft, borderColor: mix(colors.ok, '#FFFFFF', 0.7) },
+  powerBannerOff: { backgroundColor: '#FFF8E1', borderColor: '#F2C45A' },
+  powerIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  powerText: { flex: 1, minWidth: 0 },
+  powerTitle: { fontSize: 17, fontWeight: '900' },
+  powerWhen: { color: MUTED, fontSize: 14, fontWeight: '700', marginTop: 1 },
 
   /* Fault banner */
   faultBanner: {

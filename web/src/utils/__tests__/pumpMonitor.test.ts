@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { faultKind, faultText, formatHM, formatMinutes, gsmLevel, heardAgo } from '../pumpMonitor';
+import { faultKind, faultText, formatHM, formatMinutes, gsmLevel, heardAgo, pumpProblems } from '../pumpMonitor';
 
 describe('the starter\'s fault wording', () => {
   it('uses the starter\'s own names', () => {
@@ -59,5 +59,44 @@ describe('run time and last heard', () => {
     expect(heardAgo(ago(2 * 3600), now)).toBe('2 h ago');
     expect(heardAgo(ago(3 * 86400), now)).toBe('3 d ago');
     expect(heardAgo(null, now)).toBe('never');
+  });
+});
+
+describe('what is wrong with a pump (the strip at the top of its page)', () => {
+  const now = Date.parse('2026-11-11T12:00:00Z');
+  const healthy = { status: 'RUNNING', connectivity: 'ONLINE', fault_active: false, power_state: 'ON', last_seen_at: '2026-11-11T11:59:50Z' };
+
+  it('is empty when nothing is wrong', () => {
+    expect(pumpProblems(healthy, 0, now)).toEqual([]);
+    expect(pumpProblems({}, 0, now)).toEqual([]);
+  });
+
+  it("names the starter's fault, with what to do", () => {
+    const [p] = pumpProblems({ ...healthy, status: 'FAULT', fault_active: true, fault_code: 5 }, 0, now);
+    expect(p).toMatchObject({ key: 'fault', severity: 'error', title: 'Fault: Dry Run Fault' });
+    expect(p.detail).toMatch(/resets the starter/);
+  });
+
+  it('counts faults nobody has resolved yet', () => {
+    expect(pumpProblems(healthy, 1, now)[0].title).toBe('1 unresolved fault event');
+    expect(pumpProblems(healthy, 3, now)[0].title).toBe('3 unresolved fault events');
+  });
+
+  it('says when the pump stopped reporting, and since when', () => {
+    const [p] = pumpProblems({ ...healthy, connectivity: 'OFFLINE', last_seen_at: '2026-11-11T11:00:00Z' }, 0, now);
+    expect(p).toMatchObject({ key: 'offline', severity: 'warning', title: 'Pump is not reporting' });
+    expect(p.detail).toContain('Last heard 1 h ago');
+  });
+
+  it('says the power is off, and only "may be off" when the pump just went quiet', () => {
+    const sure = pumpProblems({ ...healthy, power_state: 'OFF', power_source: 'VOLTAGE', power_changed_at: '2026-11-11T11:00:00Z' }, 0, now);
+    expect(sure[0].title).toMatch(/^Power is off since /);
+    const unsure = pumpProblems({ ...healthy, power_state: 'OFF', power_source: 'CONTACT', power_changed_at: '2026-11-11T11:00:00Z' }, 0, now);
+    expect(unsure[0].title).toMatch(/^Power may be off since /);
+  });
+
+  it('lists several problems, the fault first', () => {
+    const keys = pumpProblems({ ...healthy, status: 'FAULT', fault_active: true, fault_code: 2, connectivity: 'OFFLINE', power_state: 'OFF', power_source: 'CONTACT' }, 2, now).map((p) => p.key);
+    expect(keys).toEqual(['fault', 'open-faults', 'offline', 'power']);
   });
 });

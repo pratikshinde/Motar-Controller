@@ -45,7 +45,7 @@ import type { CommandAction } from '@/state/commands';
 import { VoltageRing } from './Gauges';
 import { PlanBanner } from './PlanBanner';
 import { PowerHero } from './PowerHero';
-import { AjantaCards, AjantaFaultBanner, AjantaHero } from './LiveCards.ajanta';
+import { AjantaCards, AjantaFaultBanner, AjantaHero, AjantaPowerBanner } from './LiveCards.ajanta';
 
 import { skin } from '@/shared/theme/skin';
 const AMP_FULL_SCALE = 20;
@@ -171,9 +171,10 @@ export const LiveTab: React.FC<{
   return (
     <View style={[styles.stack, ajanta && styles.ajantaStack]}>
       <PlanBanner pump={pump} now={now} />
+      {ajanta && pump.power_state ? <AjantaPowerBanner state={pump.power_state} since={pump.power_changed_at} source={pump.power_source} /> : null}
       {!online ? <Banner tone="warn" icon={WifiOff} text={t('command.offlineBlock')} testID="control-offline" /> : null}
       {state === 'nodata' ? <Banner tone="info" text={t('live.noDataYet')} testID="no-data" /> : null}
-      {state === 'offline' ? (
+      {state === 'offline' && !(ajanta && pump.power_state) ? (
         <Banner tone="warn" icon={WifiOff} text={ajanta ? t('home.offlineNote') : t('live.stale', { ago })} testID="pump-offline" />
       ) : null}
       {refreshFailed ? <Banner tone="warn" text={t('live.refreshFailed')} /> : null}

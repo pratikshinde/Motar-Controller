@@ -31,6 +31,9 @@ export interface PumpResponse {
   nickname?: string | null;
   owner_user_id?: string | null;
   panel_serial?: string | null;
+  power_changed_at?: string | null;
+  power_source?: string | null;
+  power_state?: string | null;
   pump_on?: boolean | null;
   runtime_today_min?: number | null;
   signal_dbm?: number | null;

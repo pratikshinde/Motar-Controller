@@ -54,9 +54,12 @@ function usePushNotifications() {
     };
     void Notifications.getLastNotificationResponseAsync().then(open).catch(() => undefined);
     const tap = Notifications.addNotificationResponseReceivedListener(open);
+    // A power notification that arrives while the app is open: refresh, so the Home banner says the same thing straight away.
+    const arrived = Notifications.addNotificationReceivedListener(() => void queryClient.invalidateQueries());
     const refresh = onPushTokenChanged();
     return () => {
       tap.remove();
+      arrived.remove();
       refresh();
     };
   }, [router]);

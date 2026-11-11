@@ -17,6 +17,7 @@ import { EventsTab } from '../components/deviceDetail/EventsTab';
 import { ScheduleTab } from '../components/deviceDetail/ScheduleTab';
 import { OwnershipTab } from '../components/deviceDetail/OwnershipTab';
 import { DiagnosticsTab } from '../components/deviceDetail/DiagnosticsTab';
+import { PumpProblems } from '../components/deviceDetail/PumpProblems';
 import type { PumpDetail } from '../types';
 
 const TABS = ['overview', 'trends', 'configuration', 'schedule', 'events', 'ownership', 'diagnostics'] as const;
@@ -197,9 +198,21 @@ export const DeviceDetailView: React.FC = () => {
               fontFamily: monoFont
             }}
           />
+          {pump.power_state ? (
+            <Chip
+              size="small"
+              data-testid="power-chip"
+              label={pump.power_state === 'ON' ? 'Power ON' : pump.power_source === 'CONTACT' ? 'Power may be off' : 'Power OFF'}
+              color={pump.power_state === 'ON' ? 'success' : 'warning'}
+              variant="outlined"
+              sx={{ height: 24, fontSize: '0.75rem', fontWeight: 700 }}
+            />
+          ) : null}
           <LiveStatusChip status={wsStatus} lastUpdated={lastUpdated} />
         </Box>
       </Box>
+
+      <PumpProblems detail={detail} />
 
       {/* Modern Workspace Tabs */}
       <Tabs

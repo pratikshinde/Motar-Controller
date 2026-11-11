@@ -80,3 +80,62 @@ export function heardAgo(iso: string | null | undefined, now: number = Date.now(
   if (h < 48) return `${h} h ago`;
   return `${Math.floor(h / 24)} d ago`;
 }
+
+export interface PumpProblem {
+  key: 'fault' | 'open-faults' | 'offline' | 'power';
+  severity: 'error' | 'warning';
+  title: string;
+  detail: string;
+}
+
+type ProblemInput = {
+  status?: string | null;
+  connectivity?: string | null;
+  fault_active?: boolean | null;
+  fault_code?: number | null;
+  last_seen_at?: string | null;
+  power_state?: string | null;
+  power_changed_at?: string | null;
+  power_source?: string | null;
+};
+
+/**
+ * Everything wrong with a pump right now, in the order it matters, for the strip at the top of the pump's page: a fault the starter reports,
+ * faults nobody has resolved yet, a pump that stopped reporting, and the power being off. An empty list means nothing is wrong.
+ */
+export function pumpProblems(pump: ProblemInput, openFaultCount: number, now: number = Date.now()): PumpProblem[] {
+  const problems: PumpProblem[] = [];
+  if (pump.status === 'FAULT' || pump.fault_active) {
+    const f = faultText(pump.fault_code);
+    problems.push({ key: 'fault', severity: 'error', title: `Fault: ${f.name}`, detail: f.action });
+  }
+  if (openFaultCount > 0) {
+    problems.push({
+      key: 'open-faults',
+      severity: 'warning',
+      title: `${openFaultCount} unresolved fault event${openFaultCount === 1 ? '' : 's'}`,
+      detail: 'See Events & Logs, and acknowledge each one once it has been dealt with.',
+    });
+  }
+  if (pump.connectivity === 'OFFLINE') {
+    problems.push({
+      key: 'offline',
+      severity: 'warning',
+      title: 'Pump is not reporting',
+      detail: `Last heard ${heardAgo(pump.last_seen_at, now)}. The power may be off, or there is no mobile signal.`,
+    });
+  }
+  if (pump.power_state === 'OFF') {
+    const since = pump.power_changed_at ? ` since ${new Date(pump.power_changed_at).toLocaleString()}` : '';
+    problems.push({
+      key: 'power',
+      severity: 'warning',
+      title: pump.power_source === 'CONTACT' ? `Power may be off${since}` : `Power is off${since}`,
+      detail:
+        pump.power_source === 'CONTACT'
+          ? 'The starter stopped reporting, which is how a power cut looks from here.'
+          : 'The starter reports no line voltage.',
+    });
+  }
+  return problems;
+}

@@ -48,6 +48,10 @@ class PumpResponse(BaseModel):
     warranty_period_months: Optional[int] = None
     last_seen_at: Optional[str] = None
     created_at: Optional[str] = None
+    # Is the power on at the pump? "ON" / "OFF" (null until the first reading), since when, and what told us ("VOLTAGE" or "CONTACT")
+    power_state: Optional[str] = None
+    power_changed_at: Optional[str] = None
+    power_source: Optional[str] = None
     # Embedded telemetry snapshot fields
     v_ry: Optional[float] = None
     v_yb: Optional[float] = None

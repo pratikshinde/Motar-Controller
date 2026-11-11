@@ -129,6 +129,6 @@ def notify_users(db: Session, user_ids: Iterable, title: str, body: str, data: O
     return sent
 
 
-def notify_pump(db: Session, pump_id: str, title: str, body: str) -> int:
+def notify_pump(db: Session, pump_id: str, title: str, body: str, extra: Optional[Dict[str, str]] = None) -> int:
     """Push about one pump to everyone who can see it; tapping it opens that pump."""
-    return notify_users(db, pump_user_ids(db, pump_id), title, body, {"pump_id": pump_id})
+    return notify_users(db, pump_user_ids(db, pump_id), title, body, {"pump_id": pump_id, **(extra or {})})

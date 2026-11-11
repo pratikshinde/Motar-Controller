@@ -10,7 +10,7 @@ from app.services.alert_engine import raise_alert
 from app.services.ws_hub import ws_hub
 from app.services.jwt_auth import verify_secret
 from app.api.deps import set_db_actor_context
-from app.services import command_service as cs
+from app.services import command_service as cs, power_service
 from app.services.command_dispatch import announce, announcements
 from app.services.iot_publisher import build_envelope
 
@@ -224,9 +224,13 @@ def ingest_telemetry(
     # A reading that shows the requested motor state settles the START / STOP that asked for it.
     moved_commands = cs.observe_reading(db, pump_id, pump_on if (req.mot is not None or vfd_status or vfd_hz is not None) else None, now)
 
+    # The line voltages say whether the power is on; a change is the one thing the farmer's phone is notified about.
+    power_change = power_service.observe_reading(db, pump, *((v_ry, v_yb, v_br) if req.vl else (None, None, None)), False, now) or power_service.observe_alive(db, pump, now)
+
     h_path = pump.hierarchy_path
     db.commit()
     background_tasks.add_task(announce, announcements(db, moved_commands))
+    background_tasks.add_task(power_service.announce_in_new_session, power_change)
 
     # 4. Broadcast live update to scoped WebSocket subscribers
     async def _bcast():

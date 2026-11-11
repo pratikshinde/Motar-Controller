@@ -107,6 +107,11 @@ def format_pump(pump: Pump, latest_telem: Optional[dict] = None) -> dict:
         "last_seen_at": last_seen.isoformat() if (last_seen and hasattr(last_seen, 'isoformat')) else None,
         "created_at": created.isoformat() if (created and hasattr(created, 'isoformat')) else None,
     }
+    # Whether the power is on at the pump, since when, and what told us (see app/services/power_service.py).
+    power_at = getattr(pump, "power_changed_at", None)
+    res["power_state"] = getattr(pump, "power_state", None)
+    res["power_changed_at"] = power_at.isoformat() if power_at else None
+    res["power_source"] = getattr(pump, "power_source", None)
     expires = getattr(pump, "subscription_expires_at", None)
     res["total_runtime_min"] = getattr(pump, "total_runtime_min", None)
     res["subscription_expires_at"] = expires.isoformat() if expires else None

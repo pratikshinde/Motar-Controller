@@ -19,6 +19,7 @@ from app.models.brand import AppBrand
 from app.models.push_token import PushToken
 from app.models.farmer_claim import FarmerClaim
 from app.models.schedule import PumpSchedule, PumpScheduleEntry, PumpScheduleRun
+from app.models.power import PumpPowerEvent
 
 class OtpChallenge(Base):
     """An OTP in flight: today only `purpose='login'` (every phone-based sign-in), soon also `registration`
@@ -141,6 +142,11 @@ class Pump(Base):
     # True once this device has answered a command with an ack carrying the command's `cid` (firmware F2);
     # from then on "applied" is never inferred from telemetry for it.
     supports_command_ack = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    # Whether the power is on at the pump: ON / OFF, since when, and what told us (VOLTAGE: the starter reported no line voltage;
+    # CONTACT: it stopped reporting). NULL until the first reading. See app/services/power_service.py.
+    power_state = Column(String(3), nullable=True)
+    power_changed_at = Column(DateTime(timezone=True), nullable=True)
+    power_source = Column(String(10), nullable=True)
 
     owner = relationship("User", foreign_keys=[owner_user_id])
     organisation = relationship("Organisation", foreign_keys=[org_id])
