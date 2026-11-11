@@ -30,6 +30,7 @@ import { friendlyError } from '../shared/i18n/errors';
 import { AuthShell, authStyles as s } from './auth/AuthShell';
 import i18n, { LANGUAGES } from '@/shared/i18n';
 import { brand } from '@/config/brand';
+import { phoneSignInEnabled } from '@/config/features';
 import { firebasePhoneSupported, firebaseProblem, startPhoneSignIn, type PhoneChallenge } from '@/services/firebasePhone';
 
 interface LoginScreenProps {
@@ -321,9 +322,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <QrCode size={20} color={colors.textOnPrimary} />
           <Text style={s.submitBtnText}>{t('login.scanQr')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowPhone(true)} style={{ alignSelf: 'center', marginTop: space.lg }}>
-          <Text style={s.footerLink}>{t('login.useNumber')}</Text>
-        </TouchableOpacity>
+        {phoneSignInEnabled && (
+          <TouchableOpacity onPress={() => setShowPhone(true)} style={{ alignSelf: 'center', marginTop: space.lg }}>
+            <Text style={s.footerLink}>{t('login.useNumber')}</Text>
+          </TouchableOpacity>
+        )}
       </AuthShell>
     );
   }

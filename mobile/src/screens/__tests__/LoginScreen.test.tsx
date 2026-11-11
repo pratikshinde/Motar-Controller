@@ -24,17 +24,13 @@ function renderLogin() {
 }
 
 describe('Ajanta sign-in: the first visit is scanning the dealer\'s QR code', () => {
-  it('leads with Scan QR code, and keeps the mobile number form one tap away for a farmer who is already registered', () => {
+  it('leads with Scan QR code and, while phone sign-in is not offered, has no way to the mobile number form', () => {
     const onScanQr = jest.fn();
     render(<LoginScreen onLoginSuccess={jest.fn()} onForgotPassword={jest.fn()} onRegister={jest.fn()} onScanQr={onScanQr} />);
     expect(screen.queryByPlaceholderText('10-digit mobile number')).toBeNull();
+    expect(screen.queryByText('Already registered? Use your mobile number')).toBeNull();
     fireEvent.press(screen.getByText('Scan QR code'));
     expect(onScanQr).toHaveBeenCalledTimes(1);
-
-    fireEvent.press(screen.getByText('Already registered? Use your mobile number'));
-    expect(screen.getByPlaceholderText('10-digit mobile number')).toBeTruthy();
-    fireEvent.press(screen.getByText('Scan QR code'));
-    expect(screen.queryByPlaceholderText('10-digit mobile number')).toBeNull();
   });
 });
 
