@@ -620,6 +620,9 @@ def claim_with_qr(req: ClaimRequest, db: Session = Depends(get_db)):
     if not farmer or not stored:
         raise invalid
 
+    if (farmer.account_status or "ACTIVE").upper() == "SUSPENDED" or (getattr(farmer, "status", None) or "ACTIVE").upper() == "SUSPENDED":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been stopped. Please contact your dealer.")
+
     typed = india_phone(req.phone)
     if not typed or typed not in get_phone_variants(stored):
         claim.attempts = (claim.attempts or 0) + 1

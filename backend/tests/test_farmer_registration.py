@@ -259,5 +259,90 @@ class TestScanTheQr(Base):
         self.assertEqual(after[0]["qr"]["state"], "CLAIMED")
 
 
+class TestManageFarmer(Base):
+    """The Ajanta admin can fix a farmer's details and stop or restore their access."""
+
+    def made(self):
+        admin = self.dealer()
+        phone = digits()
+        r = self.register(admin, self.form(self.stock(admin), phone=phone))
+        self.assertEqual(r.status_code, 201, r.text)
+        return admin, phone, r.json()
+
+    def patch(self, admin, farmer_id, body):
+        return client.patch(f"/api/v1/farmers/{farmer_id}", json=body, headers=self.headers(admin))
+
+    def test_the_name_the_address_and_the_number_can_be_corrected(self):
+        admin, _, made = self.made()
+        new_phone = digits()
+        type(self).phones.append(india_phone(new_phone))
+        r = self.patch(admin, made["farmer"]["id"], {"full_name": "Ramesh S. Patil", "address": "Gat 7, Shirur, Pune", "phone": new_phone})
+        self.assertEqual(r.status_code, 200, r.text)
+        farmer = r.json()["farmer"]
+        self.assertEqual((farmer["full_name"], farmer["address"], farmer["phone_number"]), ("Ramesh S. Patil", "Gat 7, Shirur, Pune", india_phone(new_phone)))
+        listed = client.get("/api/v1/farmers", headers=self.headers(admin)).json()["farmers"]
+        self.assertEqual(listed[0]["full_name"], "Ramesh S. Patil")
+
+    def test_the_new_number_is_what_the_app_asks_for_at_the_scan(self):
+        admin, old_phone, made = self.made()
+        new_phone = digits()
+        type(self).phones.append(india_phone(new_phone))
+        self.assertEqual(self.patch(admin, made["farmer"]["id"], {"phone": new_phone}).status_code, 200)
+        wrong = client.post("/api/v1/auth/claim", json={"qr": made["qr"]["payload"], "phone": old_phone})
+        self.assertEqual(wrong.status_code, 400)
+        right = client.post("/api/v1/auth/claim", json={"qr": made["qr"]["payload"], "phone": new_phone})
+        self.assertEqual(right.status_code, 200, right.text)
+
+    def test_a_number_that_is_taken_or_not_a_number_is_refused_and_nothing_changes(self):
+        admin, _, made = self.made()
+        other_phone = digits()
+        self.assertEqual(self.register(admin, self.form(self.stock(admin), phone=other_phone)).status_code, 201)
+        self.assertEqual(self.patch(admin, made["farmer"]["id"], {"phone": other_phone}).status_code, 409)
+        self.assertEqual(self.patch(admin, made["farmer"]["id"], {"phone": "12345"}).status_code, 422)
+        self.assertEqual(self.patch(admin, made["farmer"]["id"], {}).status_code, 422)
+        self.assertEqual(self.patch(admin, made["farmer"]["id"], {"full_name": "R"}).status_code, 422)
+        listed = {f["id"]: f for f in client.get("/api/v1/farmers", headers=self.headers(admin)).json()["farmers"]}
+        self.assertEqual(listed[made["farmer"]["id"]]["full_name"], "Ramesh Patil")
+
+    def test_only_the_admin_above_a_farmer_can_change_them(self):
+        admin, _, made = self.made()
+        stranger = self.dealer("stranger")
+        self.assertEqual(self.patch(stranger, made["farmer"]["id"], {"full_name": "Someone Else"}).status_code, 404)
+        farmer_user = self.make_user("customer", "self-edit")
+        self.assertEqual(self.patch(farmer_user, made["farmer"]["id"], {"full_name": "Someone Else"}).status_code, 403)
+
+    def test_a_stopped_farmer_cannot_scan_in_and_the_qr_is_not_used_up(self):
+        admin, phone, made = self.made()
+        fid = made["farmer"]["id"]
+        off = client.post(f"/api/v1/farmers/{fid}/deactivate", headers=self.headers(admin))
+        self.assertEqual(off.status_code, 200, off.text)
+        self.assertEqual(off.json()["farmer"]["status"], "SUSPENDED")
+        blocked = client.post("/api/v1/auth/claim", json={"qr": made["qr"]["payload"], "phone": phone})
+        self.assertEqual(blocked.status_code, 403, blocked.text)
+        listed = client.get("/api/v1/farmers", headers=self.headers(admin)).json()["farmers"]
+        self.assertEqual((listed[0]["status"], listed[0]["qr"]["state"]), ("SUSPENDED", "PENDING"), "the QR was not burned")
+        on = client.post(f"/api/v1/farmers/{fid}/activate", headers=self.headers(admin))
+        self.assertEqual(on.status_code, 200, on.text)
+        self.assertEqual(on.json()["farmer"]["status"], "ACTIVE")
+        self.assertEqual(client.post("/api/v1/auth/claim", json={"qr": made["qr"]["payload"], "phone": phone}).status_code, 200)
+
+    def test_stopping_a_farmer_signs_their_phone_out(self):
+        admin, phone, made = self.made()
+        signed_in = client.post("/api/v1/auth/claim", json={"qr": made["qr"]["payload"], "phone": phone}).json()
+        headers = {"Authorization": f"Bearer {signed_in['access_token']}"}
+        self.assertEqual(client.get("/api/v1/pumps", headers=headers).status_code, 200)
+        client.post(f"/api/v1/farmers/{made['farmer']['id']}/deactivate", headers=self.headers(admin))
+        self.assertIn(client.get("/api/v1/pumps", headers=headers).status_code, (401, 403))
+
+    def test_stopping_and_restoring_belong_to_the_ajanta_admin_only(self):
+        admin, _, made = self.made()
+        fid = made["farmer"]["id"]
+        for role in ("dealer", "superadmin"):
+            other = self.make_user(role, f"manage-{role}")
+            self.assertEqual(client.post(f"/api/v1/farmers/{fid}/deactivate", headers=self.headers(other)).status_code, 403, role)
+        stranger = self.dealer("stranger2")
+        self.assertEqual(client.post(f"/api/v1/farmers/{fid}/deactivate", headers=self.headers(stranger)).status_code, 404)
+
+
 if __name__ == "__main__":
     unittest.main()

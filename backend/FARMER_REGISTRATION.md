@@ -66,3 +66,18 @@ The QR holds only a random secret (`AGP-CLAIM:<secret>`); the database keeps its
 A farmer on a new phone, or after reinstalling, can use **Already registered? Use your mobile number** (Firebase Phone Authentication, or the
 backend's SMS code). That only works for a number a dealer already registered: unknown numbers get no account unless
 `OPEN_PHONE_SIGNUP=true` (off by default outside development). Or the dealer makes a new QR.
+
+## Managing a farmer (Ajanta admin, Farmers page)
+
+- **Edit** (`PATCH /api/v1/farmers/{id}`): fix the name, address or mobile number. A new number must be a 10-digit Indian mobile and not used by another
+  account. A farmer who has not scanned the QR yet is asked for the new number at the scan.
+- **Stop / Restore** (`POST /farmers/{id}/deactivate`, `/activate`): a stopped farmer cannot scan a QR or sign in, and a phone that is already signed
+  in is signed out at once (the session version moves on and the refresh tokens are revoked). The farmer, the pump and its history are kept. A
+  stopped farmer's QR is not used up by a refused scan.
+- **New QR**: replaces the earlier QR (lost phone, expired QR).
+- Everything above is for the Ajanta admin only; the super admin can look but not change.
+
+## Not offered yet
+
+"Already registered? Use your mobile number" (Firebase / SMS code) is built but switched off in the app (`mobile/src/config/features.ts`,
+`phoneSignInEnabled = false`) until the OTP route is decided. Until then a farmer on a new phone asks the admin for a new QR.

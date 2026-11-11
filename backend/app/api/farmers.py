@@ -25,12 +25,20 @@ FARMER_READ_ROLES = ["manufacturer", "superadmin"]
 from app.core.phone import get_phone_variants, india_phone
 from app.core.scope import in_subtree, path_in_scope
 from app.database import get_db
-from app.models import AllocationLog, AuditLog, Pump, User
+from app.models import AllocationLog, AuditLog, Pump, RefreshToken, User
 from app.models.farmer_claim import FarmerClaim
 from app.services import farmer_claims
+from app.services.cache_service import cache_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Farmers"])
+
+
+class FarmerUpdate(BaseModel):
+    """Fix a farmer's details: any of the three (at least one)."""
+    full_name: Optional[str] = Field(None, min_length=2, max_length=100)
+    address: Optional[str] = Field(None, min_length=3, max_length=300)
+    phone: Optional[str] = Field(None, min_length=10, max_length=20)
 
 
 class FarmerCreate(BaseModel):
@@ -61,7 +69,11 @@ def _pump_view(pump: Pump) -> dict:
 
 
 def _farmer_view(user: User) -> dict:
-    return {"id": str(user.id), "full_name": user.full_name, "phone_number": user.phone_number or user.phone, "address": user.address}
+    return {
+        "id": str(user.id), "full_name": user.full_name, "phone_number": user.phone_number or user.phone, "address": user.address,
+        # ACTIVE, or SUSPENDED when the Ajanta admin has stopped the farmer's access
+        "status": (user.account_status or "ACTIVE").upper(),
+    }
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -157,6 +169,81 @@ def new_qr(farmer_id: str, current_user: User = Depends(require_roles(FARMER_WRI
                     action="FARMER_QR_REISSUED", after_json=None))
     db.commit()
     return {"message": "New QR created. The old one no longer works.", "farmer": _farmer_view(farmer), "qr": _qr_view(claim, token)}
+
+
+@router.patch("/{farmer_id}")
+def update_farmer(farmer_id: str, req: FarmerUpdate, current_user: User = Depends(require_roles(FARMER_WRITE_ROLES)), db: Session = Depends(get_db)):
+    """Correct a farmer's name, address or mobile number (a typo, a new number)."""
+    farmer = _farmer_in_scope(db, current_user, farmer_id)
+    changes = req.model_dump(exclude_unset=True, exclude_none=True)
+    if not changes:
+        raise HTTPException(status_code=422, detail="Nothing to change.")
+    before = {"full_name": farmer.full_name, "address": farmer.address, "phone": farmer.phone_number or farmer.phone}
+
+    if "phone" in changes:
+        phone = india_phone(changes["phone"])
+        if not phone:
+            raise HTTPException(status_code=422, detail="Enter the farmer's 10-digit mobile number.")
+        variants = get_phone_variants(phone)
+        taken = db.query(User.id).filter(
+            User.id != farmer.id, (User.phone.in_(variants)) | (User.phone_number.in_(variants))
+        ).first()
+        if taken:
+            raise HTTPException(status_code=409, detail="A farmer with this mobile number is already registered.")
+        farmer.phone = farmer.phone_number = phone
+    if "full_name" in changes:
+        farmer.full_name = changes["full_name"].strip()
+    if "address" in changes:
+        farmer.address = changes["address"].strip()
+
+    db.add(AuditLog(
+        actor_id=current_user.id, actor_role=current_user.role, entity_type="user", entity_id=str(farmer.id),
+        action="FARMER_UPDATED", before_json=before,
+        after_json={"full_name": farmer.full_name, "address": farmer.address, "phone": farmer.phone_number or farmer.phone},
+    ))
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="A farmer with this mobile number is already registered.")
+    db.refresh(farmer)
+    return {"message": "Farmer updated", "farmer": _farmer_view(farmer)}
+
+
+def _set_access(db: Session, actor: User, farmer: User, stopped: bool) -> User:
+    """Stop (or restore) a farmer's access. A stopped farmer cannot sign in or scan a QR, and a phone that is already signed in is
+    signed out at once. The farmer, the pump and the history are kept."""
+    before = {"status": farmer.account_status}
+    farmer.account_status = "SUSPENDED" if stopped else "ACTIVE"
+    farmer.is_active = not stopped
+    if stopped:
+        # Every token the farmer holds stops working: the session version moves on and the refresh tokens are revoked.
+        cache_service.increment_user_session_version(str(farmer.id))
+        farmer.session_version = (farmer.session_version or 1) + 1
+        db.query(RefreshToken).filter(RefreshToken.user_id == farmer.id, RefreshToken.revoked_at.is_(None)).update(
+            {"revoked_at": datetime.now(timezone.utc)}, synchronize_session=False
+        )
+    db.add(AuditLog(
+        actor_id=actor.id, actor_role=actor.role, entity_type="user", entity_id=str(farmer.id),
+        action="FARMER_STOPPED" if stopped else "FARMER_RESTORED", before_json=before, after_json={"status": farmer.account_status},
+    ))
+    db.commit()
+    db.refresh(farmer)
+    return farmer
+
+
+@router.post("/{farmer_id}/deactivate")
+def deactivate_farmer(farmer_id: str, current_user: User = Depends(require_roles(FARMER_WRITE_ROLES)), db: Session = Depends(get_db)):
+    """Stop a farmer's access (their phone is signed out at once). The farmer, the pump and the history are kept."""
+    farmer = _farmer_in_scope(db, current_user, farmer_id)
+    return {"message": "Farmer deactivated", "farmer": _farmer_view(_set_access(db, current_user, farmer, stopped=True))}
+
+
+@router.post("/{farmer_id}/activate")
+def activate_farmer(farmer_id: str, current_user: User = Depends(require_roles(FARMER_WRITE_ROLES)), db: Session = Depends(get_db)):
+    """Give a deactivated farmer their access back."""
+    farmer = _farmer_in_scope(db, current_user, farmer_id)
+    return {"message": "Farmer activated", "farmer": _farmer_view(_set_access(db, current_user, farmer, stopped=False))}
 
 
 @router.get("")
