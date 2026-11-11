@@ -9,9 +9,11 @@ import { SwatiPage } from '@/shared/ui/SwatiPage';
 import { useDirection } from '@/shared/i18n/useDirection';
 import { useNow } from '@/shared/hooks/useOnline';
 import { useSelectedPump } from '@/state/selectedPump';
+import { ajantaHome } from '@/config/ajantaHome';
 import { useCurrentPump } from './useCurrentPump';
 import { PumpState, displayName, pumpState } from './model';
 
+import { colors } from '@/shared/theme';
 const CHIP: Record<PumpState, { bg: string; fg: string; dot: string; key: string }> = {
   running: { bg: '#DCFCE7', fg: '#15803D', dot: '#16A34A', key: 'pumps.status.running' },
   stopped: { bg: '#F1F5F9', fg: '#475569', dot: '#94A3B8', key: 'pumps.status.stopped' },
@@ -47,11 +49,17 @@ export const MyPumpsScreen: React.FC = () => {
           const chip = CHIP[pumpState(p, now)];
           const solar = p.device_type === 'SOLAR_VFD';
           const isSelected = p.id === current?.id;
+          const chipEl = (
+            <View style={[styles.chip, { backgroundColor: chip.bg }]}>
+              <View style={[styles.chipDot, { backgroundColor: chip.dot }]} />
+              <Text style={[styles.chipText, { color: chip.fg }]}>{t(chip.key)}</Text>
+            </View>
+          );
 
           return (
             <TouchableOpacity
               key={p.id}
-              style={[styles.card, isSelected && styles.cardCurrent]}
+              style={[styles.card, isSelected && styles.cardCurrent, ajantaHome && styles.aCard, ajantaHome && isSelected && styles.aCardCurrent]}
               onPress={() => {
                 select(p.id);
                 router.replace('/(tabs)');
@@ -63,7 +71,7 @@ export const MyPumpsScreen: React.FC = () => {
               <View style={styles.thumbWrapper}>
                 <PumpThumbnail type={solar ? 'SOLAR_VFD' : '3PHASE'} size={52} />
                 {isSelected && (
-                  <View style={styles.activeCheckBadge}>
+                  <View style={[styles.activeCheckBadge, ajantaHome && styles.aCheck]}>
                     <Check size={10} color="#FFFFFF" strokeWidth={3} />
                   </View>
                 )}
@@ -71,24 +79,24 @@ export const MyPumpsScreen: React.FC = () => {
 
               <View style={styles.info}>
                 <View style={styles.titleRow}>
-                  <Text style={styles.name} numberOfLines={1}>
+                  <Text style={styles.name} numberOfLines={ajantaHome ? 2 : 1}>
                     {displayName(p)}
                   </Text>
                   {isSelected && (
-                    <View style={styles.activeTag}>
-                      <Text style={styles.activeTagText}>Active</Text>
+                    <View style={[styles.activeTag, ajantaHome && styles.aTag]}>
+                      <Text style={[styles.activeTagText, ajantaHome && styles.aTagText]}>Active</Text>
                     </View>
                   )}
                 </View>
 
                 <View style={styles.specsRow}>
-                  <View style={[styles.typeBadge, solar ? styles.typeBadgeSolar : styles.typeBadgeGrid]}>
+                  <View style={[styles.typeBadge, solar ? styles.typeBadgeSolar : styles.typeBadgeGrid, ajantaHome && !solar && styles.aBadge]}>
                     {solar ? (
                       <Sun size={10} color="#B45309" style={{ marginRight: 3 }} />
                     ) : (
-                      <Zap size={10} color="#1D4ED8" style={{ marginRight: 3 }} />
+                      <Zap size={10} color={ajantaHome ? colors.primary : '#1D4ED8'} style={{ marginRight: 3 }} />
                     )}
-                    <Text style={[styles.typeBadgeText, solar ? styles.typeBadgeTextSolar : styles.typeBadgeTextGrid]}>
+                    <Text style={[styles.typeBadgeText, solar ? styles.typeBadgeTextSolar : styles.typeBadgeTextGrid, ajantaHome && !solar && styles.aBadgeText]}>
                       {solar ? t('swati.typeSolar') : t('swati.type3Phase')}
                     </Text>
                   </View>
@@ -96,12 +104,10 @@ export const MyPumpsScreen: React.FC = () => {
                     <Text style={styles.hpText}>{t('pumps.hp', { hp: p.hp_rating })}</Text>
                   ) : null}
                 </View>
+                {ajantaHome ? <View style={styles.aChipRow}>{chipEl}</View> : null}
               </View>
 
-              <View style={[styles.chip, { backgroundColor: chip.bg }]}>
-                <View style={[styles.chipDot, { backgroundColor: chip.dot }]} />
-                <Text style={[styles.chipText, { color: chip.fg }]}>{t(chip.key)}</Text>
-              </View>
+              {!ajantaHome ? chipEl : null}
 
               <ChevronRight size={20} color="#94A3B8" style={flip} />
             </TouchableOpacity>
@@ -111,13 +117,13 @@ export const MyPumpsScreen: React.FC = () => {
 
       {pumps.length > 0 ? (
         <TouchableOpacity
-          style={styles.manageBtn}
+          style={[styles.manageBtn, ajantaHome && styles.aManage]}
           onPress={() => router.push('/manage')}
           accessibilityRole="button"
           activeOpacity={0.82}
         >
-          <Settings2 size={18} color="#0D47A1" />
-          <Text style={styles.manageText}>{t('settings.managePumps')}</Text>
+          <Settings2 size={18} color={ajantaHome ? colors.primary : '#0D47A1'} />
+          <Text style={[styles.manageText, ajantaHome && { color: colors.primary }]}>{t('settings.managePumps')}</Text>
         </TouchableOpacity>
       ) : null}
     </SwatiPage>
@@ -125,6 +131,16 @@ export const MyPumpsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  // Ajanta's look: brand green, full pump name (two lines), status under the type.
+  aCard: { borderColor: colors.border, borderWidth: 1, borderRadius: 16 },
+  aCardCurrent: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  aCheck: { backgroundColor: colors.primary },
+  aTag: { backgroundColor: colors.primarySoft },
+  aTagText: { color: colors.primaryDark },
+  aBadge: { backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder },
+  aBadgeText: { color: colors.primaryDark },
+  aChipRow: { flexDirection: 'row', marginTop: 8 },
+  aManage: { borderColor: colors.primary, borderRadius: 14 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',

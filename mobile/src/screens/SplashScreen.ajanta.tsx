@@ -5,6 +5,9 @@ import { brand } from '../config/brand';
 import { tracking } from '../shared/i18n/languages';
 import { AJANTA_PAGE, AjantaLogo, AjantaScene } from '../shared/ui/AjantaScreen';
 
+import { colors } from '@/shared/theme';
+import { rgba } from '@/shared/theme/color';
+import { scene } from '@/shared/theme/scene';
 interface SplashScreenProps {
   onFinish: () => void;
 }
@@ -36,7 +39,7 @@ export const SplashScreenAjanta: React.FC<SplashScreenProps> = ({ onFinish }) =>
       <View style={styles.bottom}>
         <Text style={styles.tagline}>{t('splash.tagline')}</Text>
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#0B7A3E" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loaderText}>{t('splash.starting')}</Text>
         </View>
         <Text style={styles.footer}>{t('splash.footer')}</Text>
@@ -47,7 +50,7 @@ export const SplashScreenAjanta: React.FC<SplashScreenProps> = ({ onFinish }) =>
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: AJANTA_PAGE },
-  banner: { flex: 1.15, backgroundColor: '#1A56D6', overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
+  banner: { flex: 1.15, backgroundColor: scene.banner, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
   brandBox: { alignItems: 'center', paddingHorizontal: 24, paddingBottom: 24, width: '100%' },
   badge: {
     width: 88,
@@ -60,7 +63,7 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: 'rgba(255,255,255,0.55)',
     elevation: 4,
-    shadowColor: '#0D1B2A',
+    shadowColor: colors.shadowTint,
     shadowOpacity: 0.2,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
@@ -70,7 +73,7 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '900',
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,40,0.35)',
+    textShadowColor: rgba(scene.titleShadow, 0.4),
     textShadowRadius: 6,
     textShadowOffset: { width: 0, height: 1 },
   },
@@ -80,7 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     marginTop: 2,
-    textShadowColor: 'rgba(0,0,40,0.35)',
+    textShadowColor: rgba(scene.titleShadow, 0.4),
     textShadowRadius: 6,
     textShadowOffset: { width: 0, height: 1 },
   },
@@ -96,17 +99,17 @@ const styles = StyleSheet.create({
   },
   bottom: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, paddingBottom: 28, paddingHorizontal: 24 },
   tagline: {
-    color: '#064B27',
+    color: colors.primaryDark,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
-    backgroundColor: '#E4F5EA',
+    backgroundColor: colors.primarySoft,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
     overflow: 'hidden',
   },
   loader: { alignItems: 'center', gap: 10 },
-  loaderText: { color: '#5B6B80', fontSize: 15, fontWeight: '600' },
-  footer: { color: '#5B6B80', fontSize: 13, letterSpacing: 0.5, textAlign: 'center' },
+  loaderText: { color: colors.textMuted, fontSize: 15, fontWeight: '600' },
+  footer: { color: colors.textMuted, fontSize: 13, letterSpacing: 0.5, textAlign: 'center' },
 });

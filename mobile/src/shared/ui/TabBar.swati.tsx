@@ -4,12 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Home, Clock, Menu } from 'lucide-react-native';
 
+import { colors } from '@/shared/theme';
+import { skin } from '@/shared/theme/skin';
 const ITEMS: Record<
   string,
   { labelKey: string; Icon: React.ComponentType<{ size?: number; color?: string }> }
 > = {
   index: { labelKey: 'nav.home', Icon: Home },
-  timer: { labelKey: 'nav.timer', Icon: Clock },
+  // Ajanta's second tab is its weekly schedule; Swati's is still the timer.
+  timer: { labelKey: skin('nav.schedule', 'nav.timer'), Icon: Clock },
   settings: { labelKey: 'nav.more', Icon: Menu },
 };
 
@@ -48,7 +51,7 @@ export const TabBarSwati: React.FC<TabBarProps> = ({ state, navigation }) => {
               testID={`tab-${route.name}`}
             >
               <View style={[styles.iconWrap, on && styles.iconWrapOn]}>
-                <Icon size={22} color={on ? '#0D47A1' : '#64748B'} />
+                <Icon size={22} color={on ? skin(colors.primary, '#0D47A1') : skin(colors.textFaint, '#64748B')} />
               </View>
               <Text style={[styles.label, on && styles.labelOn]} numberOfLines={1}>
                 {label}
@@ -69,11 +72,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1.5,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: skin(colors.border, '#E2E8F0'),
     paddingTop: 8,
     paddingBottom: 6,
     elevation: 12,
-    shadowColor: '#0F172A',
+    shadowColor: skin(colors.shadowTint, '#0F172A'),
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: -4 },
@@ -92,16 +95,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapOn: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: skin(colors.primarySoft, '#E0F2FE'),
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
+    color: skin(colors.textFaint, '#64748B'),
     marginTop: 3,
   },
   labelOn: {
-    color: '#0D47A1',
+    color: skin(colors.primary, '#0D47A1'),
     fontWeight: '900',
   },
 });

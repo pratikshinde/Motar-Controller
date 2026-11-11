@@ -1,5 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Inbox, WifiOff } from 'lucide-react-native';
+import { ajantaHome } from '@/config/ajantaHome';
 import { colors, font, radius, TOUCH } from '../theme';
 
 /** One consistent full-screen loading / error / empty state for every screen. */
@@ -10,7 +12,9 @@ export const StateView: React.FC<{
   icon?: any;
   actionLabel?: string;
   onAction?: () => void;
-}> = ({ kind, title, message, icon: Icon, actionLabel, onAction }) => {
+}> = ({ kind, title, message, icon, actionLabel, onAction }) => {
+  // Ajanta shows a picture with every empty or error page; Swati keeps its own (icon only when a screen asks for one).
+  const Icon = icon ?? (ajantaHome && kind !== 'loading' ? (kind === 'error' ? WifiOff : Inbox) : undefined);
   const tint = kind === 'error' ? colors.danger : colors.primary;
   const soft = kind === 'error' ? colors.dangerSoft : colors.primarySoft;
   return (

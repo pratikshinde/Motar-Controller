@@ -12,6 +12,7 @@ import { useCurrentPump } from '@/features/pumps/useCurrentPump';
 import { dailyBars } from './buckets';
 import { dayKey, RunSession, sessionMinutes, sessionsFromReadings } from './sessions';
 
+import { skin } from '@/shared/theme/skin';
 interface DayCard {
   key: string;
   /** Start and stop times: only known for the last 24 hours, where the pump's own readings are kept. */
@@ -115,17 +116,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: skin(colors.border, '#E2E8F0'),
     padding: 16,
     gap: 10,
   },
-  date: { fontSize: 17, fontWeight: '800', color: '#0F172A' },
+  date: { fontSize: 17, fontWeight: '800', color: skin(colors.text, '#0F172A') },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
   dot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  rowText: { flex: 1, fontSize: 16, fontWeight: '700', color: '#334155' },
-  time: { fontSize: 16, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'] },
-  footer: { borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 10, gap: 2 },
-  total: { fontSize: 15, fontWeight: '700', color: '#475569' },
-  totalValue: { fontWeight: '900', color: '#0F172A' },
-  starts: { fontSize: 14, fontWeight: '600', color: '#64748B' },
+  rowText: { flex: 1, fontSize: 16, fontWeight: '700', color: skin(colors.text, '#334155') },
+  time: { fontSize: 16, fontWeight: '800', color: skin(colors.text, '#0F172A'), fontVariant: ['tabular-nums'] },
+  footer: { borderTopWidth: 1, borderTopColor: skin(colors.border, '#F1F5F9'), paddingTop: 10, gap: 2 },
+  total: { fontSize: 15, fontWeight: '700', color: skin(colors.textMuted, '#475569') },
+  totalValue: { fontWeight: '900', color: skin(colors.text, '#0F172A') },
+  starts: { fontSize: 14, fontWeight: '600', color: skin(colors.textMuted, '#64748B') },
 });

@@ -2,11 +2,12 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AlertTriangle, Info } from 'lucide-react-native';
 import { colors, radius, TOUCH } from '../theme';
+import { skin } from '../theme/skin';
 
 export type BannerTone = 'info' | 'warn' | 'danger';
 
 const TONES = {
-  info: { bg: colors.waterSoft, fg: '#0B4F9A', Icon: Info },
+  info: { bg: skin(colors.primarySoft, colors.waterSoft), fg: skin(colors.primaryDark, '#0B4F9A'), Icon: Info },
   warn: { bg: colors.warnSoft, fg: colors.warn, Icon: AlertTriangle },
   danger: { bg: colors.dangerSoft, fg: colors.danger, Icon: AlertTriangle },
 } as const;

@@ -47,8 +47,9 @@ import { useAuth } from '@/state/auth';
 import { useSelectedPump } from '@/state/selectedPump';
 import { SupportCard } from '@/features/support/SupportCard';
 
-const INK = '#14213D';
-const MUTED = '#5B6B80';
+import { colors } from '@/shared/theme';
+const INK = colors.text;
+const MUTED = colors.textMuted;
 
 type IconType = React.ComponentType<{ size?: number; color?: string }>;
 
@@ -79,7 +80,7 @@ const Row: React.FC<{
         <Icon size={26} color={color} />
       </View>
       <View style={styles.rowText}>
-        <Text style={[styles.rowTitle, danger && { color: '#C62833' }]}>{title}</Text>
+        <Text style={[styles.rowTitle, danger && { color: colors.danger }]}>{title}</Text>
         {hint ? <Text style={styles.rowHint}>{hint}</Text> : null}
       </View>
       {value ? (
@@ -88,9 +89,9 @@ const Row: React.FC<{
         </View>
       ) : null}
       {danger ? null : open === undefined ? (
-        <ChevronRight size={22} color="#94A3B8" style={flip} />
+        <ChevronRight size={22} color={colors.textFaint} style={flip} />
       ) : (
-        <ChevronDown size={22} color="#94A3B8" style={open ? { transform: [{ rotate: '180deg' }] } : undefined} />
+        <ChevronDown size={22} color={colors.textFaint} style={open ? { transform: [{ rotate: '180deg' }] } : undefined} />
       )}
     </TouchableOpacity>
   );
@@ -185,8 +186,8 @@ export const SettingsScreenAjanta: React.FC = () => {
     >
       <View style={styles.card}>
         <View style={styles.row}>
-          <View style={[styles.iconCircle, { backgroundColor: '#E3F6EA' }]}>
-            <UserIcon size={26} color="#159A4B" />
+          <View style={[styles.iconCircle, { backgroundColor: colors.primarySoft }]}>
+            <UserIcon size={26} color={colors.primary} />
           </View>
           <View style={styles.rowText}>
             <Text style={styles.rowTitle}>{t('home.myDetails')}</Text>
@@ -207,7 +208,7 @@ export const SettingsScreenAjanta: React.FC = () => {
               maxLength={100}
               accessibilityLabel={t('settings.name')}
             />
-            <Pencil size={20} color="#1565C0" />
+            <Pencil size={20} color={colors.primary} />
           </View>
           {changed ? (
             <TouchableOpacity
@@ -224,7 +225,7 @@ export const SettingsScreenAjanta: React.FC = () => {
           {nameSaved ? <Banner tone="info" text={t('settings.nameSaved')} testID="name-saved" /> : null}
           <Text style={[styles.label, { marginTop: 10 }]}>{t('settings.mobile')}</Text>
           <View style={styles.phoneRow}>
-            <Phone size={20} color="#1565C0" />
+            <Phone size={20} color={colors.primary} />
             <Text style={styles.phone}>{user?.phone_number ?? '—'}</Text>
           </View>
         </View>
@@ -233,8 +234,8 @@ export const SettingsScreenAjanta: React.FC = () => {
       <View style={styles.card}>
         <Row
           icon={Globe}
-          color="#1565C0"
-          tint="#E3EEFF"
+          color={colors.primary}
+          tint={colors.primarySoft}
           title={t('settings.language')}
           hint={t('settings.languageHint')}
           value={languageInfo(i18n.language).native}
@@ -246,8 +247,8 @@ export const SettingsScreenAjanta: React.FC = () => {
       <View style={styles.card}>
         <Row
           icon={Droplets}
-          color="#159A4B"
-          tint="#E3F6EA"
+          color={colors.primary}
+          tint={colors.primarySoft}
           title={t('settings.managePumps')}
           hint={t('settings.managePumpsHint')}
           onPress={() => router.push('/manage')}
@@ -258,8 +259,8 @@ export const SettingsScreenAjanta: React.FC = () => {
       <View style={styles.card}>
         <Row
           icon={Smartphone}
-          color="#6B4CD6"
-          tint="#EDE8FF"
+          color={colors.primary}
+          tint={colors.primarySoft}
           title={t('settings.sessions')}
           hint={t('home.sessionsHint')}
           open={open === 'sessions'}
@@ -303,8 +304,8 @@ export const SettingsScreenAjanta: React.FC = () => {
       <View style={styles.card}>
         <Row
           icon={Headphones}
-          color="#E8780C"
-          tint="#FFEBD6"
+          color={colors.primary}
+          tint={colors.primarySoft}
           title={t('home.help')}
           hint={t('home.helpHint')}
           open={open === 'help'}
@@ -319,8 +320,8 @@ export const SettingsScreenAjanta: React.FC = () => {
         <View style={styles.divider} />
         <Row
           icon={Settings}
-          color="#5B6B80"
-          tint="#EEF1F5"
+          color={colors.textMuted}
+          tint={colors.surfaceAlt}
           title={t('home.about')}
           hint={t('home.aboutHint')}
           open={open === 'about'}
@@ -338,8 +339,8 @@ export const SettingsScreenAjanta: React.FC = () => {
       <View style={styles.card}>
         <Row
           icon={Download}
-          color="#1565C0"
-          tint="#E3EEFF"
+          color={colors.primary}
+          tint={colors.primarySoft}
           title={t('settings.export')}
           hint={t('settings.exportHint')}
           disabled={exporting || !online}
@@ -357,8 +358,8 @@ export const SettingsScreenAjanta: React.FC = () => {
         ) : (
           <Row
             icon={Trash2}
-            color="#5B6B80"
-            tint="#EEF1F5"
+            color={colors.textMuted}
+            tint={colors.surfaceAlt}
             title={t('settings.delete')}
             hint={t('settings.deleteHint')}
             disabled={!online}
@@ -370,8 +371,8 @@ export const SettingsScreenAjanta: React.FC = () => {
         <View style={styles.divider} />
         <Row
           icon={LogOut}
-          color="#C62833"
-          tint="#FDE8EA"
+          color={colors.danger}
+          tint={colors.dangerSoft}
           title={t('settings.logout')}
           danger
           onPress={() => setConfirmLogout(true)}
@@ -423,11 +424,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E6ECF2',
+    borderColor: colors.border,
     padding: 8,
     elevation: 1,
-    shadowColor: '#0D1B2A',
-    shadowOpacity: 0.04,
+    shadowColor: colors.shadowTint,
+    shadowOpacity: 0.07,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
   },
@@ -436,30 +437,30 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, minWidth: 0 },
   rowTitle: { color: INK, fontSize: 18, fontWeight: '800' },
   rowHint: { color: MUTED, fontSize: 13.5, marginTop: 2 },
-  valueChip: { backgroundColor: '#E7F0FF', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
-  valueText: { color: '#1253C4', fontSize: 15, fontWeight: '800' },
-  divider: { height: 1, backgroundColor: '#EEF2F6', marginHorizontal: 8 },
+  valueChip: { backgroundColor: colors.primarySoft, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  valueText: { color: colors.primaryDark, fontSize: 15, fontWeight: '800' },
+  divider: { height: 1, backgroundColor: colors.border, marginHorizontal: 8 },
   expand: { paddingHorizontal: 6, paddingBottom: 8, gap: 8 },
-  detailsBox: { backgroundColor: '#F4F8FD', borderRadius: 12, padding: 12, marginTop: 4, marginHorizontal: 4, marginBottom: 4 },
+  detailsBox: { backgroundColor: colors.surfaceAlt, borderRadius: 12, padding: 12, marginTop: 4, marginHorizontal: 4, marginBottom: 4 },
   label: { color: MUTED, fontSize: 14, fontWeight: '700', marginBottom: 6 },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#D3DEEC',
+    borderColor: colors.borderStrong,
     borderRadius: 12,
     paddingHorizontal: 12,
     minHeight: 50,
   },
   input: { flex: 1, color: INK, fontSize: 17, fontWeight: '700', paddingVertical: 8 },
-  saveBtn: { alignSelf: 'flex-start', backgroundColor: '#1565C0', borderRadius: 999, paddingHorizontal: 22, paddingVertical: 10, marginTop: 10 },
+  saveBtn: { alignSelf: 'flex-start', backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 22, paddingVertical: 10, marginTop: 10 },
   saveText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
   phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   phone: { color: INK, fontSize: 18, fontWeight: '800' },
-  session: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#EEF2F6' },
+  session: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.border },
   sessionTitle: { color: INK, fontSize: 15, fontWeight: '800' },
   signOut: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 },
-  signOutText: { color: '#C62833', fontSize: 15, fontWeight: '900' },
+  signOutText: { color: colors.danger, fontSize: 15, fontWeight: '900' },
   aboutName: { color: INK, fontSize: 17, fontWeight: '800' },
 });

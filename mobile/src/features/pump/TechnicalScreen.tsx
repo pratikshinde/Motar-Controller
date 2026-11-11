@@ -21,6 +21,7 @@ import { useCurrentPump } from '@/features/pumps/useCurrentPump';
 import { pumpState } from '@/features/pumps/model';
 import { driveStatusKey } from './swatiHome';
 
+import { skin } from '@/shared/theme/skin';
 interface MetricItem {
   label: string;
   value: number | null | undefined;
@@ -159,7 +160,7 @@ export const TechnicalScreen: React.FC = () => {
               <EngineeringCard
                 title="Drive Output & Motor Telemetry"
                 icon={Zap}
-                accentColor="#0284C7"
+                accentColor={skin(colors.primary, skin(colors.primary, '#0284C7'))}
                 metrics={[
                   {
                     label: t('swati.frequency'),
@@ -197,7 +198,7 @@ export const TechnicalScreen: React.FC = () => {
               <EngineeringCard
                 title="Fuji FRENIC-Ace Drive Diagnostics"
                 icon={Cpu}
-                accentColor="#7C3AED"
+                accentColor={skin(colors.primary, skin(colors.primary, '#7C3AED'))}
                 metrics={[]}
                 footerLabel={t('swati.driveStatus')}
                 footerValue={
@@ -213,7 +214,7 @@ export const TechnicalScreen: React.FC = () => {
               <EngineeringCard
                 title={t('dashboard.cardVoltages')}
                 icon={Zap}
-                accentColor="#0284C7"
+                accentColor={skin(colors.primary, skin(colors.primary, '#0284C7'))}
                 metrics={[
                   { label: 'R - Y Phase', value: pump.v_ry, unit: 'V', digits: 0, dot: '#EF4444' },
                   { label: 'Y - B Phase', value: pump.v_yb, unit: 'V', digits: 0, dot: '#F59E0B' },
@@ -225,7 +226,7 @@ export const TechnicalScreen: React.FC = () => {
               <EngineeringCard
                 title={t('dashboard.cardCurrents')}
                 icon={Activity}
-                accentColor="#16A34A"
+                accentColor={skin(colors.primary, skin(colors.primary, '#16A34A'))}
                 metrics={[
                   { label: 'Phase R Current', value: pump.i_r, unit: 'A', digits: 1, dot: '#EF4444' },
                   { label: 'Phase Y Current', value: pump.i_y, unit: 'A', digits: 1, dot: '#F59E0B' },
@@ -274,7 +275,7 @@ export const TechnicalScreen: React.FC = () => {
             <View style={[styles.statusCard, styles.statusGood]}>
               <View style={styles.statusRow}>
                 <View style={styles.statusIconWrapGood}>
-                  <CheckCircle2 size={24} color="#16A34A" />
+                  <CheckCircle2 size={24} color={skin(colors.primary, skin(colors.primary, '#16A34A'))} />
                 </View>
                 <View style={styles.statusTextWrap}>
                   <Text style={[styles.statusTitle, { color: '#15803D' }]}>{t('swati.allOk')}</Text>
@@ -299,10 +300,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: skin(colors.border, '#E2E8F0'),
     padding: 14,
     marginBottom: 4,
-    shadowColor: '#0F172A',
+    shadowColor: skin(colors.text, '#0F172A'),
     shadowOpacity: 0.04,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
@@ -314,12 +315,12 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    color: skin(colors.text, '#0F172A'),
   },
   summarySub: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
+    color: skin(colors.textMuted, '#64748B'),
     marginTop: 2,
   },
   typeTag: {
@@ -333,9 +334,9 @@ const styles = StyleSheet.create({
     borderColor: '#FDE68A',
   },
   typeTagGrid: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: skin(colors.primarySoft, '#EFF6FF'),
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: skin(colors.primaryBorder, '#BFDBFE'),
   },
   typeTagText: {
     fontSize: 11,
@@ -346,16 +347,16 @@ const styles = StyleSheet.create({
     color: '#B45309',
   },
   typeTagTextGrid: {
-    color: '#1D4ED8',
+    color: skin(colors.primaryDark, '#1D4ED8'),
   },
 
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: skin(colors.border, '#E2E8F0'),
     padding: 16,
-    shadowColor: '#0F172A',
+    shadowColor: skin(colors.text, '#0F172A'),
     shadowOpacity: 0.04,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: skin(colors.surfaceAlt, '#F1F5F9'),
   },
   headerIconBox: {
     width: 32,
@@ -380,7 +381,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: skin(colors.text, '#0F172A'),
   },
   metricsList: {
     gap: 10,
@@ -411,12 +412,12 @@ const styles = StyleSheet.create({
   metricLabel: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#334155',
+    color: skin(colors.text, '#334155'),
   },
   metricSub: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#64748B',
+    color: skin(colors.textMuted, '#64748B'),
     marginTop: 2,
   },
   valueCol: {
@@ -425,17 +426,17 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#0F172A',
+    color: skin(colors.text, '#0F172A'),
     fontVariant: ['tabular-nums'],
   },
   metricUnit: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#64748B',
+    color: skin(colors.textMuted, '#64748B'),
   },
   barTrack: {
     height: 5,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: skin(colors.surfaceAlt, '#F1F5F9'),
     borderRadius: 3,
     overflow: 'hidden',
     marginTop: 2,
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: skin(colors.surfaceAlt, '#F1F5F9'),
     marginVertical: 4,
   },
   footerRowWrap: {
@@ -455,7 +456,7 @@ const styles = StyleSheet.create({
   footerLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#64748B',
+    color: skin(colors.textMuted, '#64748B'),
   },
   statusPill: {
     backgroundColor: '#F0FDF4',
@@ -528,7 +529,7 @@ const styles = StyleSheet.create({
   statusSub: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
+    color: skin(colors.textMuted, '#64748B'),
     marginTop: 2,
   },
 });

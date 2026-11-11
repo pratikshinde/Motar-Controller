@@ -33,6 +33,7 @@ import { brand } from '@/config/brand';
 import { phoneSignInEnabled } from '@/config/features';
 import { firebasePhoneSupported, firebaseProblem, startPhoneSignIn, type PhoneChallenge } from '@/services/firebasePhone';
 
+import { skin } from '@/shared/theme/skin';
 interface LoginScreenProps {
   onLoginSuccess: () => void;
   onForgotPassword: () => void;
@@ -257,7 +258,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             style={localStyles.devChip}
             activeOpacity={0.8}
           >
-            <Sparkles size={16} color="#0284C7" />
+            <Sparkles size={16} color={skin(colors.primary, skin(colors.primary, '#0284C7'))} />
             <Text style={localStyles.devChipText}>Test Code: 123456 (Tap to autofill)</Text>
           </TouchableOpacity>
         )}
@@ -512,7 +513,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                   style={[localStyles.devChip, { marginTop: space.md }]}
                   activeOpacity={0.8}
                 >
-                  <Sparkles size={16} color="#0284C7" />
+                  <Sparkles size={16} color={skin(colors.primary, skin(colors.primary, '#0284C7'))} />
                   <Text style={localStyles.devChipText}>Dev OTP: {devOtp} (Tap to auto-fill)</Text>
                 </TouchableOpacity>
               )}
@@ -701,16 +702,16 @@ const localStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#F0F9FF',
+    backgroundColor: skin(colors.primarySoft, '#F0F9FF'),
     borderWidth: 1,
-    borderColor: '#BAE6FD',
+    borderColor: skin(colors.primaryBorder, '#BAE6FD'),
     borderRadius: radius.md,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: space.md,
   },
   devChipText: {
-    color: '#0369A1',
+    color: skin(colors.primaryDark, '#0369A1'),
     fontSize: 12,
     fontWeight: '600',
   },

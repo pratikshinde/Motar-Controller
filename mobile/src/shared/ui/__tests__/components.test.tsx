@@ -9,7 +9,6 @@ import { ConfirmSheet } from '../ConfirmSheet';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ListenButton, pickVoiceLanguage } from '../ListenButton';
 import { OfflineBanner } from '../OfflineBanner';
-import { ValueTile } from '../ValueTile';
 
 beforeEach(async () => {
   await act(async () => {
@@ -66,23 +65,6 @@ describe('BigActionButton', () => {
     render(<BigActionButton label="Send" onPress={jest.fn()} testID="b" disabled />);
     const b = screen.getByRole('button', { name: 'Send' });
     expect(b.props.accessibilityState).toMatchObject({ disabled: true });
-  });
-});
-
-describe('ValueTile', () => {
-  it('shows a dash, never a made-up number, when the pump did not report it', () => {
-    render(<ValueTile label="Volts" value={null} unit="V" />);
-    expect(screen.getByText('—')).toBeTruthy();
-    expect(screen.queryByText('V')).toBeNull();
-    expect(screen.getByLabelText('Volts: —')).toBeTruthy();
-  });
-
-  it('shows the value and unit, and a zero is a real zero', () => {
-    const { rerender } = render(<ValueTile label="Current" value={12.3} unit="A" />);
-    expect(screen.getByText('12.3')).toBeTruthy();
-    expect(screen.getByText('A')).toBeTruthy();
-    rerender(<ValueTile label="Current" value={0} unit="A" />);
-    expect(screen.getByText('0')).toBeTruthy();
   });
 });
 

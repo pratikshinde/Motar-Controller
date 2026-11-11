@@ -8,6 +8,7 @@ import { BigActionButton } from '@/shared/ui/BigActionButton';
 import type { CommandAction } from '@/state/commands';
 import { Progress, STEPS } from './progress';
 
+import { skin } from '@/shared/theme/skin';
 const AUTO_DISMISS_MS = 6000;
 
 /**
@@ -72,7 +73,7 @@ export const CommandStepper: React.FC<{
                   {done ? (
                     <Check size={18} color="#FFFFFF" strokeWidth={3.2} />
                   ) : waiting ? (
-                    <ActivityIndicator size="small" color="#1E6FE8" />
+                    <ActivityIndicator size="small" color={skin(colors.primary, skin(colors.primary, '#1E6FE8'))} />
                   ) : stuck ? (
                     <AlertTriangle size={17} color="#B45309" />
                   ) : (
@@ -154,12 +155,12 @@ export const CommandStepper: React.FC<{
 
 const styles = StyleSheet.create({
   cRow: { flexDirection: 'row', alignItems: 'center' },
-  cAction: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#1E6FE8', alignItems: 'center', justifyContent: 'center' },
+  cAction: { width: 34, height: 34, borderRadius: 17, backgroundColor: skin(colors.primary, '#1E6FE8'), alignItems: 'center', justifyContent: 'center' },
   cLine: { flex: 1, height: 3, borderRadius: 2, backgroundColor: '#E2E8F0', marginHorizontal: 4 },
   cLineDone: { backgroundColor: '#0AA24A' },
   cStep: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   cStepDone: { backgroundColor: '#0AA24A' },
-  cStepWait: { backgroundColor: '#DCEBFF', borderWidth: 2, borderColor: '#1E6FE8' },
+  cStepWait: { backgroundColor: skin(colors.primarySoft, '#DCEBFF'), borderWidth: 2, borderColor: skin(colors.primary, '#1E6FE8') },
   cStepStuck: { backgroundColor: '#FEF3C7', borderWidth: 2, borderColor: '#F59E0B' },
   cStepIdle: { backgroundColor: '#F1F5F9' },
   steps: { gap: 10 },

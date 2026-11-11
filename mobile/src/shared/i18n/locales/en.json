@@ -74,6 +74,7 @@
     "settings": "Settings",
     "home": "Home",
     "timer": "Timer",
+    "schedule": "Schedule",
     "more": "More"
   },
   "pumps": {
@@ -411,6 +412,14 @@
     "am": "AM",
     "pm": "PM",
     "done": "Done",
+    "startTime": "Start Time",
+    "stopTime": "Stop Time",
+    "tapToChange": "Tap to change",
+    "repeatOn": "Repeat on",
+    "everyDay": "Every day",
+    "summary": "Pump starts at {{on}} and stops at {{off}}.",
+    "chooseDay": "Choose at least one day.",
+    "perDay": "Different times on different days",
     "outcome": {
       "done": "Done",
       "sent": "Sent",

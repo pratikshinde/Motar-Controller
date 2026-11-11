@@ -6,39 +6,42 @@ import { useTranslation } from 'react-i18next';
 import { Bell, ChevronLeft, RefreshCw, User } from 'lucide-react-native';
 import { brand } from '@/config/brand';
 import { useDirection } from '@/shared/i18n/useDirection';
+import { colors } from '@/shared/theme';
+import { rgba } from '@/shared/theme/color';
+import { scene as paint } from '@/shared/theme/scene';
 
 /** The page colour under the banner; the banner ends in a rounded edge of this colour. */
-export const AJANTA_PAGE = '#F8FAFC';
+export const AJANTA_PAGE = colors.bg;
 
 const Palms: React.FC = () => (
   <>
-    <Path d="M338 160 Q331 128 340 96" stroke="#8A5A2B" strokeWidth={5} fill="none" strokeLinecap="round" />
-    <Path d="M340 96 Q316 80 296 96" stroke="#2F8F3A" strokeWidth={5} fill="none" strokeLinecap="round" />
-    <Path d="M340 96 Q320 70 300 70" stroke="#3FA34D" strokeWidth={5} fill="none" strokeLinecap="round" />
-    <Path d="M340 96 Q346 66 366 60" stroke="#2F8F3A" strokeWidth={5} fill="none" strokeLinecap="round" />
-    <Path d="M340 96 Q366 82 384 96" stroke="#3FA34D" strokeWidth={5} fill="none" strokeLinecap="round" />
-    <Path d="M372 164 Q367 140 374 118" stroke="#8A5A2B" strokeWidth={4} fill="none" strokeLinecap="round" />
-    <Path d="M374 118 Q356 106 342 118" stroke="#2F8F3A" strokeWidth={4} fill="none" strokeLinecap="round" />
-    <Path d="M374 118 Q388 98 400 102" stroke="#3FA34D" strokeWidth={4} fill="none" strokeLinecap="round" />
+    <Path d="M338 160 Q331 128 340 96" stroke={paint.trunk} strokeWidth={5} fill="none" strokeLinecap="round" />
+    <Path d="M340 96 Q316 80 296 96" stroke={paint.frondDark} strokeWidth={5} fill="none" strokeLinecap="round" />
+    <Path d="M340 96 Q320 70 300 70" stroke={paint.frondLight} strokeWidth={5} fill="none" strokeLinecap="round" />
+    <Path d="M340 96 Q346 66 366 60" stroke={paint.frondDark} strokeWidth={5} fill="none" strokeLinecap="round" />
+    <Path d="M340 96 Q366 82 384 96" stroke={paint.frondLight} strokeWidth={5} fill="none" strokeLinecap="round" />
+    <Path d="M372 164 Q367 140 374 118" stroke={paint.trunk} strokeWidth={4} fill="none" strokeLinecap="round" />
+    <Path d="M374 118 Q356 106 342 118" stroke={paint.frondDark} strokeWidth={4} fill="none" strokeLinecap="round" />
+    <Path d="M374 118 Q388 98 400 102" stroke={paint.frondLight} strokeWidth={4} fill="none" strokeLinecap="round" />
   </>
 );
 
 const PumpArt: React.FC = () => (
   <>
-    <Path d="M318 96 Q250 60 196 128" stroke="#EAF6FF" strokeWidth={14} opacity={0.85} fill="none" strokeLinecap="round" />
+    <Path d="M318 96 Q250 60 196 128" stroke={paint.water} strokeWidth={14} opacity={0.85} fill="none" strokeLinecap="round" />
     <Path d="M318 96 Q256 70 206 128" stroke="#FFFFFF" strokeWidth={5} opacity={0.9} fill="none" strokeLinecap="round" />
-    <Rect x="316" y="78" width="84" height="30" rx="6" fill="#244A8F" />
-    <Rect x="308" y="72" width="14" height="42" rx="4" fill="#1B3A73" />
-    <Rect x="356" y="100" width="44" height="60" rx="6" fill="#2B5AAE" />
+    <Rect x="316" y="78" width="84" height="30" rx="6" fill={paint.pumpBody} />
+    <Rect x="308" y="72" width="14" height="42" rx="4" fill={paint.pumpDark} />
+    <Rect x="356" y="100" width="44" height="60" rx="6" fill={paint.pumpLight} />
   </>
 );
 
 /** A pipe pouring water onto the field (the Home header). */
 const PipeWater: React.FC = () => (
   <>
-    <Path d="M262 112 Q262 100 274 100 L300 100" stroke="#8C98A6" strokeWidth={9} fill="none" strokeLinecap="round" />
-    <Path d="M262 112 L262 120" stroke="#6F7C8B" strokeWidth={11} strokeLinecap="round" />
-    <Path d="M262 122 Q256 140 244 150 Q252 142 258 150" stroke="#EAF6FF" strokeWidth={10} opacity={0.9} fill="none" strokeLinecap="round" />
+    <Path d="M262 112 Q262 100 274 100 L300 100" stroke={paint.pipe} strokeWidth={9} fill="none" strokeLinecap="round" />
+    <Path d="M262 112 L262 120" stroke={paint.pipeDark} strokeWidth={11} strokeLinecap="round" />
+    <Path d="M262 122 Q256 140 244 150 Q252 142 258 150" stroke={paint.water} strokeWidth={10} opacity={0.9} fill="none" strokeLinecap="round" />
     <Ellipse cx="248" cy="154" rx="22" ry="5" fill="#FFFFFF" opacity={0.55} />
   </>
 );
@@ -88,9 +91,9 @@ export const AjantaScene: React.FC<{ pump: boolean; pipe?: boolean; align?: 'xMi
     <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 190" preserveAspectRatio={`${align} slice`}>
       <Defs>
         <LinearGradient id="ajSky" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#1A56D6" />
-          <Stop offset="0.55" stopColor="#5DA7F4" />
-          <Stop offset="1" stopColor="#CDE7FF" />
+          <Stop offset="0" stopColor={paint.skyTop} />
+          <Stop offset="0.55" stopColor={paint.skyMid} />
+          <Stop offset="1" stopColor={paint.skyLow} />
         </LinearGradient>
       </Defs>
       <Rect x="0" y="0" width="400" height="190" fill="url(#ajSky)" />
@@ -101,11 +104,11 @@ export const AjantaScene: React.FC<{ pump: boolean; pipe?: boolean; align?: 'xMi
     <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 190" preserveAspectRatio={`${align} slice`}>
       <Defs>
         <LinearGradient id="ajField" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#7CCB70" />
-          <Stop offset="1" stopColor="#3E9A40" />
+          <Stop offset="0" stopColor={paint.fieldTop} />
+          <Stop offset="1" stopColor={paint.fieldBottom} />
         </LinearGradient>
       </Defs>
-      <Path d="M0 130 Q90 102 200 126 T400 114 L400 190 L0 190 Z" fill="#8FD17F" />
+      <Path d="M0 130 Q90 102 200 126 T400 114 L400 190 L0 190 Z" fill={paint.hillFar} />
       <Path d="M0 152 Q120 128 240 150 T400 142 L400 190 L0 190 Z" fill="url(#ajField)" />
       {pump ? <PumpArt /> : <Palms />}
       {pipe ? <PipeWater /> : null}
@@ -113,12 +116,12 @@ export const AjantaScene: React.FC<{ pump: boolean; pipe?: boolean; align?: 'xMi
   </View>
 );
 
-/** The brand mark: a water drop with a green leaf (no logo file yet). */
+/** The brand mark: a water drop with a leaf (no logo file yet). */
 export const AjantaLogo: React.FC<{ size?: number }> = ({ size = 40 }) => (
   <Svg width={size} height={size * 1.15} viewBox="0 0 40 46">
     <Path d="M20 2 C20 2 5 19 5 29 a15 15 0 0 0 30 0 C35 19 20 2 20 2 Z" fill="#FFFFFF" />
-    <Path d="M20 8 C20 8 10 21 10 29 a10 10 0 0 0 20 0 C30 21 20 8 20 8 Z" fill="#1E6FE8" />
-    <Path d="M11 33 Q20 21 31 31 Q22 41 11 33 Z" fill="#43A047" />
+    <Path d="M20 8 C20 8 10 21 10 29 a10 10 0 0 0 20 0 C30 21 20 8 20 8 Z" fill={colors.primary} />
+    <Path d="M11 33 Q20 21 31 31 Q22 41 11 33 Z" fill={colors.primaryBorder} />
     <Path d="M14 33 Q21 29 28 31" stroke="#FFFFFF" strokeWidth={1.2} fill="none" strokeLinecap="round" />
   </Svg>
 );
@@ -203,7 +206,7 @@ export const AjantaBanner: React.FC<AjantaBannerProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={t('settings.profile')}
               >
-                <User size={22} color="#3B9BEF" strokeWidth={2.4} />
+                <User size={22} color={paint.avatarIcon} strokeWidth={2.4} />
               </TouchableOpacity>
             </View>
           </View>
@@ -281,7 +284,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: AJANTA_PAGE },
   scroll: { flex: 1, backgroundColor: AJANTA_PAGE },
   content: { padding: 12, gap: 12, paddingBottom: 32 },
-  banner: { backgroundColor: '#1A56D6', overflow: 'hidden' },
+  banner: { backgroundColor: paint.banner, overflow: 'hidden' },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -303,7 +306,7 @@ const styles = StyleSheet.create({
     height: 20,
     paddingHorizontal: 4,
     borderRadius: 10,
-    backgroundColor: '#E5352F',
+    backgroundColor: paint.badge,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -312,7 +315,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E2F2FD',
+    backgroundColor: paint.avatarBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -323,7 +326,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 8,
     paddingBottom: 18,
-    textShadowColor: 'rgba(0,0,40,0.35)',
+    textShadowColor: rgba(paint.titleShadow, 0.4),
     textShadowRadius: 6,
     textShadowOffset: { width: 0, height: 1 },
   },
@@ -334,12 +337,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 28,
     fontWeight: '900',
-    textShadowColor: 'rgba(0,0,40,0.35)',
+    textShadowColor: rgba(paint.titleShadow, 0.4),
     textShadowRadius: 6,
     textShadowOffset: { width: 0, height: 1 },
   },
   edge: { height: 14, backgroundColor: AJANTA_PAGE, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  subBanner: { backgroundColor: '#1A56D6', overflow: 'hidden' },
+  subBanner: { backgroundColor: paint.banner, overflow: 'hidden' },
   subRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 24, minHeight: 78 },
   subSide: { minWidth: 48 },
   subTitle: {
@@ -348,7 +351,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '900',
-    textShadowColor: 'rgba(0,0,40,0.35)',
+    textShadowColor: rgba(paint.titleShadow, 0.4),
     textShadowRadius: 6,
     textShadowOffset: { width: 0, height: 1 },
   },

@@ -25,6 +25,7 @@ import { ajantaHome } from '@/config/ajantaHome';
 import { useSelectedPump } from '@/state/selectedPump';
 import { LiveTab } from './LiveTab';
 
+import { skin } from '@/shared/theme/skin';
 /** How often the Home screen reads the pump again by itself (10 to 15 s), and while the motor is running. */
 const REFRESH_MS = 12_000;
 const REFRESH_RUNNING_MS = 3_000;
@@ -221,6 +222,6 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, minHeight: TOUCH, backgroundColor: '#FFFFFF' },
   side: { width: TOUCH - 4 },
   iconBtn: { width: TOUCH - 8, height: TOUCH - 8, alignItems: 'center', justifyContent: 'center' },
-  title: { flex: 1, textAlign: 'center', color: '#0F172A', fontSize: font.title, fontWeight: '900' },
-  content: { paddingBottom: 40, backgroundColor: '#F8FAFC' },
+  title: { flex: 1, textAlign: 'center', color: skin(colors.text, '#0F172A'), fontSize: font.title, fontWeight: '900' },
+  content: { paddingBottom: 40, backgroundColor: skin(colors.bg, '#F8FAFC') },
 });

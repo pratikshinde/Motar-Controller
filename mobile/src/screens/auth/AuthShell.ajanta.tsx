@@ -1,10 +1,12 @@
 import React from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
-import { cardShadow, radius, space } from '@/shared/theme';
+import { cardShadow, colors, radius, space } from '@/shared/theme';
 import { useDirection } from '@/shared/i18n/useDirection';
 import { AJANTA_PAGE, AjantaLogo, AjantaScene } from '@/shared/ui/AjantaScreen';
 import { brand } from '@/config/brand';
+import { rgba } from '@/shared/theme/color';
+import { scene } from '@/shared/theme/scene';
 
 interface AuthShellProps {
   onBack?: () => void;
@@ -65,7 +67,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: AJANTA_PAGE },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, paddingBottom: space.xl },
-  banner: { backgroundColor: '#1A56D6', overflow: 'hidden' },
+  banner: { backgroundColor: scene.banner, overflow: 'hidden' },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12 },
   backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   brandBlock: { alignItems: 'center', paddingTop: 4, paddingBottom: 30, gap: 2 },
@@ -75,7 +77,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 3,
     marginTop: 6,
-    textShadowColor: 'rgba(0,0,40,0.35)',
+    textShadowColor: rgba(scene.titleShadow, 0.4),
     textShadowRadius: 6,
     textShadowOffset: { width: 0, height: 1 },
   },
@@ -85,7 +87,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: '#E4EBF3',
+    borderColor: colors.border,
     padding: space.xl,
     marginHorizontal: 16,
     marginTop: -6,

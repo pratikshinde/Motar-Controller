@@ -47,6 +47,7 @@ import { PlanBanner } from './PlanBanner';
 import { PowerHero } from './PowerHero';
 import { AjantaCards, AjantaFaultBanner, AjantaHero } from './LiveCards.ajanta';
 
+import { skin } from '@/shared/theme/skin';
 const AMP_FULL_SCALE = 20;
 
 const CurrentBar: React.FC<{
@@ -420,20 +421,20 @@ export const LiveTab: React.FC<{
             <Text style={[styles.quickBtnText, { color: colors.danger }]}>{t('dashboard.stopPump')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.quickBtn, { backgroundColor: colors.waterSoft }]}
+            style={[styles.quickBtn, { backgroundColor: skin(colors.primarySoft, colors.waterSoft) }]}
             onPress={onOpenTimer}
             activeOpacity={0.8}
           >
-            <TimerIcon size={20} color={colors.water} />
-            <Text style={[styles.quickBtnText, { color: colors.water }]}>{t('dashboard.viewTimer')}</Text>
+            <TimerIcon size={20} color={skin(colors.primary, colors.water)} />
+            <Text style={[styles.quickBtnText, { color: skin(colors.primary, colors.water) }]}>{t('dashboard.viewTimer')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.quickBtn, { backgroundColor: colors.purpleSoft }]}
+            style={[styles.quickBtn, { backgroundColor: skin(colors.primarySoft, colors.purpleSoft) }]}
             onPress={onOpenHistory}
             activeOpacity={0.8}
           >
-            <History size={20} color={colors.purple} />
-            <Text style={[styles.quickBtnText, { color: colors.purple }]}>{t('dashboard.viewHistory')}</Text>
+            <History size={20} color={skin(colors.primaryDark, colors.purple)} />
+            <Text style={[styles.quickBtnText, { color: skin(colors.primaryDark, colors.purple) }]}>{t('dashboard.viewHistory')}</Text>
           </TouchableOpacity>
         </View>
       </Card>

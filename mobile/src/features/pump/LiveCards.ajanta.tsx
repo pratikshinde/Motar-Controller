@@ -26,6 +26,8 @@ import { PumpThumbnail } from '@/shared/ui/PumpThumbnail';
 import { faultInfoKeys, faultKind } from '@/features/faults/info';
 import { GsmQuality, PumpState, gsmLevel, hasKnownFault, phaseIndicator } from '@/features/pumps/model';
 
+import { colors } from '@/shared/theme';
+import { mix } from '@/shared/theme/color';
 /**
  * Ajanta's Live screen, top to bottom: the pump card (power button, name, status icons), the line voltages as coloured
  * tiles, the phase currents as bars, the phase sequence and run time side by side, and the faults card. Every number is the
@@ -33,15 +35,15 @@ import { GsmQuality, PumpState, gsmLevel, hasKnownFault, phaseIndicator } from '
  * never a green tick. A fault is a warning (amber) and is shown once, in the banner above the pump card.
  */
 
-const INK = '#14213D';
-const MUTED = '#5B6B80';
+const INK = colors.text;
+const MUTED = colors.textMuted;
 const GREEN = '#0B8A43';
 const RED = '#C62833';
 const AMBER = '#F59E0B';
 const AMBER_DARK = '#B45309';
 const AMBER_INK = '#78350F';
-const CARD_BORDER = '#E6ECF2';
-const TRACK = '#E8EDF3';
+const CARD_BORDER = colors.border;
+const TRACK = colors.primarySoft;
 const PHASE_R = '#E12220';
 const PHASE_Y = '#F5B000';
 const PHASE_B = '#0B73F0';
@@ -58,7 +60,7 @@ const TONES: Record<'on' | 'off' | 'fault' | 'idle' | 'busy', Tone> = {
   // A fault is a warning, not an alarm: amber, not red.
   fault: { card: '#FFF8E1', border: '#F5D98B', button: AMBER, ring: '#FCD58A', halo: '#FEEFC8', caption: AMBER_DARK },
   idle: { card: '#FEF8E7', border: '#FBE6AE', button: '#94A3B8', ring: '#CBD5E1', halo: '#EEF1F5', caption: '#92400E' },
-  busy: { card: '#EAF4FF', border: '#C9E1FB', button: '#1E6FE8', ring: '#9CC7F7', halo: '#D8E9FC', caption: '#1D4ED8' },
+  busy: { card: colors.primarySoft, border: colors.primaryBorder, button: colors.primary, ring: mix(colors.primary, colors.primarySoft, 0.5), halo: mix(colors.primarySoft, '#FFFFFF', 0.5), caption: colors.primaryDark },
 };
 
 const QUALITY_KEY: Record<GsmQuality, string> = {
@@ -298,7 +300,7 @@ export const AjantaHero: React.FC<AjantaHeroProps> = ({
             <View style={styles.identity}>{identity}</View>
           )}
           <View style={styles.specChip}>
-            <Zap size={13} color="#1565C0" />
+            <Zap size={13} color={colors.primary} />
             <Text style={styles.specText} numberOfLines={1}>
               {spec}
             </Text>
@@ -430,7 +432,7 @@ const VoltTile: React.FC<{ label: string; value: number | null | undefined; bg: 
 }) => {
   const shown = dim ? 0 : typeof value === 'number' ? Math.round(value) : null;
   return (
-    <View style={[styles.tile, { backgroundColor: dim ? '#F1F5F9' : bg }]} accessible accessibilityLabel={`${label} ${shown ?? '—'} V`}>
+    <View style={[styles.tile, { backgroundColor: dim ? colors.surfaceAlt : bg }]} accessible accessibilityLabel={`${label} ${shown ?? '—'} V`}>
       <Text style={[styles.tileLabel, { color: dim ? '#94A3B8' : fg }]}>{label}</Text>
       <View style={styles.tileValueRow}>
         <Text style={[styles.tileValue, { color: dim ? '#94A3B8' : fg }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -515,7 +517,7 @@ export const AjantaCards: React.FC<AjantaCardsProps> = ({ pump, state, now, onOp
     <>
       <FadeIn delay={80}>
         <View style={styles.card}>
-          <Head icon={Zap} color="#1565C0" title={t('home.lineVoltages')} right={<StatusChip tone={voltTone} label={voltLabel} />} />
+          <Head icon={Zap} color={colors.primary} title={t('home.lineVoltages')} right={<StatusChip tone={voltTone} label={voltLabel} />} />
           <View style={styles.tiles}>
             {/* Nothing connected (never reported, or gone quiet): 0 V, grey. */}
             <VoltTile label="R-Y" value={pump.v_ry} bg="#FDE8E8" fg="#D32F2F" dim={!reporting} />
@@ -529,7 +531,7 @@ export const AjantaCards: React.FC<AjantaCardsProps> = ({ pump, state, now, onOp
         <View style={styles.card}>
           <Head
             icon={Activity}
-            color="#1565C0"
+            color={colors.primary}
             title={t('home.phaseCurrents')}
             right={currentTone ? <StatusChip tone={currentTone} label={currentLabel} /> : null}
           />
@@ -544,7 +546,7 @@ export const AjantaCards: React.FC<AjantaCardsProps> = ({ pump, state, now, onOp
       <FadeIn delay={200}>
         <View style={styles.pair}>
           <View style={[styles.card, styles.half]}>
-            <Head icon={RefreshCw} color="#1565C0" title={t('home.phaseSequence')} />
+            <Head icon={RefreshCw} color={colors.primary} title={t('home.phaseSequence')} />
             <View style={styles.seqRow}>
               <PhaseDot letter="R" color={seqLit ? PHASE_R : '#CBD5E1'} />
               <ArrowRight size={16} color="#8A97A8" />
@@ -563,9 +565,9 @@ export const AjantaCards: React.FC<AjantaCardsProps> = ({ pump, state, now, onOp
             accessibilityLabel={t('home.runTime')}
             testID="run-time-card"
           >
-            <Head icon={Clock} color="#1565C0" title={t('home.runTime')} right={<ChevronRight size={18} color="#94A3B8" />} />
-            <View style={[styles.runTile, { backgroundColor: '#E5F3FE' }]} accessible accessibilityLabel={t('swati.runtimeToday')}>
-              <Sun size={22} color="#1B6FD0" />
+            <Head icon={Clock} color={colors.primary} title={t('home.runTime')} right={<ChevronRight size={18} color="#94A3B8" />} />
+            <View style={[styles.runTile, { backgroundColor: colors.primarySoft }]} accessible accessibilityLabel={t('swati.runtimeToday')}>
+              <Sun size={22} color={colors.primary} />
               <View style={styles.runText}>
                 <Text style={styles.runLabel}>{t('live.today')}</Text>
                 <Text style={styles.runValue} numberOfLines={1}>
@@ -574,8 +576,8 @@ export const AjantaCards: React.FC<AjantaCardsProps> = ({ pump, state, now, onOp
               </View>
             </View>
             {total !== null ? (
-              <View style={[styles.runTile, { backgroundColor: '#EEF0FB' }]} accessible accessibilityLabel={t('dashboard.totalRunTime')}>
-                <History size={22} color="#4F46E5" />
+              <View style={[styles.runTile, { backgroundColor: colors.primarySoft }]} accessible accessibilityLabel={t('dashboard.totalRunTime')}>
+                <History size={22} color={colors.primaryDark} />
                 <View style={styles.runText}>
                   <Text style={styles.runLabel}>{t('live.total')}</Text>
                   <Text style={styles.runValue} numberOfLines={1}>
@@ -616,7 +618,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 12,
     elevation: 2,
-    shadowColor: '#1749A8',
+    shadowColor: colors.shadowTint,
     shadowOpacity: 0.12,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -637,7 +639,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 6,
-    shadowColor: '#0D1B2A',
+    shadowColor: colors.shadowTint,
     shadowOpacity: 0.28,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
@@ -656,13 +658,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 4,
-    backgroundColor: '#E3EEFC',
+    backgroundColor: colors.primarySoft,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
     maxWidth: '100%',
   },
-  specText: { color: '#1565C0', fontSize: 12, fontWeight: '800', flexShrink: 1 },
+  specText: { color: colors.primaryDark, fontSize: 12, fontWeight: '800', flexShrink: 1 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 8, columnGap: '3.5%', justifyContent: 'flex-start' },
   pill: { alignItems: 'center', width: '31%', gap: 3, minHeight: 56, justifyContent: 'flex-start' },
   pillIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
@@ -700,7 +702,7 @@ const styles = StyleSheet.create({
     borderColor: CARD_BORDER,
     padding: 14,
     elevation: 2,
-    shadowColor: '#1749A8',
+    shadowColor: colors.shadowTint,
     shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
@@ -711,7 +713,7 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, flexShrink: 1 },
   chipOk: { backgroundColor: '#E3F6EA' },
   chipWarn: { backgroundColor: '#FEF0CE' },
-  chipIdle: { backgroundColor: '#EEF2F6' },
+  chipIdle: { backgroundColor: colors.surfaceAlt },
   chipText: { fontSize: 13, fontWeight: '800', flexShrink: 1 },
 
   tiles: { flexDirection: 'row', gap: 8 },
@@ -732,7 +734,7 @@ const styles = StyleSheet.create({
 
   pair: { flexDirection: 'row', gap: 10 },
   half: { flex: 1, minWidth: 0, gap: 8 },
-  seqRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#F4F7FB', borderRadius: 14, paddingVertical: 10 },
+  seqRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: colors.surfaceAlt, borderRadius: 14, paddingVertical: 10 },
   seqDot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   seqLetter: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
 

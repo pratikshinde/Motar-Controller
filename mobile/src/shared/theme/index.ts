@@ -12,6 +12,7 @@
  */
 import { Platform } from 'react-native';
 import { brand } from '@/config/brand';
+import { rgba } from './color';
 
 export const baseColors = {
   // Surfaces
@@ -56,6 +57,9 @@ export const baseColors = {
   phaseY: '#FFB300',
   phaseB: '#0088FF',
 
+  // Tint of every card shadow (a brand can give its shadows its own hue)
+  shadowTint: '#0D2B20',
+
   // Dark "hero" surface used behind the pump power button
   hero: '#0D2B20',
   heroBorder: '#1C4432',
@@ -78,9 +82,9 @@ export const power = {
 
 /** Card shadow used across the reference design's auth + dashboard screens. */
 export const cardShadow = Platform.select({
-  ios: { shadowColor: '#0D1B2A', shadowOpacity: 0.04, shadowRadius: 20, shadowOffset: { width: 0, height: 4 } },
-  android: { elevation: 2 },
-  default: { boxShadow: '0 4px 20px rgba(13, 27, 42, 0.04), 0 1px 3px rgba(13, 27, 42, 0.02)' } as any,
+  ios: { shadowColor: colors.shadowTint, shadowOpacity: 0.06, shadowRadius: 20, shadowOffset: { width: 0, height: 4 } },
+  android: { elevation: 2, shadowColor: colors.shadowTint },
+  default: { boxShadow: `0 4px 20px ${rgba(colors.shadowTint, 0.07)}, 0 1px 3px ${rgba(colors.shadowTint, 0.04)}` } as any,
 });
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
@@ -101,15 +105,15 @@ export const TOUCH = 56;
 
 export const shadow = Platform.select({
   ios: {
-    shadowColor: '#0D2B20',
+    shadowColor: colors.shadowTint,
     shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
   },
-  android: { elevation: 3 },
+  android: { elevation: 3, shadowColor: colors.shadowTint },
   default: {
     // react-native-web
-    boxShadow: '0 4px 14px rgba(13, 43, 32, 0.08)',
+    boxShadow: `0 4px 14px ${rgba(colors.shadowTint, 0.1)}`,
   } as any,
 });
 

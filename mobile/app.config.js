@@ -29,6 +29,15 @@ module.exports = ({ config }) => {
   if (push) plugins.push('expo-notifications', '@react-native-firebase/app', './plugins/with-firebase-kotlin');
   // The Ajanta farmer's first sign-in is scanning the QR code the dealer printed.
   if (key === 'ajanta') plugins.push(['expo-camera', { cameraPermission: 'Allow $(PRODUCT_NAME) to use the camera to scan your QR code.' }]);
+  // The phone's own clock picker (Weekly schedule) and every other Android dialog take the brand colour from the app theme.
+  const c = brand.colors || {};
+  if (key === 'ajanta' && c.primary) {
+    plugins.push(['./plugins/with-brand-theme', { accent: c.primary }]);
+    plugins.push([
+      '@react-native-community/datetimepicker',
+      { android: { timePicker: { numbersSelectorColor: { light: c.primary }, numbersBackgroundColor: { light: c.primarySoft }, numbersTextColor: { light: c.text } } } },
+    ]);
+  }
   if (!production) {
     plugins.push(['expo-build-properties', { android: { usesCleartextTraffic: true } }]);
   }
