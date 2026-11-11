@@ -9,6 +9,7 @@ import { ajantaHome } from '@/config/ajantaHome';
 import { useStatusBar } from '@/shared/hooks/useStatusBar';
 import { useCurrentPump } from '@/features/pumps/useCurrentPump';
 import { ScheduleEntryCard } from '@/features/schedule/ScheduleEntryCard';
+import { AjantaSchedule } from '@/features/schedule/ScheduleScreen';
 import { TimerTab } from './TimerTab';
 
 /** The page around the Timer content: Ajanta's banner with a back arrow, or Swati's plain page. */
@@ -18,7 +19,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useStatusBar('light');
   if (ajantaHome) {
     return (
-      <AjantaScreen banner={{ title: t('nav.timer'), scene: 'pump', onBack: () => router.replace('/(tabs)') }}>
+      <AjantaScreen banner={{ title: t('schedule.title'), scene: 'pump', onBack: () => router.replace('/(tabs)') }}>
         {children}
       </AjantaScreen>
     );
@@ -31,6 +32,8 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 /**
+ * The Timer tab. Ajanta's is the weekly schedule. The rest of this comment is Swati's Timer page.
+ *
  * The Timer page of Swati's app. The pump's timer is "run for X minutes, rest for Y, repeat Z times": that is what the
  * controller supports, so that is what is shown and sent (the same real timer as everywhere else in the app).
  */
@@ -44,6 +47,9 @@ export const TimerScreen: React.FC = () => {
         <StateView kind="loading" title={t('common.loading')} />
       ) : failed ? (
         <StateView kind="error" title={t('common.serverUnreachableTitle')} actionLabel={t('common.retry')} onAction={refetch} />
+      ) : pump && ajantaHome ? (
+        // Ajanta: this tab is the weekly schedule, nothing else (one way to set the pump's hours, not two).
+        <AjantaSchedule pump={pump} />
       ) : pump ? (
         <View style={{ gap: 16 }}>
           <ScheduleEntryCard pump={pump} />

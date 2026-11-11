@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Plus, Trash2 } from 'lucide-react-native';
 import { getGetPumpScheduleQueryKey, setPumpSchedule, useGetPumpSchedule } from '@/api/generated/farmer';
 import type { PumpResponse } from '@/api/generated/model';
-import { colors, font, radius, space, TOUCH } from '@/shared/theme';
+import { colors, font, radius, TOUCH } from '@/shared/theme';
 import { Banner } from '@/shared/ui/Banner';
 import { BigActionButton } from '@/shared/ui/BigActionButton';
 import { Card, CardTitle } from '@/shared/ui/Card';
@@ -17,9 +17,12 @@ import { useOnline } from '@/shared/hooks/useOnline';
 import { canControl, displayName } from '@/features/pumps/model';
 import { useCurrentPump } from '@/features/pumps/useCurrentPump';
 import { TimePickerSheet } from './TimePickerSheet';
-import { dayName, lengthLabel, momentLabel, nextLabel, timeLabel } from './labels';
+import { ajantaHome } from '@/config/ajantaHome';
+import { RecentRuns } from './RecentRuns';
+import { SimpleScheduleEditor } from './ScheduleSimple';
+import { dayName, lengthLabel, nextLabel, timeLabel } from './labels';
 import {
-  DAY_KEYS, DEFAULT_LIMITS, Row, RowProblem, entriesFromRows, newRowFor, outcomeOf, rowsFromEntries, validateRows,
+  DAY_KEYS, DEFAULT_LIMITS, Row, RowProblem, entriesFromRows, newRowFor, rowsFromEntries, simpleWindowOf, validateRows,
 } from './model';
 
 /**
@@ -37,12 +40,34 @@ export const ScheduleScreen: React.FC = () => {
       ) : failed ? (
         <StateView kind="error" title={t('common.serverUnreachableTitle')} actionLabel={t('common.retry')} onAction={refetch} />
       ) : pump ? (
-        <ScheduleEditor pump={pump} />
+        ajantaHome ? <AjantaSchedule pump={pump} /> : <ScheduleEditor pump={pump} />
       ) : (
         <StateView kind="empty" title={t('pumps.emptyTitle')} message={t('pumps.emptyMessage')} />
       )}
     </SwatiPage>
   );
+};
+
+/**
+ * Ajanta opens the simple page (one start, one stop, the days) whenever the saved schedule can be said that way, and the detailed
+ * page (times for each day) when it cannot, or when the farmer asks for it.
+ */
+export const AjantaSchedule: React.FC<{ pump: PumpResponse }> = ({ pump }) => {
+  const { t } = useTranslation();
+  const query = useGetPumpSchedule(pump.id, { query: { refetchInterval: 30_000 } });
+  const data = query.data;
+  const [detailed, setDetailed] = useState<boolean | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  // Decided once, from the first schedule that arrives: later refreshes must not flip the page under the farmer's fingers.
+  if (data && detailed === null) setDetailed(simpleWindowOf(rowsFromEntries(data.entries)) === null);
+
+  // A failed first load hands over to the detailed editor (it shows the error and a retry) and stays there. It must be sticky: a
+  // retry puts the query back to "loading", and swapping the two pages on every state change would re-fetch without end.
+  if (query.isError && !failed) setFailed(true);
+  if (!data) return failed ? <ScheduleEditor pump={pump} /> : <StateView kind="loading" title={t('common.loading')} />;
+  if (detailed === null || detailed) return <ScheduleEditor pump={pump} />;
+  return <SimpleScheduleEditor pump={pump} data={data} onDetailed={() => setDetailed(true)} />;
 };
 
 const problemText = (p: RowProblem, t: ReturnType<typeof useTranslation>['t']): string => {
@@ -52,14 +77,6 @@ const problemText = (p: RowProblem, t: ReturnType<typeof useTranslation>['t']): 
     case 'overlap': return t('schedule.errOverlap');
     default: return t('schedule.errGap', { min: p.minutes });
   }
-};
-
-const TONE: Record<string, { bg: string; fg: string }> = {
-  ok: { bg: colors.okSoft, fg: colors.ok },
-  info: { bg: colors.waterSoft, fg: '#0B4F9A' },
-  warn: { bg: colors.warnSoft, fg: colors.warn },
-  bad: { bg: colors.dangerSoft, fg: colors.danger },
-  idle: { bg: colors.idleSoft, fg: colors.idle },
 };
 
 export const ScheduleEditor: React.FC<{ pump: PumpResponse }> = ({ pump }) => {
@@ -239,26 +256,7 @@ export const ScheduleEditor: React.FC<{ pump: PumpResponse }> = ({ pump }) => {
         disabled={blocked || !dirty || hasProblems}
       />
 
-      {data && data.recent.length > 0 ? (
-        <Card>
-          <CardTitle title={t('schedule.recent')} />
-          {data.recent.slice(0, 5).map((run) => {
-            const outcome = outcomeOf(run.outcome, run.command_status);
-            const tone = TONE[outcome.tone];
-            return (
-              <View key={`${run.kind}-${run.due_at}`} style={styles.recentRow} testID="schedule-recent">
-                <View style={styles.recentText}>
-                  <Text style={styles.recentWhen}>{momentLabel(run.day_of_week, run.time, t)}</Text>
-                  <Text style={styles.recentWhat}>{run.kind === 'START' ? t('schedule.switchOn') : t('schedule.switchOff')}</Text>
-                </View>
-                <View style={[styles.badge, { backgroundColor: tone.bg }]}>
-                  <Text style={[styles.badgeText, { color: tone.fg }]}>{t(`schedule.outcome.${outcome.key}`)}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </Card>
-      ) : null}
+      {data ? <RecentRuns recent={data.recent} /> : null}
 
       <TimePickerSheet
         visible={picking !== null && pickingRow !== undefined}
@@ -338,13 +336,4 @@ const styles = StyleSheet.create({
   error: { color: colors.danger, fontSize: font.body, fontWeight: '800', flexShrink: 1 },
   tools: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   trash: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  recentRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-    paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border,
-  },
-  recentText: { flexShrink: 1 },
-  recentWhen: { color: colors.text, fontSize: font.body, fontWeight: '800' },
-  recentWhat: { color: colors.textMuted, fontSize: font.caption, fontWeight: '700' },
-  badge: { borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 6 },
-  badgeText: { fontSize: font.caption, fontWeight: '900' },
 });

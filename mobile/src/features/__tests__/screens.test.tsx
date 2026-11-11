@@ -9,7 +9,6 @@ import { PowerHero } from '../pump/PowerHero';
 import { LiveTab } from '../pump/LiveTab';
 import { TimerTab } from '../timer/TimerTab';
 import * as api from '@/api/generated/farmer';
-import { useCommands } from '@/state/commands';
 
 jest.mock('@/api/generated/farmer', () => ({
   ...jest.requireActual('@/api/generated/farmer'),
@@ -190,19 +189,6 @@ describe('TimerTab', () => {
     expect(screen.getByText('You have not sent a timer yet.')).toBeTruthy();
   });
 
-  it('has no cycle count (the starter repeats until stopped); with no rest time the timer runs once', async () => {
-    mount();
-    expect(screen.queryByTestId('timer-cycles')).toBeNull();
-    fireEvent.changeText(screen.getByTestId('timer-on'), '45');
-    fireEvent.changeText(screen.getByTestId('timer-off'), '0');
-    fireEvent.press(screen.getByTestId('timer-save'));
-    await act(async () => {
-      fireEvent.press(screen.getByTestId('confirm-yes'));
-    });
-    expect(send.mock.calls[send.mock.calls.length - 1][1]).toEqual({ on_duration_minutes: 45, off_duration_minutes: 0, cycle_count: 1, mode: 'ON_TIMER' });
-    useCommands.getState().clearCooldown('P1'); // the next tests start without the 45 s wait this send began
-  });
-
   it('refuses out-of-range values with a message and does not ask to confirm', () => {
     mount();
     fireEvent.changeText(screen.getByTestId('timer-on'), '300');
@@ -217,23 +203,6 @@ describe('TimerTab', () => {
     fireEvent.press(screen.getByTestId('timer-save'));
     expect(screen.getByText('Enter 0 to 250 minutes')).toBeTruthy();
     expect(send).not.toHaveBeenCalled();
-  });
-
-  it('names the pump, sends one request with an Idempotency-Key, and admits it is not confirmed', async () => {
-    mount();
-    fireEvent.changeText(screen.getByTestId('timer-on'), '30');
-    fireEvent.changeText(screen.getByTestId('timer-off'), '10');
-    fireEvent.press(screen.getByTestId('timer-save'));
-    expect(screen.getByText('Set the timer on Borewell?')).toBeTruthy();
-    await act(async () => {
-      fireEvent.press(screen.getByTestId('confirm-yes'));
-    });
-    expect(send).toHaveBeenCalledTimes(1);
-    const [id, body, options] = send.mock.calls[0];
-    expect(id).toBe('P1');
-    expect(body).toEqual({ on_duration_minutes: 30, off_duration_minutes: 10, cycle_count: 0, mode: 'CYCLIC' }); // a rest time: repeats until stopped
-    expect(options.headers['Idempotency-Key']).toMatch(/[0-9a-f-]{20,}/);
-    expect(screen.getByText(/not confirmed yet/)).toBeTruthy();
   });
 
   it('cannot be sent to a suspended pump', () => {

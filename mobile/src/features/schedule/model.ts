@@ -111,6 +111,41 @@ export function newRowFor(day: number, rows: Row[]): Row {
   return { key: newKey(), day, on: toHHMM(on), off: toHHMM(off), enabled: true };
 }
 
+/** The simple editor's whole schedule: one start and one stop, repeated on the chosen days (0 = Monday). */
+export interface SimpleWindow {
+  on: string;
+  off: string;
+  days: number[];
+}
+
+export const DEFAULT_SIMPLE: Omit<SimpleWindow, 'days'> = { on: '06:00', off: '09:00' };
+
+/**
+ * Reads a saved schedule as "one start and one stop on these days", or null when it cannot be said that simply
+ * (a day with several times, different times on different days, or a time that is switched off), so the simple editor
+ * never quietly drops part of a schedule it cannot show. An empty schedule is the default window on no days.
+ */
+export function simpleWindowOf(rows: Row[]): SimpleWindow | null {
+  if (rows.length === 0) return { ...DEFAULT_SIMPLE, days: [] };
+  const first = rows[0];
+  const days = new Set<number>();
+  for (const r of rows) {
+    if (!r.enabled || r.on !== first.on || r.off !== first.off || days.has(r.day)) return null;
+    days.add(r.day);
+  }
+  return { on: first.on, off: first.off, days: [...days].sort((a, b) => a - b) };
+}
+
+/** The table rows for a simple window: the same start and stop on each chosen day. */
+export const rowsFromWindow = (w: SimpleWindow): Row[] =>
+  [...new Set(w.days)].sort((a, b) => a - b).map((day) => ({ key: newKey(), day, on: w.on, off: w.off, enabled: true }));
+
+/** "06:00 AM": two-digit hour, as the farmer reads it on the clock. `am` and `pm` are the words in the farmer's language. */
+export function clock12h(hhmm: string, am: string, pm: string): string {
+  const p = to12h(hhmm);
+  return `${pad(p.hour)}:${pad(p.minute)} ${p.pm ? pm : am}`;
+}
+
 /** How many enabled rows there are (the "3 times a week" on the Timer page). */
 export const activeCount = (entries: { enabled: boolean }[]): number => entries.filter((e) => e.enabled).length;
 
