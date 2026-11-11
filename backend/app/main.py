@@ -33,6 +33,18 @@ async def _connectivity_sweep_loop():
         await asyncio.sleep(max(1, settings.CONNECTIVITY_SWEEP_INTERVAL_SECONDS))
 
 
+async def _schedule_loop():
+    from app.services.schedule_service import schedule_tick_once
+    while True:
+        try:
+            await schedule_tick_once()
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            print(f"Schedule runner failed: {exc}")
+        await asyncio.sleep(max(1, settings.SCHEDULE_RUN_INTERVAL_SECONDS))
+
+
 async def _runtime_refresh_loop():
     from app.services.dashboard_rollup_service import runtime_refresh_loop
     await runtime_refresh_loop()
@@ -83,8 +95,13 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_runtime_refresh_loop()) if settings.DASHBOARD_RUNTIME_REFRESH_SECONDS > 0 else None
     )
 
+    # Startup: carry out the weekly schedules (send START / STOP when a set time comes due). One worker at a time (an advisory lock).
+    schedule_runner = asyncio.create_task(_schedule_loop()) if settings.SCHEDULE_RUN_INTERVAL_SECONDS > 0 else None
+
     yield
     # Shutdown
+    if schedule_runner:
+        schedule_runner.cancel()
     sweeper.cancel()
     if connectivity_sweeper:
         connectivity_sweeper.cancel()

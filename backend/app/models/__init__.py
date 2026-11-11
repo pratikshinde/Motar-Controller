@@ -18,6 +18,7 @@ from app.models.user import User
 from app.models.brand import AppBrand
 from app.models.push_token import PushToken
 from app.models.farmer_claim import FarmerClaim
+from app.models.schedule import PumpSchedule, PumpScheduleEntry, PumpScheduleRun
 
 class OtpChallenge(Base):
     """An OTP in flight: today only `purpose='login'` (every phone-based sign-in), soon also `registration`

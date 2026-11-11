@@ -46,7 +46,8 @@ from app.services.command_service import (
 from app.services.command_dispatch import dispatch_command
 from app.services.fault_catalog import load_fault_catalog
 from app.services.ws_hub import ws_hub
-from app.services import brand_service
+from app.services import brand_service, schedule_service
+from app.schemas.schedule import ScheduleIn, ScheduleOut
 from app.repositories import PumpRepository, TelemetryRepository
 
 logger = logging.getLogger("agripump.pumps")
@@ -516,6 +517,43 @@ def set_pump_timer(
         "timer": timer_payload,
         "command": command_event(cmd),
     }
+
+def _pump_in_scope_or_404(id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> Pump:
+    """The pump, or 404 for one that does not exist or is not the caller's. As a dependency it is answered before the request body is
+    checked, so a caller outside the pump's scope learns nothing about what a valid body looks like."""
+    pump = get_pump_in_scope(db, id, current_user)
+    if not pump:
+        raise HTTPException(status_code=404, detail="Pump not found")
+    return pump
+
+
+@router.get("/{id}/schedule", response_model=ScheduleOut)
+def get_pump_schedule(
+    pump: Pump = Depends(_pump_in_scope_or_404),
+    db: Session = Depends(get_db)
+):
+    """The pump's weekly schedule, when it runs next, and what happened to the last few times (the app's Timer page)."""
+    return schedule_service.get_schedule(db, pump)
+
+
+@router.put("/{id}/schedule", response_model=ScheduleOut)
+def put_pump_schedule(
+    req: ScheduleIn,
+    pump: Pump = Depends(_pump_in_scope_or_404),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Replaces the pump's whole weekly schedule. The cloud then sends START and STOP at the set times."""
+    from app.services.authorization_service import AuthorizationService
+    from app.core.permissions import Permission
+    AuthorizationService.authorize(current_user, Permission.CONTROL_DEVICE, resource=pump, db=db)
+
+    _ensure_remote_control_allowed(pump)
+    return schedule_service.save_schedule(
+        db, pump, enabled=req.enabled, entries=[e.model_dump() for e in req.entries],
+        timezone_name=req.timezone, actor_id=current_user.id,
+    )
+
 
 @router.get("/{id}/telemetry")
 def get_pump_telemetry(

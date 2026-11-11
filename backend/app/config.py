@@ -141,6 +141,10 @@ class Settings(BaseSettings):
     COMMAND_SWEEP_INTERVAL_SECONDS: int = 5
     # How often the API looks for pumps that stopped reporting (and for ones that came back). 0 turns the sweep off.
     CONNECTIVITY_SWEEP_INTERVAL_SECONDS: int = 60
+    # The weekly schedule runner: how often it looks for a START / STOP that has come due (0 turns it off), and how long it keeps
+    # trying a pump that is offline or cooling down before giving up on that time.
+    SCHEDULE_RUN_INTERVAL_SECONDS: int = 30
+    SCHEDULE_RETRY_MINUTES: int = 10
 
     # Dashboards (Phase 3). "Today" is a calendar day in DASHBOARD_TIMEZONE (an IANA name), never the browser's or
     # the server's local day. Results are cached briefly per scope; data older than DASHBOARD_STALE_AFTER_SECONDS
