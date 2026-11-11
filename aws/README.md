@@ -15,6 +15,7 @@ authenticated client id, so these must be the same string.
 | `policies/rule-sqs-iam-policy.json` | Inline policy of role `agripump-iot-rule-sqs` |
 | (managed policy `AWSIoTThingsRegistration`) | Role `agripump-iot-provisioning` |
 | `policies/backend-iam-policy.json` | IAM user or role the backend runs as |
+| `policies/factory-provisioning-iam-policy.json` | A separate IAM user used only at the factory by `backend/scripts/provision_devices.py` (see `FACTORY_PROVISIONING.md`) |
 | `iot-rule.sql` | IoT Core > Message routing > Rules, action SQS to queue `agripump-ingest` |
 | `provisioning-template.json` | IoT Core > Connect > Fleet provisioning templates, name `agripump-fleet` |
 | `lambda/provisioning_hook.py` | Lambda `agripump-provisioning-hook` (Python 3.12), set as the template's pre-provisioning action |
@@ -33,5 +34,7 @@ A virtual pump stands in for the controller and its bridge and talks to AWS IoT 
 3. Run, each in its own window, from the `backend` folder: `python simulator/virtual_pump.py` (the pump) and
    `python -m app.workers.ingest` (reads the queue). Do not run `simulator/device_simulator.py` for the same pump.
 4. Press Start or Stop in the app. `python scripts/show_commands.py` shows each command's status.
+
+`FACTORY_PROVISIONING.md` explains how to create every starter's thing, certificate and key from the factory list with one command.
 
 Never put certificates or private keys in this folder.

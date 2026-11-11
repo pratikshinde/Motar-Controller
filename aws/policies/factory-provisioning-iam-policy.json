@@ -1,0 +1,47 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadTheDevicePolicy",
+      "Effect": "Allow",
+      "Action": "iot:GetPolicy",
+      "Resource": "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:policy/agripump-device-policy"
+    },
+    {
+      "Sid": "ThingsAndTheirCertificates",
+      "Effect": "Allow",
+      "Action": [
+        "iot:CreateThing",
+        "iot:DescribeThing",
+        "iot:DeleteThing",
+        "iot:ListThingPrincipals",
+        "iot:AttachThingPrincipal",
+        "iot:DetachThingPrincipal"
+      ],
+      "Resource": [
+        "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:thing/*",
+        "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:cert/*"
+      ]
+    },
+    {
+      "Sid": "MakeKeysAndCertificates",
+      "Effect": "Allow",
+      "Action": "iot:CreateKeysAndCertificate",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ManageCertificates",
+      "Effect": "Allow",
+      "Action": [
+        "iot:UpdateCertificate",
+        "iot:DeleteCertificate",
+        "iot:AttachPolicy",
+        "iot:DetachPolicy"
+      ],
+      "Resource": [
+        "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:cert/*",
+        "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:policy/agripump-device-policy"
+      ]
+    }
+  ]
+}
