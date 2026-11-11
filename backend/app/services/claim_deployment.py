@@ -135,13 +135,14 @@ class ClaimDeployer:
             raise DeploymentError("PROVISIONING_HOOK_SECRET is empty or too short (at least 24 characters). Set it in backend/.env first; the same value is given to the Lambda.")
 
     def _retry_new_role(self, fn):
-        """A role created seconds ago is not yet usable by Lambda and IoT: AWS says so with an error that clears by itself. Try again for ~a minute."""
+        """A role or Lambda created seconds ago is not yet usable: AWS says so with an error that clears by itself. Try again for ~a minute."""
         for attempt in range(12):
             try:
                 return fn()
             except ClientError as exc:
                 text = str(exc).lower()
-                if attempt < 11 and _code(exc) in ("InvalidParameterValueException", "InvalidRequestException") and "role" in text:
+                waiting = "role" in text or "active state" in text        # the role is not usable yet / the new Lambda is still "Pending"
+                if attempt < 11 and _code(exc) in ("InvalidParameterValueException", "InvalidRequestException") and waiting:
                     self.sleep(5)
                     continue
                 raise
@@ -203,6 +204,8 @@ class ClaimDeployer:
                 FunctionName=LAMBDA_NAME, Runtime=LAMBDA_RUNTIME, Role=role_arn, Handler="provisioning_hook.lambda_handler",
                 Code={"ZipFile": code}, Timeout=15, MemorySize=128, Environment=env, Publish=True,
             ))
+            if hasattr(self.lam, "get_waiter"):
+                self.lam.get_waiter("function_active_v2").wait(FunctionName=LAMBDA_NAME)      # a new Lambda starts "Pending"; the template needs it Active
             return self._record(f"Lambda {LAMBDA_NAME}", CREATED)
         if self.update and self.apply:
             self.lam.update_function_code(FunctionName=LAMBDA_NAME, ZipFile=code, Publish=True)

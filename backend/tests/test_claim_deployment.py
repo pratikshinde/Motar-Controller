@@ -234,6 +234,20 @@ class TestApply(DeployBase):
         self.assertEqual(self.status(steps, "Lambda agripump"), cd.CREATED)
         self.assertEqual(len(self.sleeps), 3)
 
+    def test_a_lambda_that_is_still_pending_is_waited_for_by_the_template_step(self):
+        class PendingIot(FakeIot):
+            pending = 2
+
+            def create_provisioning_template(self, **kw):
+                if PendingIot.pending > 0:
+                    PendingIot.pending -= 1
+                    raise err("InvalidRequestException", "CreateProvisioningTemplate", "Lambda function arn:... cannot be invoked, the function is not in Active state")
+                return super().create_provisioning_template(**kw)
+        self.iot = PendingIot()
+        steps = self.deployer(True).run()
+        self.assertEqual(self.status(steps, "template"), cd.CREATED)
+        self.assertEqual(len(self.sleeps), 2)
+
     def test_other_aws_errors_are_not_swallowed(self):
         class Denied(FakeLambda):
             def create_function(self, **kw):
