@@ -43,11 +43,15 @@ The private key is made on the module and never travels. The ID must be on the f
 
 ## The factory process
 
-1. Import the factory list on the website (a batch with each starter's ID).
+1. **Upload the batch's Excel sheet** on the website: *Factory Station* > "1. Upload the batch sheet" (download the template there). One row per starter:
+   **Starter ID** (the barcode on the box; required) and optionally IMEI, HP, Supply (3-phase / 1-phase), Model, HW revision, Manufacture date, Notes. The whole
+   sheet is checked first: if any row has a problem nothing is saved and every problem is listed by row. This is the factory list that AWS's check uses.
 2. Flash every module with the same firmware, which carries the claim certificate.
-3. **First power-up at the factory**, as part of the factory test, with mobile signal: the module claims its own certificate. After this the ID is used up: a
+3. **Scan each starter's barcode** at *Factory Station* > "2. Scan a starter" (a USB scanner types the code and presses Enter; the camera works where the browser supports it).
+   The page shows that starter's row from the sheet (HP, supply, model, ...), records the **bench test** (pass / fail with a note), and shows its progress by itself.
+4. **First power-up at the factory**, as part of the factory test, with mobile signal: the module claims its own certificate. After this the ID is used up: a
    second claim of the same ID is refused. Nothing unclaimed leaves the factory, so the shared claim certificate has nothing useful left to steal.
-4. The dealer registers the farmer with the starter ID. Nothing in AWS changes.
+5. The dealer registers the farmer with the starter ID (its HP and details already came from the sheet). Nothing in AWS changes.
 
 ## Safety rules (why it is built this way)
 

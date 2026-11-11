@@ -407,12 +407,24 @@ class BatchImei(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     batch_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.device_batches.id", ondelete="CASCADE"), nullable=False)
-    imei = Column(String(20), nullable=False, unique=True)
-    mcu_uid = Column(String(30), nullable=True)
+    imei = Column(String(20), nullable=True, unique=True)           # the modem's IMEI; a sheet need not list it
+    mcu_uid = Column(String(30), nullable=True)                      # the starter ID: the barcode on the box = the module's own id = the AWS thing name = the pump id
     claimed = Column(Boolean, nullable=False, default=False)
     claimed_at = Column(DateTime(timezone=True), nullable=True)
     pump_id = Column(String(50), ForeignKey(f"{SCHEMA}.pumps.id", ondelete="SET NULL", onupdate="CASCADE"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    # From the factory's sheet (phase11_starter_details); the pump is created from these when the module claims its certificate
+    hp_rating = Column(Numeric(4, 1), nullable=True)
+    supply_type = Column(String(10), nullable=True)                  # "3-phase" / "1-phase"
+    model = Column(String(100), nullable=True)
+    hw_rev = Column(String(20), nullable=True)
+    manufacture_date = Column(Date, nullable=True)
+    notes = Column(Text, nullable=True)
+    # The bench test at the factory station
+    tested_at = Column(DateTime(timezone=True), nullable=True)
+    tested_by = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
+    test_result = Column(String(4), nullable=True)                   # PASS / FAIL
+    test_note = Column(Text, nullable=True)
 
 
 class DailySummary(Base):

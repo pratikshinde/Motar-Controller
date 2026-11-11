@@ -11,6 +11,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import TuneIcon from '@mui/icons-material/Tune';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import type { SvgIconComponent } from '@mui/icons-material';
 import type { RoleTier } from '../types';
 
@@ -18,7 +19,7 @@ export interface NavItemDef {
   path: string;
   labelKey:
     | 'navTelemetry' | 'navDevices' | 'navHierarchy' | 'navFaultLogs' | 'navMap' | 'navAudit'
-    | 'navFleet' | 'navFactory' | 'navHealth' | 'navSupport' | 'navConfigTemplates' | 'navServiceReports' | 'navAlerts' | 'navManufacturers' | 'navFarmers';
+    | 'navFleet' | 'navFactory' | 'navFactoryStation' | 'navHealth' | 'navSupport' | 'navConfigTemplates' | 'navServiceReports' | 'navAlerts' | 'navManufacturers' | 'navFarmers';
   icon: SvgIconComponent;
   /** Omit to show for every role; the backing endpoint itself 403s outside this set. */
   roles?: RoleTier[];
@@ -47,6 +48,7 @@ export const navSections: NavSectionDef[] = [
   {
     title: 'Hardware Operations',
     items: [
+      { path: '/factory-station', labelKey: 'navFactoryStation', icon: QrCodeScannerIcon, roles: ['manufacturer', 'superadmin'] },
       { path: '/devices', labelKey: 'navDevices', icon: DevicesOtherIcon },
       { path: '/map', labelKey: 'navMap', icon: MapIcon },
       { path: '/faults', labelKey: 'navFaultLogs', icon: ReportProblemIcon }

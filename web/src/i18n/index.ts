@@ -18,6 +18,7 @@ export interface Dict {
   navAudit: string;
   navFleet: string;
   navFactory: string;
+  navFactoryStation: string;
   navHealth: string;
   navSupport: string;
   navConfigTemplates: string;
@@ -80,6 +81,7 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     navAudit: 'Audit Log',
     navFleet: 'Fleet Dashboard',
     navFactory: 'Factory Console',
+    navFactoryStation: 'Factory Station',
     navHealth: 'System Health',
     navSupport: 'Support Console',
     navConfigTemplates: 'Config Templates',
@@ -132,6 +134,7 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     navAudit: 'ऑडिट लॉग',
     navFleet: 'फ्लीट डैशबोर्ड',
     navFactory: 'फैक्ट्री कंसोल',
+    navFactoryStation: 'फैक्ट्री स्टेशन',
     navHealth: 'सिस्टम स्वास्थ्य',
     navSupport: 'सपोर्ट कंसोल',
     navConfigTemplates: 'कॉन्फ़िग टेम्पलेट्स',

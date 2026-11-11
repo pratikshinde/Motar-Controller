@@ -449,6 +449,51 @@ export interface BatchImeiImportResult {
   errors: BatchImeiImportError[];
 }
 
+// The starter sheet (Excel) upload and the factory station (scan a barcode): see backend/app/api/batches.py.
+export interface StarterSheetProblem {
+  row: number;
+  starter_id: string;
+  reason: string;
+}
+
+export interface StarterSheetResult {
+  /** false: nothing was saved (a problem in the sheet); every problem is listed with its row number. */
+  saved: boolean;
+  created?: number;
+  updated?: number;
+  unchanged?: number;
+  errors: StarterSheetProblem[];
+  rows_in_sheet?: number;
+  batch?: DeviceBatch;
+}
+
+export interface StarterStage {
+  key: 'on_sheet' | 'tested' | 'claimed' | 'online' | 'farmer';
+  label: string;
+  done: boolean;
+  failed?: boolean;
+}
+
+export interface StarterStationView {
+  found: true;
+  id: number;
+  starter_id: string;
+  imei: string | null;
+  batch: { id: string; batch_code: string; revoked: boolean } | null;
+  details: {
+    hp_rating: number | null;
+    supply_type: string | null;
+    model: string | null;
+    hw_rev: string | null;
+    manufacture_date: string | null;
+    notes: string | null;
+  };
+  test: { result: 'PASS' | 'FAIL' | null; note: string | null; tested_at: string | null; tested_by: string | null };
+  claim: { claimed: boolean; claimed_at: string | null; pump_id: string | null };
+  pump: { id: string; status: string; lifecycle_state: string; connectivity: string | null; last_seen_at: string | null; farmer: string | null } | null;
+  stages: StarterStage[];
+}
+
 // GET /api/system/health (FR-WEB-017). Every field is a live read or a
 // counter incremented at the exact code path it names — see
 // backend/services/metrics.js. No historical/time-series storage exists

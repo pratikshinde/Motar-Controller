@@ -16,6 +16,7 @@ import { DeviceDetailView } from './views/DeviceDetailView';
 import { AuditLogView } from './views/AuditLogView';
 import { FleetDashboardView } from './views/FleetDashboardView';
 import { FactoryConsoleView } from './views/FactoryConsoleView';
+import { FactoryStationView } from './views/FactoryStationView';
 import { SystemHealthView } from './views/SystemHealthView';
 import { SupportConsoleView } from './views/SupportConsoleView';
 import { InviteRedeemView } from './views/InviteRedeemView';
@@ -52,6 +53,7 @@ const AuthenticatedApp: React.FC = () => {
       <Route path="/alerts" element={<AlertsView />} />
       <Route path="/audit" element={<AuditLogView />} />
       <Route path="/factory" element={<FactoryConsoleView />} />
+      <Route path="/factory-station" element={<FactoryStationView />} />
       <Route path="/health" element={<SystemHealthView />} />
       <Route path="/support" element={<SupportConsoleView />} />
       <Route path="*" element={<Navigate to={homePath(role)} replace />} />

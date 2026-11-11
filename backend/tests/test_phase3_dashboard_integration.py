@@ -52,6 +52,10 @@ class _Fixture(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # "Now" is taken when this class starts, not when the file was imported: in a long full run the import can be minutes
+        # earlier, which pushes the pumps made "a minute ago" past the 3 minute offline cut-off.
+        global NOW
+        NOW = datetime.now(timezone.utc)
         cls.db = SessionLocal()
         cls.db.execute(text("SET app.bypass_rls = 'on';"))
         cls.sfx = uuid.uuid4().hex[:6]
