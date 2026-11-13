@@ -19,11 +19,12 @@ from app.core.scope import in_subtree, path_in_scope
 from app.database import get_db
 from app.models import AppBrand, AuditLog, Pump
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.user import RegistrationCreate, UserCreate, UserResponse, UserUpdate
 from app.services.cache_service import cache_service
 from app.services.jwt_auth import hash_secret
 from app.services.phone_verification import redeem_phone_verification
-from app.services import brand_service, farmer_claims
+from app.services import brand_service, farmer_claims, partner_registration
+from app.models.partner_registration import PartnerRegistration
 
 logger = logging.getLogger("agripump.users")
 router = APIRouter(tags=["Users"])
@@ -134,6 +135,107 @@ def get_user_tree(current_user: User = Depends(partner_only), db: Session = Depe
         roots = [{**_node(current_user), "id": "root", "name": "AgriPump Organization Root",
                   "full_name": "AgriPump Organization Root", "hierarchy_path": "/SA", "children": roots}]
     return {"tree": roots, "data": roots}
+
+
+def _registration_view(row: PartnerRegistration, reveal: bool = False) -> dict:
+    """A pending registration as the admin's page shows it. With `reveal`, the one-time password too, once: it is forgotten from the clear after that."""
+    view = {
+        "id": str(row.id), "role": row.role, "full_name": row.full_name, "address": row.address, "phone_number": row.phone,
+        "status": partner_registration.state_of(row),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+        "scanned_at": row.scanned_at.isoformat() if row.scanned_at else None,
+        "password": None,
+    }
+    if reveal:
+        view["password"] = partner_registration.reveal_to_admin(row)
+    return view
+
+
+def _registration_in_scope(db: Session, actor: User, rid: str) -> PartnerRegistration:
+    try:
+        key = uuid.UUID(rid)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    row = db.query(PartnerRegistration).filter(PartnerRegistration.id == key).first()
+    # One answer for "missing" and "not yours".
+    if row is None:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    try:
+        _get_in_scope(db, actor, row.parent_user_id)
+    except HTTPException:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    return row
+
+
+@router.post("/registrations", status_code=status.HTTP_201_CREATED)
+def create_registration(req: RegistrationCreate, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """Start registering a distributor or a dealer: saves what was typed and returns the QR (shown once). No account exists until the new person has
+    scanned the QR, been sent the one-time password and typed it with their mobile number, then chosen their own password."""
+    role = (req.role or "").lower()
+    if role not in ASSIGNABLE_ROLES.get(current_user.role, []):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"A {current_user.role} account cannot register a {role} account.")
+    parent = current_user
+    if req.parent_user_id:
+        try:
+            parent = _get_in_scope(db, current_user, uuid.UUID(req.parent_user_id))
+        except ValueError:
+            raise HTTPException(status_code=422, detail="parent_user_id is not a valid id")
+    if role not in ASSIGNABLE_ROLES.get(parent.role, []):
+        raise HTTPException(status_code=422, detail=f"A {parent.role} cannot have a {role} under it.")
+    row, token = partner_registration.create(db, current_user, parent, role, req.full_name, req.address, req.phone_number)
+    _audit(db, current_user, row.id, "PARTNER_REGISTRATION_STARTED", after={"role": role, "parent": str(parent.id)})
+    db.commit()
+    return {"registration": _registration_view(row), "qr": {"token": token, "expires_at": row.expires_at.isoformat()}}
+
+
+@router.get("/registrations")
+def list_registrations(current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """The registrations under the caller that are not finished: waiting for the scan, scanned (the password is to be sent), expired or blocked."""
+    ids = [u.id for u in _scoped_users(db, current_user).with_entities(User.id).all()]
+    rows = (
+        db.query(PartnerRegistration)
+        .filter(PartnerRegistration.parent_user_id.in_(ids), PartnerRegistration.completed_at.is_(None))
+        .order_by(PartnerRegistration.created_at.desc()).all()
+    ) if ids else []
+    open_ones = [r for r in rows if partner_registration.state_of(r) != partner_registration.CANCELLED]
+    return {"registrations": [_registration_view(r) for r in open_ones]}
+
+
+@router.get("/registrations/{rid}")
+def get_registration(rid: str, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """Where one registration stands. As soon as the QR is scanned this also carries the one-time password, once (send it to the new person)."""
+    row = _registration_in_scope(db, current_user, rid)
+    view = _registration_view(row, reveal=True)
+    db.commit()
+    return {"registration": view}
+
+
+@router.post("/registrations/{rid}/qr")
+def new_registration_qr(rid: str, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """A new QR for a registration that was not finished (the old one stops working and the person scans again)."""
+    row = _registration_in_scope(db, current_user, rid)
+    token = partner_registration.new_qr(db, row)
+    db.commit()
+    return {"registration": _registration_view(row), "qr": {"token": token, "expires_at": row.expires_at.isoformat()}}
+
+
+@router.post("/registrations/{rid}/password")
+def new_registration_password(rid: str, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """A new one-time password for a registration whose QR was scanned (the first was lost). It is returned once."""
+    row = _registration_in_scope(db, current_user, rid)
+    partner_registration.new_password(db, row)
+    view = _registration_view(row, reveal=True)
+    db.commit()
+    return {"registration": view}
+
+
+@router.delete("/registrations/{rid}")
+def cancel_registration(rid: str, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    row = _registration_in_scope(db, current_user, rid)
+    partner_registration.cancel(row)
+    db.commit()
+    return {"message": "Registration cancelled"}
 
 
 @router.get("/team")

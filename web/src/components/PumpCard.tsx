@@ -61,7 +61,7 @@ interface Props {
   pump: PumpListItem;
   cooldownRemaining?: number;
   onCooldownStart: (pumpId: string, seconds: number) => void;
-  onEditLocation: (pump: PumpListItem) => void;
+  onEditLocation?: (pump: PumpListItem) => void;
   onChanged: () => void;
 }
 
@@ -213,6 +213,13 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
           </Typography>
         )}
 
+        {/* A pump that has never reported has no readings to show: one plain line instead of a grid of dashes */}
+        {status === 'NO_DATA' ? (
+          <Typography data-testid="no-data-note" variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', py: 1 }}>
+            Waiting for the first reading from this pump.
+          </Typography>
+        ) : (
+        <>
         {/* Telemetry Metric Readouts */}
         {pump.device_type === 'SOLAR_VFD' ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -360,10 +367,7 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
           </Box>
         )}
 
-        {!pump.telemetry_recorded_at && !pump.v_ry && !pump.i_r && !pump.vfd_hz && !pump.vfd?.hz && (
-          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', textAlign: 'center', py: 0.5 }}>
-            No recent telemetry signal
-          </Typography>
+        </>
         )}
 
         {/* Subscription Expiry Warning */}
@@ -395,7 +399,7 @@ export const PumpCard: React.FC<Props> = ({ pump, cooldownRemaining, onCooldownS
                 {formatCoords(pump.latitude, pump.longitude)}
               </Typography>
             </Box>
-            {isSuperadmin && (
+            {isSuperadmin && onEditLocation && (
               <Tooltip title="Edit location">
                 <IconButton size="small" onClick={() => onEditLocation(pump)} sx={{ p: 0.5 }}>
                   <EditIcon sx={{ fontSize: 16 }} />

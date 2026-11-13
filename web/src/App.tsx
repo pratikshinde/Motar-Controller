@@ -17,10 +17,12 @@ import { SystemHealthView } from './views/SystemHealthView';
 import { SupportConsoleView } from './views/SupportConsoleView';
 import { InviteRedeemView } from './views/InviteRedeemView';
 import { ClaimView } from './views/ClaimView';
+import { RegisterView } from './views/RegisterView';
 import { ConfigTemplatesView } from './views/ConfigTemplatesView';
 import { ServiceReportsView } from './views/ServiceReportsView';
 import { ManufacturersView } from './views/ManufacturersView';
-import { AlertsHub, DevicesHub } from './views/hubs';
+import { DevicesHub } from './views/hubs';
+import { AlertsView } from './views/AlertsView';
 import { PeopleView } from './views/people/PeopleView';
 import { PersonDashboardView } from './views/people/PersonDashboardView';
 import { ManagerDashboardView } from './views/people/ManagerDashboardView';
@@ -54,10 +56,10 @@ const AuthenticatedApp: React.FC = () => {
       <Route path="/devices" element={<DevicesHub />} />
       <Route path="/devices/:id" element={<DeviceDetailView />} />
       <Route path="/hierarchy" element={role === 'manufacturer' || role === 'distributor' || (role === 'superadmin' && viewing) ? <HierarchyView /> : <Navigate to="/dashboard" replace />} />
-      <Route path="/faults" element={<Navigate to="/alerts?tab=faults" replace />} />
+      <Route path="/faults" element={<Navigate to="/alerts" replace />} />
       <Route path="/config-templates" element={<ConfigTemplatesView />} />
       <Route path="/service-reports" element={<ServiceReportsView />} />
-      <Route path="/alerts" element={<AlertsHub />} />
+      <Route path="/alerts" element={<AlertsView />} />
       <Route path="/audit" element={<AuditLogView />} />
       <Route path="/factory" element={<FactoryConsoleView />} />
       <Route path="/factory-station" element={<Navigate to="/devices?tab=factory" replace />} />
@@ -90,6 +92,7 @@ const Gate: React.FC = () => {
       {/* Invite Redemption Token */}
       <Route path="/invite/:token" element={<InviteRedeemView />} />
       <Route path="/claim/:token" element={<ClaimView />} />
+      <Route path="/register/:token" element={<RegisterView />} />
 
       {/* Protected Dashboard */}
       <Route path="/*" element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/login" replace />} />

@@ -83,6 +83,11 @@ export const PersonCard: React.FC<{ m: TeamMember; onOpen: () => void; onNewQr?:
           <RoleChip role={m.role} />
         </Stack>
 
+        {m.address && (
+          <Typography variant="caption" color="text.secondary" noWrap data-testid={`address-${m.id}`}>
+            {m.address}
+          </Typography>
+        )}
         {(m.above.length > 0 || m.role !== 'distributor') && (
           <Typography variant="caption" color="text.secondary" noWrap>
             Under: {lineageOf(m)}

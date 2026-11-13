@@ -9,12 +9,10 @@ const mocks = vi.hoisted(() => ({ role: 'manufacturer', viewing: null as null | 
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ role: mocks.role, user: { id: 'u', role: mocks.role } }) }));
 vi.mock('../../api/viewing', () => ({ useViewing: () => mocks.viewing }));
 vi.mock('../TelemetryView', () => ({ TelemetryView: () => <div>live pumps page</div> }));
-vi.mock('../AlertsView', () => ({ AlertsView: () => <div>alerts page</div> }));
-vi.mock('../FaultLogsView', () => ({ FaultLogsView: () => <div>fault history page</div> }));
 vi.mock('../DevicesView', () => ({ DevicesView: () => <div>devices page</div> }));
 vi.mock('../FactoryStationView', () => ({ FactoryStationView: () => <div>factory page</div> }));
 
-import { AlertsHub, DevicesHub } from '../hubs';
+import { DevicesHub } from '../hubs';
 
 const Where = () => <span data-testid="where">{useLocation().search}</span>;
 const at = (ui: React.ReactElement, url = '/') =>
@@ -28,26 +26,6 @@ const at = (ui: React.ReactElement, url = '/') =>
 beforeEach(() => {
   mocks.role = 'manufacturer';
   mocks.viewing = null;
-});
-
-describe('Alerts: alerts and fault history in one page', () => {
-  it('has both tabs and keeps the chosen one in the address', async () => {
-    at(<AlertsHub />);
-    expect(screen.getByText('alerts page')).toBeInTheDocument();
-    await userEvent.click(screen.getByTestId('hub-tab-faults'));
-    expect(screen.getByText('fault history page')).toBeInTheDocument();
-    expect(screen.getByTestId('where')).toHaveTextContent('?tab=faults');
-  });
-
-  it('opens straight on the tab named in the link, and falls back to the first for one it does not have', () => {
-    at(<AlertsHub />, '/alerts?tab=faults');
-    expect(screen.getByText('fault history page')).toBeInTheDocument();
-  });
-
-  it('falls back to the first tab for a tab it does not have', () => {
-    at(<AlertsHub />, '/alerts?tab=nonsense');
-    expect(screen.getByText('alerts page')).toBeInTheDocument();
-  });
 });
 
 describe('Devices: the devices, how they are doing live, and for the admin only the factory station', () => {

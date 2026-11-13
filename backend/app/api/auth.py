@@ -39,9 +39,13 @@ from app.services.phone_verification import (
 )
 from app.services.cache_service import cache_service
 from app.services import firebase_phone
-from app.schemas import ClaimRequest, FirebasePhoneRequest, LoginEmailRequest, PartnerClaimRequest
+from app.schemas import (
+    ClaimRequest, FirebasePhoneRequest, LoginEmailRequest, PartnerClaimRequest,
+    RegistrationScanRequest, RegistrationVerifyRequest, RegistrationCompleteRequest,
+)
 from app.models.farmer_claim import FarmerClaim
-from app.services import farmer_claims
+from app.services import farmer_claims, partner_registration
+from app.services import brand_service
 from app.core.phone import india_phone
 from app.api.deps import get_current_user, require_roles, set_db_actor_context, security, HTTPAuthorizationCredentials
 from app.repositories import PumpRepository
@@ -642,6 +646,50 @@ def claim_with_qr(req: ClaimRequest, db: Session = Depends(get_db)):
     _record_audit_log(db, farmer.id, farmer.role, "user", str(farmer.id), "QR_CLAIMED", {"channel": "qr"})
     db.commit()
     return _finish_phone_sign_in(db, req, stored, "qr")
+
+
+@router.post("/registration/scan")
+def registration_scan(req: RegistrationScanRequest, db: Session = Depends(get_db)):
+    """The QR of a registration was opened by the person being registered. The one-time password is made now and shown on the admin's page; this answer
+    says only who is registering them, so the page can greet them."""
+    row = partner_registration.scan(db, req.token)
+    db.commit()
+    parent = db.query(User).filter(User.id == row.parent_user_id).first()
+    brand = brand_service.info_for_id(db, getattr(parent, "brand_id", None)) if parent else None
+    return {
+        "first_name": (row.full_name or "").split()[0] if (row.full_name or "").strip() else "",
+        "role": row.role,
+        "registered_by": parent.full_name if parent else None,
+        "brand": brand.name if brand else None,
+    }
+
+
+@router.post("/registration/verify")
+def registration_verify(req: RegistrationVerifyRequest, db: Session = Depends(get_db)):
+    """A right mobile number and the password the admin sent: a short-lived ticket to choose their own password with. Five wrong tries burn the QR."""
+    ticket, _row = partner_registration.verify(db, req.token, req.phone, req.code)
+    db.commit()
+    return {"ticket": ticket}
+
+
+@router.post("/registration/complete", response_model=LoginResponse)
+def registration_complete(req: RegistrationCompleteRequest, db: Session = Depends(get_db)):
+    """They chose their own password: now, and only now, the account is created, and they are signed in."""
+    row = partner_registration.by_token(db, req.token)
+    parent = db.query(User).filter(User.id == row.parent_user_id).first() if row is not None else None
+    if parent is not None:
+        set_db_actor_context(db, user=parent)       # the new account is a child of the one who registered it
+    try:
+        user = partner_registration.complete(db, req.token, req.ticket, req.password)
+    except HTTPException:
+        db.rollback()
+        raise
+    set_db_actor_context(db, user=user)
+    _enforce_brand(user)
+    session = _issue_session(db, user, req.app_install_id, req.device_info)
+    _record_audit_log(db, None, "registration", "user", str(user.id), "USER_CREATED", {"role": user.role, "parent": str(parent.id), "via": "scanned registration"})
+    db.commit()
+    return session
 
 
 PARTNER_CLAIM_ROLES = ("distributor", "dealer")

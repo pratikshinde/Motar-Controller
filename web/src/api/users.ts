@@ -38,17 +38,6 @@ export function claimLinkFor(token: string): string {
   return `${window.location.origin}/claim/${encodeURIComponent(token)}`;
 }
 
-/** Add a distributor or dealer by name and mobile number only: no password and no OTP. They get a one-time QR to open and choose their own password. */
-export async function createPartnerByQr(input: {
-  full_name: string;
-  phone_number: string;
-  role: RoleTier;
-  parent_user_id?: string;
-  parent_hierarchy_path?: string;
-}): Promise<{ message: string; user: User; claim: PartnerClaim }> {
-  return apiJson('/users', { method: 'POST', body: JSON.stringify(input) });
-}
-
 /** A fresh QR for a distributor or dealer under you: for one who has not signed in yet or who lost their password. The old QR stops working. */
 export async function newPartnerQr(id: string): Promise<{ message: string; claim: PartnerClaim }> {
   return apiJson(`/users/${encodeURIComponent(id)}/qr`, { method: 'POST' });

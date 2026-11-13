@@ -104,7 +104,7 @@ export const PersonDashboardView: React.FC = () => {
             <MemberChips m={m} />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            {[m.phone_number, m.role === 'customer' ? m.address : null].filter(Boolean).join(' · ') || 'No contact details'}
+            {[m.phone_number, m.address].filter(Boolean).join(' · ') || 'No contact details'}
             {m.above.length > 0 ? ` · Under ${lineageOf(m)}` : ''}
           </Typography>
         </Box>

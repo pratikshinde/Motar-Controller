@@ -4,8 +4,6 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useViewing } from '../api/viewing';
 import { TelemetryView } from './TelemetryView';
-import { AlertsView } from './AlertsView';
-import { FaultLogsView } from './FaultLogsView';
 import { DevicesView } from './DevicesView';
 import { FactoryStationView } from './FactoryStationView';
 
@@ -42,16 +40,6 @@ export const TabbedPage: React.FC<{ tabs: HubTab[] }> = ({ tabs }) => {
     </Box>
   );
 };
-
-/** What needs attention now, and what went wrong before. (Was two pages: Alerts and Fault Logs.) */
-export const AlertsHub: React.FC = () => (
-  <TabbedPage
-    tabs={[
-      { key: 'alerts', label: 'Alerts', element: <AlertsView /> },
-      { key: 'faults', label: 'Fault history', element: <FaultLogsView /> }
-    ]}
-  />
-);
 
 /** The pumps and starters, how they are doing live, and (for the admin) bringing new ones in from the factory. */
 export const DevicesHub: React.FC = () => {

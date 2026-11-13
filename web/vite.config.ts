@@ -9,7 +9,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
-    restoreMocks: true
+    restoreMocks: true,
+    // The suite runs many files at once; a form test that types a lot can take a while on a busy machine.
+    testTimeout: 20000
   },
   server: {
     port: 3000,

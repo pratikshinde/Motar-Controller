@@ -1,336 +1,120 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Box, Typography, FormControl, InputLabel, Select, MenuItem, Card, CardContent,
-  Chip, CircularProgress, TextField, IconButton, Tooltip, Collapse,
-  Paper, InputAdornment, Button
-} from '@mui/material';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Box, Chip, CircularProgress, InputAdornment, Paper, Stack, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import HistoryIcon from '@mui/icons-material/HistoryToggleOff';
-import SecurityIcon from '@mui/icons-material/Security';
-import DevicesIcon from '@mui/icons-material/Memory';
-import PeopleIcon from '@mui/icons-material/Group';
+import { useTheme } from '@mui/material/styles';
 import { fetchAuditLog } from '../api/audit';
+import { ROLE_NAMES } from '../api/users';
 import { useToast } from '../context/ToastContext';
-import { monoFont } from '../theme';
-import type { AuditLogEntry } from '../types';
+import { auditNeedsAttention, auditText } from '../utils/auditText';
+import { timeAgo } from '../utils/timeAgo';
+import type { AuditLogEntry, RoleTier } from '../types';
 
-const ENTITY_TYPES = ['pump', 'user', 'device_config', 'fault_log', 'allocation', 'batch', 'invite'] as const;
+const WHO: Record<string, string> = { operator: 'Server operator' };
+const who = (role: string | null) => (role ? WHO[role] || ROLE_NAMES[role as RoleTier] || role : '');
 
-function getActionColor(action: string): 'success' | 'info' | 'warning' | 'error' | 'default' {
-  const act = action.toUpperCase();
-  if (act.includes('CREATE') || act.includes('ADD') || act.includes('IMPORT')) return 'success';
-  if (act.includes('DELETE') || act.includes('REVOKE') || act.includes('REMOVE')) return 'error';
-  if (act.includes('ALLOCATE') || act.includes('WARRANTY') || act.includes('STAFF')) return 'warning';
-  if (act.includes('UPDATE') || act.includes('SET') || act.includes('COMMAND')) return 'info';
-  return 'default';
-}
+const GROUPS = [
+  { key: '', label: 'Everything' },
+  { key: 'user', label: 'People' },
+  { key: 'pump', label: 'Pumps' },
+  { key: 'allocation', label: 'Stock' }
+] as const;
 
+/** Who did what, and when: the most recent actions first. */
 export const AuditLogView: React.FC = () => {
+  const theme = useTheme();
   const { showToast } = useToast();
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
-  const [entityType, setEntityType] = useState<string>('');
+  const [group, setGroup] = useState<string>('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<number | string | null>(null);
+  const [failed, setFailed] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchAuditLog(entityType || undefined);
-      const list = Array.isArray(data) ? data : (data?.entries || (data as any)?.data || []);
+      const data = await fetchAuditLog(group || undefined);
+      const list = Array.isArray(data) ? data : data?.entries || (data as any)?.data || [];
       setEntries(Array.isArray(list) ? list : []);
+      setFailed('');
     } catch (err: any) {
-      showToast(err.message || 'Could not load audit log', true);
+      setFailed(err?.message || 'Could not load the activity');
+      showToast(err?.message || 'Could not load the activity', true);
       setEntries([]);
     } finally {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityType]);
+  }, [group]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const safeEntries = useMemo(() => (Array.isArray(entries) ? entries : []), [entries]);
-
-  const filtered = useMemo(() => {
-    return safeEntries.filter(e => {
-      if (!search.trim()) return true;
-      const needle = search.trim().toLowerCase();
-      return (
-        (e.entity_id || '').toLowerCase().includes(needle) ||
-        (e.action || '').toLowerCase().includes(needle) ||
-        (e.actor_role || '').toLowerCase().includes(needle) ||
-        (e.entity_type || '').toLowerCase().includes(needle)
-      );
-    });
-  }, [safeEntries, search]);
-
-  const stats = useMemo(() => {
-    const total = safeEntries.length;
-    const deviceEvents = safeEntries.filter(e => e.entity_type === 'pump' || e.entity_type === 'device_config').length;
-    const userEvents = safeEntries.filter(e => e.entity_type === 'user' || e.entity_type === 'invite' || e.entity_type === 'allocation').length;
-    const batchEvents = safeEntries.filter(e => e.entity_type === 'batch').length;
-    return { total, deviceEvents, userEvents, batchEvents };
-  }, [safeEntries]);
-
-  const toggleExpand = (id: number | string) => {
-    setExpandedId(prev => (prev === id ? null : id));
-  };
+  const shown = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const list = [...entries].sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
+    if (!q) return list;
+    return list.filter(e => `${auditText(e.action)} ${who(e.actor_role)} ${e.entity_id}`.toLowerCase().includes(q));
+  }, [entries, search]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2.5, overflowY: 'auto' }}>
-      {/* Header Title & Subtitle */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5, flexShrink: 0 }}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.02em' }}>
-            System Audit & Governance Log
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Immutable trace of security events, configuration modifications, user hierarchy changes, and device provisioning.
-          </Typography>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <Typography variant="body2" color="text.secondary">
+        Who did what, and when. The newest first.
+      </Typography>
+
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1.5 }}>
+        <ToggleButtonGroup value={group} exclusive size="small" onChange={(_, v: string | null) => v !== null && setGroup(v)}>
+          {GROUPS.map(g => (
+            <ToggleButton key={g.key} value={g.key} data-testid={`group-${g.key || 'all'}`}>
+              {g.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        <TextField
+          size="small"
+          placeholder="Search"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          sx={{ flex: '1 1 220px', maxWidth: 360 }}
+          slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
+        />
+      </Stack>
+
+      {failed && <Alert severity="error">{failed}</Alert>}
+      {loading ? (
+        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
+          <CircularProgress size={36} />
         </Box>
-        <Tooltip title="Refresh log feed">
-          <IconButton onClick={load} color="primary" sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-            <RefreshIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {/* Summary Stat Cards Grid */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 1.5, flexShrink: 0 }}>
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: 'primary.main', color: '#fff', opacity: 0.9 }}>
-            <HistoryIcon fontSize="small" />
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Total Events Recorded</Typography>
-            <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: monoFont }}>{stats.total}</Typography>
-          </Box>
-        </Paper>
-
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: '#0B7A3E', color: '#fff' }}>
-            <DevicesIcon fontSize="small" />
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Device & Config Audit</Typography>
-            <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: monoFont }}>{stats.deviceEvents}</Typography>
-          </Box>
-        </Paper>
-
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: '#F59E0B', color: '#fff' }}>
-            <PeopleIcon fontSize="small" />
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>User & Hierarchy Changes</Typography>
-            <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: monoFont }}>{stats.userEvents}</Typography>
-          </Box>
-        </Paper>
-
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ p: 1.25, borderRadius: 1.5, bgcolor: '#10B981', color: '#fff' }}>
-            <SecurityIcon fontSize="small" />
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>Manufacturing Batches</Typography>
-            <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: monoFont }}>{stats.batchEvents}</Typography>
-          </Box>
-        </Paper>
-      </Box>
-
-      {/* Search and Filters Bar */}
-      {/* The page's outer flex column has `overflowY: auto` on itself rather than only on the results list
-          below, so when everything's natural height exceeds the viewport, flex-shrink (default on every
-          flex item) squeezed this bar — with no `flexShrink: 0` to opt out — down below the height its own
-          search field needs, clipping it to a thin sliver. */}
-      <Card elevation={0} sx={{ p: 2, borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', bgcolor: 'background.surface', flexShrink: 0 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-          <TextField
-            size="small"
-            placeholder="Search by action, entity ID, or role..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" fontSize="small" />
-                  </InputAdornment>
-                )
-              }
-            }}
-            sx={{ flex: 1, minWidth: 280 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel id="entity-type-label">Entity Category</InputLabel>
-            <Select
-              labelId="entity-type-label"
-              label="Entity Category"
-              value={entityType}
-              onChange={e => setEntityType(e.target.value)}
-            >
-              <MenuItem value="">All Entities</MenuItem>
-              {ENTITY_TYPES.map(t => (
-                <MenuItem key={t} value={t}>
-                  {t.toUpperCase()}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {(search || entityType) && (
-            <Button
-              size="small"
-              onClick={() => {
-                setSearch('');
-                setEntityType('');
-              }}
-              sx={{ color: 'text.secondary' }}
-            >
-              Clear Filters
-            </Button>
-          )}
-        </Box>
-      </Card>
-
-      {/* Audit Log Entries List */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', height: 200 }}>
-            <CircularProgress />
-          </Box>
-        ) : filtered.length === 0 ? (
-          <Card elevation={0} sx={{ p: 4, borderRadius: 3, border: '1px dashed rgba(255,255,255,0.15)' }}>
-            <Typography color="text.secondary" align="center">
-              No audit log entries found matching the filter criteria.
-            </Typography>
-          </Card>
-        ) : (
-          filtered.map(e => {
-            const isExpanded = expandedId === e.id;
-            const hasDetails = Boolean(e.before_json || e.after_json || (e as any).before_state || (e as any).after_state);
-            const beforeState = e.before_json || (e as any).before_state;
-            const afterState = e.after_json || (e as any).after_state;
-
+      ) : shown.length === 0 ? (
+        <Typography color="text.secondary" sx={{ py: 6, textAlign: 'center' }} data-testid="no-activity">
+          {search ? 'Nothing matches that search.' : 'Nothing has happened yet.'}
+        </Typography>
+      ) : (
+        <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+          {shown.map((e, i) => {
+            const warn = auditNeedsAttention(e.action);
             return (
-              <Card
+              <Stack
                 key={e.id}
-                elevation={0}
-                sx={{
-                  borderRadius: 2.5,
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  bgcolor: 'background.surfaceVariant',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': { border: '1px solid rgba(0, 230, 118, 0.3)', bgcolor: 'rgba(255,255,255,0.03)' }
-                }}
+                direction="row"
+                spacing={1.5}
+                data-testid={`entry-${e.id}`}
+                sx={{ px: 2, py: 1.25, alignItems: 'center', borderTop: i === 0 ? 0 : `1px solid ${theme.palette.divider}`, flexWrap: 'wrap', rowGap: 0.5 }}
               >
-                <CardContent sx={{ p: 2, '&:last-child': { pb: isExpanded ? 2 : 2 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', flex: 1 }}>
-                      <Typography variant="caption" sx={{ fontFamily: monoFont, color: 'text.secondary', minWidth: 160 }}>
-                        {new Date(e.occurred_at).toLocaleString()}
-                      </Typography>
-                      <Chip
-                        size="small"
-                        label={e.action}
-                        color={getActionColor(e.action)}
-                        sx={{ fontFamily: monoFont, fontWeight: 700, px: 0.5 }}
-                      />
-                      <Chip
-                        size="small"
-                        label={`${(e.entity_type || 'system').toUpperCase()} : ${e.entity_id || 'N/A'}`}
-                        variant="outlined"
-                        sx={{ fontFamily: monoFont }}
-                      />
-                      <Typography variant="body2" sx={{ color: 'text.primary', fontWeight: 500 }}>
-                        by <strong style={{ color: '#00E676' }}>{e.actor_role || 'system'}</strong>
-                        {e.actor_id ? ` (${e.actor_id.slice(0, 8)}...)` : ''}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {e.ip && (
-                        <Chip
-                          size="small"
-                          label={`IP: ${e.ip}`}
-                          variant="outlined"
-                          sx={{ fontFamily: monoFont, fontSize: '0.7rem', opacity: 0.7 }}
-                        />
-                      )}
-                      {hasDetails && (
-                        <IconButton size="small" onClick={() => toggleExpand(e.id)} sx={{ color: 'text.secondary' }}>
-                          {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        </IconButton>
-                      )}
-                    </Box>
-                  </Box>
-
-                  {/* Expandable JSON State Delta */}
-                  {hasDetails && (
-                    <Collapse in={isExpanded} timeout="auto" unmountOnExit sx={{ mt: 2 }}>
-                      <Box sx={{ display: 'grid', gridTemplateColumns: beforeState && afterState ? { xs: '1fr', md: '1fr 1fr' } : '1fr', gap: 2 }}>
-                        {beforeState && (
-                          <Box>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
-                              BEFORE STATE
-                            </Typography>
-                            <Paper
-                              elevation={0}
-                              sx={{
-                                p: 1.5,
-                                bgcolor: 'rgba(0,0,0,0.3)',
-                                borderRadius: 2,
-                                border: '1px solid rgba(255,255,255,0.05)',
-                                fontFamily: monoFont,
-                                fontSize: '0.75rem',
-                                overflowX: 'auto',
-                                color: '#FF8A80'
-                              }}
-                            >
-                              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                                {JSON.stringify(beforeState, null, 2)}
-                              </pre>
-                            </Paper>
-                          </Box>
-                        )}
-                        {afterState && (
-                          <Box>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
-                              AFTER STATE
-                            </Typography>
-                            <Paper
-                              elevation={0}
-                              sx={{
-                                p: 1.5,
-                                bgcolor: 'rgba(0,0,0,0.3)',
-                                borderRadius: 2,
-                                border: '1px solid rgba(255,255,255,0.05)',
-                                fontFamily: monoFont,
-                                fontSize: '0.75rem',
-                                overflowX: 'auto',
-                                color: '#B9F6CA'
-                              }}
-                            >
-                              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                                {JSON.stringify(afterState, null, 2)}
-                              </pre>
-                            </Paper>
-                          </Box>
-                        )}
-                      </Box>
-                    </Collapse>
-                  )}
-                </CardContent>
-              </Card>
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: warn ? 'warning.main' : 'success.main', flexShrink: 0 }} />
+                <Typography sx={{ fontWeight: 600, flex: '1 1 220px' }}>{auditText(e.action)}</Typography>
+                {e.actor_role && <Chip size="small" variant="outlined" label={who(e.actor_role)} sx={{ height: 22 }} />}
+                <Tooltip title={new Date(e.occurred_at).toLocaleString()}>
+                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 96, textAlign: 'right' }}>
+                    {timeAgo(e.occurred_at)}
+                  </Typography>
+                </Tooltip>
+              </Stack>
             );
-          })
-        )}
-      </Box>
+          })}
+        </Paper>
+      )}
     </Box>
   );
 };

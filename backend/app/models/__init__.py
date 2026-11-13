@@ -18,6 +18,7 @@ from app.models.user import User
 from app.models.brand import AppBrand
 from app.models.push_token import PushToken
 from app.models.farmer_claim import FarmerClaim
+from app.models.partner_registration import PartnerRegistration
 from app.models.schedule import PumpSchedule, PumpScheduleEntry, PumpScheduleRun
 from app.models.power import PumpPowerEvent
 

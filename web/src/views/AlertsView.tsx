@@ -1,252 +1,147 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Box, Typography, FormControl, InputLabel, Select, MenuItem, Alert, Button,
-  Stack, Chip, CircularProgress
-} from '@mui/material';
+import { Box, Button, Chip, CircularProgress, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import { useNavigate } from 'react-router-dom';
-import { fetchAlerts, ackAlert, type AlertFilters } from '../api/alerts';
-import { useAuth } from '../context/AuthContext';
+import { fetchAlerts, type AlertFilters } from '../api/alerts';
 import { useWs } from '../context/WebSocketContext';
 import { useToast } from '../context/ToastContext';
-import { AssignAlertDialog } from '../components/AssignAlertDialog';
 import { ResolveAlertDialog } from '../components/ResolveAlertDialog';
-import { AlertSubscriptionsDialog } from '../components/AlertSubscriptionsDialog';
-import { monoFont } from '../theme';
+import { timeAgo } from '../utils/timeAgo';
 import type { AlertRow } from '../types';
 
-const SEVERITY_MAP: Record<string, 'error' | 'warning' | 'info'> = {
-  CRITICAL: 'error',
-  HIGH: 'warning',
-  MEDIUM: 'warning',
-  LOW: 'info'
-};
+type Show = 'open' | 'resolved' | 'all';
 
-// FR-WEB-060/062/063 — scoped down (17 Aug 2026): in-app only, no
-// SMS/email/push service. Alerts here are already deduplicated and
-// severity-real (server-computed, see backend/services/alertEngine.js) —
-// nothing on this page is a raw fault re-notification.
+/** What happened, in words anyone reads at a glance. */
+export const alertText = (a: Pick<AlertRow, 'alert_type' | 'fault_name' | 'fault_code'>) =>
+  a.alert_type === 'FAULT' ? a.fault_name || (a.fault_code !== null ? `Fault ${a.fault_code}` : 'Pump fault') : 'Pump went offline';
+
+/** The pumps that need attention: what happened, to which pump and when. Resolve one when it has been dealt with. */
 export const AlertsView: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { subscribe } = useWs();
   const { showToast } = useToast();
-  // Subscriptions default to "everything in scope" with zero rows (see
-  // AlertSubscriptionsDialog) — the narrowing/muting controls are a
-  // multi-device power-user tool (dealer/distributor/manufacturer
-  // managing a fleet), not something a single-pump end customer needs to
-  // touch to receive alerts at all.
-  const canManageSubscriptions = user?.role !== 'customer';
-
-  const [status, setStatus] = useState<AlertFilters['status'] | ''>('open');
-  const [severity, setSeverity] = useState('');
+  const [show, setShow] = useState<Show>('open');
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [subscriptionsOpen, setSubscriptionsOpen] = useState(false);
-  const [assignTarget, setAssignTarget] = useState<string | null>(null);
   const [resolveTarget, setResolveTarget] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const data = await fetchAlerts({ status: status || undefined, severity: severity || undefined });
-      const alertList = Array.isArray(data) ? data : (data?.alerts || (data as any)?.data || []);
-      setAlerts(alertList);
+      const status: AlertFilters['status'] | undefined = show === 'all' ? undefined : show;
+      const data = await fetchAlerts({ status });
+      const list = Array.isArray(data) ? data : data?.alerts || (data as any)?.data || [];
+      setAlerts(list);
     } catch (err: any) {
-      showToast(err.message || 'Could not load alerts', true);
+      showToast(err?.message || 'Could not load the alerts', true);
       setAlerts([]);
     } finally {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, severity]);
+  }, [show]);
 
   useEffect(() => {
     setLoading(true);
     load();
   }, [load]);
 
-  // A live alert while this view is open should show up without a manual
-  // refresh — cheaper to re-fetch than reconcile the digest/single-alert
-  // shapes locally, same reasoning FleetDashboardView uses for 'fault'.
+  // A new alert shows up without a refresh.
   useEffect(() => {
-    const unsubAlert = subscribe('alert', load);
-    const unsubDigest = subscribe('alert_digest', load);
+    const a = subscribe('alert', load);
+    const b = subscribe('alert_digest', load);
     return () => {
-      unsubAlert();
-      unsubDigest();
+      a();
+      b();
     };
   }, [subscribe, load]);
 
-  async function handleAck(id: string) {
-    try {
-      await ackAlert(id);
-      showToast('Alert acknowledged');
-      load();
-    } catch (err: any) {
-      showToast(err.message || 'Could not acknowledge alert', true);
-    }
-  }
+  const red = theme.palette.error.main;
+  const amber = theme.palette.warning.main;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
-            Alerts &amp; Operational Incidents
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
-            Automated fault escalation, offline anomaly detections, and field technician dispatch workflows
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          Pumps that need attention. Mark one resolved when it has been dealt with.
+        </Typography>
+        <ToggleButtonGroup value={show} exclusive size="small" onChange={(_, v: Show | null) => v && setShow(v)}>
+          <ToggleButton value="open" data-testid="show-open">Open</ToggleButton>
+          <ToggleButton value="resolved" data-testid="show-resolved">Resolved</ToggleButton>
+          <ToggleButton value="all" data-testid="show-all">All</ToggleButton>
+        </ToggleButtonGroup>
+      </Stack>
+
+      {loading ? (
+        <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
+          <CircularProgress size={36} />
+        </Box>
+      ) : alerts.length === 0 ? (
+        <Box sx={{ textAlign: 'center', py: 8, border: `1px dashed ${theme.palette.divider}`, borderRadius: 3 }} data-testid="no-alerts">
+          <CheckCircleOutlineIcon sx={{ fontSize: 36, color: 'success.main', mb: 1 }} />
+          <Typography sx={{ fontWeight: 700 }}>{show === 'resolved' ? 'Nothing resolved yet' : 'All clear'}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {show === 'open' ? 'No pump needs attention right now.' : 'There are no alerts to show here.'}
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel id="alert-status-label">Status</InputLabel>
-            <Select labelId="alert-status-label" label="Status" value={status} onChange={e => setStatus(e.target.value as AlertFilters['status'])}>
-              <MenuItem value="open">Open</MenuItem>
-              <MenuItem value="acknowledged">Acknowledged</MenuItem>
-              <MenuItem value="resolved">Resolved</MenuItem>
-              <MenuItem value="">All Statuses</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel id="alert-severity-label">Severity</InputLabel>
-            <Select labelId="alert-severity-label" label="Severity" value={severity} onChange={e => setSeverity(e.target.value)}>
-              <MenuItem value="">All Severities</MenuItem>
-              <MenuItem value="CRITICAL">Critical</MenuItem>
-              <MenuItem value="HIGH">High</MenuItem>
-              <MenuItem value="MEDIUM">Medium</MenuItem>
-              <MenuItem value="LOW">Low</MenuItem>
-            </Select>
-          </FormControl>
-          {canManageSubscriptions && (
-            <Button variant="tonal" size="small" onClick={() => setSubscriptionsOpen(true)} sx={{ height: 36 }}>
-              Alert Subscriptions
-            </Button>
-          )}
-        </Stack>
-      </Box>
-
-      <Box sx={{ flex: 1, overflowY: 'auto' }}>
-        {loading ? (
-          <Box sx={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-            <CircularProgress size={36} />
-          </Box>
-        ) : alerts.length === 0 ? (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              py: 8,
-              border: theme => `1px dashed ${theme.palette.divider}`,
-              borderRadius: 2
-            }}
-          >
-            <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-              No active incidents
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              All pump units in scope are operating within nominal electrical and connectivity parameters.
-            </Typography>
-          </Box>
-        ) : (
-          <Stack spacing={1.5}>
-            {alerts.map(a => {
-              const sev = a.severity || 'LOW';
-              const sevColor = sev === 'CRITICAL' || sev === 'HIGH' ? '#DC2626' : sev === 'MEDIUM' ? '#D97706' : '#0B7FC7';
-              return (
-                <Box
-                  key={a.id}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: { xs: 'column', sm: 'row' },
-                    alignItems: { xs: 'flex-start', sm: 'center' },
-                    justifyContent: 'space-between',
-                    gap: 1.5,
-                    p: 2,
-                    borderRadius: 2,
-                    border: theme => `1px solid ${theme.palette.divider}`,
-                    borderLeft: `4px solid ${sevColor}`,
-                    bgcolor: 'background.paper',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-                  }}
-                >
-                  <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
-                      <Chip
-                        size="small"
-                        label={a.severity}
-                        sx={{
-                          height: 20,
-                          fontSize: '0.6875rem',
-                          fontWeight: 700,
-                          bgcolor: `${sevColor}18`,
-                          color: sevColor,
-                          border: `1px solid ${sevColor}33`,
-                          fontFamily: monoFont
-                        }}
-                      />
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          color: 'primary.main',
-                          '&:hover': { textDecoration: 'underline' }
-                        }}
-                        onClick={() => navigate(`/devices/${encodeURIComponent(a.pump_id)}`)}
-                      >
-                        {a.pump_name}
-                      </Typography>
-                      <Chip
-                        size="small"
-                        label={a.alert_type === 'FAULT' ? a.fault_name || `Fault Code ${a.fault_code}` : 'Device Offline'}
-                        sx={{ height: 20, fontSize: '0.6875rem', fontFamily: monoFont, fontWeight: 600 }}
-                      />
-                      {a.occurrence_count > 1 && (
-                        <Chip size="small" label={`×${a.occurrence_count} events`} sx={{ height: 20, fontSize: '0.6875rem' }} />
-                      )}
-                    </Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: monoFont, display: 'block' }}>
-                      Reported: {new Date(a.last_occurred_at).toLocaleString()}
-                      {a.acknowledged_at && ` • Acknowledged by ${a.acknowledged_by_name || 'Staff'}`}
-                      {a.assigned_to_name && ` • Assigned to ${a.assigned_to_name}`}
-                      {a.resolved_at && ` • Resolved at ${new Date(a.resolved_at).toLocaleTimeString()}`}
-                    </Typography>
-                    {a.resolution_note && (
-                      <Typography variant="body2" sx={{ mt: 0.75, fontStyle: 'italic', color: 'text.secondary', bgcolor: 'background.surfaceVariant', p: 1, borderRadius: 1 }}>
-                        Resolution note: {a.resolution_note}
-                      </Typography>
-                    )}
-                  </Box>
-
-                  <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-                    {!a.acknowledged_at && (
-                      <Button size="small" variant="outlined" onClick={() => handleAck(a.id)} sx={{ height: 30, fontSize: '0.75rem' }}>
-                        Acknowledge
-                      </Button>
-                    )}
-                    {!a.resolved_at && (
-                      <Button size="small" variant="outlined" onClick={() => setAssignTarget(a.id)} sx={{ height: 30, fontSize: '0.75rem' }}>
-                        Assign
-                      </Button>
-                    )}
-                    {!a.resolved_at && (
-                      <Button size="small" variant="contained" onClick={() => setResolveTarget(a.id)} sx={{ height: 30, fontSize: '0.75rem' }}>
-                        Resolve
-                      </Button>
-                    )}
+      ) : (
+        <Stack spacing={1.5}>
+          {alerts.map(a => {
+            const urgent = a.severity === 'CRITICAL' || a.severity === 'HIGH';
+            const color = a.resolved_at ? theme.palette.success.main : urgent ? red : amber;
+            return (
+              <Box
+                key={a.id}
+                data-testid={`alert-${a.id}`}
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  justifyContent: 'space-between',
+                  gap: 1.5,
+                  p: 2,
+                  borderRadius: 3,
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderLeft: `5px solid ${color}`,
+                  bgcolor: 'background.paper'
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
+                    <Typography sx={{ fontWeight: 800 }}>{alertText(a)}</Typography>
+                    {urgent && !a.resolved_at && <Chip size="small" color="error" label="Urgent" sx={{ height: 20 }} />}
+                    {a.occurrence_count > 1 && <Chip size="small" variant="outlined" label={`${a.occurrence_count} times`} sx={{ height: 20 }} />}
                   </Stack>
+                  <Typography
+                    variant="body2"
+                    sx={{ cursor: 'pointer', color: 'primary.main', '&:hover': { textDecoration: 'underline' }, display: 'inline-block' }}
+                    onClick={() => navigate(`/devices/${encodeURIComponent(a.pump_id)}`)}
+                  >
+                    {a.pump_name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {timeAgo(a.last_occurred_at)}
+                    {a.resolved_at ? ` · resolved ${timeAgo(a.resolved_at)}` : ''}
+                  </Typography>
+                  {a.resolution_note && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                      {a.resolution_note}
+                    </Typography>
+                  )}
                 </Box>
-              );
-            })}
-          </Stack>
-        )}
-      </Box>
+                {!a.resolved_at && (
+                  <Button variant="contained" size="small" onClick={() => setResolveTarget(a.id)} data-testid={`resolve-${a.id}`} sx={{ flexShrink: 0 }}>
+                    Resolve
+                  </Button>
+                )}
+              </Box>
+            );
+          })}
+        </Stack>
+      )}
 
-      <AssignAlertDialog open={assignTarget !== null} alertId={assignTarget} onClose={() => setAssignTarget(null)} onAssigned={load} />
       <ResolveAlertDialog open={resolveTarget !== null} alertId={resolveTarget} onClose={() => setResolveTarget(null)} onResolved={load} />
-      <AlertSubscriptionsDialog open={subscriptionsOpen} onClose={() => setSubscriptionsOpen(false)} />
     </Box>
   );
 };

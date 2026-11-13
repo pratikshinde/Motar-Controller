@@ -9,6 +9,8 @@ import { AddSubordinateDialog } from '../../components/AddSubordinateDialog';
 import { AddFarmerDialog } from '../../components/AddFarmerDialog';
 import { NewPartnerQrDialog } from '../../components/NewPartnerQrDialog';
 import { PersonCard } from '../../components/people/personUi';
+import { PendingRegistrations } from '../../components/people/PendingRegistrations';
+import { cancelRegistration, fetchRegistrations, type Registration } from '../../api/registrations';
 
 type Level = TeamMember['role'];
 
@@ -35,10 +37,14 @@ export const PeopleView: React.FC = () => {
   const [addPartner, setAddPartner] = useState<'distributor' | 'dealer' | null>(null);
   const [addFarmer, setAddFarmer] = useState(false);
   const [qrTarget, setQrTarget] = useState<TeamMember | null>(null);
+  const [pending, setPending] = useState<Registration[]>([]);
+  const [resume, setResume] = useState<Registration | null>(null);
 
   const load = useCallback(async () => {
     try {
       setTeam(await fetchTeam());
+      // Registrations that were started and not finished (distributors and dealers only; a farmer is registered in one go).
+      fetchRegistrations().then(r => setPending(r.registrations)).catch(() => setPending([]));
       setError('');
     } catch (err: any) {
       setError(err?.message || 'Could not load your people');
@@ -115,6 +121,17 @@ export const PeopleView: React.FC = () => {
         </Typography>
       )}
 
+      {level !== 'customer' && (
+        <PendingRegistrations
+          items={pending.filter(r => r.role === level)}
+          onContinue={r => setResume(r)}
+          onCancel={async r => {
+            await cancelRegistration(r.id).catch(() => undefined);
+            load();
+          }}
+        />
+      )}
+
       {people.length > 0 && (
         <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fill, minmax(320px, 1fr))' } }}>
           {people.map(m => (
@@ -123,7 +140,18 @@ export const PeopleView: React.FC = () => {
         </Box>
       )}
 
-      <AddSubordinateDialog open={addPartner !== null} onClose={() => setAddPartner(null)} onCreated={load} underRole={addPartner} lockRole />
+      <AddSubordinateDialog
+        open={addPartner !== null || resume !== null}
+        onClose={() => {
+          setAddPartner(null);
+          setResume(null);
+          load();
+        }}
+        onCreated={load}
+        underRole={resume ? resume.role : addPartner}
+        lockRole
+        resume={resume}
+      />
       <AddFarmerDialog open={addFarmer} onClose={() => setAddFarmer(false)} onRegistered={load} />
       <NewPartnerQrDialog target={qrTarget} onClose={() => setQrTarget(null)} onDone={load} />
     </Box>

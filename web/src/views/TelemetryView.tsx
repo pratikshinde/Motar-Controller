@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Box, Typography, TextField, InputAdornment, Button, CircularProgress, Card, IconButton, Tooltip } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
-import AddIcon from '@mui/icons-material/Add';
 import BoltIcon from '@mui/icons-material/Bolt';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -15,7 +14,6 @@ import { usePumps } from '../hooks/usePumps';
 import { useCooldowns } from '../hooks/useCooldowns';
 import { useAuth } from '../context/AuthContext';
 import { PumpCard } from '../components/PumpCard';
-import { CommissionDialog } from '../components/CommissionDialog';
 import { LiveStatusChip } from '../components/LiveStatusChip';
 import { monoFont } from '../theme';
 import { effectiveStatus } from '../utils/pumpStatus';
@@ -28,10 +26,6 @@ export const TelemetryView: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'RUNNING' | 'FAULT' | 'STOPPED' | 'OFFLINE'>('ALL');
   const { pumps, stats, loading, reload, lastUpdated, wsStatus } = usePumps(search);
   const { remaining, start } = useCooldowns();
-  const [commissionOpen, setCommissionOpen] = useState(false);
-  const [editingPump, setEditingPump] = useState<PumpListItem | null>(null);
-
-  const isSuperadmin = user?.role === 'superadmin';
 
   const kpis = [
     { key: 'ALL', label: 'Total Fleet', value: stats?.total ?? 0, icon: BoltIcon, color: theme.palette.primary.main, bg: 'primaryContainer' },
@@ -170,20 +164,6 @@ export const TelemetryView: React.FC = () => {
               <RefreshIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          {isSuperadmin && (
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setEditingPump(null);
-                setCommissionOpen(true);
-              }}
-              sx={{ height: 36, px: 2 }}
-            >
-              Commission Pump
-            </Button>
-          )}
         </Box>
       </Box>
 
@@ -261,22 +241,12 @@ export const TelemetryView: React.FC = () => {
               pump={p}
               cooldownRemaining={remaining[p.id]}
               onCooldownStart={start}
-              onEditLocation={pump => {
-                setEditingPump(pump);
-                setCommissionOpen(true);
-              }}
               onChanged={reload}
             />
           ))}
         </Box>
       )}
 
-      <CommissionDialog
-        open={commissionOpen}
-        onClose={() => setCommissionOpen(false)}
-        onSaved={reload}
-        editingPump={editingPump}
-      />
     </Box>
   );
 };

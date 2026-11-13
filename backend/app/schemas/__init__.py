@@ -34,6 +34,25 @@ class ClaimRequest(BaseModel):
     app_install_id: Optional[str] = None
     device_info: Optional[str] = None
 
+class RegistrationScanRequest(BaseModel):
+    """The new distributor or dealer opened the registration QR."""
+    token: str = Field(..., min_length=20, max_length=128)
+
+
+class RegistrationVerifyRequest(BaseModel):
+    token: str = Field(..., min_length=20, max_length=128)
+    phone: str = Field(..., min_length=10, max_length=20)
+    code: str = Field(..., min_length=4, max_length=20)
+
+
+class RegistrationCompleteRequest(BaseModel):
+    token: str = Field(..., min_length=20, max_length=128)
+    ticket: str = Field(..., min_length=10, max_length=128)
+    password: str = Field(..., min_length=1, max_length=128)
+    app_install_id: Optional[str] = None
+    device_info: Optional[str] = None
+
+
 class PartnerClaimRequest(BaseModel):
     """A distributor or dealer opened the QR link the person above them gave out, typed the mobile number that was registered for them
     and chose a password. No OTP: the QR is the proof, the number is the second check."""

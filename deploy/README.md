@@ -29,6 +29,17 @@ One server runs five containers from `docker-compose.yml`:
 - `docker compose ps`: `api` is healthy, `migrate` has exited with code 0, `ingest` is **running** (it keeps restarting if `SQS_INGEST_URL` is empty)
 - Power one starter on the bench: it appears on the Factory Station page as "Has its own AWS certificate", then "Reporting to the cloud"
 
+## A forgotten password
+Admins and the super admin sign in with an email, so there is no code to send. Whoever runs the server sets a new password (and, if they lost the
+authenticator app too, removes it so they set it up again at the next sign-in):
+
+```bash
+docker compose exec api python scripts/reset_portal_password.py --email admin@ajanta.example
+docker compose exec api python scripts/reset_portal_password.py --email admin@ajanta.example --reset-authenticator
+```
+
+A distributor or a dealer who forgot theirs does not need this: the person above them clicks **New QR** on their card.
+
 ## Upgrades
 
 ```bash

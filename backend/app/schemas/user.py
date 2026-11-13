@@ -104,3 +104,12 @@ class UserUpdate(BaseModel):
 
 class UserRoleUpdate(BaseModel):
     role: str = Field(..., description="New role to assign")
+
+
+class RegistrationCreate(BaseModel):
+    """Register a distributor or a dealer: name, address and mobile number. The account is made only after the QR is scanned and the password typed."""
+    full_name: str = Field(..., min_length=2, max_length=100)
+    address: str = Field(..., min_length=3, max_length=300)
+    phone_number: str = Field(..., min_length=10, max_length=20)
+    role: str = Field(..., description="distributor or dealer")
+    parent_user_id: Optional[str] = Field(None, description="Who they sit under (default: the caller)")

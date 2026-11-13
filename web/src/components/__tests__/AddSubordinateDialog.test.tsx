@@ -3,67 +3,161 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-const mocks = vi.hoisted(() => ({ createPartnerByQr: vi.fn(), showToast: vi.fn(), role: 'manufacturer' }));
+const mocks = vi.hoisted(() => ({
+  startRegistration: vi.fn(),
+  fetchRegistration: vi.fn(),
+  newRegistrationQr: vi.fn(),
+  newRegistrationPassword: vi.fn(),
+  cancelRegistration: vi.fn(),
+  showToast: vi.fn(),
+  role: 'manufacturer'
+}));
 
-vi.mock('../../api/users', async importOriginal => ({ ...(await importOriginal<typeof import('../../api/users')>()), createPartnerByQr: mocks.createPartnerByQr }));
+vi.mock('../../api/registrations', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../api/registrations')>()),
+  startRegistration: mocks.startRegistration,
+  fetchRegistration: mocks.fetchRegistration,
+  newRegistrationQr: mocks.newRegistrationQr,
+  newRegistrationPassword: mocks.newRegistrationPassword,
+  cancelRegistration: mocks.cancelRegistration
+}));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'u1', role: mocks.role } }) }));
 vi.mock('../../context/ToastContext', () => ({ useToast: () => ({ showToast: mocks.showToast }) }));
 
 import { AddSubordinateDialog } from '../AddSubordinateDialog';
 
-const created = {
-  message: 'ok',
-  user: { id: 'p1', full_name: 'Suresh Patil', phone_number: '+919876543210', role: 'distributor' },
-  claim: { qr: 'AGP-CLAIM:abcdefghijklmnopqrstuvwxyz012345', token: 'abcdefghijklmnopqrstuvwxyz012345', expires_at: '2099-01-01T00:00:00Z' }
-};
+const reg = (over: any = {}) => ({
+  id: 'r1', role: 'distributor', full_name: 'Suresh Patil', address: 'Hadapsar, Pune', phone_number: '+919876543210', status: 'WAITING',
+  created_at: '2026-11-13T10:00:00Z', expires_at: '2099-01-01T00:00:00Z', scanned_at: null, password: null, ...over
+});
+const started = { registration: reg(), qr: { token: 'abcdefghijklmnopqrstuvwxyz012345', expires_at: '2099-01-01T00:00:00Z' } };
+
+async function fill(phone = '98765 43210') {
+  await userEvent.type(screen.getByLabelText(/full name/i), 'Suresh Patil');
+  await userEvent.type(screen.getByLabelText(/address/i), 'Hadapsar, Pune');
+  await userEvent.type(screen.getByLabelText(/mobile number/i), phone);
+  await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+}
+
+const open = (props: any = {}) => render(<AddSubordinateDialog open onClose={vi.fn()} onCreated={vi.fn()} pollMs={20} {...props} />);
 
 beforeEach(() => {
-  mocks.createPartnerByQr.mockReset();
-  mocks.showToast.mockReset();
+  Object.values(mocks).forEach(m => typeof m === 'function' && (m as ReturnType<typeof vi.fn>).mockReset());
   mocks.role = 'manufacturer';
+  mocks.fetchRegistration.mockResolvedValue({ registration: reg() });
 });
 
-describe('Add distributor or dealer', () => {
-  it('asks for a name and a mobile number only: no password, no code', () => {
-    render(<AddSubordinateDialog open onClose={vi.fn()} onCreated={vi.fn()} />);
+describe('Registering a distributor or dealer: the form', () => {
+  it('asks for name, address and mobile number only: no password, no code', () => {
+    open();
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/mobile number/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/whatsapp/i)).not.toBeInTheDocument();
   });
 
-  it('creates the account and shows the one-time QR with the link to open it', async () => {
-    mocks.createPartnerByQr.mockResolvedValue(created);
-    const onCreated = vi.fn();
-    render(<AddSubordinateDialog open onClose={vi.fn()} onCreated={onCreated} />);
+  it('refuses a number that is not ten digits, and a missing address, without asking the server', async () => {
+    open();
     await userEvent.type(screen.getByLabelText(/full name/i), 'Suresh Patil');
-    await userEvent.type(screen.getByLabelText(/mobile number/i), '98765 43210');
-    await userEvent.click(screen.getByRole('button', { name: /add and show qr/i }));
-    await waitFor(() => expect(mocks.createPartnerByQr).toHaveBeenCalledTimes(1));
-    expect(mocks.createPartnerByQr.mock.calls[0][0]).toMatchObject({ full_name: 'Suresh Patil', phone_number: '98765 43210', role: 'distributor' });
-    expect(await screen.findByTestId('partner-qr')).toBeInTheDocument();
-    expect(screen.getByTestId('partner-qr-link')).toHaveTextContent(`/claim/${created.claim.token}`);
-    expect(onCreated).toHaveBeenCalled();
+    await userEvent.type(screen.getByLabelText(/mobile number/i), '12345');
+    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+    expect(mocks.startRegistration).not.toHaveBeenCalled();
   });
 
   it('offers distributor and dealer to an admin, and nothing at all to a dealer', async () => {
-    const { unmount } = render(<AddSubordinateDialog open onClose={vi.fn()} onCreated={vi.fn()} />);
+    const { unmount } = open();
     await userEvent.click(screen.getByRole('combobox'));
     expect(await screen.findByRole('option', { name: /regional distributor/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /dealer/i })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /farmer/i })).not.toBeInTheDocument();
     unmount();
     mocks.role = 'dealer';
-    const { container } = render(<AddSubordinateDialog open onClose={vi.fn()} onCreated={vi.fn()} />);
+    const { container } = open();
     expect(container).toBeEmptyDOMElement();
   });
+});
 
-  it('refuses a number that is not ten digits without asking the server', async () => {
-    render(<AddSubordinateDialog open onClose={vi.fn()} onCreated={vi.fn()} />);
-    await userEvent.type(screen.getByLabelText(/full name/i), 'Suresh Patil');
-    await userEvent.type(screen.getByLabelText(/mobile number/i), '12345');
-    await userEvent.click(screen.getByRole('button', { name: /add and show qr/i }));
-    expect(mocks.createPartnerByQr).not.toHaveBeenCalled();
-    expect(mocks.showToast).toHaveBeenCalledWith(expect.stringMatching(/10-digit/), true);
+describe('Registering: the QR, the scan, the password', () => {
+  it('sends what was typed, the parent, and then shows the QR and waits for the scan: no account is claimed to exist', async () => {
+    mocks.startRegistration.mockResolvedValue(started);
+    const onCreated = vi.fn();
+    open({ onCreated, underRole: 'distributor', lockRole: true, parentId: 'p9' });
+    await fill();
+    await waitFor(() => expect(mocks.startRegistration).toHaveBeenCalledTimes(1));
+    expect(mocks.startRegistration.mock.calls[0][0]).toMatchObject({ full_name: 'Suresh Patil', address: 'Hadapsar, Pune', phone_number: '98765 43210', role: 'distributor', parent_user_id: 'p9' });
+    expect(await screen.findByTestId('registration-link')).toHaveTextContent('/register/abcdefghijklmnopqrstuvwxyz012345');
+    expect(screen.getByTestId('waiting-for-scan')).toHaveTextContent('scan this QR');
+    expect(screen.queryByTestId('one-time-password')).not.toBeInTheDocument();
+  });
+
+  it('shows the one-time password the moment the QR is scanned, to be sent to the new person', async () => {
+    mocks.startRegistration.mockResolvedValue(started);
+    mocks.fetchRegistration.mockResolvedValue({ registration: reg({ status: 'SCANNED', password: 'K7Q4-9MZB' }) });
+    open({ underRole: 'distributor', lockRole: true });
+    await fill();
+    expect(await screen.findByTestId('one-time-password')).toHaveTextContent('K7Q4-9MZB');
+    expect(screen.getByTestId('scanned')).toHaveTextContent('Send them this password');
+  });
+
+  it('keeps showing the password once the server has stopped sending it, as long as the dialog is open', async () => {
+    mocks.startRegistration.mockResolvedValue(started);
+    mocks.fetchRegistration
+      .mockResolvedValueOnce({ registration: reg({ status: 'SCANNED', password: 'K7Q4-9MZB' }) })
+      .mockResolvedValue({ registration: reg({ status: 'SCANNED', password: null }) });
+    open({ underRole: 'distributor', lockRole: true });
+    await fill();
+    await screen.findByTestId('one-time-password');
+    await new Promise(r => setTimeout(r, 120));
+    expect(screen.getByTestId('one-time-password')).toHaveTextContent('K7Q4-9MZB');
+  });
+
+  it('says it is registered when they have finished, and tells the page', async () => {
+    mocks.startRegistration.mockResolvedValue(started);
+    mocks.fetchRegistration.mockResolvedValue({ registration: reg({ status: 'COMPLETED' }) });
+    const onCreated = vi.fn();
+    open({ onCreated, underRole: 'distributor', lockRole: true });
+    await fill();
+    expect(await screen.findByText('Suresh Patil is registered')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /done/i })).toBeInTheDocument();
+    await waitFor(() => expect(onCreated.mock.calls.length).toBeGreaterThanOrEqual(2)); // once when started, once when finished
+  });
+
+  it('offers a new QR when it has expired or been blocked', async () => {
+    mocks.startRegistration.mockResolvedValue(started);
+    mocks.fetchRegistration.mockResolvedValue({ registration: reg({ status: 'BLOCKED' }) });
+    mocks.newRegistrationQr.mockResolvedValue({ registration: reg(), qr: { token: 'zyxwvutsrqponmlkjihgfedcba98765', expires_at: '2099-01-01T00:00:00Z' } });
+    open({ underRole: 'distributor', lockRole: true });
+    await fill();
+    expect(await screen.findByText(/too many wrong tries/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('new-qr-button'));
+    await waitFor(() => expect(mocks.newRegistrationQr).toHaveBeenCalledWith('r1'));
+  });
+
+  it('offers a new password when the page missed the first one', async () => {
+    mocks.startRegistration.mockResolvedValue(started);
+    mocks.fetchRegistration.mockResolvedValue({ registration: reg({ status: 'SCANNED', password: null }) });
+    mocks.newRegistrationPassword.mockResolvedValue({ registration: reg({ status: 'SCANNED', password: 'NEW1-PASS' }) });
+    open({ underRole: 'distributor', lockRole: true });
+    await fill();
+    await userEvent.click(await screen.findByRole('button', { name: /new password/i }));
+    expect(await screen.findByTestId('one-time-password')).toHaveTextContent('NEW1-PASS');
+  });
+
+  it('cancels the registration when asked, so nothing is left behind', async () => {
+    mocks.startRegistration.mockResolvedValue(started);
+    mocks.cancelRegistration.mockResolvedValue({ message: 'ok' });
+    const onClose = vi.fn();
+    open({ onClose, underRole: 'distributor', lockRole: true });
+    await fill();
+    await userEvent.click(await screen.findByRole('button', { name: /cancel registration/i }));
+    await waitFor(() => expect(mocks.cancelRegistration).toHaveBeenCalledWith('r1'));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('carries on with an unfinished registration by making a new QR for it', async () => {
+    mocks.newRegistrationQr.mockResolvedValue({ registration: reg(), qr: { token: 'resumedtokenresumedtoken1234', expires_at: '2099-01-01T00:00:00Z' } });
+    open({ resume: reg() as any });
+    await waitFor(() => expect(mocks.newRegistrationQr).toHaveBeenCalledWith('r1'));
+    expect(await screen.findByTestId('registration-link')).toHaveTextContent('/register/resumedtokenresumedtoken1234');
   });
 });

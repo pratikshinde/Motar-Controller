@@ -243,11 +243,11 @@ export const DeviceDetailView: React.FC = () => {
       >
         <Tab label="Overview" value="overview" />
         <Tab label="Trends" value="trends" />
-        <Tab label="Configuration" value="configuration" />
+        <Tab label="Settings" value="configuration" />
         <Tab label="Schedule" value="schedule" />
-        <Tab label="Events & Logs" value="events" />
-        <Tab label="Ownership & Hierarchy" value="ownership" />
-        <Tab label="Diagnostics & Panel" value="diagnostics" />
+        <Tab label="History" value="events" />
+        <Tab label="Owner" value="ownership" />
+        <Tab label="Panel details" value="diagnostics" />
       </Tabs>
 
       <Box sx={{ flex: 1, overflowY: 'auto', pt: 1 }}>
