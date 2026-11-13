@@ -24,7 +24,7 @@ interface Props {
 export const InviteDialog: React.FC<Props> = ({ open, onClose, underRole, parentId }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const assignable = user ? ASSIGNABLE_ROLES[user.role] : [];
+  const assignable: RoleTier[] = user ? ASSIGNABLE_ROLES[user.role].filter(r => r !== 'customer') : [];
 
   const [role, setRole] = useState<RoleTier | ''>('');
   const [busy, setBusy] = useState(false);

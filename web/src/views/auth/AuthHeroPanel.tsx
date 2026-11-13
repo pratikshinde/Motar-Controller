@@ -20,7 +20,7 @@ const CAPABILITIES = [
 const FACTS = [
   { label: '4G connected pumps', icon: SensorsIcon, tint: '#38B6F5' },
   { label: 'Secure, encrypted sign-in', icon: LockOutlinedIcon, tint: '#34C37A' },
-  { label: 'Farmers use the Ajanta app', icon: PhoneAndroidIcon, tint: '#FBBF24' }
+  { label: 'Farmers use the mobile app', icon: PhoneAndroidIcon, tint: '#FBBF24' }
 ];
 
 export const AuthHeroPanel: React.FC = () => (
@@ -61,7 +61,7 @@ export const AuthHeroPanel: React.FC = () => (
     />
 
     <Box sx={{ position: 'relative', zIndex: 2, mb: { xs: 3, md: 4 } }}>
-      <BrandLogo size="medium" light partnerName="Ajanta Pump Controller" />
+      <BrandLogo size="medium" light partnerName="Pump Controller" />
     </Box>
 
     <Box sx={{ position: 'relative', zIndex: 2, my: 'auto', py: { xs: 2, md: 3 } }}>

@@ -5,7 +5,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
-import { loginWithEmail } from '../../api/auth';
+import { loginWithEmail, loginWithPassword } from '../../api/auth';
 import { verifyMfa } from '../../api/mfa';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -14,14 +14,16 @@ import { isMfaRequired } from '../../types';
 // A developer's machine only (`npm run dev`): the authenticator step also accepts the fixed development code.
 const DEV_HELPERS = import.meta.env.DEV;
 
-/** The website has two logins, each by email and password: the Ajanta admin (registers farmers) and the super admin (monitors only).
- *  There is no sign-up here: the platform owner creates both accounts. */
+/** The website's sign-in. The admin and the platform owner sign in with an email and a password; distributors and dealers (who have no email) with
+ *  their mobile number and the password they chose when they opened their QR. There is no sign-up here: the person above creates every account. */
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { handleAuthResult } = useAuth();
   const { showToast } = useToast();
 
+  const [byMobile, setByMobile] = useState(false);
   const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -36,7 +38,7 @@ export const LoginForm: React.FC = () => {
     setError('');
     setBusy(true);
     try {
-      const result = await loginWithEmail(email, password);
+      const result = byMobile ? await loginWithPassword(mobile, password) : await loginWithEmail(email, password);
       if (isMfaRequired(result)) {
         setMfaToken(result.mfa_token);
         setMfaCode(DEV_HELPERS ? '123456' : '');
@@ -79,7 +81,7 @@ export const LoginForm: React.FC = () => {
           Sign in
         </Typography>
         <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.92rem' }}>
-          Ajanta Pump Controller admin and platform owner
+          {byMobile ? 'Distributors and dealers' : 'Admin and platform owner'}
         </Typography>
       </Box>
 
@@ -139,18 +141,34 @@ export const LoginForm: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <Stack spacing={2.5}>
             <Box>
-              <Typography sx={{ fontSize: '0.84rem', fontWeight: 600, color: '#334155', mb: 0.75 }}>Email</Typography>
-              <TextField
-                placeholder="name@company.com"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                autoComplete="username"
-                autoFocus
-                fullWidth
-                required
-                slotProps={{ input: { sx: { borderRadius: 2.2, bgcolor: '#FFFFFF' } } }}
-              />
+              <Typography sx={{ fontSize: '0.84rem', fontWeight: 600, color: '#334155', mb: 0.75 }}>{byMobile ? 'Mobile number' : 'Email'}</Typography>
+              {byMobile ? (
+                <TextField
+                  key="mobile"
+                  placeholder="98765 43210"
+                  type="tel"
+                  value={mobile}
+                  onChange={e => setMobile(e.target.value)}
+                  autoComplete="username"
+                  autoFocus
+                  fullWidth
+                  required
+                  slotProps={{ input: { sx: { borderRadius: 2.2, bgcolor: '#FFFFFF' } } }}
+                />
+              ) : (
+                <TextField
+                  key="email"
+                  placeholder="name@company.com"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  autoComplete="username"
+                  autoFocus
+                  fullWidth
+                  required
+                  slotProps={{ input: { sx: { borderRadius: 2.2, bgcolor: '#FFFFFF' } } }}
+                />
+              )}
             </Box>
 
             <Box>
@@ -182,7 +200,7 @@ export const LoginForm: React.FC = () => {
               type="submit"
               variant="contained"
               size="large"
-              disabled={busy || !email.trim() || !password}
+              disabled={busy || !(byMobile ? mobile.trim() : email.trim()) || !password}
               sx={{ py: 1.35, borderRadius: 2.2, fontWeight: 700, fontSize: '0.95rem', bgcolor: '#0B7A3E', textTransform: 'none', boxShadow: '0 4px 12px rgba(11, 122, 62, 0.25)', '&:hover': { bgcolor: '#08642F' } }}
             >
               {busy ? 'Signing in…' : 'Sign In'}
@@ -191,9 +209,25 @@ export const LoginForm: React.FC = () => {
             <Box sx={{ p: 1.75, borderRadius: 2, bgcolor: '#F0F9FF', border: '1px solid #BAE6FD', display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
               <InfoOutlinedIcon sx={{ color: '#0284C7', fontSize: 20, mt: '2px', flexShrink: 0 }} />
               <Typography sx={{ fontSize: '0.82rem', color: '#0369A1', lineHeight: 1.45 }}>
-                There is no sign-up here. Your email and password are given to you by the platform owner. Forgot your password? Ask the platform owner.
+                {byMobile
+                  ? 'There is no sign-up here. You opened your account from the QR the person above you gave you. Forgot your password? Ask them for a new QR.'
+                  : 'There is no sign-up here. Your email and password are given to you by the platform owner. Forgot your password? Ask the platform owner.'}
               </Typography>
             </Box>
+
+            <Link
+              component="button"
+              type="button"
+              variant="body2"
+              data-testid="switch-login"
+              onClick={() => {
+                setByMobile(v => !v);
+                setError('');
+              }}
+              sx={{ color: '#0B7A3E', fontWeight: 600, alignSelf: 'center' }}
+            >
+              {byMobile ? 'Admin? Use your email' : 'Distributor or dealer? Use your phone number'}
+            </Link>
           </Stack>
         </form>
       )}

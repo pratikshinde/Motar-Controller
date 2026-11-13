@@ -75,7 +75,7 @@ export const LoginView: React.FC<LoginViewProps> = () => {
           bgcolor: '#FFFFFF'
         }}
       >
-        <BrandLogo size="small" partnerName="Ajanta Pump Controller" />
+        <BrandLogo size="small" partnerName="Pump Controller" />
       </Box>
 
       {/* RIGHT COLUMN: Authentication Container */}
@@ -104,7 +104,7 @@ export const LoginView: React.FC<LoginViewProps> = () => {
 
           {/* Desktop Right Column Brand (Subtle) */}
           <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-            <BrandLogo size="small" partnerName="Ajanta Pump Controller" />
+            <BrandLogo size="small" partnerName="Pump Controller" />
           </Box>
 
           {/* Language Selector */}
@@ -156,7 +156,7 @@ export const LoginView: React.FC<LoginViewProps> = () => {
         {/* Bottom Security / Copyright Note */}
         <Box sx={{ textAlign: 'center', pt: 3, borderTop: '1px solid #F1F5F9' }}>
           <Typography sx={{ fontSize: '0.78rem', color: '#94A3B8' }}>
-            &copy; {new Date().getFullYear()} Ajanta Pump Controller &bull; Secured with TLS &amp; two-factor sign-in
+            &copy; {new Date().getFullYear()} Pump Controller &bull; Secured with TLS &amp; two-factor sign-in
           </Typography>
         </Box>
       </Box>

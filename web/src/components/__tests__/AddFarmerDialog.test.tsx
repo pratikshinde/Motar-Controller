@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 const mocks = vi.hoisted(() => ({ registerFarmer: vi.fn(), showToast: vi.fn() }));
 
 vi.mock('../../api/farmers', () => ({ registerFarmer: mocks.registerFarmer }));
+vi.mock('../../hooks/useBrandName', () => ({ useBrandName: () => 'Ajanta Pump Controller', PLATFORM_NAME: 'Pump Controller' }));
 vi.mock('../../context/ToastContext', () => ({ useToast: () => ({ showToast: mocks.showToast }) }));
 vi.mock('../BarcodeScanDialog', () => ({ barcodeScanSupported: () => false, BarcodeScanDialog: () => null }));
 

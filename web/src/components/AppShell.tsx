@@ -17,18 +17,14 @@ import { useLocale } from '../context/LocaleContext';
 import { useWs } from '../context/WebSocketContext';
 import { useToast } from '../context/ToastContext';
 import { ROLE_NAMES } from '../api/users';
-import { navSections, navItems } from './navItems';
+import { menuFor, menuItemsFor, menuItemForPath } from './navItems';
 import { SettingsDialog } from './SettingsDialog';
 import { MfaSetupDialog } from './MfaSetupDialog';
 import { BrandLogo } from './brand/BrandLogo';
-import { ManufacturerSwitcher } from './ManufacturerSwitcher';
-import { AddFarmerDialog } from './AddFarmerDialog';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { fetchMyBrand } from '../api/brands';
+import { useBrandName } from '../hooks/useBrandName';
 import { setViewing, useViewing } from '../api/viewing';
 
-// The website is Ajanta's: this name shows until (and unless) the server names the signed-in person's manufacturer.
-const AJANTA_NAME = 'Ajanta Pump Controller';
+
 
 const DRAWER_WIDTH = 256;
 const RAIL_WIDTH = 76;
@@ -51,29 +47,11 @@ export const AppShell: React.FC = () => {
   const viewing = useViewing();
   const viewingBannerHeight = viewing ? 34 : 0;
 
-  // The Ajanta admin registers a farmer from the Live Telemetry page: the form opens right there.
-  const [addFarmerOpen, setAddFarmerOpen] = useState(false);
-  const canAddFarmer = user?.role === 'manufacturer' && (location.pathname === '/dashboard' || location.pathname === '/telemetry');
-
-  // A manufacturer's distributors and dealers see their manufacturer's name (e.g. "Ajanta Pump Controller") in the header.
-  const [partnerName, setPartnerName] = useState<string | null>(AJANTA_NAME);
+  // The name of the signed-in person's manufacturer ("Ajanta Pump Controller", "Swati ..."), or "Pump Controller" for the platform owner.
+  const partnerName = useBrandName();
   useEffect(() => {
-    let cancelled = false;
-    if (!user) {
-      setPartnerName(AJANTA_NAME);
-      return;
-    }
-    fetchMyBrand()
-      .then(res => {
-        if (!cancelled) setPartnerName(res.brand?.name ?? AJANTA_NAME);
-      })
-      .catch(() => {
-        if (!cancelled) setPartnerName(AJANTA_NAME); // cosmetic: the Ajanta name stays
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
+    document.title = partnerName;
+  }, [partnerName]);
 
   useEffect(() => {
     const unsubAlert = subscribe('alert', msg => {
@@ -93,26 +71,12 @@ export const AppShell: React.FC = () => {
   const roleName = user ? ROLE_NAMES[user.role] : '';
   const railOrDrawerWidth = isExpanded ? DRAWER_WIDTH : RAIL_WIDTH;
 
-  // Filter sections and items based on role and viewing mode
-  const filteredSections = useMemo(() => {
-    return navSections
-      .map(sec => ({
-        ...sec,
-        items: sec.items.filter(
-          item => (!item.roles || (user && item.roles.includes(user.role))) && !(viewing && item.platformOnly)
-        )
-      }))
-      .filter(sec => sec.items.length > 0);
-  }, [user, viewing]);
-
-  const visibleNavItems = useMemo(() => {
-    return navItems.filter(
-      item => (!item.roles || (user && item.roles.includes(user.role))) && !(viewing && item.platformOnly)
-    );
-  }, [user, viewing]);
+  // The menu for this role
+  const filteredSections = useMemo(() => menuFor(user?.role), [user]);
+  const visibleNavItems = useMemo(() => menuItemsFor(user?.role), [user]);
 
   // Current page title
-  const currentNavItem = visibleNavItems.find(item => item.path === location.pathname);
+  const currentNavItem = menuItemForPath(user?.role, location.pathname);
   const pageTitle = currentNavItem ? t[currentNavItem.labelKey] : 'Dashboard';
 
   const navList = (
@@ -320,17 +284,6 @@ export const AppShell: React.FC = () => {
             <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.9375rem' }}>
               {pageTitle}
             </Typography>
-            {canAddFarmer && (
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<PersonAddIcon />}
-                onClick={() => setAddFarmerOpen(true)}
-                sx={{ ml: 1.5, textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
-              >
-                Add farmer
-              </Button>
-            )}
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
@@ -370,7 +323,6 @@ export const AppShell: React.FC = () => {
           </Box>
 
           {/* Manufacturer Switcher for Superadmin */}
-          {user?.role === 'superadmin' && <ManufacturerSwitcher />}
 
           {/* User Role Tag */}
           {user && !isExpanded && (
@@ -517,14 +469,6 @@ export const AppShell: React.FC = () => {
       )}
 
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      {canAddFarmer && (
-        <AddFarmerDialog
-          open={addFarmerOpen}
-          onClose={() => setAddFarmerOpen(false)}
-          // The pump list and the Farmers page pick the new farmer up straight away.
-          onRegistered={() => window.dispatchEvent(new Event('farmers-changed'))}
-        />
-      )}
       <MfaSetupDialog />
     </Box>
   );

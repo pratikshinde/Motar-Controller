@@ -17,6 +17,8 @@ export interface User {
   id: string;
   full_name: string;
   phone_number: string;
+  /** Admins sign in with an email and may have no mobile number. */
+  email?: string | null;
   role: RoleTier;
   hierarchy_path: string;
   dealer_depth?: number;
@@ -34,6 +36,8 @@ export interface User {
 // `members`; `children` branches only at the org-unit level, not per login.
 export interface UserTreeNode extends User {
   parent_user_id: string | null;
+  /** A distributor or dealer added by QR has no password until they open the QR link and choose one. */
+  has_signed_in?: boolean;
   members: User[];
   children: UserTreeNode[];
 }

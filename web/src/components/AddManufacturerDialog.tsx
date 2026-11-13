@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Stack, TextField, Typography } from '@mui/material';
 import { createManufacturerAccount, createManufacturerBrand } from '../api/brands';
-import { PhoneVerifyField } from './PhoneVerifyField';
 import { useToast } from '../context/ToastContext';
 
 // Mirrors the server (MIN_PARTNER_PASSWORD, KEY_PATTERN, the #RRGGBB check).
@@ -38,10 +37,8 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
   const [supportPhone, setSupportPhone] = useState('');
   const [supportEmail, setSupportEmail] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [ticket, setTicket] = useState<string | null>(null);
-  const [verifyReset, setVerifyReset] = useState(0);
   const [brandDone, setBrandDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -55,9 +52,8 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
     setSupportPhone('');
     setSupportEmail('');
     setOwnerName('');
-    setPhone('');
+    setEmail('');
     setPassword('');
-    setTicket(null);
     setBrandDone(false);
     setError('');
   }, [open]);
@@ -75,8 +71,7 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
       if (!KEY_RE.test(key)) return setError('The short key must be 2–30 lowercase letters, digits or dashes, starting with a letter.');
       if (color && !COLOR_RE.test(color)) return setError('The colour must look like #1B4FB8.');
     }
-    if (!ownerName.trim() || !phone.trim()) return setError('The manufacturer’s login needs a name and a mobile number.');
-    if (!ticket) return setError('Verify the mobile number first: send the WhatsApp code and enter what the person reads out.');
+    if (!ownerName.trim() || !email.trim()) return setError('The manufacturer’s login needs a name and an email address.');
     if (password.length < MIN_PASSWORD) return setError(`The password must be at least ${MIN_PASSWORD} characters.`);
 
     setBusy(true);
@@ -95,9 +90,8 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
       await createManufacturerAccount({
         brand: key,
         full_name: ownerName.trim(),
-        phone_number: phone.trim(),
-        password,
-        phone_verification_token: ticket
+        email: email.trim(),
+        password
       });
       showToast(`${name.trim()} added. They can sign in to the web portal now.`);
       onCreated(key);
@@ -105,8 +99,6 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
     } catch (err: any) {
       // The manufacturer itself may already exist when the login step fails: keep that, retry only the login.
       setError(err.message || 'Could not add the manufacturer.');
-      setVerifyReset(n => n + 1);
-      setTicket(null);
     } finally {
       setBusy(false);
     }
@@ -148,14 +140,7 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
             <Divider />
             <Typography variant="subtitle2">The manufacturer’s login to this portal</Typography>
             <TextField label="Full name" value={ownerName} onChange={e => setOwnerName(e.target.value)} required fullWidth disabled={busy} />
-            <TextField label="Mobile number" placeholder="+91 XXXXX XXXXX" value={phone} onChange={e => setPhone(e.target.value)} required fullWidth disabled={busy} />
-            <PhoneVerifyField
-              phone={phone}
-              onTicket={setTicket}
-              disabled={busy}
-              resetKey={verifyReset}
-              hint="A one-time code goes to this number on WhatsApp. Ask the person to read it out to you."
-            />
+            <TextField label="Email" type="email" placeholder="name@company.com" helperText="They sign in to the website with this email and password." value={email} onChange={e => setEmail(e.target.value)} required fullWidth disabled={busy} />
             <TextField
               label={`Password (at least ${MIN_PASSWORD} characters)`}
               type="password"
@@ -172,7 +157,7 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
           <Button onClick={onClose} disabled={busy}>
             Cancel
           </Button>
-          <Button type="submit" variant="contained" disabled={busy || !ticket}>
+          <Button type="submit" variant="contained" disabled={busy}>
             {brandDone ? 'Create login' : 'Add manufacturer'}
           </Button>
         </DialogActions>

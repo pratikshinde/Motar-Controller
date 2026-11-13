@@ -55,6 +55,17 @@ export async function loginWithPassword(phoneNumber: string, password: string): 
   return outcomeFrom(body);
 }
 
+/** A distributor's or dealer's first sign-in (and how a lost password is replaced): the QR link, the registered mobile number and a new password. */
+export async function claimPartnerAccount(token: string, phoneNumber: string, password: string): Promise<LoginOutcome> {
+  const res = await apiFetch('/auth/partner-claim', {
+    method: 'POST',
+    body: JSON.stringify({ qr: `AGP-CLAIM:${token}`, phone: cleanPhone(phoneNumber), password })
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'Could not open this link'));
+  return outcomeFrom(body);
+}
+
 export async function loginWithEmail(email: string, password: string): Promise<LoginOutcome> {
   const res = await apiFetch('/auth/login-email', {
     method: 'POST',

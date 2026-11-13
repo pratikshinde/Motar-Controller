@@ -4,56 +4,63 @@ import { AppThemeProvider } from './theme/ColorModeContext';
 import { ToastProvider } from './context/ToastContext';
 import { LocaleProvider } from './context/LocaleContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useViewing } from './api/viewing';
 import { BrandingProvider } from './context/BrandingContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { AppShell } from './components/AppShell';
 import { LoginView } from './views/LoginView';
-import { TelemetryView } from './views/TelemetryView';
-import { DevicesView } from './views/DevicesView';
-import { FaultLogsView } from './views/FaultLogsView';
-import { MapView } from './views/MapView';
 import { DeviceDetailView } from './views/DeviceDetailView';
 import { AuditLogView } from './views/AuditLogView';
-import { FleetDashboardView } from './views/FleetDashboardView';
 import { FactoryConsoleView } from './views/FactoryConsoleView';
-import { FactoryStationView } from './views/FactoryStationView';
+import { HierarchyView } from './views/HierarchyView';
 import { SystemHealthView } from './views/SystemHealthView';
 import { SupportConsoleView } from './views/SupportConsoleView';
 import { InviteRedeemView } from './views/InviteRedeemView';
+import { ClaimView } from './views/ClaimView';
 import { ConfigTemplatesView } from './views/ConfigTemplatesView';
 import { ServiceReportsView } from './views/ServiceReportsView';
-import { AlertsView } from './views/AlertsView';
 import { ManufacturersView } from './views/ManufacturersView';
-import { FarmersView } from './views/FarmersView';
+import { AlertsHub, DevicesHub } from './views/hubs';
+import { PeopleView } from './views/people/PeopleView';
+import { PersonDashboardView } from './views/people/PersonDashboardView';
+import { ManagerDashboardView } from './views/people/ManagerDashboardView';
+import { PortalMapView } from './views/people/PortalMapView';
+import { PlatformDashboardView } from './views/platform/PlatformDashboardView';
+import { ManufacturerDashboardView } from './views/platform/ManufacturerDashboardView';
+import { PlatformMapView } from './views/platform/PlatformMapView';
 import { LightScope } from './theme/LightScope';
 
 // The public pages are drawn on a fixed light palette, so they always render with the light theme.
 const publicPage = (page: React.ReactElement) => <LightScope>{page}</LightScope>;
 
 // Where a signed-in person lands: the platform owner on the list of manufacturers, everyone else on their own pumps.
-const homePath = (role: string | null) => (role === 'superadmin' ? '/manufacturers' : '/dashboard');
+const homePath = (role: string | null) => (role === 'support' ? '/devices' : '/dashboard');
 
 const AuthenticatedApp: React.FC = () => {
   const { role } = useAuth();
+  const viewing = useViewing();
   return (
   <Routes>
     <Route element={<AppShell />}>
       <Route path="/manufacturers" element={role === 'superadmin' ? <ManufacturersView /> : <Navigate to="/dashboard" replace />} />
-      <Route path="/farmers" element={<FarmersView />} />
-      <Route path="/dashboard" element={<TelemetryView />} />
-      <Route path="/telemetry" element={<TelemetryView />} />
-      <Route path="/fleet" element={<FleetDashboardView />} />
-      <Route path="/devices" element={<DevicesView />} />
+      <Route path="/manufacturers/:key" element={role === 'superadmin' ? <ManufacturerDashboardView /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/map" element={role === 'superadmin' ? <PlatformMapView /> : <PortalMapView />} />
+      <Route path="/people" element={<PeopleView />} />
+      <Route path="/people/:id" element={<PersonDashboardView />} />
+      <Route path="/farmers" element={<Navigate to="/people?tab=customer" replace />} />
+      <Route path="/dashboard" element={role === 'superadmin' ? <PlatformDashboardView /> : role === 'support' ? <Navigate to="/devices" replace /> : <ManagerDashboardView />} />
+      <Route path="/telemetry" element={<Navigate to="/devices?tab=live" replace />} />
+      <Route path="/fleet" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/devices" element={<DevicesHub />} />
       <Route path="/devices/:id" element={<DeviceDetailView />} />
-      <Route path="/hierarchy" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/faults" element={<FaultLogsView />} />
-      <Route path="/map" element={<MapView />} />
+      <Route path="/hierarchy" element={role === 'manufacturer' || role === 'distributor' || (role === 'superadmin' && viewing) ? <HierarchyView /> : <Navigate to="/dashboard" replace />} />
+      <Route path="/faults" element={<Navigate to="/alerts?tab=faults" replace />} />
       <Route path="/config-templates" element={<ConfigTemplatesView />} />
       <Route path="/service-reports" element={<ServiceReportsView />} />
-      <Route path="/alerts" element={<AlertsView />} />
+      <Route path="/alerts" element={<AlertsHub />} />
       <Route path="/audit" element={<AuditLogView />} />
       <Route path="/factory" element={<FactoryConsoleView />} />
-      <Route path="/factory-station" element={<FactoryStationView />} />
+      <Route path="/factory-station" element={<Navigate to="/devices?tab=factory" replace />} />
       <Route path="/health" element={<SystemHealthView />} />
       <Route path="/support" element={<SupportConsoleView />} />
       <Route path="*" element={<Navigate to={homePath(role)} replace />} />
@@ -82,6 +89,7 @@ const Gate: React.FC = () => {
 
       {/* Invite Redemption Token */}
       <Route path="/invite/:token" element={<InviteRedeemView />} />
+      <Route path="/claim/:token" element={<ClaimView />} />
 
       {/* Protected Dashboard */}
       <Route path="/*" element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/login" replace />} />

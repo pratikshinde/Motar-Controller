@@ -8,13 +8,14 @@ const mocks = vi.hoisted(() => ({
   handleAuthResult: vi.fn(),
   showToast: vi.fn(),
   loginWithEmail: vi.fn(),
+  loginWithPassword: vi.fn(),
   verifyMfa: vi.fn(),
   navigate: vi.fn()
 }));
 
 vi.mock('../../../context/AuthContext', () => ({ useAuth: () => ({ handleAuthResult: mocks.handleAuthResult }) }));
 vi.mock('../../../context/ToastContext', () => ({ useToast: () => ({ showToast: mocks.showToast }) }));
-vi.mock('../../../api/auth', () => ({ loginWithEmail: mocks.loginWithEmail }));
+vi.mock('../../../api/auth', () => ({ loginWithEmail: mocks.loginWithEmail, loginWithPassword: mocks.loginWithPassword }));
 vi.mock('../../../api/mfa', () => ({ verifyMfa: mocks.verifyMfa }));
 vi.mock('react-router-dom', async importOriginal => ({ ...(await importOriginal<typeof import('react-router-dom')>()), useNavigate: () => mocks.navigate }));
 
@@ -27,12 +28,12 @@ beforeEach(() => {
   Object.values(mocks).forEach(m => m.mockReset());
 });
 
-describe('the website sign-in: email and password only', () => {
-  it('asks for an email and a password, and offers no sign-up, no OTP and no mobile number', () => {
+describe('the website sign-in: email and password, or phone number and password', () => {
+  it('asks for an email and a password by default, and offers no sign-up and no OTP', () => {
     renderForm();
     expect(screen.getByPlaceholderText('name@company.com')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your password')).toBeInTheDocument();
-    for (const gone of [/create account/i, /sign in with otp/i, /mobile number/i, /forgot password\?/i]) {
+    for (const gone of [/create account/i, /sign in with otp/i, /forgot password\?/i]) {
       expect(screen.queryByText(gone)).not.toBeInTheDocument();
     }
   });
@@ -85,5 +86,27 @@ describe('the website sign-in: email and password only', () => {
     await userEvent.click(screen.getByRole('button', { name: /verify code/i }));
     await waitFor(() => expect(mocks.verifyMfa).toHaveBeenCalledWith('temp-token', '654321'));
     await waitFor(() => expect(mocks.handleAuthResult).toHaveBeenCalledWith(session));
+  });
+});
+
+describe('distributors and dealers sign in with their mobile number', () => {
+  it('switches to the mobile number and signs in with it and the password they chose', async () => {
+    mocks.loginWithPassword.mockResolvedValue(session);
+    renderForm();
+    await userEvent.click(screen.getByTestId('switch-login'));
+    expect(screen.queryByPlaceholderText('name@company.com')).not.toBeInTheDocument();
+    await userEvent.type(screen.getByPlaceholderText('98765 43210'), '9876543210');
+    await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'my-own-password');
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+    await waitFor(() => expect(mocks.loginWithPassword).toHaveBeenCalledWith('9876543210', 'my-own-password'));
+    expect(mocks.loginWithEmail).not.toHaveBeenCalled();
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/dashboard'));
+  });
+
+  it('switches back to the email', async () => {
+    renderForm();
+    await userEvent.click(screen.getByTestId('switch-login'));
+    await userEvent.click(screen.getByTestId('switch-login'));
+    expect(screen.getByPlaceholderText('name@company.com')).toBeInTheDocument();
   });
 });

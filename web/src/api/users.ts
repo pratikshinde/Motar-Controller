@@ -7,10 +7,12 @@ import type { RoleTier, UserTreeNode, User, AccountStatus } from '../types';
 export const ASSIGNABLE_ROLES: Record<RoleTier, RoleTier[]> = {
   // A manufacturer is a business with its own app and dashboard: it is added from the Manufacturers page, which creates it
   // together with its brand. (The API still accepts role 'manufacturer' but requires the brand.)
-  superadmin: ['distributor', 'dealer', 'customer', 'support'],
+  // The platform owner makes manufacturers (admins) only, on the Manufacturers page; an admin makes distributors, dealers and farmers; a
+  // distributor makes dealers and farmers; a dealer makes farmers. (A farmer is registered on the Farmers page, together with their starter.)
+  superadmin: [],
   manufacturer: ['distributor', 'dealer', 'customer'],
   distributor: ['dealer', 'customer'],
-  dealer: ['dealer', 'customer'],
+  dealer: ['customer'],
   support: [],
   customer: []
 };
@@ -18,11 +20,39 @@ export const ASSIGNABLE_ROLES: Record<RoleTier, RoleTier[]> = {
 export const ROLE_NAMES: Record<RoleTier, string> = {
   customer: 'End Customer / Farmer',
   superadmin: 'Super Admin (monitoring)',
-  manufacturer: 'Ajanta Admin',
+  manufacturer: 'Admin',
   distributor: 'Regional Distributor',
   dealer: 'Dealer / Installer',
   support: 'Support Engineer'
 };
+
+/** The one-time sign-up QR of a distributor or dealer. `token` is what goes in the link; shown once, the server keeps no readable copy. */
+export interface PartnerClaim {
+  qr: string;
+  token: string;
+  expires_at: string;
+}
+
+/** What the QR holds: a link to the website's claim page, so an ordinary phone camera opens it. */
+export function claimLinkFor(token: string): string {
+  return `${window.location.origin}/claim/${encodeURIComponent(token)}`;
+}
+
+/** Add a distributor or dealer by name and mobile number only: no password and no OTP. They get a one-time QR to open and choose their own password. */
+export async function createPartnerByQr(input: {
+  full_name: string;
+  phone_number: string;
+  role: RoleTier;
+  parent_user_id?: string;
+  parent_hierarchy_path?: string;
+}): Promise<{ message: string; user: User; claim: PartnerClaim }> {
+  return apiJson('/users', { method: 'POST', body: JSON.stringify(input) });
+}
+
+/** A fresh QR for a distributor or dealer under you: for one who has not signed in yet or who lost their password. The old QR stops working. */
+export async function newPartnerQr(id: string): Promise<{ message: string; claim: PartnerClaim }> {
+  return apiJson(`/users/${encodeURIComponent(id)}/qr`, { method: 'POST' });
+}
 
 export async function fetchUserTree(): Promise<{ tree: UserTreeNode[] }> {
   return apiJson('/users/tree');

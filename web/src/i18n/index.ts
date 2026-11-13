@@ -10,6 +10,8 @@
 // not a rewrite — see §4.1.
 
 export interface Dict {
+  navDashboard: string;
+  navPeople: string;
   navTelemetry: string;
   navDevices: string;
   navHierarchy: string;
@@ -73,16 +75,18 @@ export const localeLabels: Record<SupportedLocale, string> = {
 
 export const dictionaries: Record<SupportedLocale, Dict> = {
   en: {
+    navDashboard: 'Dashboard',
+    navPeople: 'People',
     navTelemetry: 'Live Telemetry',
     navDevices: 'Devices',
-    navHierarchy: 'Hierarchy',
+    navHierarchy: 'Team',
     navFaultLogs: 'Fault Logs',
     navMap: 'Map',
-    navAudit: 'Audit Log',
+    navAudit: 'Activity log',
     navFleet: 'Fleet Dashboard',
     navFactory: 'Factory Console',
     navFactoryStation: 'Factory Station',
-    navHealth: 'System Health',
+    navHealth: 'Platform health',
     navSupport: 'Support Console',
     navConfigTemplates: 'Config Templates',
     navServiceReports: 'Service Reports',
@@ -122,20 +126,22 @@ export const dictionaries: Record<SupportedLocale, Dict> = {
     hierarchyTitle: 'Multi-Tenant Account Hierarchy',
     faultLogsTitle: 'Fleet Fault Incident & Protection Logs',
     settingsTitle: 'System & Interface Settings',
-    loginTitle: 'Ajanta Pump Controller',
+    loginTitle: 'Pump Controller',
     loginSubtitle: 'Sign in to continue'
   },
   hi: {
+    navDashboard: 'डैशबोर्ड',
+    navPeople: 'लोग',
     navTelemetry: 'लाइव टेलीमेट्री',
     navDevices: 'उपकरण',
-    navHierarchy: 'हायरार्की',
+    navHierarchy: 'टीम',
     navFaultLogs: 'फॉल्ट लॉग्स',
     navMap: 'मानचित्र',
-    navAudit: 'ऑडिट लॉग',
+    navAudit: 'गतिविधि लॉग',
     navFleet: 'फ्लीट डैशबोर्ड',
     navFactory: 'फैक्ट्री कंसोल',
     navFactoryStation: 'फैक्ट्री स्टेशन',
-    navHealth: 'सिस्टम स्वास्थ्य',
+    navHealth: 'प्लेटफ़ॉर्म स्वास्थ्य',
     navSupport: 'सपोर्ट कंसोल',
     navConfigTemplates: 'कॉन्फ़िग टेम्पलेट्स',
     navServiceReports: 'सेवा रिपोर्ट',

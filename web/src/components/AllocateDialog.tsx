@@ -65,8 +65,8 @@ export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pu
       setAccountsLoaded(false);
       setOpenedWithCount(pumpIds.length);
       fetchUserTree()
-        // The server refuses the caller itself and the platform owner as a target, so do not offer them.
-        .then(data => setAccounts(flattenTree(data.tree).filter(a => a.id !== user?.id && a.role !== 'superadmin')))
+        // Stock goes to a distributor or a dealer under the caller (a farmer gets a starter by being registered with it).
+        .then(data => setAccounts(flattenTree(data.tree).filter(a => a.id !== user?.id && (a.role === 'distributor' || a.role === 'dealer') && (user?.role !== 'distributor' || a.role === 'dealer'))))
         .catch(err => showToast(err.message || 'Could not load accounts', true))
         .finally(() => setAccountsLoaded(true));
     }
@@ -76,7 +76,7 @@ export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pu
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!targetId) {
-      showToast('Choose a target account', true);
+      showToast('Choose who to give them to', true);
       return;
     }
     setBusy(true);
@@ -103,22 +103,20 @@ export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pu
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <form onSubmit={submit}>
-        <DialogTitle>Allocate {openedWithCount} Device{openedWithCount === 1 ? '' : 's'}</DialogTitle>
+        <DialogTitle>Give {openedWithCount} starter{openedWithCount === 1 ? '' : 's'}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Reassigns ownership and hierarchy scope for every selected device to the target account. Recorded in the
-            allocation history for each device.
+            The starters you ticked move to the person you choose. They can then register farmers with them. Each move is recorded.
           </Typography>
           {accountsLoaded && accounts.length === 0 && (
             <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
-              There are no accounts below yours to allocate to yet. Add a dealer or customer account first (Hierarchy),
-              or send an invite link.
+              There is nobody to give them to yet. Add a {user?.role === 'distributor' ? 'dealer' : 'distributor or dealer'} on the People page first.
             </Typography>
           )}
           <Stack spacing={2}>
             <FormControl fullWidth required>
-              <InputLabel id="allocate-target-label">Target account</InputLabel>
-              <Select labelId="allocate-target-label" label="Target account" value={targetId} onChange={e => setTargetId(e.target.value)}>
+              <InputLabel id="allocate-target-label">Give to</InputLabel>
+              <Select labelId="allocate-target-label" label="Give to" value={targetId} onChange={e => setTargetId(e.target.value)}>
                 {accounts.map(a => (
                   <MenuItem key={a.id} value={a.id} sx={{ fontFamily: monoFont, fontSize: '0.85rem' }}>
                     {a.label}

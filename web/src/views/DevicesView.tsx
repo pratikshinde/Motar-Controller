@@ -1,93 +1,63 @@
-import React, { useState, useMemo } from 'react';
-import { Box, Typography, Chip, IconButton, Tooltip, Card, Button, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { Box, Button, Chip, Card, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
-import EditIcon from '@mui/icons-material/EditLocationAlt';
-import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import AddIcon from '@mui/icons-material/Add';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import TuneIcon from '@mui/icons-material/Tune';
+import SendIcon from '@mui/icons-material/Send';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { usePumps } from '../hooks/usePumps';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
-import { deletePump } from '../api/pumps';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import { CommissionDialog } from '../components/CommissionDialog';
-import { ApplyTemplateDialog } from '../components/ApplyTemplateDialog';
-import { BulkImportModal } from '../components/BulkImportModal';
-import { effectiveStatus, formatCoords, STATUS_LABEL } from '../utils/pumpStatus';
+import { AllocateDialog } from '../components/AllocateDialog';
+import { effectiveStatus, STATUS_LABEL } from '../utils/pumpStatus';
 import { monoFont } from '../theme';
 import type { PumpListItem } from '../types';
 
+/** A starter that has not been given to a farmer yet: it can still be handed to a distributor or a dealer. */
+export const STOCK_STATES = new Set(['MANUFACTURED', 'IN_STOCK', 'ALLOCATED']);
+export const isInStock = (p: Pick<PumpListItem, 'lifecycle_state'>) => STOCK_STATES.has(p.lifecycle_state);
+
+type Filter = 'ALL' | 'STOCK' | 'IN_USE';
+
+/** The starters and pumps under you, and the ones still in stock that you can give to a distributor or dealer under you. */
 export const DevicesView: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { showToast } = useToast();
   const { pumps, loading, reload } = usePumps();
-  const [deviceTypeFilter, setDeviceTypeFilter] = useState<'ALL' | 'AC_3PH' | 'SOLAR_VFD'>('ALL');
-  const [commissionOpen, setCommissionOpen] = useState(false);
-  const [bulkImportOpen, setBulkImportOpen] = useState(false);
-  const [editingPump, setEditingPump] = useState<PumpListItem | null>(null);
-  const [applyTemplateOpen, setApplyTemplateOpen] = useState(false);
+  const [filter, setFilter] = useState<Filter>('ALL');
+  const [giveOpen, setGiveOpen] = useState(false);
   const [selection, setSelection] = useState<GridRowSelectionModel>({ type: 'include', ids: new Set() });
 
-  const isSuperadmin = user?.role === 'superadmin';
-  const isCustomer = user?.role === 'customer';
-  // FR-WEB-013 — bulk allocation is a stock-management action for anyone
-  // who can own/reassign fleet devices; the backend re-enforces this and
-  // additionally scopes the target account to the caller's own hierarchy.
-  const canAllocate = Boolean(user) && !isCustomer;
-  // FR-WEB-032 — same set of roles config-templates endpoints allow.
-  const canApplyTemplate = canAllocate;
+  // The admin gives stock to its distributors and dealers, a distributor to its dealers. A dealer gives starters to farmers by registering them.
+  const canGive = user?.role === 'manufacturer' || user?.role === 'distributor';
   const selectedIds = Array.from(selection.ids).map(String);
 
-  async function handleDelete(id: string) {
-    if (!window.confirm(`Superadmin action: delete device ${id} from the database? This cannot be undone.`)) return;
-    try {
-      await deletePump(id);
-      showToast(`Device ${id} deleted successfully`);
-      reload();
-    } catch (err: any) {
-      showToast(err.message || 'Delete failed', true);
-    }
-  }
+  const stock = pumps.filter(isInStock);
+  const inUse = pumps.filter(p => !isInStock(p));
+  const shown = filter === 'STOCK' ? stock : filter === 'IN_USE' ? inUse : pumps;
 
   const columns: GridColDef<PumpListItem>[] = useMemo(
     () => [
-      // `flex` alone has no floor: on a narrow screen every column (including the device's own id) would
-      // shrink to fit and ellipsize into illegibility rather than the grid scrolling horizontally. A
-      // `minWidth` per column gives DataGrid a point below which it scrolls instead of over-shrinking.
-      { field: 'id', headerName: 'Device ID (Thing Name)', flex: 1.2, minWidth: 170, renderCell: p => <span style={{ fontFamily: monoFont, fontWeight: 700 }}>{p.value}</span> },
+      { field: 'id', headerName: 'Starter ID', flex: 1.2, minWidth: 170, renderCell: p => <span style={{ fontFamily: monoFont, fontWeight: 700 }}>{p.value}</span> },
+      { field: 'name', headerName: 'Name', flex: 1, minWidth: 140 },
+      { field: 'hp_rating', headerName: 'HP', width: 80, valueGetter: (_v, row) => (row.hp_rating ? Number(row.hp_rating) : '—') },
       {
         field: 'device_type',
-        headerName: 'Device Type',
-        flex: 0.9,
-        minWidth: 130,
-        valueGetter: (_v, row) => row.device_type || 'AC_3PH',
-        renderCell: p => (
-          <Chip
-            size="small"
-            label={p.value === 'SOLAR_VFD' ? 'Solar VFD' : 'AC 3-Phase'}
-            color={p.value === 'SOLAR_VFD' ? 'warning' : 'default'}
-            variant="outlined"
-            sx={{ fontFamily: monoFont, fontWeight: 600 }}
-          />
-        )
+        headerName: 'Type',
+        width: 120,
+        valueGetter: (_v, row) => (row.device_type === 'SOLAR_VFD' ? 'Solar' : 'AC 3-phase')
       },
-      { field: 'supply_type', headerName: 'Supply Type', flex: 0.8, minWidth: 110 },
-      { field: 'firmware_version', headerName: 'Firmware', flex: 0.7, minWidth: 100, valueGetter: (_v, row) => row.firmware_version || '—' },
       {
-        field: 'location',
-        headerName: 'GPS Location',
-        flex: 1,
-        minWidth: 170,
-        valueGetter: (_v, row) => formatCoords(row.latitude, row.longitude)
+        field: 'stock',
+        headerName: 'Where it is',
+        flex: 0.8,
+        minWidth: 120,
+        sortable: false,
+        valueGetter: (_v, row) => (isInStock(row) ? 'In stock' : 'With a farmer'),
+        renderCell: p => <Chip size="small" variant="outlined" label={p.value as string} color={p.value === 'In stock' ? 'info' : 'default'} />
       },
       {
         field: 'status',
-        headerName: 'Status',
+        headerName: 'State',
         flex: 0.8,
         minWidth: 110,
         valueGetter: (_v, row) => effectiveStatus(row),
@@ -97,204 +67,62 @@ export const DevicesView: React.FC = () => {
             : p.value === 'FAULT' ? theme.palette.error.main
             : p.value === 'OFFLINE' ? theme.palette.warning.main
             : theme.palette.text.secondary;
-          return <Chip size="small" label={STATUS_LABEL[p.value as keyof typeof STATUS_LABEL]} sx={{ color, bgcolor: `${color}1F`, fontFamily: monoFont, fontWeight: 700 }} />;
+          return <Chip size="small" label={STATUS_LABEL[p.value as keyof typeof STATUS_LABEL]} sx={{ color, bgcolor: `${color}1F`, fontWeight: 700 }} />;
         }
-      },
-      {
-        // FR-WEB-030 — "stock view": pre-commissioning inventory
-        // (MANUFACTURED/ALLOCATED/IN_STOCK) vs. deployed devices is a
-        // filter on this column, not a separate page — DataGrid's built-in
-        // column filter already does the job once lifecycle_state is a
-        // visible column.
-        field: 'lifecycle_state',
-        headerName: 'Lifecycle',
-        flex: 0.9,
-        minWidth: 130, // "MANUFACTURED" is the longest value; must not ellipsize the very thing being filtered on
-        renderCell: p => <Chip size="small" label={p.value} variant="outlined" sx={{ fontFamily: monoFont }} />
-      },
-      {
-        field: 'actions',
-        headerName: 'Actions',
-        flex: 1,
-        minWidth: 100,
-        sortable: false,
-        filterable: false,
-        renderCell: p =>
-          isSuperadmin ? (
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              <Tooltip title="Edit location">
-                <IconButton
-                  size="small"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setEditingPump(p.row);
-                    setCommissionOpen(true);
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete device">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleDelete(p.row.id);
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          ) : isCustomer ? (
-            <Typography variant="caption" color="text.secondary">
-              End owner
-            </Typography>
-          ) : null
       }
     ],
-    [isSuperadmin, isCustomer, theme]
+    [theme]
   );
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 2 }}>
-      {/* Header with Title and Primary Actions */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
-            Device Registry &amp; Fleet Inventory
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
-            {isSuperadmin
-              ? 'Superadmin console: Full provisioning, batch configuration, and stock allocation'
-              : isCustomer
-              ? 'Customer workspace: Active pump assets assigned to your profile'
-              : 'Fleet operations: Hierarchy inventory management and provisioning'}
+          <Typography variant="body2" color="text.secondary">
+            {canGive ? 'Your starters and pumps. Tick the ones in stock to give them to someone under you.' : 'Your starters and pumps.'}
           </Typography>
         </Box>
-
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-          {canApplyTemplate && selectedIds.length > 0 && (
-            <Button
-              variant="tonal"
-              size="small"
-              startIcon={<TuneIcon />}
-              onClick={() => setApplyTemplateOpen(true)}
-              sx={{ height: 34 }}
-            >
-              Apply Template ({selectedIds.length})
-            </Button>
-          )}
-          {isSuperadmin && (
-            <>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<UploadFileIcon />}
-                onClick={() => setBulkImportOpen(true)}
-                sx={{ height: 34 }}
-              >
-                Bulk Import CSV
-              </Button>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={() => {
-                  setEditingPump(null);
-                  setCommissionOpen(true);
-                }}
-                sx={{ height: 34 }}
-              >
-                Register Device
-              </Button>
-            </>
-          )}
-        </Box>
+        {canGive && selectedIds.length > 0 && (
+          <Button variant="contained" startIcon={<SendIcon />} onClick={() => setGiveOpen(true)} data-testid="give-stock">
+            {user?.role === 'distributor' ? `Give ${selectedIds.length} to a dealer` : `Give ${selectedIds.length} to a distributor or dealer`}
+          </Button>
+        )}
       </Box>
 
-      {/* Segmented Filter Control */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-        <ToggleButtonGroup
-          value={deviceTypeFilter}
-          exclusive
-          size="small"
-          onChange={(_, val) => val && setDeviceTypeFilter(val)}
-          sx={{
-            bgcolor: 'background.surfaceVariant',
-            p: 0.5,
-            borderRadius: 2,
-            border: `1px solid ${theme.palette.divider}`,
-            '& .MuiToggleButton-root': {
-              border: 'none',
-              borderRadius: 1.5,
-              px: 2,
-              py: 0.5,
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              textTransform: 'none',
-              color: 'text.secondary',
-              '&.Mui-selected': {
-                bgcolor: 'background.paper',
-                color: 'text.primary',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
-              }
-            }
-          }}
-        >
-          <ToggleButton value="ALL">All ({pumps.length})</ToggleButton>
-          <ToggleButton value="AC_3PH">
-            AC 3-Phase ({pumps.filter(p => (p.device_type || 'AC_3PH') === 'AC_3PH').length})
-          </ToggleButton>
-          <ToggleButton value="SOLAR_VFD">
-            Solar VFD ({pumps.filter(p => p.device_type === 'SOLAR_VFD').length})
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
+      <ToggleButtonGroup value={filter} exclusive size="small" onChange={(_, v: Filter | null) => v && setFilter(v)} sx={{ alignSelf: 'flex-start' }}>
+        <ToggleButton value="ALL" data-testid="filter-all">
+          All ({pumps.length})
+        </ToggleButton>
+        <ToggleButton value="STOCK" data-testid="filter-stock">
+          In stock ({stock.length})
+        </ToggleButton>
+        <ToggleButton value="IN_USE" data-testid="filter-in-use">
+          With farmers ({inUse.length})
+        </ToggleButton>
+      </ToggleButtonGroup>
 
-      {/* Modern DataGrid Container */}
-      <Card elevation={1} sx={{ flex: 1, overflow: 'hidden', borderRadius: 2 }}>
+      <Card variant="outlined" sx={{ flex: 1, minHeight: 360, overflow: 'hidden', borderRadius: 3 }}>
         <DataGrid
-          rows={deviceTypeFilter === 'ALL' ? pumps : pumps.filter(p => (p.device_type || 'AC_3PH') === deviceTypeFilter)}
+          rows={shown}
           columns={columns}
           loading={loading}
           density="comfortable"
           pageSizeOptions={[10, 25, 50]}
           initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-          checkboxSelection={canAllocate}
+          checkboxSelection={canGive}
+          isRowSelectable={p => isInStock(p.row)}
           rowSelectionModel={selection}
           onRowSelectionModelChange={setSelection}
           disableRowSelectionOnClick
-          onRowClick={p => navigate(`/devices/${encodeURIComponent(p.row.id)}`)}
-          showToolbar
-          sx={{
-            border: 'none',
-            height: '100%',
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-            '& .MuiDataGrid-footerContainer': {
-              borderTop: `1px solid ${theme.palette.divider}`,
-              minHeight: 44
-            }
-          }}
+          onRowClick={p => navigate(`/devices/${encodeURIComponent(String(p.row.id))}`)}
+          sx={{ border: 'none', height: '100%', '& .MuiDataGrid-row': { cursor: 'pointer' } }}
         />
       </Card>
 
-      <BulkImportModal
-        open={bulkImportOpen}
-        onClose={() => setBulkImportOpen(false)}
-        onSuccess={reload}
-      />
-      <CommissionDialog
-        open={commissionOpen}
-        onClose={() => setCommissionOpen(false)}
-        onSaved={reload}
-        editingPump={editingPump}
-      />
-      <ApplyTemplateDialog
-        open={applyTemplateOpen}
-        onClose={() => setApplyTemplateOpen(false)}
-        onApplied={() => {
+      <AllocateDialog
+        open={giveOpen}
+        onClose={() => setGiveOpen(false)}
+        onAllocated={() => {
           reload();
           setSelection({ type: 'include', ids: new Set() });
         }}

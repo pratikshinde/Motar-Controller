@@ -17,17 +17,45 @@ export interface ManufacturerSummary {
   primary_color: string | null;
   status: 'ACTIVE' | 'SUSPENDED';
   /** The manufacturer's own account; null until one has been created. */
-  owner: { name: string; phone: string } | null;
+  owner: { name: string; phone: string | null; email?: string | null } | null;
   farmers: number;
   /** Distributors, dealers and staff under the manufacturer. */
   team: number;
+  /** Of the team: how many are distributors and how many are dealers. */
+  distributors: number;
+  dealers: number;
   open_alerts: number;
   pumps: PumpBuckets;
+  /** Pumps on the GSM service (a modem is on their starter record), and of those the ones reporting right now. */
+  gsm_pumps: number;
+  gsm_online: number;
+  /** When this manufacturer was added to the platform. */
+  joined: string | null;
 }
 
 export interface ManufacturersOverview {
   manufacturers: ManufacturerSummary[];
-  totals: PumpBuckets & { farmers: number; open_alerts: number };
+  totals: PumpBuckets & {
+    farmers: number;
+    open_alerts: number;
+    manufacturers: number;
+    distributors: number;
+    dealers: number;
+    gsm_pumps: number;
+    gsm_online: number;
+    /** Pumps added in each of the last six months, oldest first. */
+    monthly_pumps: { month: string; pumps: number }[];
+  };
+}
+
+/** Super admin only: every pump that has a position, one pin each. */
+export interface PlatformMap {
+  total: number;
+  pumps: { id: string; lat: number; lng: number; manufacturer: string | null }[];
+}
+
+export function fetchPlatformMap(): Promise<PlatformMap> {
+  return apiJson('/brands/map');
 }
 
 /** The manufacturer the signed-in partner belongs to (its name for the portal's header), or null for a super admin. */
@@ -63,9 +91,8 @@ export function setManufacturerStatus(key: string, status: 'ACTIVE' | 'SUSPENDED
 export function createManufacturerAccount(input: {
   brand: string;
   full_name: string;
-  phone_number: string;
+  email: string;
   password: string;
-  phone_verification_token: string;
 }): Promise<{ message: string }> {
   return apiJson('/users', { method: 'POST', body: JSON.stringify({ ...input, role: 'manufacturer' }) });
 }

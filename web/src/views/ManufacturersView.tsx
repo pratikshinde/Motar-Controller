@@ -1,54 +1,112 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Button, Card, CardContent, Chip, CircularProgress, Stack, Tooltip, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Alert, Avatar, Box, Button, Card, CardActionArea, Chip, CircularProgress, Stack, Typography } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useNavigate } from 'react-router-dom';
 import { fetchManufacturersOverview, setManufacturerStatus, type ManufacturerSummary, type ManufacturersOverview } from '../api/brands';
 import { setViewing } from '../api/viewing';
 import { AddManufacturerDialog } from '../components/AddManufacturerDialog';
 import { useToast } from '../context/ToastContext';
+import { formatDate } from '../components/platform/platformUi';
 
 const REFRESH_MS = 30_000;
 
-const Stat: React.FC<{ label: string; value: number; color?: string }> = ({ label, value, color }) => (
+export const initialsOf = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0]!.toUpperCase())
+    .join('') || '?';
+
+const Mini: React.FC<{ label: string; value: number; color?: string }> = ({ label, value, color }) => (
   <Box sx={{ minWidth: 0 }}>
-    <Typography variant="h5" sx={{ color, lineHeight: 1.2 }}>
-      {value}
-    </Typography>
-    <Typography variant="caption" color="text.secondary">
+    <Typography sx={{ fontSize: '1.35rem', fontWeight: 800, lineHeight: 1.1, color }}>{value}</Typography>
+    <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
       {label}
     </Typography>
   </Box>
 );
 
-/**
- * The platform owner's main page: every manufacturer on the platform side by side, with a way into each one's own
- * dashboard. What a manufacturer's card counts is exactly what that manufacturer sees on its own dashboard.
- */
-export const ManufacturersView: React.FC = () => {
+/** One admin as a card: who they are and, at a glance, how big their business on the platform is. Click to open their own dashboard. */
+const ManufacturerCard: React.FC<{ m: ManufacturerSummary; busy: boolean; onOpen: () => void; onToggle: () => void }> = ({ m, busy, onOpen, onToggle }) => {
   const theme = useTheme();
+  const color = m.primary_color || theme.palette.primary.main;
+  const on = m.status === 'ACTIVE';
+  return (
+    <Card
+      variant="outlined"
+      data-testid={`card-${m.key}`}
+      sx={{ borderRadius: 3.5, overflow: 'hidden', borderColor: alpha(color, 0.35), opacity: on ? 1 : 0.75, display: 'flex', flexDirection: 'column' }}
+    >
+      <Box sx={{ height: 6, bgcolor: color }} />
+      <CardActionArea onClick={onOpen} sx={{ p: 2.5, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2.25 }}>
+        <Stack direction="row" spacing={1.75} sx={{ alignItems: 'center' }}>
+          <Avatar src={m.logo_url || undefined} variant="rounded" sx={{ width: 54, height: 54, fontWeight: 800, fontSize: '1.15rem', bgcolor: alpha(color, 0.18), color, border: `1px solid ${alpha(color, 0.4)}` }}>
+            {initialsOf(m.short_name || m.name)}
+          </Avatar>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.2 }} noWrap>
+              {m.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" noWrap>
+              {m.owner ? `${m.owner.name} · ${m.owner.email || m.owner.phone || 'no contact'}` : 'No admin login yet'}
+            </Typography>
+          </Box>
+          <Chip size="small" label={on ? 'App on' : 'App off'} color={on ? 'success' : 'default'} variant={on ? 'filled' : 'outlined'} />
+        </Stack>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, rowGap: 2.25 }}>
+          <Mini label="Pumps supplied" value={m.pumps.total} />
+          <Mini label="Running now" value={m.pumps.running} color={theme.palette.success.main} />
+          <Mini label="GSM online" value={m.gsm_online} color={theme.palette.info.main} />
+          <Mini label="Distributors" value={m.distributors} color="#7C9CFF" />
+          <Mini label="Dealers" value={m.dealers} color="#C58BF2" />
+          <Mini label="Farmers" value={m.farmers} color={theme.palette.success.main} />
+        </Box>
+      </CardActionArea>
+      <Stack direction="row" sx={{ px: 2.5, py: 1, alignItems: 'center', justifyContent: 'space-between', borderTop: `1px solid ${theme.palette.divider}` }}>
+        <Typography variant="caption" color="text.secondary">
+          {m.joined ? `Added ${formatDate(m.joined)}` : ''}
+        </Typography>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          <Button size="small" color="inherit" disabled={busy} onClick={onToggle} data-testid={`toggle-${m.key}`}>
+            {on ? 'Switch app off' : 'Switch app on'}
+          </Button>
+          <Button size="small" endIcon={<ChevronRightIcon />} onClick={onOpen}>
+            Open
+          </Button>
+        </Stack>
+      </Stack>
+    </Card>
+  );
+};
+
+/** The platform owner's list of admins (manufacturers), one card each, with a way to register a new one. */
+export const ManufacturersView: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [data, setData] = useState<ManufacturersOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       setData(await fetchManufacturersOverview());
+      setError('');
     } catch (err: any) {
-      showToast(err.message || 'Could not load the manufacturers', true);
+      setError(err?.message || 'Could not load the manufacturers');
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // This page is the platform itself: arriving here (even by typing the address) ends any "viewing a manufacturer".
+  // This page is the platform itself: arriving here (even by typing the address) ends any "viewing a manufacturer's team".
   useEffect(() => {
-    setViewing(null);
+    if (window.location.pathname.startsWith('/manufacturers')) setViewing(null);
   }, []);
 
   useEffect(() => {
@@ -57,17 +115,10 @@ export const ManufacturersView: React.FC = () => {
     return () => clearInterval(id);
   }, [load]);
 
-  function openDashboard(m: ManufacturerSummary) {
-    setViewing({ key: m.key, name: m.name, color: m.primary_color });
-    navigate('/fleet');
-  }
-
   async function toggleStatus(m: ManufacturerSummary) {
     const suspend = m.status === 'ACTIVE';
     const ok = window.confirm(
-      suspend
-        ? `Switch off ${m.name}? Its farmers’ app stops working for everyone until you switch it back on.`
-        : `Switch ${m.name} back on?`
+      suspend ? `Switch off ${m.name}? Its farmers’ app stops working for everyone until you switch it back on.` : `Switch ${m.name} back on?`
     );
     if (!ok) return;
     setBusyKey(m.key);
@@ -84,103 +135,40 @@ export const ManufacturersView: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+      <Box sx={{ display: 'grid', placeItems: 'center', py: 10 }}>
         <CircularProgress />
       </Box>
     );
   }
-  if (!data) return null;
 
-  const t = data.totals;
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '100%', overflowY: 'auto' }}>
-      <Stack direction="row" spacing={2} useFlexGap sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
         <Box>
-          <Typography variant="h4">Manufacturers</Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, fontSize: '1.5rem' }}>
+            Manufacturers
+          </Typography>
           <Typography variant="body2" color="text.secondary">
-            Every pump manufacturer on the platform. Open one to see its own dashboard, exactly as it sees it.
+            Each registered admin has a card. Open one to see its own dashboard.
           </Typography>
         </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
-          Add manufacturer
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)} data-testid="register-admin">
+          Register admin
         </Button>
       </Stack>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(4, 1fr)', xl: 'repeat(7, 1fr)' }, gap: 2 }}>
-        {[
-          ['Manufacturers', data.manufacturers.length, undefined],
-          ['Farmers', t.farmers, undefined],
-          ['Pumps', t.total, undefined],
-          ['Running', t.running, theme.palette.success.main],
-          ['Faults', t.fault, theme.palette.error.main],
-          ['Offline', t.offline, theme.palette.text.secondary],
-          ['Open alerts', t.open_alerts, theme.palette.error.main]
-        ].map(([label, value, color]) => (
-          <Card key={label as string} elevation={1}>
-            <CardContent>
-              <Typography variant="caption" color="text.secondary">
-                {label as string}
-              </Typography>
-              <Typography variant="h3" sx={{ color: color as string | undefined }}>
-                {value as number}
-              </Typography>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
+      {error && !data && <Alert severity="error">{error}</Alert>}
 
-      {data.manufacturers.length === 0 ? (
-        <Card elevation={1}>
-          <CardContent>
-            <Typography color="text.secondary">No manufacturers yet. Add the first one.</Typography>
-          </CardContent>
-        </Card>
-      ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
+      {data && data.manufacturers.length === 0 && (
+        <Typography color="text.secondary" sx={{ py: 6, textAlign: 'center' }}>
+          No admins registered yet. Use “Register admin” to add the first one.
+        </Typography>
+      )}
+
+      {data && data.manufacturers.length > 0 && (
+        <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fill, minmax(360px, 1fr))' } }}>
           {data.manufacturers.map(m => (
-            <Card key={m.key} elevation={1} sx={{ borderTop: `4px solid ${m.primary_color || theme.palette.primary.main}` }}>
-              <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="h6" noWrap>
-                      {m.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      {m.owner ? `${m.owner.name} · ${m.owner.phone}` : 'No login created yet'}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    size="small"
-                    label={m.status === 'ACTIVE' ? 'App on' : 'App off'}
-                    color={m.status === 'ACTIVE' ? 'success' : 'default'}
-                    variant={m.status === 'ACTIVE' ? 'filled' : 'outlined'}
-                  />
-                </Stack>
-
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(72px, 1fr))', gap: 2 }}>
-                  <Stat label="Farmers" value={m.farmers} />
-                  <Stat label="Team" value={m.team} />
-                  <Stat label="Pumps" value={m.pumps.total} />
-                  <Stat label="Running" value={m.pumps.running} color={theme.palette.success.main} />
-                  <Stat label="Faults" value={m.pumps.fault} color={m.pumps.fault ? theme.palette.error.main : undefined} />
-                  <Stat label="Offline" value={m.pumps.offline} />
-                  <Stat label="Open alerts" value={m.open_alerts} color={m.open_alerts ? theme.palette.error.main : undefined} />
-                </Box>
-
-                <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
-                  <Button size="small" color="inherit" onClick={() => toggleStatus(m)} disabled={busyKey === m.key}>
-                    {m.status === 'ACTIVE' ? 'Switch app off' : 'Switch app on'}
-                  </Button>
-                  <Tooltip title={m.owner ? '' : 'This manufacturer has no login yet, so there is no dashboard to show.'}>
-                    <span>
-                      <Button variant="contained" size="small" endIcon={<OpenInNewIcon />} onClick={() => openDashboard(m)} disabled={!m.owner}>
-                        Open dashboard
-                      </Button>
-                    </span>
-                  </Tooltip>
-                </Stack>
-              </CardContent>
-            </Card>
+            <ManufacturerCard key={m.key} m={m} busy={busyKey === m.key} onOpen={() => navigate(`/manufacturers/${encodeURIComponent(m.key)}`)} onToggle={() => toggleStatus(m)} />
           ))}
         </Box>
       )}

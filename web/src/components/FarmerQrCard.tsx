@@ -6,6 +6,7 @@ import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { FarmerSummary, FarmerPump, FarmerQr } from '../api/farmers';
 import { useToast } from '../context/ToastContext';
+import { useBrandName } from '../hooks/useBrandName';
 
 interface Props {
   farmer: FarmerSummary;
@@ -24,6 +25,7 @@ function expiryText(iso: string | null) {
 /** The farmer's one-time QR code with a print sheet to hand over and a PNG to send. It is shown once: the server keeps no readable copy. */
 export const FarmerQrCard: React.FC<Props> = ({ farmer, pump, qr }) => {
   const { showToast } = useToast();
+  const brand = useBrandName();
   const canvasHost = useRef<HTMLDivElement>(null);
   if (!qr.payload) return null;
   const payload = qr.payload;
@@ -39,11 +41,11 @@ export const FarmerQrCard: React.FC<Props> = ({ farmer, pump, qr }) => {
       <style>body{font-family:Arial,sans-serif;text-align:center;margin:24px;color:#111}
       h1{font-size:20px;margin:0 0 4px}p{margin:4px 0;font-size:14px}.note{margin-top:16px;font-size:13px;color:#444}
       .box{display:inline-block;border:2px dashed #999;padding:12px;margin-top:12px;border-radius:12px}</style></head><body>
-      <h1>Ajanta Pump Controller</h1>
+      <h1>${esc(brand)}</h1>
       <p><b>${esc(farmer.full_name)}</b> &middot; ${esc(farmer.phone_number)}</p>
       ${pump ? `<p>Starter ${esc(pump.id)}${pump.hp_rating ? ` &middot; ${pump.hp_rating} HP` : ''}</p>` : ''}
       <div class="box">${svg}</div>
-      <p class="note">Open the Ajanta Pump Controller app, tap <b>Scan QR</b>, point the camera here,<br/>then type your mobile number.<br/>This QR works only once. Keep it private.</p>
+      <p class="note">Open the ${esc(brand)} app, tap <b>Scan QR</b>, point the camera here,<br/>then type your mobile number.<br/>This QR works only once. Keep it private.</p>
       <script>window.onload=function(){window.print();}</script></body></html>`);
     win.document.close();
   };
