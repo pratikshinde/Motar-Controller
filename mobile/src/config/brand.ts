@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import ajanta from '../../brands/ajanta/brand.json';
 
 /**
@@ -25,7 +26,31 @@ export interface Brand {
 
 type PublicBrand = Partial<Brand>;
 
-const fromBuild = (Constants.expoConfig?.extra as { brand?: PublicBrand } | undefined)?.brand;
+type BuildConfig = { extra?: { brand?: PublicBrand } } | null | undefined;
+
+/**
+ * The build's config. On the web `Constants.expoConfig` can hold the first brand's config instead of this build's (and it
+ * cannot read the inlined JSON string), so the web build reads the copy Metro inlined into this bundle; the phone's
+ * build reads Constants as before.
+ */
+function readBuildConfig(): BuildConfig {
+  const decode = (raw: unknown): BuildConfig => (typeof raw === 'string' ? JSON.parse(raw) : raw) as BuildConfig;
+  if (Platform.OS === 'web') {
+    try {
+      const inlined = decode(process.env.APP_MANIFEST);
+      if (inlined?.extra?.brand) return inlined;
+    } catch {
+      // fall through to Constants
+    }
+  }
+  try {
+    return decode(Constants.expoConfig);
+  } catch {
+    return undefined;
+  }
+}
+
+const fromBuild = readBuildConfig()?.extra?.brand;
 
 // A build that carries no brand (jest, an old dev client) is the first brand, which is also what an unconfigured
 // `expo start` builds. (Only the public fields: the folder's build-only half never reaches the app.)
