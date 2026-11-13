@@ -119,6 +119,8 @@ class Settings(BaseSettings):
     PROVISIONING_HOOK_SECRET: str = ""
 
     # A pump that has reported before but not within this long is shown as Offline (never as Running / Stopped).
+    # Look a farmer's address up (OpenStreetMap Nominatim) so the pump gets a pin on the map. Only the address text is sent.
+    GEOCODE_ENABLED: bool = True
     OFFLINE_AFTER_SECONDS: int = 180  # three missed one-minute heartbeats: the pump is offline (and the power may be off)
 
     # Commands to pumps (P2.4).

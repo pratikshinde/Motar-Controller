@@ -34,6 +34,16 @@ class ClaimRequest(BaseModel):
     app_install_id: Optional[str] = None
     device_info: Optional[str] = None
 
+class PartnerClaimRequest(BaseModel):
+    """A distributor or dealer opened the QR link the person above them gave out, typed the mobile number that was registered for them
+    and chose a password. No OTP: the QR is the proof, the number is the second check."""
+    qr: str = Field(..., min_length=20, max_length=200)
+    phone: str = Field(..., min_length=10, max_length=20)
+    password: str = Field(..., min_length=1, max_length=128)
+    app_install_id: Optional[str] = None
+    device_info: Optional[str] = None
+
+
 class RegisterRequestIn(BaseModel):
     phone: Optional[str] = None
     phone_number: Optional[str] = None

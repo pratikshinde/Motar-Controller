@@ -37,7 +37,8 @@ def _imei():
 
 
 class Tree(MfaBase):
-    """superadmin > dealer (> sub-dealer, > farmer), and a second dealer beside it that must stay out of reach."""
+    """superadmin > dealer (> sub-dealer, > farmer), and a second dealer beside it that must stay out of reach; plus a distributor, the
+    one who may make dealers (a dealer makes farmers only)."""
 
     def setUp(self):
         cls = type(self)
@@ -48,6 +49,7 @@ class Tree(MfaBase):
         self.farmer = _partner(self, "customer", "farmer", parent=self.dealer)
         self.other = _partner(self, "dealer", "d10", parent=self.sa)
         self.other_farmer = _partner(self, "customer", "farmer10", parent=self.other)
+        self.dist = _partner(self, "distributor", "dist1", parent=self.sa)
 
     def pump(self, owner, state="ACTIVE", **extra):
         p = Pump(id=f"T{self.sfx}-{uuid.uuid4().hex[:8]}", name="Test pump", owner_user_id=owner.id,
@@ -83,7 +85,8 @@ class TestPartnerInvites(Tree):
         self.assertEqual(self.invite(self.farmer, role="dealer").status_code, 403)
         self.assertEqual(self.invite(self.dealer, role="distributor").status_code, 403)
         self.assertEqual(self.invite(self.dealer, role="superadmin").status_code, 403)
-        ok = self.invite(self.dealer, role="dealer")
+        self.assertEqual(self.invite(self.dealer, role="dealer").status_code, 403, "a dealer makes farmers only")
+        ok = self.invite(self.dist, role="dealer")
         self.assertEqual(ok.status_code, 200, ok.text)
         body = ok.json()
         self.assertEqual(body["role"], "dealer")
@@ -105,7 +108,7 @@ class TestPartnerInvites(Tree):
         self.assertEqual(under_sub.status_code, 200, under_sub.text)
 
     def test_redeeming_creates_the_account_under_the_parent_and_signs_it_in(self):
-        token = self.invite(self.dealer, role="dealer", parent_user_id=str(self.sub.id)).json()["token"]
+        token = self.invite(self.dist, role="dealer").json()["token"]
         digits = _phone()
         r = self.redeem(token, phone_number=f"+91 {digits[:5]}-{digits[5:]}")
         self.assertEqual(r.status_code, 200, r.text)
@@ -115,9 +118,9 @@ class TestPartnerInvites(Tree):
         made = self.db.query(User).filter(User.id == body["user"]["id"]).one()
         self.assertEqual(made.role, "dealer")
         self.assertEqual(made.phone_number, f"+91{digits}")
-        self.assertEqual(made.parent_user_id, self.sub.id)
-        self.assertEqual(made.hierarchy_path, f"{self.sub.hierarchy_path}/{made.id}")
-        self.assertEqual(made.dealer_depth, self.sub.dealer_depth + 1)
+        self.assertEqual(made.parent_user_id, self.dist.id)
+        self.assertEqual(made.hierarchy_path, f"{self.dist.hierarchy_path}/{made.id}")
+        self.assertEqual(made.dealer_depth, 1)
         # The password they chose works, and the session they were handed works.
         login = client.post("/api/v1/auth/login-password", json={"phone_number": made.phone_number, "password": "Strong-Pass-1"})
         self.assertEqual(login.status_code, 200, login.text)
@@ -126,12 +129,12 @@ class TestPartnerInvites(Tree):
         self.assertIsNotNone(audit)
 
     def test_the_sign_up_page_can_ask_who_invited_you_and_whether_a_password_is_needed(self):
-        dealer_link = self.invite(self.dealer, role="dealer").json()["token"]
+        dealer_link = self.invite(self.dist, role="dealer").json()["token"]
         info = client.get(f"/api/v1/invites/{dealer_link}")
         self.assertEqual(info.status_code, 200, info.text)
         self.assertEqual(
             (info.json()["role"], info.json()["invited_by"], info.json()["password_required"]),
-            ("dealer", self.dealer.full_name, True))
+            ("dealer", self.dist.full_name, True))
         farmer_link = self.invite(self.dealer, role="customer").json()["token"]
         self.assertFalse(client.get(f"/api/v1/invites/{farmer_link}").json()["password_required"])
         # Looking is not using: the link still works, and the preview leaks nothing else.
@@ -160,12 +163,12 @@ class TestPartnerInvites(Tree):
         self.assertEqual(r.status_code, 200, r.text)
         self.assertIsNone(self.db.query(User).filter(User.id == r.json()["user"]["id"]).one().password_hash)
 
-        dealer_link = self.invite(self.dealer, role="dealer").json()["token"]
+        dealer_link = self.invite(self.dist, role="dealer").json()["token"]
         for pw in (None, "short"):
             self.assertEqual(self.redeem(dealer_link, password=pw).status_code, 422)
 
     def test_a_mistake_does_not_use_the_link_up(self):
-        token = self.invite(self.dealer, role="dealer").json()["token"]
+        token = self.invite(self.dist, role="dealer").json()["token"]
         taken = self.farmer.phone
         self.assertEqual(self.redeem(token, phone_number=taken).status_code, 409)
         self.assertEqual(self.redeem(token, phone_number="12345").status_code, 422)
@@ -206,11 +209,9 @@ class TestPartnerInvites(Tree):
         self.db.commit()
         self.assertEqual(self.redeem(token).status_code, 404)
 
-    def test_the_dealer_depth_limit_is_enforced_when_the_link_is_made(self):
-        self.db.query(User).filter(User.id == self.sub.id).update({"dealer_depth": 6})
-        self.db.commit()
-        r = self.invite(self.sub, role="dealer")
-        self.assertEqual(r.status_code, 422, r.text)
+    def test_a_dealer_cannot_make_another_dealer_at_any_level(self):
+        self.assertEqual(self.invite(self.dealer, role="dealer").status_code, 403)
+        self.assertEqual(self.invite(self.sub, role="dealer").status_code, 403)
 
 
 class TestPanelBinding(Tree):

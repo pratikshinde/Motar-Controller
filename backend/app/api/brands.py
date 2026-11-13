@@ -11,14 +11,16 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import distinct, func
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import distinct, func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
 from app.config import settings
 from app.database import get_db
-from app.models import Alert, AppBrand, AuditLog, Organisation, Pump, User
+from app.models import Alert, AppBrand, AuditLog, BatchImei, Organisation, Pump, User
 from app.repositories.pump_repository import PumpRepository
 from app.services import brand_service, view_as
 
@@ -181,6 +183,7 @@ def overview(current_user: User = Depends(require_roles(["superadmin"])), db: Se
     for b in db.query(AppBrand).order_by(AppBrand.name).all():
         owner = db.query(User).filter(User.id == b.owner_user_id).first() if b.owner_user_id else None
         counts, farmers, team, open_alerts = dict(empty), 0, 0, 0
+        distributors = dealers = gsm_pumps = gsm_online = 0
         if owner is not None:
             repo = PumpRepository.for_actor(owner, db)
             counts = repo.fleet_counts(settings.OFFLINE_AFTER_SECONDS)
@@ -192,21 +195,75 @@ def overview(current_user: User = Depends(require_roles(["superadmin"])), db: Se
                 db.query(func.count(Alert.id))
                 .filter(Alert.resolved_at.is_(None), Alert.pump_id.in_(db.query(in_tree.c.id))).scalar() or 0
             )
+            gsm_pumps, gsm_online = _gsm_counts(db, in_tree)
             path = (owner.hierarchy_path or "").rstrip("/")
             if path.count("/") >= 2:
                 team = db.query(func.count(User.id)).filter(
                     (User.hierarchy_path == path) | User.hierarchy_path.like(path + "/%"), User.id != owner.id,
                     func.lower(User.role) != "customer",
                 ).scalar() or 0
+                by_role = dict(db.query(func.lower(User.role), func.count(User.id)).filter(
+                    (User.hierarchy_path == path) | User.hierarchy_path.like(path + "/%"), User.id != owner.id,
+                ).group_by(func.lower(User.role)).all())
+                distributors, dealers = int(by_role.get("distributor", 0)), int(by_role.get("dealer", 0))
         rows.append({
             "key": b.key, "name": b.name, "short_name": b.short_name, "logo_url": b.logo_url,
             "primary_color": b.primary_color, "status": b.status,
-            "owner": {"name": owner.full_name, "phone": owner.phone_number or owner.phone} if owner else None,
-            "farmers": int(farmers), "team": int(team), "open_alerts": int(open_alerts), "pumps": counts,
+            "owner": {"name": owner.full_name, "phone": owner.phone_number or owner.phone, "email": owner.email} if owner else None,
+            "farmers": int(farmers), "team": int(team), "distributors": distributors, "dealers": dealers, "open_alerts": int(open_alerts), "pumps": counts,
+            "gsm_pumps": gsm_pumps, "gsm_online": gsm_online,
+            "joined": b.created_at.isoformat() if b.created_at else None,
         })
     totals = {k: sum(r["pumps"][k] for r in rows) for k in empty}
-    totals.update(farmers=len(all_farmers), open_alerts=sum(r["open_alerts"] for r in rows))
+    totals.update(
+        farmers=len(all_farmers), open_alerts=sum(r["open_alerts"] for r in rows),
+        manufacturers=len(rows),
+        distributors=sum(r["distributors"] for r in rows), dealers=sum(r["dealers"] for r in rows),
+        gsm_pumps=sum(r["gsm_pumps"] for r in rows), gsm_online=sum(r["gsm_online"] for r in rows),
+        monthly_pumps=_pumps_per_month(db),
+    )
     return {"manufacturers": rows, "totals": totals}
+
+
+def _gsm_counts(db: Session, in_tree) -> tuple:
+    """(pumps on the GSM service, of those the ones online now) among the pumps in `in_tree` (a subquery of pump ids).
+
+    A pump is on the GSM service when its starter record carries a modem: the modem's IMEI is on the factory's sheet, or the module has already
+    claimed its certificate. Online means it reported within the offline window, the same rule every dashboard uses."""
+    on_gsm = db.query(BatchImei.pump_id).filter(BatchImei.pump_id.isnot(None), or_(BatchImei.imei.isnot(None), BatchImei.claimed.is_(True)))
+    base = db.query(func.count(distinct(Pump.id))).filter(Pump.id.in_(db.query(in_tree.c.id)), Pump.id.in_(on_gsm))
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=settings.OFFLINE_AFTER_SECONDS)
+    return int(base.scalar() or 0), int(base.filter(Pump.last_seen_at.isnot(None), Pump.last_seen_at >= cutoff).scalar() or 0)
+
+
+def _pumps_per_month(db: Session, months: int = 6) -> list:
+    """How many pumps were added in each of the last `months` months (oldest first, empty months as 0), for the dashboard's growth graph."""
+    now = datetime.now(timezone.utc)
+    first = []
+    y, m = now.year, now.month
+    for _ in range(months):
+        first.append((y, m))
+        m -= 1
+        if m == 0:
+            y, m = y - 1, 12
+    first.reverse()
+    since = datetime(first[0][0], first[0][1], 1, tzinfo=timezone.utc)
+    month = func.to_char(func.date_trunc("month", Pump.created_at), "YYYY-MM")
+    rows = db.query(month, func.count(Pump.id)).filter(Pump.created_at >= since).group_by(month).all()
+    found = {r[0]: int(r[1]) for r in rows}
+    return [{"month": f"{y}-{m:02d}", "pumps": found.get(f"{y}-{m:02d}", 0)} for y, m in first]
+
+
+@router.get("/map")
+def platform_map(current_user: User = Depends(require_roles(["superadmin"])), db: Session = Depends(get_db)):
+    """Every pump on the platform that has a known position, for the platform owner's map: one red pin each. Pumps without a position are not listed."""
+    brands = {b.id: b for b in db.query(AppBrand).all()}
+    rows = db.query(Pump.id, Pump.latitude, Pump.longitude, Pump.brand_id).filter(Pump.latitude.isnot(None), Pump.longitude.isnot(None)).all()
+    pumps = [
+        {"id": r[0], "lat": float(r[1]), "lng": float(r[2]), "manufacturer": (brands[r[3]].name if r[3] in brands else None)}
+        for r in rows
+    ]
+    return {"total": len(pumps), "pumps": pumps}
 
 
 @router.get("/{key}")

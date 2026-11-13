@@ -98,11 +98,23 @@ class TestSuperAdminMonitorsOnly(SignInBase):
             headers = self.headers("superadmin")
             self.assertEqual(client.get("/api/v1/pumps", headers=headers).status_code, 200)
             self.assertEqual(client.get("/api/v1/farmers", headers=headers).status_code, 200)
-            for method, path in (("post", "/api/v1/users"), ("post", "/api/v1/batches"), ("delete", f"/api/v1/pumps/{uuid.uuid4().hex[:8]}"),
+            for method, path in (("post", "/api/v1/batches"), ("delete", f"/api/v1/pumps/{uuid.uuid4().hex[:8]}"),
                                  ("post", "/api/v1/farmers"), ("put", "/api/v1/brands/ajanta")):
                 r = getattr(client, method)(path, headers=headers, **({"json": {}} if method in ("post", "put") else {}))
                 self.assertEqual(r.status_code, 403, (method, path, r.text))
-                self.assertIn("monitoring only", r.json()["detail"], (method, path))
+                self.assertIn("monitoring", r.json()["detail"], (method, path))
+
+    def test_the_one_thing_it_may_do_is_make_a_manufacturer_and_only_that(self):
+        with switches(SUPERADMIN_MONITOR_ONLY=True):
+            headers = self.headers("superadmin")
+            # a manufacturer's brand and login get past the monitoring guard (an empty body then fails on its own: 422)
+            self.assertEqual(client.post("/api/v1/brands", json={}, headers=headers).status_code, 422)
+            # any other account is refused by the rule for what a super admin may create
+            for role in ("distributor", "dealer", "customer"):
+                r = client.post("/api/v1/users", headers=headers, json={"full_name": "Someone", "phone_number": "9000000000", "role": role,
+                                                                        "password": "Strong-Pass-1"})
+                self.assertEqual(r.status_code, 403, (role, r.text))
+                self.assertIn("manufacturer", r.json()["detail"])
 
     def test_the_super_admin_can_still_sign_in_refresh_and_sign_out(self):
         with switches(SUPERADMIN_MONITOR_ONLY=True):

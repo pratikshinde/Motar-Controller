@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
-from app.core.phone import normalize_phone
+from app.core.phone import india_phone, normalize_phone
 from app.core.scope import in_subtree, path_in_scope
 from app.database import get_db
 from app.models import AppBrand, AuditLog, Pump
@@ -23,7 +23,7 @@ from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.services.cache_service import cache_service
 from app.services.jwt_auth import hash_secret
 from app.services.phone_verification import redeem_phone_verification
-from app.services import brand_service
+from app.services import brand_service, farmer_claims
 
 logger = logging.getLogger("agripump.users")
 router = APIRouter(tags=["Users"])
@@ -31,11 +31,13 @@ router = APIRouter(tags=["Users"])
 PARTNER_ROLES = ["superadmin", "manufacturer", "distributor", "dealer"]
 
 # Who may create whom (mirrors web/src/api/users.ts, which only offers what the server accepts).
+# The platform owner makes manufacturers (admins) and nothing else: everything below an admin is that admin's own to build.
+# An admin makes distributors, dealers and farmers; a distributor makes dealers and farmers; a dealer makes farmers only.
 ASSIGNABLE_ROLES: Dict[str, List[str]] = {
-    "superadmin": ["manufacturer", "distributor", "dealer", "customer", "support"],
+    "superadmin": ["manufacturer"],
     "manufacturer": ["distributor", "dealer", "customer"],
     "distributor": ["dealer", "customer"],
-    "dealer": ["dealer", "customer"],
+    "dealer": ["customer"],
     "customer": [],
 }
 MAX_DEALER_DEPTH = 6          # FR-SEC-000a
@@ -90,6 +92,8 @@ def _node(u: User) -> dict:
         "contract_notes": u.contract_notes,
         "device_quota": u.device_quota,
         "totp_enabled": bool(u.totp_enabled),
+        # A distributor or dealer added by QR has no password until they open the QR link and choose one.
+        "has_signed_in": bool(u.password_hash),
         "members": [],
         "children": [],
     }
@@ -132,6 +136,13 @@ def get_user_tree(current_user: User = Depends(partner_only), db: Session = Depe
     return {"tree": roots, "data": roots}
 
 
+@router.get("/team")
+def get_team(current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """What the dashboards and the people cards show: the numbers for the caller's whole tree, and for every distributor, dealer and farmer in it."""
+    from app.services.team_stats import team_overview
+    return team_overview(db, current_user)
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user_by_id(user_id: uuid.UUID, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
     return _get_in_scope(db, current_user, user_id)
@@ -141,6 +152,8 @@ def get_user_by_id(user_id: uuid.UUID, current_user: User = Depends(partner_only
 @router.post("/", status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def create_user(req: UserCreate, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
     staff = (req.membership or "").lower() == "staff"
+    if current_user.role == "superadmin" and (staff or (req.role or "").lower() != "manufacturer"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The super admin creates manufacturer (admin) accounts only.")
 
     # Where in the tree: under `parent` (a colleague joins that node's unit; anyone else becomes its child).
     parent = current_user
@@ -177,12 +190,22 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
             raise HTTPException(status_code=422, detail=f"Dealer sub-levels are limited to {MAX_DEALER_DEPTH}.")
         org_node, org_role = None, "owner"
 
-    # Partner accounts sign in with a password and must have one; a farmer signs in with an SMS code and needs none.
-    password = req.password
-    if role != "customer" or staff:
+    # A distributor or dealer has no email and no password of their own to start with: the person above them registers the mobile number and
+    # hands over a one-time QR; they scan it, type the number and choose their own password (POST /auth/partner-claim). No OTP, so no cost.
+    by_qr = (not staff) and role in ("distributor", "dealer")
+    # An admin (manufacturer) signs in with an email and a password given when the platform owner creates it; staff logins keep a password too.
+    password = None if by_qr else req.password
+    if (role not in ("customer", "distributor", "dealer")) or staff:
         if not password or len(password) < MIN_PARTNER_PASSWORD:
             raise HTTPException(status_code=422, detail=f"A password of at least {MIN_PARTNER_PASSWORD} characters is required.")
-    phone = normalize_phone(req.phone_number or req.phone or "") or None
+    if role == "manufacturer" and not staff and not (req.email or "").strip():
+        raise HTTPException(status_code=422, detail="An admin signs in with an email address: enter one.")
+    if by_qr:
+        phone = india_phone(req.phone_number or req.phone or "")
+        if not phone:
+            raise HTTPException(status_code=422, detail="Enter the 10-digit mobile number of the person you are adding.")
+    else:
+        phone = normalize_phone(req.phone_number or req.phone or "") or None
 
     email = req.email.lower().strip() if req.email else None
     if email and db.query(User.id).filter(User.email == email).first():
@@ -190,13 +213,9 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
     if phone and db.query(User.id).filter((User.phone == phone) | (User.phone_number == phone)).first():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That phone number or email is already registered.")
 
-    # The caller (a dealer, typically) is not the phone's owner, so it does not get to just assert this number
-    # is real - it must present a ticket proving *someone* answered a WhatsApp code sent to it just now
-    # (dealer-waits-for-the-code onboarding). An email-only account (no phone at all) has nothing to verify.
+    # No WhatsApp/SMS code is asked for: it costs money. A distributor or dealer proves they are the person by holding the QR and typing the
+    # registered number; an admin is made by the platform owner with an email and password. Nothing marks the number as verified.
     phone_verified = False
-    if phone:
-        redeem_phone_verification(db, phone, "registration", req.phone_verification_token)
-        phone_verified = True
 
     user = User(
         id=uuid.uuid4() if staff else new_id,
@@ -225,13 +244,16 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
             if brand_row is not None:
                 brand_row.owner_user_id = user.id
         _audit(db, current_user, user.id, "USER_CREATED", after={"role": role, "parent": str(parent.id), "staff": staff})
+        claim = token = None
+        if by_qr:
+            claim, token = farmer_claims.issue_claim(db, user.id, current_user.id)
         db.commit()
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That phone number or email is already registered.")
     db.refresh(user)
 
-    return {
+    response = {
         "message": "User account created successfully",
         "user": {
             "id": str(user.id),
@@ -241,6 +263,27 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
             "hierarchy_path": user.hierarchy_path,
         },
     }
+    if claim is not None:
+        response["claim"] = _claim_view(claim, token)
+    return response
+
+
+def _claim_view(claim, token: str) -> dict:
+    """The one-time sign-up QR of a distributor or dealer. Shown once: only its hash is kept."""
+    return {"qr": farmer_claims.payload_for(token), "token": token, "expires_at": claim.expires_at.isoformat()}
+
+
+@router.post("/{user_id}/qr")
+def new_partner_qr(user_id: uuid.UUID, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """A fresh sign-up QR for a distributor or dealer under the caller: for one who has not signed in yet, or who lost their password
+    (the old QR stops working, and opening the new one sets a new password and ends their old sessions)."""
+    target = _get_in_scope(db, current_user, user_id)
+    if target.id == current_user.id or (target.role or "").lower() not in ("distributor", "dealer"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="A sign-up QR can be made for a distributor or a dealer under you only.")
+    claim, token = farmer_claims.issue_claim(db, target.id, current_user.id)
+    _audit(db, current_user, target.id, "PARTNER_QR_ISSUED")
+    db.commit()
+    return {"message": "New QR code created", "claim": _claim_view(claim, token)}
 
 
 @router.patch("/{user_id}")

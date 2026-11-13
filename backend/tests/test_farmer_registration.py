@@ -157,14 +157,47 @@ class TestRegisterFarmer(Base):
         self.db.expire_all()
         self.assertEqual(self.db.query(Pump).filter(Pump.id == starter).one().owner_user_id, dealer.id)
 
-    def test_only_the_ajanta_admin_registers_farmers_not_a_dealer_a_distributor_or_the_super_admin(self):
-        owner = self.dealer()
-        starter = self.stock(owner)
-        for role in ("dealer", "distributor", "superadmin", "support"):
+    def test_the_admin_a_distributor_and_a_dealer_register_farmers_nobody_else_does(self):
+        for role in ("manufacturer", "distributor", "dealer"):
+            owner = self.make_user(role, f"reg-{role}")
+            r = self.register(owner, self.form(self.stock(owner)))
+            self.assertEqual(r.status_code, 201, (role, r.text))
+        starter = self.stock(self.dealer())
+        for role in ("superadmin", "support"):
             other = self.make_user(role, f"no-{role}")
             r = client.post("/api/v1/farmers", json=self.form(starter), headers=self.headers(other))
             self.assertEqual(r.status_code, 403, (role, r.text))
-        self.assertEqual(self.register(owner, self.form(starter)).status_code, 201)
+
+    def test_a_dealer_can_only_use_starters_in_its_own_stock(self):
+        owner = self.dealer()
+        starter = self.stock(owner)
+        dealer = self.make_user("dealer", "no-stock")
+        self.assertEqual(self.register(dealer, self.form(starter)).status_code, 404)
+
+    def test_each_level_sees_only_the_farmers_under_it(self):
+        distributor = self.make_user("distributor", "tree-dist")
+        dealer, sibling = self.make_user("dealer", "tree-d1"), self.make_user("dealer", "tree-d2")
+        for u in (dealer, sibling):          # both dealers sit under the distributor; the sibling is a different dealer
+            row = self.db.query(User).filter(User.id == u.id).one()
+            row.hierarchy_path = f"{distributor.hierarchy_path.rstrip('/')}/{u.id}"
+            row.parent_user_id = distributor.id
+        self.db.commit()
+        made = {}
+        for name, who in (("d1", dealer), ("d2", sibling)):
+            r = self.register(who, self.form(self.stock(who)))
+            self.assertEqual(r.status_code, 201, r.text)
+            made[name] = r.json()["farmer"]["id"]
+
+        def listed(user):
+            return {f["id"] for f in client.get("/api/v1/farmers", headers=self.headers(user)).json()["farmers"]}
+
+        self.assertEqual(listed(dealer) & set(made.values()), {made["d1"]}, "a dealer sees its own farmers only")
+        self.assertEqual(listed(sibling) & set(made.values()), {made["d2"]})
+        self.assertEqual(listed(distributor) & set(made.values()), set(made.values()), "the distributor sees both dealers' farmers")
+        self.assertEqual(listed(self.make_user("superadmin", "tree-sa")) & set(made.values()), set(made.values()), "the super admin sees all")
+        # and a dealer cannot touch the other dealer's farmer
+        r = client.post(f"/api/v1/farmers/{made['d2']}/deactivate", headers=self.headers(dealer))
+        self.assertEqual(r.status_code, 404)
 
     def test_a_farmer_cannot_register_farmers(self):
         farmer = self.make_user("customer", "nosy")
@@ -334,10 +367,10 @@ class TestManageFarmer(Base):
         client.post(f"/api/v1/farmers/{made['farmer']['id']}/deactivate", headers=self.headers(admin))
         self.assertIn(client.get("/api/v1/pumps", headers=headers).status_code, (401, 403))
 
-    def test_stopping_and_restoring_belong_to_the_ajanta_admin_only(self):
+    def test_stopping_and_restoring_belong_to_the_ones_above_the_farmer_not_the_super_admin(self):
         admin, _, made = self.made()
         fid = made["farmer"]["id"]
-        for role in ("dealer", "superadmin"):
+        for role in ("support", "superadmin"):
             other = self.make_user(role, f"manage-{role}")
             self.assertEqual(client.post(f"/api/v1/farmers/{fid}/deactivate", headers=self.headers(other)).status_code, 403, role)
         stranger = self.dealer("stranger2")

@@ -39,7 +39,7 @@ from app.services.phone_verification import (
 )
 from app.services.cache_service import cache_service
 from app.services import firebase_phone
-from app.schemas import ClaimRequest, FirebasePhoneRequest, LoginEmailRequest
+from app.schemas import ClaimRequest, FirebasePhoneRequest, LoginEmailRequest, PartnerClaimRequest
 from app.models.farmer_claim import FarmerClaim
 from app.services import farmer_claims
 from app.core.phone import india_phone
@@ -642,6 +642,62 @@ def claim_with_qr(req: ClaimRequest, db: Session = Depends(get_db)):
     _record_audit_log(db, farmer.id, farmer.role, "user", str(farmer.id), "QR_CLAIMED", {"channel": "qr"})
     db.commit()
     return _finish_phone_sign_in(db, req, stored, "qr")
+
+
+PARTNER_CLAIM_ROLES = ("distributor", "dealer")
+MIN_PARTNER_PASSWORD = 8
+
+
+@router.post("/partner-claim", response_model=LoginResponse)
+def partner_claim(req: PartnerClaimRequest, db: Session = Depends(get_db)):
+    """A distributor's or dealer's first sign-in, and also how a lost password is replaced: they opened the QR link the person above
+    them gave out, typed the mobile number registered for them and chose a password. No OTP (it costs money and these people have no
+    email). The QR works once; five wrong numbers burn it. Afterwards they sign in with the mobile number and that password."""
+    invalid = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="This link is not valid any more. Please ask the person who added you for a new QR code.",
+    )
+    token = farmer_claims.token_from_payload(req.qr)
+    if not token:
+        raise invalid
+    claim = db.query(FarmerClaim).filter(FarmerClaim.token_hash == farmer_claims.hash_token(token)).first()
+    if farmer_claims.state_of(claim) != "PENDING":
+        raise invalid
+    user = db.query(User).filter(User.id == claim.user_id).first()
+    stored = (user.phone or user.phone_number or "") if user else ""
+    if not user or not stored or (user.role or "").lower() not in PARTNER_CLAIM_ROLES:
+        raise invalid
+    if (user.account_status or "ACTIVE").upper() == "SUSPENDED":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account has been stopped. Please contact the person who added you.")
+
+    typed = india_phone(req.phone)
+    if not typed or typed not in get_phone_variants(stored):
+        claim.attempts = (claim.attempts or 0) + 1
+        burned = claim.attempts >= farmer_claims.MAX_PHONE_ATTEMPTS
+        if burned:
+            claim.revoked_at = datetime.now(timezone.utc)
+        _record_audit_log(db, user.id, user.role, "user", str(user.id), "QR_CLAIM_FAILED", {"attempts": claim.attempts, "burned": burned})
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=("That number does not match the one registered for you."
+                    + (" This QR code is now blocked: please ask for a new one." if burned else "")),
+        )
+    if len(req.password) < MIN_PARTNER_PASSWORD:
+        raise HTTPException(status_code=422, detail=f"Choose a password of at least {MIN_PARTNER_PASSWORD} characters.")
+
+    set_db_actor_context(db, user=user)
+    user.password_hash = hash_secret(req.password)
+    # A new password ends every older session, the same as a reset does (this is also how a lost password is replaced).
+    cache_service.increment_user_session_version(str(user.id))
+    user.session_version = (user.session_version or 1) + 1
+    db.query(RefreshToken).filter(RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None)).update(
+        {"revoked_at": datetime.utcnow()}, synchronize_session=False)
+    claim.claimed_at = datetime.now(timezone.utc)
+    cache_service.delete(_login_fail_key(stored))
+    _record_audit_log(db, user.id, user.role, "user", str(user.id), "QR_CLAIMED", {"channel": "partner"})
+    db.commit()
+    return _password_sign_in(db, req, user, _login_fail_key(stored), "Incorrect mobile number or password. Please check and try again.")
 
 
 @router.post("/verify-phone/send")

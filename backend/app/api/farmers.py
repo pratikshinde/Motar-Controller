@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -19,15 +19,17 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_pump_in_scope, require_roles
 from app.api.pumps import STOCK_STATES, _pump_audit, _utc_iso
 
-# Only the manufacturer's own admin (the Ajanta admin) registers farmers. The platform owner (super admin) can look at them.
-FARMER_WRITE_ROLES = ["manufacturer"]
-FARMER_READ_ROLES = ["manufacturer", "superadmin"]
+# The manufacturer's admin, its distributors and its dealers register farmers (each only from the starters in their own stock, and each sees only
+# the farmers under them). The platform owner (super admin) can look at all of them but registers none.
+FARMER_WRITE_ROLES = ["manufacturer", "distributor", "dealer"]
+FARMER_READ_ROLES = ["manufacturer", "distributor", "dealer", "superadmin"]
 from app.core.phone import get_phone_variants, india_phone
 from app.core.scope import in_subtree, path_in_scope
 from app.database import get_db
 from app.models import AllocationLog, AuditLog, Pump, RefreshToken, User
 from app.models.farmer_claim import FarmerClaim
 from app.services import farmer_claims
+from app.services.geocode import place_pumps_for_address
 from app.services.cache_service import cache_service
 
 logger = logging.getLogger(__name__)
@@ -77,7 +79,7 @@ def _farmer_view(user: User) -> dict:
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-def register_farmer(req: FarmerCreate, current_user: User = Depends(require_roles(FARMER_WRITE_ROLES)), db: Session = Depends(get_db)):
+def register_farmer(req: FarmerCreate, background: BackgroundTasks, current_user: User = Depends(require_roles(FARMER_WRITE_ROLES)), db: Session = Depends(get_db)):
     """Create the farmer, give them the starter, and return the QR code (shown once)."""
     phone = india_phone(req.phone)
     if not phone:
@@ -143,6 +145,8 @@ def register_farmer(req: FarmerCreate, current_user: User = Depends(require_role
     db.commit()
     db.refresh(farmer)
     db.refresh(pump)
+    # The address becomes a pin on the map once the response has gone (a lookup can take a few seconds and must never hold up the registration).
+    background.add_task(place_pumps_for_address, [pump.id], req.address)
     return {"message": "Farmer registered", "farmer": _farmer_view(farmer), "pump": _pump_view(pump), "qr": _qr_view(claim, token)}
 
 
@@ -172,7 +176,7 @@ def new_qr(farmer_id: str, current_user: User = Depends(require_roles(FARMER_WRI
 
 
 @router.patch("/{farmer_id}")
-def update_farmer(farmer_id: str, req: FarmerUpdate, current_user: User = Depends(require_roles(FARMER_WRITE_ROLES)), db: Session = Depends(get_db)):
+def update_farmer(farmer_id: str, req: FarmerUpdate, background: BackgroundTasks, current_user: User = Depends(require_roles(FARMER_WRITE_ROLES)), db: Session = Depends(get_db)):
     """Correct a farmer's name, address or mobile number (a typo, a new number)."""
     farmer = _farmer_in_scope(db, current_user, farmer_id)
     changes = req.model_dump(exclude_unset=True, exclude_none=True)
@@ -207,6 +211,10 @@ def update_farmer(farmer_id: str, req: FarmerUpdate, current_user: User = Depend
         db.rollback()
         raise HTTPException(status_code=409, detail="A farmer with this mobile number is already registered.")
     db.refresh(farmer)
+    if "address" in changes:
+        # A corrected address moves the farmer's pins to the new place.
+        ids = [r[0] for r in db.query(Pump.id).filter(Pump.owner_user_id == farmer.id).all()]
+        background.add_task(place_pumps_for_address, ids, farmer.address, True)
     return {"message": "Farmer updated", "farmer": _farmer_view(farmer)}
 
 

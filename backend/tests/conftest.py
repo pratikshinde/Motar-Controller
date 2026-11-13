@@ -18,6 +18,7 @@ os.environ["SUPERADMIN_MONITOR_ONLY"] = "false"
 # Likewise the provisioning hook: the real server has its own secret in .env, but the tests call the hook as local development does (no secret). The
 # tests that are about the secret set it themselves.
 os.environ["PROVISIONING_HOOK_SECRET"] = ""
+os.environ["GEOCODE_ENABLED"] = "false"          # no test reaches out to an outside address service
 
 
 @pytest.fixture(autouse=True)

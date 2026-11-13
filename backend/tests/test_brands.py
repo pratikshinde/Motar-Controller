@@ -20,7 +20,7 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.main import app
-from app.models import AppBrand, AuditLog, DeviceConfig, Pump, User
+from app.models import AppBrand, AuditLog, BatchImei, DeviceBatch, DeviceConfig, Pump, User
 from app.services import brand_service
 from app.services.brand_service import current_brand
 from test_web_portal_hardening import PASSWORD, MfaBase  # noqa: E402
@@ -41,6 +41,7 @@ class BrandBase(MfaBase):
         cls.brand_a = cls.add_brand(f"tba-{cls.sfx}", "Test A Controller")
         cls.brand_b = cls.add_brand(f"tbb-{cls.sfx}", "Test B Controller")
         cls.pump_ids = []
+        cls.batch_ids = []
 
     @classmethod
     def add_brand(cls, key, name, **extra):
@@ -55,6 +56,8 @@ class BrandBase(MfaBase):
         try:
             cls.db.rollback()
             cls.db.execute(text("SET app.bypass_rls = 'on';"))
+            if cls.batch_ids:
+                cls.db.query(DeviceBatch).filter(DeviceBatch.id.in_(cls.batch_ids)).delete(synchronize_session=False)
             if cls.pump_ids:
                 cls.db.query(DeviceConfig).filter(DeviceConfig.pump_id.in_(cls.pump_ids)).delete(synchronize_session=False)
                 cls.db.query(Pump).filter(Pump.id.in_(cls.pump_ids)).delete(synchronize_session=False)
@@ -214,7 +217,7 @@ class TestNewThingsGetABrand(BrandBase):
         self.assertEqual(self.create_pump((_h(sa),), brand="nope")[1].status_code, 422)
 
     def test_a_partner_account_made_by_a_partner_inherits_its_brand_a_farmer_has_none(self):
-        dealer = self.partner("dealer", "parent-a", self.brand_a)
+        dealer = self.partner("distributor", "parent-a", self.brand_a)
         made = {}
         for role in ("dealer", "customer"):
             phone = f"90{uuid.uuid4().int % 10**8:08d}"
@@ -349,6 +352,18 @@ class TestManufacturerPortals(BrandBase):
         self.b = self.tree(self.brand_b, "b")
         self.sa = _partner(self, "superadmin", "sa-portal")
 
+    def on_gsm(self, pump_id, online):
+        """Give the pump a modem (its starter record carries an IMEI) and say whether it reported just now."""
+        from datetime import datetime, timezone, timedelta
+        batch = DeviceBatch(id=uuid.uuid4(), batch_code=f"GSM-{uuid.uuid4().hex[:10]}", model="m", hw_rev="1", quantity=1, created_by=self.sa.id)
+        self.db.add(batch)
+        self.db.flush()
+        type(self).batch_ids.append(batch.id)
+        self.db.add(BatchImei(batch_id=batch.id, imei=f"86{uuid.uuid4().int % 10**13:013d}", mcu_uid=pump_id, pump_id=pump_id, claimed=True))
+        seen = datetime.now(timezone.utc) - (timedelta(seconds=10) if online else timedelta(hours=2))
+        self.db.query(Pump).filter(Pump.id == pump_id).update({"last_seen_at": seen})
+        self.db.commit()
+
     @staticmethod
     def viewing(user, key):
         return {**_h(user), "X-View-Manufacturer": key}
@@ -415,6 +430,52 @@ class TestManufacturerPortals(BrandBase):
         rows = {m["key"]: m for m in client.get("/api/v1/brands/overview", headers=_h(self.sa)).json()["manufacturers"]}
         self.assertEqual((rows[self.brand_b.key]["owner"], rows[self.brand_b.key]["pumps"]["total"]), (None, 0))
 
+    def test_the_overview_counts_gsm_pumps_and_how_many_are_online_per_manufacturer_and_in_total(self):
+        self.on_gsm(self.a.pump, online=True)
+        self.on_gsm(self.b.pump, online=False)
+        r = client.get("/api/v1/brands/overview", headers=_h(self.sa)).json()
+        rows = {m["key"]: m for m in r["manufacturers"]}
+        self.assertEqual((rows[self.brand_a.key]["gsm_pumps"], rows[self.brand_a.key]["gsm_online"]), (1, 1))
+        self.assertEqual((rows[self.brand_b.key]["gsm_pumps"], rows[self.brand_b.key]["gsm_online"]), (1, 0))
+        self.assertTrue(r["totals"]["gsm_pumps"] >= 2 and r["totals"]["gsm_online"] >= 1)
+
+    def test_a_pump_without_a_modem_is_not_counted_as_gsm(self):
+        r = client.get("/api/v1/brands/overview", headers=_h(self.sa)).json()
+        rows = {m["key"]: m for m in r["manufacturers"]}
+        self.assertEqual((rows[self.brand_a.key]["gsm_pumps"], rows[self.brand_b.key]["gsm_pumps"]), (0, 0))
+
+    def test_the_totals_have_what_the_platform_dashboard_shows(self):
+        t = client.get("/api/v1/brands/overview", headers=_h(self.sa)).json()["totals"]
+        for key in ("manufacturers", "distributors", "dealers", "gsm_pumps", "gsm_online", "running", "total", "monthly_pumps"):
+            self.assertIn(key, t)
+        self.assertGreaterEqual(t["manufacturers"], 2)
+        self.assertGreaterEqual(t["dealers"], 2)       # each test manufacturer has one dealer
+        months = t["monthly_pumps"]
+        self.assertEqual(len(months), 6)
+        self.assertEqual([m["month"] for m in months], sorted(m["month"] for m in months), "oldest first")
+        self.assertGreaterEqual(months[-1]["pumps"], 2, "this month's two test pumps")
+
+    def test_each_manufacturer_row_has_the_distributor_and_dealer_counts_and_when_it_joined(self):
+        rows = {m["key"]: m for m in client.get("/api/v1/brands/overview", headers=_h(self.sa)).json()["manufacturers"]}
+        row = rows[self.brand_a.key]
+        self.assertEqual((row["distributors"], row["dealers"]), (0, 1))
+        self.assertTrue(row["joined"])
+
+    def test_the_platform_map_lists_the_pumps_with_a_position_only_and_for_the_super_admin_only(self):
+        self.db.query(Pump).filter(Pump.id == self.a.pump).update({"latitude": 18.52, "longitude": 73.85})
+        self.db.commit()
+        r = client.get("/api/v1/brands/map", headers=_h(self.sa))
+        self.assertEqual(r.status_code, 200, r.text)
+        body = r.json()
+        by_id = {p["id"]: p for p in body["pumps"]}
+        self.assertIn(self.a.pump, by_id)
+        self.assertNotIn(self.b.pump, by_id, "a pump with no position has no pin")
+        self.assertEqual((by_id[self.a.pump]["lat"], by_id[self.a.pump]["lng"]), (18.52, 73.85))
+        self.assertEqual(by_id[self.a.pump]["manufacturer"], "Test A Controller")
+        self.assertEqual(body["total"], len(body["pumps"]))
+        self.assertEqual(client.get("/api/v1/brands/map", headers=_h(self.a.mfr)).status_code, 403)
+        self.assertEqual(client.get("/api/v1/brands/map").status_code, 401)
+
     def test_a_new_manufacturer_must_name_its_brand_and_its_first_account_becomes_the_owner(self):
         self.db.query(AppBrand).filter(AppBrand.id == self.brand_b.id).update({"owner_user_id": None})
         self.db.commit()
@@ -422,7 +483,7 @@ class TestManufacturerPortals(BrandBase):
         def create(**extra):
             phone = f"90{uuid.uuid4().int % 10**8:08d}"
             body = {"full_name": "New Maker", "phone_number": phone, "role": "manufacturer", "password": "Strong-Pass-1",
-                    "phone_verification_token": _verify_phone(phone), **extra}
+                    "email": f"maker-{uuid.uuid4().hex[:10]}@example.test", **extra}
             return client.post("/api/v1/users", json=body, headers=_h(self.sa))
 
         without = create()

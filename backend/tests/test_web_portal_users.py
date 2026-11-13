@@ -83,6 +83,7 @@ class TestUserManagementRules(MfaBase):
             cls.sa = _partner(self, "superadmin", "root")
         self.dealer = _partner(self, "dealer", "d1", parent=self.sa)
         self.other_dealer = _partner(self, "dealer", "d10", parent=self.sa)
+        self.dist = _partner(self, "distributor", "dist1", parent=self.sa)
 
     def create(self, actor, **body):
         body.setdefault("full_name", "Someone")
@@ -94,21 +95,37 @@ class TestUserManagementRules(MfaBase):
             type(self).user_ids.append(uuid.UUID(r.json()["user"]["id"]))
         return r
 
-    def test_a_dealer_creates_farmers_and_dealers_but_nothing_above_itself(self):
+    def test_a_dealer_creates_farmers_only(self):
         ok = self.create(self.dealer, role="customer")
         self.assertEqual(ok.status_code, 201, ok.text)
         made = self.db.query(User).filter(User.id == ok.json()["user"]["id"]).one()
         self.assertTrue(made.hierarchy_path.startswith(self.dealer.hierarchy_path + "/"))
         self.assertIsNone(made.password_hash, "a farmer signs in with an SMS code and gets no default password")
 
-        for role in ("superadmin", "manufacturer", "distributor"):
+        for role in ("superadmin", "manufacturer", "distributor", "dealer"):
             self.assertEqual(self.create(self.dealer, role=role, password="Strong-Pass-1").status_code, 403, role)
 
-    def test_a_partner_account_needs_a_real_password_and_there_is_no_default(self):
-        for body in ({"role": "dealer"}, {"role": "dealer", "password": "short"}):
-            r = self.create(self.dealer, **body)
+    def test_a_distributor_creates_dealers_and_farmers_but_nothing_above_itself(self):
+        self.assertEqual(self.create(self.dist, role="dealer", password="Strong-Pass-1").status_code, 201)
+        self.assertEqual(self.create(self.dist, role="customer").status_code, 201)
+        for role in ("superadmin", "manufacturer", "distributor"):
+            self.assertEqual(self.create(self.dist, role=role, password="Strong-Pass-1").status_code, 403, role)
+
+    def test_the_super_admin_creates_manufacturers_and_nothing_else(self):
+        for role in ("distributor", "dealer", "customer", "support", "superadmin"):
+            self.assertEqual(self.create(self.sa, role=role, password="Strong-Pass-1").status_code, 403, role)
+        self.assertEqual(self.create(self.sa, role="customer", membership="staff", parent_user_id=str(self.sa.id),
+                                     password="Strong-Pass-1").status_code, 403, "no staff for the platform owner either")
+
+    def test_a_dealer_gets_no_password_from_the_one_who_adds_them_and_a_staff_login_needs_a_real_one(self):
+        r = self.create(self.dist, role="dealer")
+        self.assertEqual(r.status_code, 201, r.text)
+        self.assertIn("claim", r.json(), "they choose their own password from the QR")
+        made = self.db.query(User).filter(User.id == r.json()["user"]["id"]).one()
+        self.assertIsNone(made.password_hash, "there is no default password")
+        for body in ({}, {"password": "short"}):
+            r = self.create(self.dist, membership="staff", parent_user_id=str(self.dist.id), **body)
             self.assertEqual(r.status_code, 422, r.text)
-        self.assertEqual(self.create(self.dealer, role="dealer", password="Strong-Pass-1").status_code, 201)
 
     def test_the_platform_owner_role_cannot_be_created_at_all(self):
         self.assertEqual(self.create(self.sa, role="superadmin", password="Strong-Pass-1").status_code, 403)
@@ -177,20 +194,20 @@ class TestUserManagementRules(MfaBase):
         self.assertEqual(self.create(self.dealer, role="customer", phone_number=phone).status_code, 409)
 
     def test_suspending_ends_the_sessions_and_you_cannot_suspend_yourself(self):
-        child = self.create(self.dealer, role="dealer", password="Strong-Pass-1").json()["user"]["id"]
+        child = self.create(self.dist, role="dealer", password="Strong-Pass-1").json()["user"]["id"]
         child_user = self.db.query(User).filter(User.id == child).one()
         self.assertEqual(client.get("/api/v1/auth/me", headers=_h(child_user)).status_code, 200)
 
-        r = client.put(f"/api/v1/users/{child}", json={"account_status": "SUSPENDED", "device_quota": 5}, headers=_h(self.dealer))
+        r = client.put(f"/api/v1/users/{child}", json={"account_status": "SUSPENDED", "device_quota": 5}, headers=_h(self.dist))
         self.assertEqual(r.status_code, 200, r.text)
         self.assertEqual(r.json()["user"]["account_status"], "SUSPENDED")
         self.assertIn(client.get("/api/v1/auth/me", headers=_h(child_user)).status_code, (401, 403))
 
-        own = client.put(f"/api/v1/users/{self.dealer.id}", json={"account_status": "ACTIVE"}, headers=_h(self.dealer))
+        own = client.put(f"/api/v1/users/{self.dist.id}", json={"account_status": "ACTIVE"}, headers=_h(self.dist))
         self.assertEqual(own.status_code, 403)
-        bad = client.put(f"/api/v1/users/{child}", json={"account_status": "DELETED"}, headers=_h(self.dealer))
+        bad = client.put(f"/api/v1/users/{child}", json={"account_status": "DELETED"}, headers=_h(self.dist))
         self.assertEqual(bad.status_code, 422)
-        foreign = client.put(f"/api/v1/users/{self.other_dealer.id}", json={"full_name": "Hijacked"}, headers=_h(self.dealer))
+        foreign = client.put(f"/api/v1/users/{self.other_dealer.id}", json={"full_name": "Hijacked"}, headers=_h(self.dist))
         self.assertEqual(foreign.status_code, 404)
 
     def test_only_the_platform_owner_deletes_and_never_an_owner_of_devices(self):
