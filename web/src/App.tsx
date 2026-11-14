@@ -9,6 +9,7 @@ import { BrandingProvider } from './context/BrandingContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { AppShell } from './components/AppShell';
 import { LoginView } from './views/LoginView';
+import { HomeView } from './views/home/HomeView';
 import { DeviceDetailView } from './views/DeviceDetailView';
 import { AuditLogView } from './views/AuditLogView';
 import { FactoryConsoleView } from './views/FactoryConsoleView';
@@ -78,10 +79,14 @@ const Gate: React.FC = () => {
   const { isAuthenticated, role } = useAuth();
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<HomeView />)} />
 
       {/* Authentication & Onboarding Portal */}
       <Route path="/login" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/login/admin" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="admin" />)} />
+      <Route path="/login/distributor" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="distributor" />)} />
+      <Route path="/login/dealer" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="dealer" />)} />
+      <Route path="/owner" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="owner" />)} />
       <Route path="/auth/login" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
       <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/auth/register" element={<Navigate to="/login" replace />} />
@@ -95,7 +100,7 @@ const Gate: React.FC = () => {
       <Route path="/register/:token" element={<RegisterView />} />
 
       {/* Protected Dashboard */}
-      <Route path="/*" element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/login" replace />} />
+      <Route path="/*" element={isAuthenticated ? <AuthenticatedApp /> : <Navigate to="/" replace />} />
     </Routes>
   );
 };

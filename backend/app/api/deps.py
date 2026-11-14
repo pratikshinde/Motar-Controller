@@ -136,7 +136,7 @@ def get_current_user(
     # The one thing it may do is create a manufacturer: its brand (POST /brands) and its login (POST /users, which accepts nothing but a
     # manufacturer from this account).
     path = request.url.path.rstrip("/")
-    creates_manufacturer = request.method.upper() == "POST" and path.endswith(("/brands", "/users"))
+    creates_manufacturer = request.method.upper() == "POST" and (path.endswith(("/brands", "/users", "/admin-code")) or "/users/admin-invites" in path)
     if settings.SUPERADMIN_MONITOR_ONLY and request.method.upper() not in ("GET", "HEAD", "OPTIONS") and "/auth/" not in path and not creates_manufacturer:
         from app.core.roles import to_db_role as _db_role
         if _db_role(user.role) == "superadmin":

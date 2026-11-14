@@ -1,10 +1,10 @@
-"""Signing in with a code sent to the account's email: how the admin and the platform owner sign in. There is no password.
+"""The platform owner signs in with a code emailed to them (and then the authenticator code): no password.
 
-1. They type their email. If it belongs to an admin or the platform owner, a 6-digit code is emailed; whatever the email, the answer is the same, so nobody
-   can learn which emails have accounts.
+1. They type their email. If it is the platform owner's, a 6-digit code is emailed; whatever the email, the answer is the same, so nobody can learn which emails
+   have accounts.
 2. They type the code. It works once, for 10 minutes; five wrong tries burn it; no more than five codes are sent to one email in 15 minutes.
-3. The platform owner then also enters the authenticator code (the existing second step); an admin is signed in.
 
+(An admin's email is proved differently, once, when the platform owner adds them: see app/services/admin_invites.py.)
 Only a keyed hash of the code is stored. On a developer machine (ENV=development) the fixed code 123456 is accepted too, but only while emails are not really being sent (EMAIL_BACKEND=log).
 """
 import hashlib
@@ -12,7 +12,7 @@ import hmac
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Tuple
 
 from fastapi import HTTPException, status
 from sqlalchemy import func
@@ -29,7 +29,7 @@ CODE_MINUTES = 10
 MAX_ATTEMPTS = 5
 MAX_SENDS = 5
 SEND_WINDOW_MINUTES = 15
-EMAIL_SIGN_IN_ROLES = ("superadmin", "manufacturer")
+OWNER_ROLES = ("superadmin",)
 DEV_CODE = "123456"
 WRONG = "That code is not right, or it has expired. Ask for a new one."
 
@@ -50,20 +50,20 @@ def _hash(email: str, code: str) -> str:
     return hmac.new((settings.JWT_SECRET or "dev").encode("utf-8"), f"{email}|{code}".encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def find_account(db: Session, email: str) -> Optional[User]:
-    """The admin or platform owner this email signs in to (active, not suspended), or None."""
+def find_account(db: Session, email: str, roles: Tuple[str, ...]) -> Optional[User]:
+    """The account of one of these roles this email belongs to (active, not suspended), or None."""
     if not email or "@" not in email:
         return None
-    user = db.query(User).filter(func.lower(User.email) == email, User.role.in_(EMAIL_SIGN_IN_ROLES)).first()
+    user = db.query(User).filter(func.lower(User.email) == email, User.role.in_(roles)).first()
     if user is None or not user.is_active or user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
         return None
     return user
 
 
-def request_code(db: Session, raw_email: str) -> None:
-    """Email a code if the address belongs to an admin or the platform owner. Never says which; never raises for a stranger's address."""
+def request_code(db: Session, raw_email: str, roles: Tuple[str, ...]) -> None:
+    """Email a code if the address belongs to an account of one of these roles. Never says which; never raises for a stranger's address."""
     email = clean_email(raw_email)
-    user = find_account(db, email)
+    user = find_account(db, email, roles)
     if user is None:
         return
     now = _now()
@@ -88,12 +88,12 @@ def request_code(db: Session, raw_email: str) -> None:
         logger.error("A sign-in code could not be sent: %s", exc)
 
 
-def verify_code(db: Session, raw_email: str, code: str) -> User:
+def verify_code(db: Session, raw_email: str, code: str, roles: Tuple[str, ...]) -> User:
     """The account, when the email and the code are right. Otherwise one answer, whatever was wrong."""
     email = clean_email(raw_email)
     code = "".join(ch for ch in (code or "") if ch.isdigit())
     wrong = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=WRONG)
-    user = find_account(db, email)
+    user = find_account(db, email, roles)
     if user is None or len(code) != 6:
         raise wrong
     # The development shortcut only stands in for the code when emails are not really being sent.

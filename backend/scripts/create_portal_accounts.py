@@ -1,4 +1,4 @@
-"""Create the two website logins: the Ajanta admin and the super admin. Each signs in with an email and a code emailed to it; there is no password.
+"""Create the two website logins: the Ajanta admin and the super admin. No password is asked here.
 
     python scripts/create_portal_accounts.py --role superadmin    --name "Platform Owner" --email owner@example.com
     python scripts/create_portal_accounts.py --role ajanta-admin  --name "Ajanta Admin"   --email admin@ajanta.example
@@ -6,10 +6,11 @@
 * The Ajanta admin registers farmers, manages the starters and sees everything of Ajanta. It is the Ajanta brand's own account.
 * The super admin only monitors (see SUPERADMIN_MONITOR_ONLY in backend/.env) and can open the Ajanta dashboard read-only.
 
-The super admin enters the emailed code and then the code of an authenticator app (set up at the first sign-in). The admin enters only the emailed
-code. The server needs EMAIL_FROM set and the sender verified in Amazon SES (see deploy/README.md).
+The super admin signs in with a code emailed to them, then the code of an authenticator app (set up at the first sign-in). The Ajanta admin opens the
+website, chooses Login > Admin > "First time here", gets a code by email to prove the email is theirs and chooses their own password; after that they
+sign in with the email and that password. The server needs EMAIL_BACKEND set up (see deploy/README.md).
 Only if you really want one, `--with-password` asks for a password (hidden, typed twice, at least 10 characters, stored only as a hash; or set
-PORTAL_PASSWORD for a non-interactive run); it then also works on the old email-and-password sign-in.
+PORTAL_PASSWORD for a non-interactive run).
 """
 import argparse
 import getpass
@@ -96,7 +97,7 @@ def main() -> int:
         db.execute(text("SELECT set_config('app.bypass_rls', 'on', false)"))
         user = create_account(db, args.role, args.name, args.email, _ask_password() if args.with_password else None, replace_owner=args.replace_owner)
         db.commit()
-        print(f"Created {args.role}: {user.email}. Sign in on the website with that email: a code is emailed to it.")
+        print(f"Created {args.role}: {user.email}. The super admin signs in with an emailed code and the authenticator; the admin uses First time here on the Admin sign-in to choose a password.")
         return 0
     except AccountError as exc:
         db.rollback()

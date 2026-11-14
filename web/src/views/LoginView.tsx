@@ -13,17 +13,21 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthHeroPanel } from './auth/AuthHeroPanel';
-import { LoginForm } from './auth/LoginForm';
+import { LoginForm, type LoginVariant } from './auth/LoginForm';
+import { RoleChooser } from './auth/RoleChooser';
+import { AdminLoginForm } from './auth/AdminLoginForm';
 import { BrandLogo } from '../components/brand/BrandLogo';
 import { useLocale } from '../context/LocaleContext';
 import { supportedLocales, localeLabels, type SupportedLocale } from '../i18n';
 
 interface LoginViewProps {
+  /** Which page: the "who are you?" choice (the default), or one kind of person's sign-in. */
+  variant?: 'choose' | 'admin' | LoginVariant;
   /** Kept so the old /register routes still render the page: there is no sign-up any more, only the sign-in. */
   defaultTab?: 'login' | 'register';
 }
 
-export const LoginView: React.FC<LoginViewProps> = () => {
+export const LoginView: React.FC<LoginViewProps> = ({ variant = 'choose' }) => {
   const theme = useTheme();
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -150,7 +154,7 @@ export const LoginView: React.FC<LoginViewProps> = () => {
 
         {/* Center: Tabs & Main Form */}
         <Box sx={{ my: 'auto', py: { xs: 1, md: 2 } }}>
-          <LoginForm />
+          {variant === 'choose' ? <RoleChooser /> : variant === 'admin' ? <AdminLoginForm /> : <LoginForm variant={variant} />}
         </Box>
 
         {/* Bottom Security / Copyright Note */}

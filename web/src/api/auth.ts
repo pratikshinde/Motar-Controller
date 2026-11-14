@@ -81,6 +81,14 @@ export async function loginWithEmailCode(email: string, code: string): Promise<L
   return outcomeFrom(body);
 }
 
+/** The code the admin got by email when the platform owner added them proves it is them: their own password is saved and they are signed in. The code works once. */
+export async function setAdminPassword(email: string, code: string, password: string): Promise<LoginOutcome> {
+  const res = await apiFetch('/auth/admin-password/set', { method: 'POST', body: JSON.stringify({ email: email.trim(), code: code.trim(), password }) });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'That code is not right, or it has expired. Ask for a new one.'));
+  return outcomeFrom(body);
+}
+
 export async function loginWithEmail(email: string, password: string): Promise<LoginOutcome> {
   const res = await apiFetch('/auth/login-email', {
     method: 'POST',

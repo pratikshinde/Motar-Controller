@@ -1,4 +1,4 @@
-"""Admin and platform-owner sign-in with a code emailed to them: no password. The platform owner then also passes the authenticator step.
+"""The platform owner signs in with a code emailed to them and then the authenticator code (no password).
 Runs against the local development database; no email is really sent (the sender is replaced)."""
 import os
 import re
@@ -45,7 +45,7 @@ class EmailBase(MfaBase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def account(self, role="manufacturer", tag="mail", **fields):
+    def account(self, role="superadmin", tag="mail", **fields):
         u = self.make_user(role, tag)
         u = self.db.query(User).filter(User.id == u.id).one()
         u.email = f"{tag}-{uuid.uuid4().hex[:8]}@example.com"
@@ -64,7 +64,7 @@ class EmailBase(MfaBase):
 
 
 class TestAskingForACode(EmailBase):
-    def test_an_admins_address_gets_a_six_digit_code_by_email(self):
+    def test_the_platform_owners_address_gets_a_six_digit_code_by_email(self):
         admin = self.account()
         r = self.ask(admin.email)
         self.assertEqual(r.status_code, 200, r.text)
@@ -79,10 +79,11 @@ class TestAskingForACode(EmailBase):
         self.assertEqual((known.status_code, known.json()), (unknown.status_code, unknown.json()))
         self.assertEqual(len(self.inbox.sent), 1, "only the real admin was emailed")
 
-    def test_only_an_admin_or_the_platform_owner_can_sign_in_this_way(self):
+    def test_only_the_platform_owner_signs_in_this_way(self):
         farmer = self.account("customer", "farmer")
         dealer = self.account("dealer", "dealer")
-        for who in (farmer, dealer):
+        admin = self.account("manufacturer", "admin")
+        for who in (farmer, dealer, admin):
             self.assertEqual(self.ask(who.email).status_code, 200)
         self.assertEqual(self.inbox.sent, [])
         self.assertEqual(self.enter(farmer.email, "123456").status_code, 400, "not even the development code")
@@ -113,14 +114,15 @@ class TestAskingForACode(EmailBase):
 
 
 class TestEnteringTheCode(EmailBase):
-    def test_a_right_code_signs_an_admin_in_with_no_password_and_no_authenticator(self):
+    def test_a_right_code_signs_the_owner_in_with_no_password_while_no_authenticator_is_set_up(self):
         admin = self.account()
         self.ask(admin.email)
         r = self.enter(admin.email, self.inbox.code())
         self.assertEqual(r.status_code, 200, r.text)
         body = r.json()
         self.assertTrue(body["access_token"] and body["refresh_token"])
-        self.assertEqual(body["user"]["role"], "manufacturer")
+        self.assertEqual(body["user"]["role"], "superadmin")
+        self.assertTrue(body.get("mfa_setup_required"), "a setup-only session: the authenticator comes next")
         self.assertEqual(client.get(f"{API}/me", headers={"Authorization": f"Bearer {body['access_token']}"}).status_code, 200)
 
     def test_a_code_works_once(self):
@@ -174,7 +176,7 @@ class TestEnteringTheCode(EmailBase):
         self.assertEqual(b.json()["detail"], a.json()["detail"])
         self.assertIn(c.status_code, (400, 422))
 
-    def test_in_development_the_fixed_code_works_for_a_real_admin_only(self):
+    def test_in_development_the_fixed_code_works_for_a_real_owner_only(self):
         admin = self.account()
         self.assertEqual(self.enter(admin.email, "123456").status_code, 200)
         self.assertEqual(self.enter("nobody@example.com", "123456").status_code, 400)

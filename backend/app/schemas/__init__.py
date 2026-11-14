@@ -46,6 +46,15 @@ class EmailCodeVerifyRequest(BaseModel):
     device_info: Optional[str] = None
 
 
+class AdminPasswordSetRequest(BaseModel):
+    """An admin proves their email with the emailed code and chooses their own password (the first time, or when they forgot it)."""
+    email: str = Field(..., min_length=3, max_length=254)
+    code: str = Field(..., min_length=4, max_length=12)
+    password: str = Field(..., min_length=1, max_length=128)
+    app_install_id: Optional[str] = None
+    device_info: Optional[str] = None
+
+
 class RegistrationScanRequest(BaseModel):
     """The new distributor or dealer opened the registration QR."""
     token: str = Field(..., min_length=20, max_length=128)

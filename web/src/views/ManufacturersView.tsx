@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Avatar, Box, Button, Card, CardActionArea, Chip, CircularProgress, Stack, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, Card, CardActionArea, Chip, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useNavigate } from 'react-router-dom';
 import { fetchManufacturersOverview, setManufacturerStatus, type ManufacturerSummary, type ManufacturersOverview } from '../api/brands';
+import { fetchAdminInvites, resendAdminInvite, sendAdminResetCode, type AdminInvite } from '../api/adminInvites';
+import { VerifyAdminInviteDialog } from '../components/VerifyAdminInviteDialog';
 import { setViewing } from '../api/viewing';
 import { AddManufacturerDialog } from '../components/AddManufacturerDialog';
 import { useToast } from '../context/ToastContext';
@@ -30,7 +32,7 @@ const Mini: React.FC<{ label: string; value: number; color?: string }> = ({ labe
 );
 
 /** One admin as a card: who they are and, at a glance, how big their business on the platform is. Click to open their own dashboard. */
-const ManufacturerCard: React.FC<{ m: ManufacturerSummary; busy: boolean; onOpen: () => void; onToggle: () => void }> = ({ m, busy, onOpen, onToggle }) => {
+const ManufacturerCard: React.FC<{ m: ManufacturerSummary; busy: boolean; onOpen: () => void; onToggle: () => void; onNewCode: () => void }> = ({ m, busy, onOpen, onToggle, onNewCode }) => {
   const theme = useTheme();
   const color = m.primary_color || theme.palette.primary.main;
   const on = m.status === 'ACTIVE';
@@ -71,6 +73,11 @@ const ManufacturerCard: React.FC<{ m: ManufacturerSummary; busy: boolean; onOpen
           {m.joined ? `Added ${formatDate(m.joined)}` : ''}
         </Typography>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          {m.owner?.id && (
+            <Button size="small" color="inherit" disabled={busy} onClick={onNewCode} data-testid={`new-code-${m.key}`}>
+              Send new code
+            </Button>
+          )}
           <Button size="small" color="inherit" disabled={busy} onClick={onToggle} data-testid={`toggle-${m.key}`}>
             {on ? 'Switch app off' : 'Switch app on'}
           </Button>
@@ -92,10 +99,13 @@ export const ManufacturersView: React.FC = () => {
   const [error, setError] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [invites, setInvites] = useState<AdminInvite[]>([]);
+  const [confirming, setConfirming] = useState<AdminInvite | null>(null);
 
   const load = useCallback(async () => {
     try {
       setData(await fetchManufacturersOverview());
+      setInvites((await fetchAdminInvites().catch(() => ({ invites: [] as AdminInvite[] }))).invites);
       setError('');
     } catch (err: any) {
       setError(err?.message || 'Could not load the manufacturers');
@@ -115,6 +125,9 @@ export const ManufacturersView: React.FC = () => {
     return () => clearInterval(id);
   }, [load]);
 
+  // Admins who were added and whose email is not confirmed yet (the code was not typed in): they are not manufacturers until it is.
+  const waiting = invites.filter(i => i.status === 'WAITING_FOR_CODE' || i.status === 'EXPIRED' || i.status === 'BLOCKED');
+
   async function toggleStatus(m: ManufacturerSummary) {
     const suspend = m.status === 'ACTIVE';
     const ok = window.confirm(
@@ -128,6 +141,32 @@ export const ManufacturersView: React.FC = () => {
       await load();
     } catch (err: any) {
       showToast(err.message || 'Could not change the status', true);
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function newCode(m: ManufacturerSummary) {
+    const email = m.owner?.email || 'their email';
+    if (!window.confirm(`Send a new code to ${email}? They use it on the Admin sign-in, under “First time here”, to choose a new password.`)) return;
+    setBusyKey(m.key);
+    try {
+      await sendAdminResetCode(m.owner!.id!);
+      showToast(`A new code was sent to ${email}`);
+    } catch (err: any) {
+      showToast(err.message || 'Could not send the code', true);
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function sendAgain(invite: AdminInvite) {
+    setBusyKey(invite.id);
+    try {
+      await resendAdminInvite(invite.id);
+      showToast(`A new code was sent to ${invite.email}`);
+    } catch (err: any) {
+      showToast(err.message || 'Could not send the code', true);
     } finally {
       setBusyKey(null);
     }
@@ -159,6 +198,35 @@ export const ManufacturersView: React.FC = () => {
 
       {error && !data && <Alert severity="error">{error}</Alert>}
 
+      {waiting.length > 0 && (
+        <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, borderStyle: 'dashed' }} data-testid="waiting-admins">
+          <Typography sx={{ fontWeight: 700, mb: 1.25 }}>Waiting to confirm their email ({waiting.length})</Typography>
+          <Stack spacing={1}>
+            {waiting.map(i => (
+              <Box key={i.id} data-testid={`waiting-${i.id}`} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', p: 1.25, borderRadius: 2, bgcolor: theme => alpha(theme.palette.info.main, 0.05) }}>
+                <Box sx={{ flex: '1 1 220px', minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 600 }} noWrap>
+                    {i.full_name} <Typography component="span" variant="body2" color="text.secondary">· {i.company_name || 'no company'}</Typography>
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    A code was sent to {i.email}
+                    {i.status === 'EXPIRED' ? ' (expired)' : i.status === 'BLOCKED' ? ' (blocked: too many wrong tries)' : ''}
+                  </Typography>
+                </Box>
+                {i.status === 'WAITING_FOR_CODE' && (
+                  <Button size="small" onClick={() => setConfirming(i)} data-testid={`enter-code-${i.id}`}>
+                    Enter code
+                  </Button>
+                )}
+                <Button size="small" color="inherit" disabled={busyKey === i.id} onClick={() => sendAgain(i)} data-testid={`send-again-${i.id}`}>
+                  Send a new code
+                </Button>
+              </Box>
+            ))}
+          </Stack>
+        </Paper>
+      )}
+
       {data && data.manufacturers.length === 0 && (
         <Typography color="text.secondary" sx={{ py: 6, textAlign: 'center' }}>
           No admins registered yet. Use “Register admin” to add the first one.
@@ -168,12 +236,27 @@ export const ManufacturersView: React.FC = () => {
       {data && data.manufacturers.length > 0 && (
         <Box sx={{ display: 'grid', gap: 2.5, gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fill, minmax(360px, 1fr))' } }}>
           {data.manufacturers.map(m => (
-            <ManufacturerCard key={m.key} m={m} busy={busyKey === m.key} onOpen={() => navigate(`/manufacturers/${encodeURIComponent(m.key)}`)} onToggle={() => toggleStatus(m)} />
+            <ManufacturerCard
+              key={m.key}
+              m={m}
+              busy={busyKey === m.key}
+              onOpen={() => navigate(`/manufacturers/${encodeURIComponent(m.key)}`)}
+              onToggle={() => toggleStatus(m)}
+              onNewCode={() => newCode(m)}
+            />
           ))}
         </Box>
       )}
 
       <AddManufacturerDialog open={addOpen} onClose={() => setAddOpen(false)} onCreated={() => load()} />
+      <VerifyAdminInviteDialog
+        invite={confirming}
+        onClose={() => setConfirming(null)}
+        onDone={() => {
+          setConfirming(null);
+          load();
+        }}
+      />
     </Box>
   );
 };

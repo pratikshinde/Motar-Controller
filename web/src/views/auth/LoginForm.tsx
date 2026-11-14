@@ -2,24 +2,38 @@ import React, { useState } from 'react';
 import { Box, Typography, TextField, Button, Stack, Alert, IconButton, InputAdornment, Link } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import { loginWithEmailCode, loginWithPassword, requestEmailCode } from '../../api/auth';
-import { verifyMfa } from '../../api/mfa';
+import { clearSession } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { isMfaRequired } from '../../types';
+import { MfaChallenge } from './MfaChallenge';
 
-/** The website's sign-in. The admin and the platform owner sign in with their email and a 6-digit code emailed to it (the platform owner then also enters
- *  the code of an authenticator app); distributors and dealers (who have no email) with their mobile number and the password they chose when they opened
- *  their QR. There is no sign-up here: the person above creates every account. */
-export const LoginForm: React.FC = () => {
+export type LoginVariant = 'owner' | 'distributor' | 'dealer';
+
+const TITLES: Record<LoginVariant, string> = {
+  owner: 'Platform owner sign in',
+  distributor: 'Distributor sign in',
+  dealer: 'Dealer sign in'
+};
+
+const SUBTITLES: Record<LoginVariant, string> = {
+  owner: 'Your email, then your authenticator app',
+  distributor: 'Your mobile number and password',
+  dealer: 'Your mobile number and password'
+};
+
+/** The website's sign-in for the platform owner (the emailed 6-digit code, then the code of an authenticator app), distributors and dealers (who have no
+ *  email: their mobile number and the password they chose when they opened their QR). Admins have their own form (AdminLoginForm). There is no sign-up
+ *  here: the person above creates every account. A sign-in that turns out to belong to another kind of person is refused and no session is kept. */
+export const LoginForm: React.FC<{ variant: LoginVariant }> = ({ variant }) => {
   const navigate = useNavigate();
   const { handleAuthResult } = useAuth();
   const { showToast } = useToast();
 
-  const [byMobile, setByMobile] = useState(false);
+  const byMobile = variant === 'distributor' || variant === 'dealer';
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
@@ -29,9 +43,17 @@ export const LoginForm: React.FC = () => {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  // Authenticator (TOTP) challenge
+  // The authenticator step (the platform owner)
   const [mfaToken, setMfaToken] = useState<string | null>(null);
-  const [mfaCode, setMfaCode] = useState('');
+
+  /** Why this sign-in does not belong on this page, or null when it does. */
+  function wrongPage(role: string | undefined): string | null {
+    const r = (role || '').toLowerCase();
+    if (variant === 'owner' && r !== 'superadmin') return 'This is not the platform owner’s email. Everyone else signs in with the Login button on the home page.';
+    if (variant === 'distributor' && r !== 'distributor') return `This account is not a distributor. Choose ${r || 'your role'} on the previous page.`;
+    if (variant === 'dealer' && r !== 'dealer') return `This account is not a dealer. Choose ${r || 'your role'} on the previous page.`;
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,7 +69,12 @@ export const LoginForm: React.FC = () => {
       const result = byMobile ? await loginWithPassword(mobile, password) : await loginWithEmailCode(email, emailCode);
       if (isMfaRequired(result)) {
         setMfaToken(result.mfa_token);
-        setMfaCode('');
+        return;
+      }
+      const refused = wrongPage(result.user?.role);
+      if (refused) {
+        clearSession();
+        setError(refused);
         return;
       }
       handleAuthResult(result);
@@ -60,23 +87,6 @@ export const LoginForm: React.FC = () => {
     }
   }
 
-  async function handleMfaSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!mfaToken) return;
-    setError('');
-    setBusy(true);
-    try {
-      const result = await verifyMfa(mfaToken, mfaCode.trim());
-      handleAuthResult(result);
-      showToast(`Signed in: ${result.user.full_name}`);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Incorrect verification code. Check your authenticator app and try again.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <Box sx={{ width: '100%', maxWidth: 460, mx: 'auto' }}>
       <Box sx={{ mb: 3.5 }}>
@@ -84,58 +94,33 @@ export const LoginForm: React.FC = () => {
           variant="h4"
           sx={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 800, color: '#0F172A', fontSize: { xs: '1.75rem', sm: '2rem' }, letterSpacing: '-0.02em', mb: 0.75 }}
         >
-          Sign in
+          {TITLES[variant]}
         </Typography>
         <Typography variant="body2" sx={{ color: '#64748B', fontSize: '0.92rem' }}>
-          {byMobile ? 'Distributors and dealers' : 'Admin and platform owner'}
+          {SUBTITLES[variant]}
         </Typography>
       </Box>
 
-      {error && (
+      {error && !mfaToken && (
         <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
           {error}
         </Alert>
       )}
 
       {mfaToken ? (
-        <form onSubmit={handleMfaSubmit}>
-          <Stack spacing={2.5} sx={{ alignItems: 'center', textAlign: 'center' }}>
-            <Box sx={{ width: 56, height: 56, borderRadius: '50%', bgcolor: '#E4F5EA', display: 'grid', placeItems: 'center', color: '#0B7A3E' }}>
-              <ShieldOutlinedIcon sx={{ fontSize: 32 }} />
-            </Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A' }}>
-              Two-Factor Authentication
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#64748B', maxWidth: 360 }}>
-              Enter the 6-digit verification code from your authenticator application.
-            </Typography>
-            <TextField
-              label="Authenticator Code"
-              placeholder="123456"
-              value={mfaCode}
-              onChange={e => setMfaCode(e.target.value)}
-              fullWidth
-              autoFocus
-              slotProps={{ htmlInput: { maxLength: 6, style: { letterSpacing: 6, fontWeight: 700, textAlign: 'center', fontSize: '1.25rem' } } }}
-            />
-            <Button type="submit" variant="contained" size="large" fullWidth disabled={busy || mfaCode.trim().length !== 6} sx={{ py: 1.3, borderRadius: 2, fontWeight: 700, textTransform: 'none' }}>
-              Verify Code
-            </Button>
-            <Link
-              component="button"
-              type="button"
-              variant="body2"
-              onClick={() => {
-                setMfaToken(null);
-                setMfaCode('');
-                setError('');
-              }}
-              sx={{ color: '#0B7A3E', fontWeight: 600 }}
-            >
-              ← Back to sign in
-            </Link>
-          </Stack>
-        </form>
+        <MfaChallenge
+          token={mfaToken}
+          refuse={result => wrongPage(result.user?.role)}
+          onSignedIn={result => {
+            handleAuthResult(result);
+            showToast(`Signed in: ${result.user.full_name}`);
+            navigate('/dashboard');
+          }}
+          onBack={message => {
+            setMfaToken(null);
+            if (message) setError(message);
+          }}
+        />
       ) : (
         <form onSubmit={handleSubmit}>
           <Stack spacing={2.5}>
@@ -234,7 +219,7 @@ export const LoginForm: React.FC = () => {
               <Typography sx={{ fontSize: '0.82rem', color: '#0369A1', lineHeight: 1.45 }}>
                 {byMobile
                   ? 'There is no sign-up here. You opened your account from the QR the person above you gave you. Forgot your password? Ask them for a new QR.'
-                  : 'There is no sign-up here and no password. We email a 6-digit code to the address the platform owner registered for you. The platform owner then also enters the code of the authenticator app.'}
+                  : 'There is no password. We email a 6-digit code to your address, and then you enter the code of your authenticator app.'}
               </Typography>
             </Box>
 
@@ -242,15 +227,11 @@ export const LoginForm: React.FC = () => {
               component="button"
               type="button"
               variant="body2"
-              data-testid="switch-login"
-              onClick={() => {
-                setByMobile(v => !v);
-                setCodeSent(false);
-                setError('');
-              }}
+              data-testid="back-link"
+              onClick={() => navigate(variant === 'owner' ? '/' : '/login')}
               sx={{ color: '#0B7A3E', fontWeight: 600, alignSelf: 'center' }}
             >
-              {byMobile ? 'Admin? Use your email' : 'Distributor or dealer? Use your phone number'}
+              {variant === 'owner' ? '← Back to the home page' : '← Choose a different role'}
             </Link>
           </Stack>
         </form>

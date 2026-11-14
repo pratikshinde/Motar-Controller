@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -42,20 +40,6 @@ interface LoginScreenProps {
   /** Ajanta: opens the QR scanner (the farmer's first sign-in). */
   onScanQr?: () => void;
 }
-
-// Shortcuts for a developer's machine only: the seeded demo accounts and their published password. Empty in a release
-// build (`__DEV__` is false), so neither the accounts nor the password ship, and the "Quick Test Accounts" bar is not drawn.
-const DEMO_ACCOUNTS = __DEV__
-  ? [
-      { label: 'Farmer', role: 'Customer', phone: '9999900006', pass: 'Admin@123', icon: '👨‍🌾' },
-      { label: 'Dealer', role: 'Installer', phone: '9999900004', pass: 'Admin@123', icon: '🏪' },
-      { label: 'Support', role: 'Engineer', phone: '9999900005', pass: 'Admin@123', icon: '🛡️' },
-      { label: 'Manufacturer', role: 'OEM', phone: '9999900002', pass: 'Admin@123', icon: '🏭' },
-      { label: 'Super Admin', role: 'Admin (MFA)', phone: '9999900001', pass: 'Admin@123', icon: '👑' },
-      { label: 'Swati Dealer', role: 'Other brand', phone: '9999900014', pass: 'Admin@123', icon: '🏬' },
-      { label: 'Two brands', role: 'Farmer', phone: '9999900019', pass: 'Admin@123', icon: '🌾' },
-    ]
-  : [];
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
@@ -109,16 +93,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     const timer = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
     return () => clearInterval(timer);
   }, [cooldown]);
-
-  const handleSelectDemo = (acc: typeof DEMO_ACCOUNTS[number]) => {
-    setPhone(acc.phone);
-    if (mode === 'password') setPassword(acc.pass);
-    setError(null);
-    if (otpSent) {
-      setOtpSent(false);
-      setOtpCode('');
-    }
-  };
 
   const handlePasswordLogin = async () => {
     setError(null);
@@ -368,41 +342,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       </View>
       )}
 
-      {/* Quick Test Accounts Bar - development builds only */}
-      {DEMO_ACCOUNTS.length > 0 && (
-        <View style={localStyles.demoSection}>
-          <View style={localStyles.demoTitleRow}>
-            <Sparkles size={14} color={colors.primaryDark} />
-            <Text style={localStyles.demoHeading}>Quick Test Accounts</Text>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={localStyles.demoScroll}
-          >
-            {DEMO_ACCOUNTS.map((acc) => {
-              const isSelected = phone === acc.phone;
-              return (
-                <TouchableOpacity
-                  key={acc.phone}
-                  style={[localStyles.demoChip, isSelected && localStyles.demoChipSelected]}
-                  onPress={() => handleSelectDemo(acc)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={localStyles.demoIcon}>{acc.icon}</Text>
-                  <View>
-                    <Text style={[localStyles.demoRole, isSelected && localStyles.demoRoleSelected]}>
-                      {acc.label}
-                    </Text>
-                    <Text style={localStyles.demoPhone}>{acc.phone}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-      )}
-
       <Text style={s.title}>{t('login.welcomeBack')}</Text>
       <Text style={s.desc}>
         {phoneOnly ? t('login.smsDesc') : mode === 'password' ? t('login.welcomeBackDesc') : 'Sign in securely with a one-time verification code.'}
@@ -643,60 +582,6 @@ const localStyles = StyleSheet.create({
   tabTextActive: {
     color: colors.primaryDark,
     fontWeight: '700',
-  },
-  demoSection: {
-    marginBottom: space.lg,
-    paddingBottom: space.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  demoTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
-  },
-  demoHeading: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  demoScroll: {
-    gap: 8,
-    paddingVertical: 4,
-  },
-  demoChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  demoChipSelected: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primary,
-  },
-  demoIcon: {
-    fontSize: 18,
-  },
-  demoRole: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  demoRoleSelected: {
-    color: colors.primaryDark,
-  },
-  demoPhone: {
-    fontSize: 10,
-    color: colors.textFaint,
-    fontFamily: Platform.select({ ios: 'Courier', default: 'monospace' }),
   },
   devChip: {
     flexDirection: 'row',

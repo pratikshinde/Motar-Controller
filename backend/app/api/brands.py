@@ -209,7 +209,7 @@ def overview(current_user: User = Depends(require_roles(["superadmin"])), db: Se
         rows.append({
             "key": b.key, "name": b.name, "short_name": b.short_name, "logo_url": b.logo_url,
             "primary_color": b.primary_color, "status": b.status,
-            "owner": {"name": owner.full_name, "phone": owner.phone_number or owner.phone, "email": owner.email} if owner else None,
+            "owner": {"id": str(owner.id), "name": owner.full_name, "phone": owner.phone_number or owner.phone, "email": owner.email} if owner else None,
             "farmers": int(farmers), "team": int(team), "distributors": distributors, "dealers": dealers, "open_alerts": int(open_alerts), "pumps": counts,
             "gsm_pumps": gsm_pumps, "gsm_online": gsm_online,
             "joined": b.created_at.isoformat() if b.created_at else None,

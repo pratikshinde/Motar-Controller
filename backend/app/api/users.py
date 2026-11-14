@@ -7,6 +7,7 @@ platform-owner role can never be created through the API.
 import logging
 import secrets
 import uuid
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -19,12 +20,13 @@ from app.core.scope import in_subtree, path_in_scope
 from app.database import get_db
 from app.models import AppBrand, AuditLog, Pump
 from app.models.user import User
-from app.schemas.user import RegistrationCreate, UserCreate, UserResponse, UserUpdate
+from app.schemas.user import AdminInviteCreate, AdminInviteVerify, RegistrationCreate, UserCreate, UserResponse, UserUpdate
 from app.services.cache_service import cache_service
 from app.services.jwt_auth import hash_secret
 from app.services.phone_verification import redeem_phone_verification
-from app.services import brand_service, farmer_claims, partner_registration
+from app.services import admin_invites, brand_service, farmer_claims, partner_registration
 from app.models.partner_registration import PartnerRegistration
+from app.models.admin_invite import AdminInvite
 
 logger = logging.getLogger("agripump.users")
 router = APIRouter(tags=["Users"])
@@ -221,6 +223,85 @@ def cancel_registration(rid: str, current_user: User = Depends(partner_only), db
     partner_registration.cancel(row)
     db.commit()
     return {"message": "Registration cancelled"}
+
+
+def _invite_view(row: AdminInvite) -> dict:
+    return {
+        "id": str(row.id), "full_name": row.full_name, "email": row.email, "brand": row.brand_key,
+        "company_name": row.company_name, "address": row.address, "phone": row.phone,
+        "status": admin_invites.state_of(row),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+        "user_id": str(row.user_id) if row.user_id else None,
+    }
+
+
+def _invite(db: Session, rid: str) -> AdminInvite:
+    try:
+        key = uuid.UUID(rid)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    row = db.query(AdminInvite).filter(AdminInvite.id == key).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    return row
+
+
+@router.post("/admin-invites", status_code=status.HTTP_201_CREATED)
+def create_admin_invite(req: AdminInviteCreate, current_user: User = Depends(require_roles("superadmin")), db: Session = Depends(get_db)):
+    """The platform owner adds an admin: a 6-digit code is emailed to the admin's address. No account exists until the owner types the code in."""
+    row = admin_invites.create(db, current_user, req.full_name, req.company_name, req.address, req.phone, req.email)
+    _audit(db, current_user, row.id, "ADMIN_INVITE_STARTED", after={"email": row.email, "company": row.company_name})
+    db.commit()
+    return {"invite": _invite_view(row)}
+
+
+@router.get("/admin-invites")
+def list_admin_invites(current_user: User = Depends(require_roles("superadmin")), db: Session = Depends(get_db)):
+    """Admins that were started and not finished (waiting for the code, or for the admin to choose a password), expired or blocked."""
+    rows = db.query(AdminInvite).filter(AdminInvite.completed_at.is_(None)).order_by(AdminInvite.created_at.desc()).all()
+    return {"invites": [_invite_view(r) for r in rows if admin_invites.state_of(r) != admin_invites.CANCELLED]}
+
+
+@router.post("/admin-invites/{rid}/verify")
+def verify_admin_invite(rid: str, req: AdminInviteVerify, current_user: User = Depends(require_roles("superadmin")), db: Session = Depends(get_db)):
+    """The platform owner types the code the admin read out: the email is theirs, so the admin account is created (the admin chooses the password next)."""
+    row = _invite(db, rid)
+    user = admin_invites.verify_by_owner(db, current_user, row, req.code)
+    _audit(db, current_user, user.id, "USER_CREATED", after={"role": "manufacturer", "via": "admin invite", "brand": row.brand_key})
+    db.commit()
+    return {"invite": _invite_view(row), "user": {"id": str(user.id), "full_name": user.full_name, "email": user.email}}
+
+
+@router.post("/admin-invites/{rid}/resend")
+def resend_admin_invite(rid: str, current_user: User = Depends(require_roles("superadmin")), db: Session = Depends(get_db)):
+    """A new code for an invite that is not finished."""
+    row = _invite(db, rid)
+    admin_invites.resend(db, row)
+    db.commit()
+    return {"invite": _invite_view(row)}
+
+
+@router.delete("/admin-invites/{rid}")
+def cancel_admin_invite(rid: str, current_user: User = Depends(require_roles("superadmin")), db: Session = Depends(get_db)):
+    row = _invite(db, rid)
+    if row.completed_at is not None:
+        raise HTTPException(status_code=409, detail="This admin has already chosen a password.")
+    row.revoked_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"message": "Invite cancelled"}
+
+
+@router.post("/{user_id}/admin-code")
+def send_admin_reset_code(user_id: uuid.UUID, current_user: User = Depends(require_roles("superadmin")), db: Session = Depends(get_db)):
+    """An admin forgot their password: a new code is emailed to them, and they choose a new password with it (Admin sign-in, "First time here")."""
+    target = db.query(User).filter(User.id == user_id, User.role == "manufacturer").first()
+    if target is None:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    row = admin_invites.start_reset(db, current_user, target)
+    _audit(db, current_user, target.id, "ADMIN_CODE_SENT", after={"email": target.email})
+    db.commit()
+    return {"invite": _invite_view(row)}
 
 
 @router.get("/team")

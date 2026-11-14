@@ -113,3 +113,17 @@ class RegistrationCreate(BaseModel):
     phone_number: str = Field(..., min_length=10, max_length=20)
     role: str = Field(..., description="distributor or dealer")
     parent_user_id: Optional[str] = Field(None, description="Who they sit under (default: the caller)")
+
+
+class AdminInviteCreate(BaseModel):
+    """The platform owner adds an admin: the admin's name, company, address, phone (an Indian number, +91) and email. The manufacturer itself is made from the
+    company name when the owner confirms the code."""
+    full_name: str = Field(..., min_length=2, max_length=100)
+    company_name: str = Field(..., min_length=2, max_length=100)
+    address: str = Field(..., min_length=3, max_length=500)
+    phone: str = Field(..., min_length=10, max_length=20)
+    email: str = Field(..., min_length=3, max_length=254)
+
+
+class AdminInviteVerify(BaseModel):
+    code: str = Field(..., min_length=4, max_length=12)

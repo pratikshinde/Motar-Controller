@@ -41,10 +41,10 @@ from app.services.cache_service import cache_service
 from app.services import firebase_phone
 from app.schemas import (
     ClaimRequest, FirebasePhoneRequest, LoginEmailRequest, PartnerClaimRequest,
-    RegistrationScanRequest, RegistrationCompleteRequest, EmailCodeRequest, EmailCodeVerifyRequest,
+    RegistrationScanRequest, RegistrationCompleteRequest, EmailCodeRequest, EmailCodeVerifyRequest, AdminPasswordSetRequest,
 )
 from app.models.farmer_claim import FarmerClaim
-from app.services import farmer_claims, partner_registration, email_login, email_service
+from app.services import farmer_claims, partner_registration, email_login, email_service, admin_invites
 from app.services import brand_service
 from app.core.phone import india_phone
 from app.api.deps import get_current_user, require_roles, set_db_actor_context, security, HTTPAuthorizationCredentials
@@ -816,19 +816,41 @@ def login_email(req: LoginEmailRequest, db: Session = Depends(get_db)):
 
 @router.post("/email-code/request")
 def email_code_request(req: EmailCodeRequest, db: Session = Depends(get_db)):
-    """The website's sign-in for an admin or the platform owner, step 1: a 6-digit code is emailed to the address if it belongs to one of them. The answer is the
-    same for any address, so it never says which emails have accounts."""
-    email_login.request_code(db, req.email)
+    """The platform owner's sign-in, step 1: a 6-digit code is emailed to the address if it belongs to the platform owner. The answer is the same for any
+    address, so it never says which emails have accounts."""
+    email_login.request_code(db, req.email, email_login.OWNER_ROLES)
     return {"message": "If that email belongs to an account, a sign-in code has been sent to it."}
 
 
 @router.post("/email-code/verify", response_model=LoginResponse)
 def email_code_verify(req: EmailCodeVerifyRequest, db: Session = Depends(get_db)):
-    """Step 2: the emailed code. The platform owner then still has to pass the authenticator step (same challenge as after a password); an admin is signed in."""
-    user = email_login.verify_code(db, req.email, req.code)
+    """Step 2: the emailed code. The platform owner then still has to pass the authenticator step (same challenge as after a password)."""
+    user = email_login.verify_code(db, req.email, req.code, email_login.OWNER_ROLES)
     if user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
         raise HTTPException(status_code=403, detail="Account suspended")
     _enforce_brand(user)
+    if _needs_mfa_challenge(user):
+        db.commit()
+        return _mfa_challenge_response(user)
+    session = _issue_session(db, user, req.app_install_id, req.device_info)
+    db.commit()
+    return session
+
+
+@router.post("/admin-password/set", response_model=LoginResponse)
+def admin_password_set(req: AdminPasswordSetRequest, db: Session = Depends(get_db)):
+    """An admin's first sign-in (or after the platform owner sent a new code because they forgot the password): the code from their email, with their email, lets
+    them choose their own password, and they are signed in. The code is used up and never needed again. Every earlier sign-in of the account ends."""
+    user = admin_invites.set_password(db, req.email, req.code, req.password, hash_secret)
+    if user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account suspended")
+    _enforce_brand(user)
+    user.session_version = (user.session_version or 1) + 1
+    db.query(RefreshToken).filter(RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None)).update(
+        {"revoked_at": datetime.utcnow()}, synchronize_session=False)
+    cache_service.delete(f"login_fail:email:{(req.email or '').strip().lower()}")
+    set_db_actor_context(db, user=user)
+    _record_audit_log(db, user.id, user.role, "user", str(user.id), "PASSWORD_SET", {"via": "admin code"})
     if _needs_mfa_challenge(user):
         db.commit()
         return _mfa_challenge_response(user)

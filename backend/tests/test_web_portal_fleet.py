@@ -56,6 +56,7 @@ class TestFleetTruth(FleetBase):
     def setUp(self):
         self.dealer = _partner(self, "dealer", "fleet")
         self.owner = self.make_user("customer", "fleet-owner")
+        NOW = datetime.now(timezone.utc)      # taken now, not when the file was loaded: a long test run would make "30 seconds ago" look like minutes ago
         self.online = self.add_pump(self.dealer, self.owner, "on", "RUNNING", NOW - timedelta(seconds=30))
         self.quiet = self.add_pump(self.dealer, self.owner, "quiet", "RUNNING", NOW - timedelta(minutes=40))
         self.never = self.add_pump(self.dealer, self.owner, "never", "STOPPED", None)
@@ -91,6 +92,7 @@ class TestFleetTruth(FleetBase):
         self.assertEqual(client.get(f"/api/v1/pumps/{self.never.id}", headers=_h(self.dealer)).status_code, 200)
 
     def test_reported_values_are_passed_through(self):
+        NOW = datetime.now(timezone.utc)
         p = self.add_pump(self.dealer, self.owner, "real", "RUNNING", NOW, firmware_version="1.0.400", latitude=18.5, longitude=73.8)
         row = next(x for x in client.get("/api/v1/pumps", headers=_h(self.dealer)).json()["pumps"] if x["id"] == p.id)
         self.assertEqual((row["firmware_version"], row["latitude"], row["longitude"]), ("1.0.400", 18.5, 73.8))
