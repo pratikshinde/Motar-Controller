@@ -5,12 +5,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 
-const mocks = vi.hoisted(() => ({ scanRegistration: vi.fn(), verifyRegistration: vi.fn(), completeRegistration: vi.fn(), handleAuthResult: vi.fn(), navigate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ scanRegistration: vi.fn(), completeRegistration: vi.fn(), handleAuthResult: vi.fn(), navigate: vi.fn() }));
 
 vi.mock('../../api/registrations', async importOriginal => ({
   ...(await importOriginal<typeof import('../../api/registrations')>()),
   scanRegistration: mocks.scanRegistration,
-  verifyRegistration: mocks.verifyRegistration,
   completeRegistration: mocks.completeRegistration
 }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ handleAuthResult: mocks.handleAuthResult }) }));
@@ -33,6 +32,13 @@ const open = () =>
     </ThemeProvider>
   );
 
+async function fill(phone: string, password: string, again = password) {
+  await userEvent.type(await screen.findByLabelText(/your mobile number/i), phone);
+  await userEvent.type(screen.getByLabelText(/choose a password/i), password);
+  await userEvent.type(screen.getByLabelText(/type the password again/i), again);
+  await userEvent.click(screen.getByRole('button', { name: /finish registration/i }));
+}
+
 beforeEach(() => {
   Object.values(mocks).forEach(m => m.mockReset());
   mocks.scanRegistration.mockResolvedValue(greeting);
@@ -46,45 +52,33 @@ describe('the page the registration QR opens', () => {
     expect(screen.getByText(/Ajanta Admin is registering you as a dealer for Ajanta Pump Controller/)).toBeInTheDocument();
   });
 
-  it('asks for the mobile number and the password that was sent, then for their own password, then signs them in', async () => {
-    mocks.verifyRegistration.mockResolvedValue({ ticket: 'the-ticket-after-the-code' });
+  it('asks only for the mobile number and a password of their own: nothing was sent to them', async () => {
+    open();
+    expect(await screen.findByLabelText(/your mobile number/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/choose a password/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/the password you were sent/i)).not.toBeInTheDocument();
+  });
+
+  it('creates the account with the number and the chosen password, signs them in and opens the dashboard', async () => {
     mocks.completeRegistration.mockResolvedValue(session);
     open();
-    await userEvent.type(await screen.findByLabelText(/your mobile number/i), '98765 43210');
-    await userEvent.type(screen.getByLabelText(/the password you were sent/i), 'K7Q4-9MZB');
-    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
-    await waitFor(() => expect(mocks.verifyRegistration).toHaveBeenCalledWith('the-secret-in-the-qr-code', '98765 43210', 'K7Q4-9MZB'));
-
-    expect(await screen.findByText('Choose your own password')).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText(/choose a password/i), 'my-own-password');
-    await userEvent.type(screen.getByLabelText(/type the password again/i), 'my-own-password');
-    await userEvent.click(screen.getByRole('button', { name: /finish registration/i }));
-    await waitFor(() => expect(mocks.completeRegistration).toHaveBeenCalledWith('the-secret-in-the-qr-code', 'the-ticket-after-the-code', 'my-own-password'));
+    await fill('98765 43210', 'my-own-password');
+    await waitFor(() => expect(mocks.completeRegistration).toHaveBeenCalledWith('the-secret-in-the-qr-code', '98765 43210', 'my-own-password'));
     await waitFor(() => expect(mocks.handleAuthResult).toHaveBeenCalledWith(session));
     expect(mocks.navigate).toHaveBeenCalledWith('/dashboard', { replace: true });
   });
 
-  it('stays on the first step and says why when the number or the password is wrong', async () => {
-    mocks.verifyRegistration.mockRejectedValue(new Error('The mobile number or the password is not right.'));
+  it('says why, and stays on the form, when the number is not the one they were registered with', async () => {
+    mocks.completeRegistration.mockRejectedValue(new Error('That is not the mobile number you were registered with.'));
     open();
-    await userEvent.type(await screen.findByLabelText(/your mobile number/i), '9000000000');
-    await userEvent.type(screen.getByLabelText(/the password you were sent/i), 'WRONG-CODE');
-    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
-    expect(await screen.findByText('The mobile number or the password is not right.')).toBeInTheDocument();
-    expect(screen.queryByText('Choose your own password')).not.toBeInTheDocument();
-    expect(mocks.completeRegistration).not.toHaveBeenCalled();
+    await fill('9000000000', 'my-own-password');
+    expect(await screen.findByText('That is not the mobile number you were registered with.')).toBeInTheDocument();
+    expect(mocks.handleAuthResult).not.toHaveBeenCalled();
   });
 
   it('does not ask the server when the new password is too short or typed differently twice', async () => {
-    mocks.verifyRegistration.mockResolvedValue({ ticket: 't'.repeat(20) });
     open();
-    await userEvent.type(await screen.findByLabelText(/your mobile number/i), '9876543210');
-    await userEvent.type(screen.getByLabelText(/the password you were sent/i), 'K7Q4-9MZB');
-    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
-    await screen.findByText('Choose your own password');
-    await userEvent.type(screen.getByLabelText(/choose a password/i), 'short');
-    await userEvent.type(screen.getByLabelText(/type the password again/i), 'short');
-    await userEvent.click(screen.getByRole('button', { name: /finish registration/i }));
+    await fill('9876543210', 'short');
     expect(await screen.findByRole('alert')).toHaveTextContent(/at least 8 characters/i);
     await userEvent.clear(screen.getByLabelText(/choose a password/i));
     await userEvent.clear(screen.getByLabelText(/type the password again/i));

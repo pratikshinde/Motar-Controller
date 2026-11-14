@@ -8,7 +8,7 @@ import { buildAppTheme } from '../../theme';
 
 const item = (id: string, status: string, name = 'Suresh Patil') => ({
   id, role: 'dealer' as const, full_name: name, address: 'Pune', phone_number: '+919876543210', status: status as any,
-  created_at: new Date(Date.now() - 3_600_000).toISOString(), expires_at: null, scanned_at: null, password: null
+  created_at: new Date(Date.now() - 3_600_000).toISOString(), expires_at: null, scanned_at: null
 });
 const open = (items: any[], onContinue = vi.fn(), onCancel = vi.fn()) =>
   render(<ThemeProvider theme={buildAppTheme('dark')}><PendingRegistrations items={items} onContinue={onContinue} onCancel={onCancel} /></ThemeProvider>);
@@ -24,7 +24,7 @@ describe('registrations that are not finished', () => {
     expect(screen.getByTestId('pending-registrations')).toHaveTextContent('Waiting to finish (3)');
     expect(within(screen.getByTestId('pending-1')).getByText('Waiting for the QR to be scanned')).toBeInTheDocument();
     expect(screen.getByTestId('pending-1')).toHaveTextContent('Started 1 hour ago');
-    expect(within(screen.getByTestId('pending-2')).getByText('Scanned: send them the password')).toBeInTheDocument();
+    expect(within(screen.getByTestId('pending-2')).getByText('Scanned: they are choosing a password')).toBeInTheDocument();
     expect(within(screen.getByTestId('pending-3')).getByText('Blocked: too many wrong tries')).toBeInTheDocument();
   });
 

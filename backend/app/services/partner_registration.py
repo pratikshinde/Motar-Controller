@@ -1,16 +1,13 @@
 """Registering a distributor or a dealer, step by step, so that nobody becomes an account by accident.
 
 1. The admin (or a distributor, for a dealer) types name, address and mobile number: a *pending registration* is saved and a QR is shown. No account yet.
-2. The new person scans the QR. A one-time password is made at that moment and shown, once, on the admin's page.
-3. The admin sends them the password (a call, a message).
-4. They type their mobile number and that password on the page the QR opened. Only a right pair gets through (five wrong tries burn the QR).
-5. They choose their own password, and only then is the account created and signed in. The admin never learns the password they chose.
+2. The new person scans the QR: the website opens, and the admin's page shows that the QR was scanned.
+3. On that page they type their mobile number (it must be the one the admin registered) and choose their own password.
+4. Only then is the account created, under the admin, and they are signed in. The admin never learns the password they chose.
 
-The QR alone gets nothing: the password never travels on it. The password alone gets nothing: it is only made once the QR has been scanned, and it must come with
-the registered mobile number. Only hashes of the QR secret, the password and the short-lived ticket between steps 4 and 5 are kept.
+The QR is a secret link: it works once, for 24 hours, and only with the registered mobile number. Five wrong numbers burn it. Only a hash of the QR secret is kept.
 """
 import hashlib
-import hmac
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -25,13 +22,9 @@ from app.models.partner_registration import PartnerRegistration
 from app.services import brand_service
 
 REGISTRATION_HOURS = 24      # how long a QR can be scanned
-CODE_HOURS = 24              # how long a password can be used once it exists
-TICKET_MINUTES = 15          # from a right password to choosing one's own
 MAX_ATTEMPTS = 5
 MIN_PASSWORD = 8
 PARTNER_ROLES = ("distributor", "dealer")
-# No 0/O/1/I/L: the password is read out over a call.
-ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
 WAITING, SCANNED, COMPLETED, EXPIRED, BLOCKED, CANCELLED = "WAITING", "SCANNED", "COMPLETED", "EXPIRED", "BLOCKED", "CANCELLED"
 
@@ -48,18 +41,8 @@ def _hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def new_code() -> str:
-    """A one-time password like K7Q4-9MZB."""
-    raw = "".join(secrets.choice(ALPHABET) for _ in range(8))
-    return f"{raw[:4]}-{raw[4:]}"
-
-
-def _normal_code(code: str) -> str:
-    return "".join(ch for ch in (code or "").upper() if ch.isalnum())
-
-
 def state_of(row: Optional[PartnerRegistration], now: Optional[datetime] = None) -> str:
-    """WAITING (not scanned yet), SCANNED (the password exists; the admin sends it), COMPLETED, EXPIRED, BLOCKED (five wrong tries) or CANCELLED."""
+    """WAITING (not scanned yet), SCANNED (opened: they are choosing a password), COMPLETED, EXPIRED, BLOCKED (five wrong tries) or CANCELLED."""
     if row is None:
         return CANCELLED
     now = now or _now()
@@ -130,93 +113,45 @@ def new_qr(db: Session, row: PartnerRegistration) -> str:
     row.token_hash = _hash(token)
     row.revoked_at = None
     row.expires_at = now + timedelta(hours=REGISTRATION_HOURS)
-    row.scanned_at = row.code_hash = row.code_plain = row.code_expires_at = row.code_revealed_at = None
-    row.ticket_hash = row.ticket_expires_at = None
+    row.scanned_at = None
     row.attempts = 0
     return token
-
-
-def new_password(db: Session, row: PartnerRegistration) -> None:
-    """A fresh one-time password, for a registration that has been scanned (the first was lost, or the admin wants to start over)."""
-    if state_of(row) != SCANNED:
-        raise HTTPException(status_code=409, detail="The password can only be changed after the QR has been scanned.")
-    _make_code(row)
-    row.attempts = 0
-
-
-def _make_code(row: PartnerRegistration) -> None:
-    code = new_code()
-    row.code_hash = _hash(_normal_code(code))
-    row.code_plain = code
-    row.code_expires_at = _now() + timedelta(hours=CODE_HOURS)
-    row.code_revealed_at = None
-    row.ticket_hash = row.ticket_expires_at = None
-
-
-def reveal_to_admin(row: PartnerRegistration) -> Optional[str]:
-    """The password, once: the admin's page shows it as soon as the QR is scanned, and it is forgotten from the clear after that."""
-    if row.code_plain and state_of(row) == SCANNED:
-        code = row.code_plain
-        row.code_plain = None
-        row.code_revealed_at = _now()
-        return code
-    return None
 
 
 def cancel(row: PartnerRegistration) -> None:
     if state_of(row) == COMPLETED:
         raise HTTPException(status_code=409, detail="This person is already registered.")
     row.revoked_at = _now()
-    row.code_plain = None
 
 
 # --------------------------------------------------------------------------------------------------------- the new person's side
 def scan(db: Session, token: str) -> PartnerRegistration:
-    """The QR was opened: the registration is marked scanned and the one-time password is made (the admin's page then shows it)."""
+    """The QR was opened: the registration is marked scanned (the admin's page shows it)."""
     row = by_token(db, token)
     if row is None or not is_open(row):
         raise _invalid()
     if row.scanned_at is None:
         row.scanned_at = _now()
-        _make_code(row)
     return row
 
 
-def verify(db: Session, token: str, phone_raw: str, code: str) -> Tuple[str, PartnerRegistration]:
-    """A right mobile number and password give a short-lived ticket to choose a password with. Five wrong tries burn the QR."""
+def complete(db: Session, token: str, phone_raw: str, password: str) -> User:
+    """Create the account, with the password the person chose. Nothing is created unless the QR is still good and the mobile number is the registered one.
+    Five wrong numbers burn the QR."""
     row = by_token(db, token)
-    if row is None or state_of(row) != SCANNED or not row.code_hash:
+    if row is None or not is_open(row):
         raise _invalid()
-    now = _now()
-    if row.code_expires_at is not None and _aware(row.code_expires_at) <= now:
-        raise HTTPException(status_code=400, detail="That password has expired. Ask for a new one.")
     typed = india_phone(phone_raw or "")
-    phone_ok = bool(typed) and typed in get_phone_variants(row.phone)
-    code_ok = hmac.compare_digest(_hash(_normal_code(code)), row.code_hash)
-    if not (phone_ok and code_ok):
+    if not typed or typed not in get_phone_variants(row.phone):
         row.attempts = (row.attempts or 0) + 1
         burned = row.attempts >= MAX_ATTEMPTS
         if burned:
-            row.revoked_at = now
-            row.code_plain = None
+            row.revoked_at = _now()
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The mobile number or the password is not right." + (" This QR is now blocked: please ask for a new one." if burned else ""),
+            detail="That is not the mobile number you were registered with." + (" This QR is now blocked: please ask for a new one." if burned else ""),
         )
-    ticket = secrets.token_urlsafe(24)
-    row.ticket_hash = _hash(ticket)
-    row.ticket_expires_at = now + timedelta(minutes=TICKET_MINUTES)
-    return ticket, row
-
-
-def complete(db: Session, token: str, ticket: str, password: str) -> User:
-    """Create the account, with the password the person chose. Nothing is created unless the QR was scanned and the password was right."""
-    row = by_token(db, token)
-    if row is None or state_of(row) != SCANNED or not row.ticket_hash or row.ticket_expires_at is None:
-        raise _invalid()
-    if _aware(row.ticket_expires_at) <= _now() or not hmac.compare_digest(_hash(ticket or ""), row.ticket_hash):
-        raise HTTPException(status_code=400, detail="That took too long. Please type the mobile number and the password again.")
     if len(password or "") < MIN_PASSWORD:
         raise HTTPException(status_code=422, detail=f"Choose a password of at least {MIN_PASSWORD} characters.")
     parent = db.query(User).filter(User.id == row.parent_user_id).first()
@@ -243,5 +178,4 @@ def complete(db: Session, token: str, ticket: str, password: str) -> User:
     db.flush()
     row.completed_at = _now()
     row.user_id = user.id
-    row.ticket_hash = row.ticket_expires_at = row.code_plain = None
     return user

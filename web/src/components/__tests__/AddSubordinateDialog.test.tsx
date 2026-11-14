@@ -7,7 +7,6 @@ const mocks = vi.hoisted(() => ({
   startRegistration: vi.fn(),
   fetchRegistration: vi.fn(),
   newRegistrationQr: vi.fn(),
-  newRegistrationPassword: vi.fn(),
   cancelRegistration: vi.fn(),
   showToast: vi.fn(),
   role: 'manufacturer'
@@ -18,7 +17,6 @@ vi.mock('../../api/registrations', async importOriginal => ({
   startRegistration: mocks.startRegistration,
   fetchRegistration: mocks.fetchRegistration,
   newRegistrationQr: mocks.newRegistrationQr,
-  newRegistrationPassword: mocks.newRegistrationPassword,
   cancelRegistration: mocks.cancelRegistration
 }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'u1', role: mocks.role } }) }));
@@ -28,7 +26,7 @@ import { AddSubordinateDialog } from '../AddSubordinateDialog';
 
 const reg = (over: any = {}) => ({
   id: 'r1', role: 'distributor', full_name: 'Suresh Patil', address: 'Hadapsar, Pune', phone_number: '+919876543210', status: 'WAITING',
-  created_at: '2026-11-13T10:00:00Z', expires_at: '2099-01-01T00:00:00Z', scanned_at: null, password: null, ...over
+  created_at: '2026-11-13T10:00:00Z', expires_at: '2099-01-01T00:00:00Z', scanned_at: null, ...over
 });
 const started = { registration: reg(), qr: { token: 'abcdefghijklmnopqrstuvwxyz012345', expires_at: '2099-01-01T00:00:00Z' } };
 
@@ -47,7 +45,7 @@ beforeEach(() => {
   mocks.fetchRegistration.mockResolvedValue({ registration: reg() });
 });
 
-describe('Registering a distributor or dealer: the form', () => {
+describe('Registering a distributor or a dealer: the form', () => {
   it('asks for name, address and mobile number only: no password, no code', () => {
     open();
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
@@ -77,7 +75,7 @@ describe('Registering a distributor or dealer: the form', () => {
   });
 });
 
-describe('Registering: the QR, the scan, the password', () => {
+describe('Registering: the QR, the scan, then their own password', () => {
   it('sends what was typed, the parent, and then shows the QR and waits for the scan: no account is claimed to exist', async () => {
     mocks.startRegistration.mockResolvedValue(started);
     const onCreated = vi.fn();
@@ -87,37 +85,27 @@ describe('Registering: the QR, the scan, the password', () => {
     expect(mocks.startRegistration.mock.calls[0][0]).toMatchObject({ full_name: 'Suresh Patil', address: 'Hadapsar, Pune', phone_number: '98765 43210', role: 'distributor', parent_user_id: 'p9' });
     expect(await screen.findByTestId('registration-link')).toHaveTextContent('/register/abcdefghijklmnopqrstuvwxyz012345');
     expect(screen.getByTestId('waiting-for-scan')).toHaveTextContent('scan this QR');
+    expect(screen.queryByText(/send them/i)).not.toBeInTheDocument();
+  });
+
+  it('says it was scanned and that they are choosing a password: nothing for the admin to send', async () => {
+    mocks.startRegistration.mockResolvedValue(started);
+    mocks.fetchRegistration.mockResolvedValue({ registration: reg({ status: 'SCANNED' }) });
+    open({ underRole: 'distributor', lockRole: true });
+    await fill();
+    expect(await screen.findByTestId('scanned')).toHaveTextContent('is choosing a password');
     expect(screen.queryByTestId('one-time-password')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /new password/i })).not.toBeInTheDocument();
   });
 
-  it('shows the one-time password the moment the QR is scanned, to be sent to the new person', async () => {
-    mocks.startRegistration.mockResolvedValue(started);
-    mocks.fetchRegistration.mockResolvedValue({ registration: reg({ status: 'SCANNED', password: 'K7Q4-9MZB' }) });
-    open({ underRole: 'distributor', lockRole: true });
-    await fill();
-    expect(await screen.findByTestId('one-time-password')).toHaveTextContent('K7Q4-9MZB');
-    expect(screen.getByTestId('scanned')).toHaveTextContent('Send them this password');
-  });
-
-  it('keeps showing the password once the server has stopped sending it, as long as the dialog is open', async () => {
-    mocks.startRegistration.mockResolvedValue(started);
-    mocks.fetchRegistration
-      .mockResolvedValueOnce({ registration: reg({ status: 'SCANNED', password: 'K7Q4-9MZB' }) })
-      .mockResolvedValue({ registration: reg({ status: 'SCANNED', password: null }) });
-    open({ underRole: 'distributor', lockRole: true });
-    await fill();
-    await screen.findByTestId('one-time-password');
-    await new Promise(r => setTimeout(r, 120));
-    expect(screen.getByTestId('one-time-password')).toHaveTextContent('K7Q4-9MZB');
-  });
-
-  it('says it is registered when they have finished, and tells the page', async () => {
+  it('says it is registered when they have finished, with no pumps yet, and tells the page', async () => {
     mocks.startRegistration.mockResolvedValue(started);
     mocks.fetchRegistration.mockResolvedValue({ registration: reg({ status: 'COMPLETED' }) });
     const onCreated = vi.fn();
     open({ onCreated, underRole: 'distributor', lockRole: true });
     await fill();
     expect(await screen.findByText('Suresh Patil is registered')).toBeInTheDocument();
+    expect(screen.getByText(/no pumps yet/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /done/i })).toBeInTheDocument();
     await waitFor(() => expect(onCreated.mock.calls.length).toBeGreaterThanOrEqual(2)); // once when started, once when finished
   });
@@ -131,16 +119,6 @@ describe('Registering: the QR, the scan, the password', () => {
     expect(await screen.findByText(/too many wrong tries/i)).toBeInTheDocument();
     await userEvent.click(screen.getByTestId('new-qr-button'));
     await waitFor(() => expect(mocks.newRegistrationQr).toHaveBeenCalledWith('r1'));
-  });
-
-  it('offers a new password when the page missed the first one', async () => {
-    mocks.startRegistration.mockResolvedValue(started);
-    mocks.fetchRegistration.mockResolvedValue({ registration: reg({ status: 'SCANNED', password: null }) });
-    mocks.newRegistrationPassword.mockResolvedValue({ registration: reg({ status: 'SCANNED', password: 'NEW1-PASS' }) });
-    open({ underRole: 'distributor', lockRole: true });
-    await fill();
-    await userEvent.click(await screen.findByRole('button', { name: /new password/i }));
-    expect(await screen.findByTestId('one-time-password')).toHaveTextContent('NEW1-PASS');
   });
 
   it('cancels the registration when asked, so nothing is left behind', async () => {

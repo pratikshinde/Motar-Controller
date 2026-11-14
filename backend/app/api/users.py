@@ -137,18 +137,15 @@ def get_user_tree(current_user: User = Depends(partner_only), db: Session = Depe
     return {"tree": roots, "data": roots}
 
 
-def _registration_view(row: PartnerRegistration, reveal: bool = False) -> dict:
-    """A pending registration as the admin's page shows it. With `reveal`, the one-time password too, once: it is forgotten from the clear after that."""
+def _registration_view(row: PartnerRegistration) -> dict:
+    """A pending registration as the admin's page shows it."""
     view = {
         "id": str(row.id), "role": row.role, "full_name": row.full_name, "address": row.address, "phone_number": row.phone,
         "status": partner_registration.state_of(row),
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "expires_at": row.expires_at.isoformat() if row.expires_at else None,
         "scanned_at": row.scanned_at.isoformat() if row.scanned_at else None,
-        "password": None,
     }
-    if reveal:
-        view["password"] = partner_registration.reveal_to_admin(row)
     return view
 
 
@@ -171,7 +168,7 @@ def _registration_in_scope(db: Session, actor: User, rid: str) -> PartnerRegistr
 @router.post("/registrations", status_code=status.HTTP_201_CREATED)
 def create_registration(req: RegistrationCreate, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
     """Start registering a distributor or a dealer: saves what was typed and returns the QR (shown once). No account exists until the new person has
-    scanned the QR, been sent the one-time password and typed it with their mobile number, then chosen their own password."""
+    scanned the QR, typed their mobile number and chosen their own password."""
     role = (req.role or "").lower()
     if role not in ASSIGNABLE_ROLES.get(current_user.role, []):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"A {current_user.role} account cannot register a {role} account.")
@@ -191,7 +188,7 @@ def create_registration(req: RegistrationCreate, current_user: User = Depends(pa
 
 @router.get("/registrations")
 def list_registrations(current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
-    """The registrations under the caller that are not finished: waiting for the scan, scanned (the password is to be sent), expired or blocked."""
+    """The registrations under the caller that are not finished: waiting for the scan, scanned (they are choosing a password), expired or blocked."""
     ids = [u.id for u in _scoped_users(db, current_user).with_entities(User.id).all()]
     rows = (
         db.query(PartnerRegistration)
@@ -204,11 +201,9 @@ def list_registrations(current_user: User = Depends(partner_only), db: Session =
 
 @router.get("/registrations/{rid}")
 def get_registration(rid: str, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
-    """Where one registration stands. As soon as the QR is scanned this also carries the one-time password, once (send it to the new person)."""
+    """Where one registration stands: waiting for the scan, scanned, completed, expired or blocked."""
     row = _registration_in_scope(db, current_user, rid)
-    view = _registration_view(row, reveal=True)
-    db.commit()
-    return {"registration": view}
+    return {"registration": _registration_view(row)}
 
 
 @router.post("/registrations/{rid}/qr")
@@ -218,16 +213,6 @@ def new_registration_qr(rid: str, current_user: User = Depends(partner_only), db
     token = partner_registration.new_qr(db, row)
     db.commit()
     return {"registration": _registration_view(row), "qr": {"token": token, "expires_at": row.expires_at.isoformat()}}
-
-
-@router.post("/registrations/{rid}/password")
-def new_registration_password(rid: str, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
-    """A new one-time password for a registration whose QR was scanned (the first was lost). It is returned once."""
-    row = _registration_in_scope(db, current_user, rid)
-    partner_registration.new_password(db, row)
-    view = _registration_view(row, reveal=True)
-    db.commit()
-    return {"registration": view}
 
 
 @router.delete("/registrations/{rid}")

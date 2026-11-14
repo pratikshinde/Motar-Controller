@@ -151,9 +151,12 @@ class TestCreatePortalAccounts(SignInBase):
 
     def test_the_ajanta_admin_becomes_the_brand_owner_when_asked_to(self):
         from app.models import AppBrand
-        with self.assertRaises(script.AccountError):  # the dev database already has an owner
+        # Make sure the brand has an owner whatever the database held (rolled back in tearDown), so that a second admin is refused.
+        script.create_account(self.db, "ajanta-admin", "First Owner", email(), "a-long-password-1", replace_owner=True)
+        self.db.flush()
+        with self.assertRaises(script.AccountError):
             script.create_account(self.db, "ajanta-admin", "Ajanta Admin", email(), "a-long-password-1")
-        user = script.create_account(self.db, "ajanta-admin", "Ajanta Admin", email(), "a-long-password-1", replace_owner=True)
+        user =script.create_account(self.db, "ajanta-admin", "Ajanta Admin", email(), "a-long-password-1", replace_owner=True)
         self.db.flush()
         brand = self.db.query(AppBrand).filter(AppBrand.key == "ajanta").one()
         self.assertEqual(brand.owner_user_id, user.id)

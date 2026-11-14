@@ -41,7 +41,7 @@ from app.services.cache_service import cache_service
 from app.services import firebase_phone
 from app.schemas import (
     ClaimRequest, FirebasePhoneRequest, LoginEmailRequest, PartnerClaimRequest,
-    RegistrationScanRequest, RegistrationVerifyRequest, RegistrationCompleteRequest,
+    RegistrationScanRequest, RegistrationCompleteRequest,
 )
 from app.models.farmer_claim import FarmerClaim
 from app.services import farmer_claims, partner_registration
@@ -650,7 +650,7 @@ def claim_with_qr(req: ClaimRequest, db: Session = Depends(get_db)):
 
 @router.post("/registration/scan")
 def registration_scan(req: RegistrationScanRequest, db: Session = Depends(get_db)):
-    """The QR of a registration was opened by the person being registered. The one-time password is made now and shown on the admin's page; this answer
+    """The QR of a registration was opened by the person being registered. The admin's page now shows it was scanned; this answer
     says only who is registering them, so the page can greet them."""
     row = partner_registration.scan(db, req.token)
     db.commit()
@@ -664,23 +664,15 @@ def registration_scan(req: RegistrationScanRequest, db: Session = Depends(get_db
     }
 
 
-@router.post("/registration/verify")
-def registration_verify(req: RegistrationVerifyRequest, db: Session = Depends(get_db)):
-    """A right mobile number and the password the admin sent: a short-lived ticket to choose their own password with. Five wrong tries burn the QR."""
-    ticket, _row = partner_registration.verify(db, req.token, req.phone, req.code)
-    db.commit()
-    return {"ticket": ticket}
-
-
 @router.post("/registration/complete", response_model=LoginResponse)
 def registration_complete(req: RegistrationCompleteRequest, db: Session = Depends(get_db)):
-    """They chose their own password: now, and only now, the account is created, and they are signed in."""
+    """They typed their registered mobile number and chose their own password: now, and only now, the account is created, and they are signed in."""
     row = partner_registration.by_token(db, req.token)
     parent = db.query(User).filter(User.id == row.parent_user_id).first() if row is not None else None
     if parent is not None:
         set_db_actor_context(db, user=parent)       # the new account is a child of the one who registered it
     try:
-        user = partner_registration.complete(db, req.token, req.ticket, req.password)
+        user = partner_registration.complete(db, req.token, req.phone, req.password)
     except HTTPException:
         db.rollback()
         raise

@@ -3,7 +3,7 @@ import type { LoginOutcome, RoleTier } from '../types';
 
 export type RegistrationStatus = 'WAITING' | 'SCANNED' | 'COMPLETED' | 'EXPIRED' | 'BLOCKED' | 'CANCELLED';
 
-/** A distributor or dealer being registered: nothing but this exists until the new person has scanned the QR and typed the password. */
+/** A distributor or dealer being registered: nothing but this exists until the new person has scanned the QR, typed their mobile number and chosen a password. */
 export interface Registration {
   id: string;
   role: 'distributor' | 'dealer';
@@ -14,8 +14,6 @@ export interface Registration {
   created_at: string | null;
   expires_at: string | null;
   scanned_at: string | null;
-  /** The one-time password: present once, right after the QR is scanned. Send it to the new person. */
-  password: string | null;
 }
 
 export interface RegistrationQr {
@@ -23,7 +21,7 @@ export interface RegistrationQr {
   expires_at: string;
 }
 
-/** What the QR holds: a link to the page the new person types their mobile number and password on. */
+/** What the QR holds: a link to the page the new person types their mobile number and chosen password on. */
 export function registrationLinkFor(token: string): string {
   return `${window.location.origin}/register/${encodeURIComponent(token)}`;
 }
@@ -43,17 +41,13 @@ export async function fetchRegistrations(): Promise<{ registrations: Registratio
   return apiJson('/users/registrations');
 }
 
-/** Where one registration stands. Once the QR is scanned this also carries the one-time password (once). */
+/** Where one registration stands: waiting for the scan, scanned, completed, expired or blocked. */
 export async function fetchRegistration(id: string): Promise<{ registration: Registration }> {
   return apiJson(`/users/registrations/${encodeURIComponent(id)}`);
 }
 
 export async function newRegistrationQr(id: string): Promise<{ registration: Registration; qr: RegistrationQr }> {
   return apiJson(`/users/registrations/${encodeURIComponent(id)}/qr`, { method: 'POST' });
-}
-
-export async function newRegistrationPassword(id: string): Promise<{ registration: Registration }> {
-  return apiJson(`/users/registrations/${encodeURIComponent(id)}/password`, { method: 'POST' });
 }
 
 export async function cancelRegistration(id: string): Promise<{ message: string }> {
@@ -75,15 +69,12 @@ async function publicPost<T>(path: string, body: unknown, fallback: string): Pro
   return json as T;
 }
 
-/** The QR was opened: this is what makes the password appear on the admin's page. */
+/** The QR was opened: the admin's page shows it was scanned. */
 export const scanRegistration = (token: string) => publicPost<RegistrationGreeting>('/auth/registration/scan', { token }, 'This link is not valid any more.');
 
-export const verifyRegistration = (token: string, phone: string, code: string) =>
-  publicPost<{ ticket: string }>('/auth/registration/verify', { token, phone: phone.trim(), code: code.trim() }, 'The mobile number or the password is not right.');
-
-/** They chose their own password: the account is created now, and they are signed in. */
-export async function completeRegistration(token: string, ticket: string, password: string): Promise<LoginOutcome> {
-  const body = await publicPost<any>('/auth/registration/complete', { token, ticket, password }, 'Could not finish the registration.');
+/** They typed their registered mobile number and chose their own password: the account is created now, and they are signed in. */
+export async function completeRegistration(token: string, phone: string, password: string): Promise<LoginOutcome> {
+  const body = await publicPost<any>('/auth/registration/complete', { token, phone: phone.trim(), password }, 'Could not finish the registration.');
   const result = toAuthResult(body);
   persistTokens(result);
   return result;

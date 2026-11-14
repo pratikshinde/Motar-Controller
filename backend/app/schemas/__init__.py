@@ -39,15 +39,9 @@ class RegistrationScanRequest(BaseModel):
     token: str = Field(..., min_length=20, max_length=128)
 
 
-class RegistrationVerifyRequest(BaseModel):
-    token: str = Field(..., min_length=20, max_length=128)
-    phone: str = Field(..., min_length=10, max_length=20)
-    code: str = Field(..., min_length=4, max_length=20)
-
-
 class RegistrationCompleteRequest(BaseModel):
     token: str = Field(..., min_length=20, max_length=128)
-    ticket: str = Field(..., min_length=10, max_length=128)
+    phone: str = Field(..., min_length=10, max_length=20)
     password: str = Field(..., min_length=1, max_length=128)
     app_install_id: Optional[str] = None
     device_info: Optional[str] = None

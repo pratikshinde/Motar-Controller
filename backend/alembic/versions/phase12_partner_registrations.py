@@ -4,9 +4,8 @@ Revision ID: phase12_partner_registrations
 Revises: phase11_starter_details
 
 The admin (or a distributor, for a dealer) types the new person's name, address and mobile number. That saves a pending registration and shows a QR; no
-account exists yet. When the new person scans the QR a one-time password is made and shown to the admin, who sends it to them. They type their mobile
-number and that password, then choose their own password: only then is the account created. Only hashes of the QR secret, the password and the
-activation ticket are kept; the password is also held in clear until the admin has seen it once.
+account exists yet. The new person scans the QR, types their mobile number and chooses their own password: only then is the account created. Only a hash of
+the QR secret is kept.
 """
 from alembic import op
 
@@ -31,13 +30,7 @@ def upgrade() -> None:
             created_at        timestamptz NOT NULL DEFAULT now(),
             expires_at        timestamptz NOT NULL,
             scanned_at        timestamptz,
-            code_hash         varchar(64),
-            code_plain        varchar(20),
-            code_expires_at   timestamptz,
-            code_revealed_at  timestamptz,
             attempts          integer NOT NULL DEFAULT 0,
-            ticket_hash       varchar(64),
-            ticket_expires_at timestamptz,
             completed_at      timestamptz,
             user_id           uuid REFERENCES agripump.users(id) ON DELETE SET NULL,
             revoked_at        timestamptz,

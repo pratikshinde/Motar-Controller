@@ -6,7 +6,7 @@ import type { Registration, RegistrationStatus } from '../../api/registrations';
 
 const LABEL: Record<RegistrationStatus, { text: string; color: 'info' | 'success' | 'warning' | 'error' | 'default' }> = {
   WAITING: { text: 'Waiting for the QR to be scanned', color: 'info' },
-  SCANNED: { text: 'Scanned: send them the password', color: 'success' },
+  SCANNED: { text: 'Scanned: they are choosing a password', color: 'success' },
   EXPIRED: { text: 'QR expired', color: 'warning' },
   BLOCKED: { text: 'Blocked: too many wrong tries', color: 'error' },
   COMPLETED: { text: 'Registered', color: 'success' },

@@ -9,8 +9,8 @@ SCHEMA = "agripump"
 
 
 class PartnerRegistration(Base):
-    """A distributor or dealer being registered. Nothing but this row exists until the new person has scanned the QR, been sent the one-time password
-    and typed it with their mobile number; only then is the account made (see app/services/partner_registration.py)."""
+    """A distributor or dealer being registered. Nothing but this row exists until the new person has scanned the QR, typed their mobile number
+    and chosen their own password; only then is the account made (see app/services/partner_registration.py)."""
 
     __tablename__ = "partner_registrations"
     __table_args__ = (
@@ -31,13 +31,7 @@ class PartnerRegistration(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     scanned_at = Column(DateTime(timezone=True), nullable=True)
-    code_hash = Column(String(64), nullable=True)
-    code_plain = Column(String(20), nullable=True)           # held only until the admin has seen it once
-    code_expires_at = Column(DateTime(timezone=True), nullable=True)
-    code_revealed_at = Column(DateTime(timezone=True), nullable=True)
     attempts = Column(Integer, nullable=False, default=0)
-    ticket_hash = Column(String(64), nullable=True)
-    ticket_expires_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
     revoked_at = Column(DateTime(timezone=True), nullable=True)

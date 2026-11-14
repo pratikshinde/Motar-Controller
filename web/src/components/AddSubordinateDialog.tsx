@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, FormControl, InputLabel, Select, MenuItem, Alert, Box, Typography,
-  CircularProgress, Paper
+  CircularProgress
 } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { ASSIGNABLE_ROLES, ROLE_NAMES } from '../api/users';
 import {
-  cancelRegistration, fetchRegistration, newRegistrationPassword, newRegistrationQr, registrationLinkFor, startRegistration,
+  cancelRegistration, fetchRegistration, newRegistrationQr, registrationLinkFor, startRegistration,
   type Registration
 } from '../api/registrations';
 import { useAuth } from '../context/AuthContext';
@@ -34,8 +33,8 @@ interface Props {
   pollMs?: number;
 }
 
-/** Register a distributor or a dealer: name, address and mobile number first. Nothing is created yet: a QR is shown, the new person scans it, the one-time
- *  password then appears here for you to send them, they type it with their mobile number and choose their own password, and only then is the account made. */
+/** Register a distributor or a dealer: name, address and mobile number first. Nothing is created yet: a QR is shown, the new person scans it, the website
+ *  opens, they type their mobile number and choose their own password, and only then is the account made (with no pumps yet). */
 export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated, underRole, lockRole, parentId, resume, pollMs = POLL_MS }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -49,13 +48,10 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
   const [busy, setBusy] = useState(false);
   const [reg, setReg] = useState<Registration | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  // The password is shown by the server once; keep it here so the admin can read it for as long as this dialog is open.
-  const [password, setPassword] = useState<string | null>(null);
   const done = useRef(false);
 
   const absorb = useCallback((r: Registration) => {
     setReg(r);
-    if (r.password) setPassword(r.password);
     if (r.status === 'COMPLETED' && !done.current) {
       done.current = true;
       onCreated();
@@ -70,7 +66,6 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
     setPhone('');
     setReg(null);
     setToken(null);
-    setPassword(null);
     setRole(underRole && assignable.includes(underRole) ? underRole : assignable[0] || '');
     if (resume) {
       // Carry on with an unfinished registration: a new QR (the old one may be gone) and the dialog follows it from the start again.
@@ -86,7 +81,7 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, underRole, resume?.id]);
 
-  // Follow the registration: waiting for the scan, then the password to send, then done.
+  // Follow the registration: waiting for the scan, then for them to choose a password, then done.
   useEffect(() => {
     if (!open || !reg || reg.status === 'COMPLETED' || reg.status === 'CANCELLED') return;
     const id = setInterval(async () => {
@@ -128,24 +123,9 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
     try {
       const res = await newRegistrationQr(reg.id);
       setToken(res.qr.token);
-      setPassword(null);
       absorb(res.registration);
     } catch (err: any) {
       showToast(err?.message || 'Could not make a new QR', true);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function newPassword() {
-    if (!reg) return;
-    setBusy(true);
-    try {
-      const res = await newRegistrationPassword(reg.id);
-      setPassword(res.registration.password);
-      absorb(res.registration);
-    } catch (err: any) {
-      showToast(err?.message || 'Could not make a new password', true);
     } finally {
       setBusy(false);
     }
@@ -161,15 +141,6 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
       }
     }
     onClose();
-  }
-
-  async function copy(text: string, what: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast(`${what} copied`);
-    } catch {
-      showToast('Could not copy. Select it and copy it.', true);
-    }
   }
 
   if (assignable.length === 0) return null;
@@ -194,7 +165,7 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
                 <TextField
                   label="Mobile number"
                   placeholder="98765 43210"
-                  helperText="They will type this same number later. No account is made until they do."
+                  helperText="They type this same number when they register. No account is made until they do."
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   required
@@ -239,7 +210,7 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
             <>
               <CheckCircleIcon color="success" sx={{ fontSize: 48 }} />
               <Typography>
-                {first} chose their own password and the {roleName.toLowerCase()} account is ready. They can sign in on the website with their mobile number.
+                {first} chose their own password and the {roleName.toLowerCase()} account is ready, with no pumps yet. They can sign in on the website with their mobile number.
               </Typography>
             </>
           )}
@@ -257,36 +228,14 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
 
           {reg.status === 'WAITING' && (
             <Alert severity="info" icon={<CircularProgress size={18} />} sx={{ width: '100%', textAlign: 'left' }} data-testid="waiting-for-scan">
-              Ask {first} to scan this QR with their phone camera. This page shows the password as soon as they do.
+              Ask {first} to scan this QR with their phone camera. The website opens for them to type their mobile number and choose a password.
             </Alert>
           )}
 
           {reg.status === 'SCANNED' && (
-            <Box sx={{ width: '100%' }} data-testid="scanned">
-              <Alert severity="success" sx={{ textAlign: 'left', mb: 1.5 }}>
-                {first} scanned the QR. Send them this password now.
-              </Alert>
-              {password ? (
-                <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Password for {reg.full_name} ({reg.phone_number})
-                  </Typography>
-                  <Typography data-testid="one-time-password" sx={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '2rem', letterSpacing: 3, my: 0.5 }}>
-                    {password}
-                  </Typography>
-                  <Button size="small" startIcon={<ContentCopyIcon />} onClick={() => copy(password, 'Password')}>
-                    Copy
-                  </Button>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    They type their mobile number and this password on the page that opened, then choose their own password. It works once.
-                  </Typography>
-                </Paper>
-              ) : (
-                <Alert severity="warning" sx={{ textAlign: 'left' }} action={<Button size="small" onClick={newPassword} disabled={busy}>New password</Button>}>
-                  The password is shown only once and this page missed it. Make a new one.
-                </Alert>
-              )}
-            </Box>
+            <Alert severity="success" icon={<CircularProgress size={18} />} sx={{ width: '100%', textAlign: 'left' }} data-testid="scanned">
+              {first} scanned the QR and is choosing a password. This page updates when they finish.
+            </Alert>
           )}
 
           {reg.status === 'EXPIRED' && (
@@ -315,11 +264,6 @@ export const AddSubordinateDialog: React.FC<Props> = ({ open, onClose, onCreated
             {(reg.status === 'EXPIRED' || reg.status === 'BLOCKED' || reg.status === 'WAITING' || reg.status === 'SCANNED') && (
               <Button onClick={newQr} disabled={busy} data-testid="new-qr-button">
                 New QR
-              </Button>
-            )}
-            {reg.status === 'SCANNED' && password && (
-              <Button onClick={newPassword} disabled={busy}>
-                New password
               </Button>
             )}
             <Button variant="contained" onClick={onClose}>
