@@ -5,17 +5,15 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
-import { loginWithEmail, loginWithPassword } from '../../api/auth';
+import { loginWithEmailCode, loginWithPassword, requestEmailCode } from '../../api/auth';
 import { verifyMfa } from '../../api/mfa';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { isMfaRequired } from '../../types';
 
-// A developer's machine only (`npm run dev`): the authenticator step also accepts the fixed development code.
-const DEV_HELPERS = import.meta.env.DEV;
-
-/** The website's sign-in. The admin and the platform owner sign in with an email and a password; distributors and dealers (who have no email) with
- *  their mobile number and the password they chose when they opened their QR. There is no sign-up here: the person above creates every account. */
+/** The website's sign-in. The admin and the platform owner sign in with their email and a 6-digit code emailed to it (the platform owner then also enters
+ *  the code of an authenticator app); distributors and dealers (who have no email) with their mobile number and the password they chose when they opened
+ *  their QR. There is no sign-up here: the person above creates every account. */
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { handleAuthResult } = useAuth();
@@ -26,6 +24,8 @@ export const LoginForm: React.FC = () => {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [emailCode, setEmailCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -38,10 +38,16 @@ export const LoginForm: React.FC = () => {
     setError('');
     setBusy(true);
     try {
-      const result = byMobile ? await loginWithPassword(mobile, password) : await loginWithEmail(email, password);
+      if (!byMobile && !codeSent) {
+        await requestEmailCode(email);
+        setCodeSent(true);
+        setEmailCode('');
+        return;
+      }
+      const result = byMobile ? await loginWithPassword(mobile, password) : await loginWithEmailCode(email, emailCode);
       if (isMfaRequired(result)) {
         setMfaToken(result.mfa_token);
-        setMfaCode(DEV_HELPERS ? '123456' : '');
+        setMfaCode('');
         return;
       }
       handleAuthResult(result);
@@ -103,13 +109,6 @@ export const LoginForm: React.FC = () => {
             <Typography variant="body2" sx={{ color: '#64748B', maxWidth: 360 }}>
               Enter the 6-digit verification code from your authenticator application.
             </Typography>
-            {DEV_HELPERS && (
-              <Box sx={{ p: 1.5, bgcolor: '#E4F5EA', borderRadius: 2, border: '1px solid #BFDBFE', width: '100%' }}>
-                <Typography sx={{ fontSize: '0.8rem', color: '#1E40AF', fontWeight: 600 }}>
-                  Dev testing: code <strong>123456</strong> or your authenticator code is accepted.
-                </Typography>
-              </Box>
-            )}
             <TextField
               label="Authenticator Code"
               placeholder="123456"
@@ -161,7 +160,10 @@ export const LoginForm: React.FC = () => {
                   placeholder="name@company.com"
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => {
+                    setEmail(e.target.value);
+                    setCodeSent(false);
+                  }}
                   autoComplete="username"
                   autoFocus
                   fullWidth
@@ -171,6 +173,7 @@ export const LoginForm: React.FC = () => {
               )}
             </Box>
 
+{byMobile && (
             <Box>
               <Typography sx={{ fontSize: '0.84rem', fontWeight: 600, color: '#334155', mb: 0.75 }}>Password</Typography>
               <TextField
@@ -195,15 +198,35 @@ export const LoginForm: React.FC = () => {
                 }}
               />
             </Box>
+            )}
+
+            {!byMobile && codeSent && (
+              <Box>
+                <Alert severity="success" sx={{ mb: 1.5, borderRadius: 2 }} data-testid="code-sent">
+                  A 6-digit code was sent to {email.trim()}. It works for 10 minutes. Check your spam folder if it does not arrive.
+                </Alert>
+                <Typography sx={{ fontSize: '0.84rem', fontWeight: 600, color: '#334155', mb: 0.75 }}>Code from your email</Typography>
+                <TextField
+                  placeholder="123456"
+                  value={emailCode}
+                  onChange={e => setEmailCode(e.target.value)}
+                  autoComplete="one-time-code"
+                  autoFocus
+                  fullWidth
+                  required
+                  slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, style: { letterSpacing: 6, fontWeight: 700, fontSize: '1.2rem' } }, input: { sx: { borderRadius: 2.2, bgcolor: '#FFFFFF' } } }}
+                />
+              </Box>
+            )}
 
             <Button
               type="submit"
               variant="contained"
               size="large"
-              disabled={busy || !(byMobile ? mobile.trim() : email.trim()) || !password}
+              disabled={busy || (byMobile ? !(mobile.trim() && password) : !email.trim() || (codeSent && emailCode.trim().length !== 6))}
               sx={{ py: 1.35, borderRadius: 2.2, fontWeight: 700, fontSize: '0.95rem', bgcolor: '#0B7A3E', textTransform: 'none', boxShadow: '0 4px 12px rgba(11, 122, 62, 0.25)', '&:hover': { bgcolor: '#08642F' } }}
             >
-              {busy ? 'Signing in…' : 'Sign In'}
+              {busy ? (byMobile || codeSent ? 'Signing in…' : 'Sending…') : byMobile || codeSent ? 'Sign In' : 'Send me a code'}
             </Button>
 
             <Box sx={{ p: 1.75, borderRadius: 2, bgcolor: '#F0F9FF', border: '1px solid #BAE6FD', display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
@@ -211,7 +234,7 @@ export const LoginForm: React.FC = () => {
               <Typography sx={{ fontSize: '0.82rem', color: '#0369A1', lineHeight: 1.45 }}>
                 {byMobile
                   ? 'There is no sign-up here. You opened your account from the QR the person above you gave you. Forgot your password? Ask them for a new QR.'
-                  : 'There is no sign-up here. Your email and password are given to you by the platform owner. Forgot your password? Ask the platform owner.'}
+                  : 'There is no sign-up here and no password. We email a 6-digit code to the address the platform owner registered for you. The platform owner then also enters the code of the authenticator app.'}
               </Typography>
             </Box>
 
@@ -222,6 +245,7 @@ export const LoginForm: React.FC = () => {
               data-testid="switch-login"
               onClick={() => {
                 setByMobile(v => !v);
+                setCodeSent(false);
                 setError('');
               }}
               sx={{ color: '#0B7A3E', fontWeight: 600, alignSelf: 'center' }}

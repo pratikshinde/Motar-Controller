@@ -66,6 +66,21 @@ export async function claimPartnerAccount(token: string, phoneNumber: string, pa
   return outcomeFrom(body);
 }
 
+/** Step 1 of the admin's and the platform owner's sign-in: a 6-digit code is emailed to the address (if it belongs to one of them; the answer never says which). */
+export async function requestEmailCode(email: string): Promise<void> {
+  const res = await apiFetch('/auth/email-code/request', { method: 'POST', body: JSON.stringify({ email: email.trim() }) });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'Could not send the code. Try again in a moment.'));
+}
+
+/** Step 2: the emailed code. The platform owner gets the authenticator challenge back (isMfaRequired); an admin is signed in. */
+export async function loginWithEmailCode(email: string, code: string): Promise<LoginOutcome> {
+  const res = await apiFetch('/auth/email-code/verify', { method: 'POST', body: JSON.stringify({ email: email.trim(), code: code.trim() }) });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'That code is not right, or it has expired. Ask for a new one.'));
+  return outcomeFrom(body);
+}
+
 export async function loginWithEmail(email: string, password: string): Promise<LoginOutcome> {
   const res = await apiFetch('/auth/login-email', {
     method: 'POST',

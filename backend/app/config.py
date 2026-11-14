@@ -108,6 +108,16 @@ class Settings(BaseSettings):
     # set TOTP up (and read its own profile / log out): every other request is refused with MFA_SETUP_REQUIRED.
     MFA_REQUIRED_ROLES: str = ""
 
+    # Email (the admin's and the platform owner's sign-in code). EMAIL_BACKEND: "ses" (Amazon SES), "log" (development only) or empty (log in
+    # development, else ses), or "smtp". EMAIL_FROM is the sender address (verified in SES; with smtp it defaults to SMTP_USER).
+    EMAIL_BACKEND: str = ""
+    EMAIL_FROM: str = ""
+    # For EMAIL_BACKEND=smtp (for example Gmail: smtp.gmail.com, port 587, the account's address and an app password).
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+
     def mfa_required_for(self, role) -> bool:
         return (role or "") in {r.strip() for r in self.MFA_REQUIRED_ROLES.split(",") if r.strip()}
 

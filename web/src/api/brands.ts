@@ -92,7 +92,6 @@ export function createManufacturerAccount(input: {
   brand: string;
   full_name: string;
   email: string;
-  password: string;
 }): Promise<{ message: string }> {
   return apiJson('/users', { method: 'POST', body: JSON.stringify({ ...input, role: 'manufacturer' }) });
 }

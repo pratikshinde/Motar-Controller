@@ -280,11 +280,11 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
     # A distributor or dealer has no email and no password of their own to start with: the person above them registers the mobile number and
     # hands over a one-time QR; they scan it, type the number and choose their own password (POST /auth/partner-claim). No OTP, so no cost.
     by_qr = (not staff) and role in ("distributor", "dealer")
-    # An admin (manufacturer) signs in with an email and a password given when the platform owner creates it; staff logins keep a password too.
+    # An admin (manufacturer) signs in with an email and a code sent to it: no password. Staff logins keep a password.
     password = None if by_qr else req.password
-    if (role not in ("customer", "distributor", "dealer")) or staff:
-        if not password or len(password) < MIN_PARTNER_PASSWORD:
-            raise HTTPException(status_code=422, detail=f"A password of at least {MIN_PARTNER_PASSWORD} characters is required.")
+    needs_password = staff or role not in ("customer", "distributor", "dealer", "manufacturer")
+    if (needs_password and not password) or (password and len(password) < MIN_PARTNER_PASSWORD):
+        raise HTTPException(status_code=422, detail=f"A password of at least {MIN_PARTNER_PASSWORD} characters is required.")
     if role == "manufacturer" and not staff and not (req.email or "").strip():
         raise HTTPException(status_code=422, detail="An admin signs in with an email address: enter one.")
     if by_qr:

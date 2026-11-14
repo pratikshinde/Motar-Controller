@@ -19,6 +19,7 @@ os.environ["SUPERADMIN_MONITOR_ONLY"] = "false"
 # tests that are about the secret set it themselves.
 os.environ["PROVISIONING_HOOK_SECRET"] = ""
 os.environ["GEOCODE_ENABLED"] = "false"          # no test reaches out to an outside address service
+os.environ["EMAIL_BACKEND"] = "log"              # no test sends a real email, whatever the developer's .env says
 
 
 @pytest.fixture(autouse=True)

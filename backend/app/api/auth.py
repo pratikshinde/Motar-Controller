@@ -41,10 +41,10 @@ from app.services.cache_service import cache_service
 from app.services import firebase_phone
 from app.schemas import (
     ClaimRequest, FirebasePhoneRequest, LoginEmailRequest, PartnerClaimRequest,
-    RegistrationScanRequest, RegistrationCompleteRequest,
+    RegistrationScanRequest, RegistrationCompleteRequest, EmailCodeRequest, EmailCodeVerifyRequest,
 )
 from app.models.farmer_claim import FarmerClaim
-from app.services import farmer_claims, partner_registration
+from app.services import farmer_claims, partner_registration, email_login, email_service
 from app.services import brand_service
 from app.core.phone import india_phone
 from app.api.deps import get_current_user, require_roles, set_db_actor_context, security, HTTPAuthorizationCredentials
@@ -814,6 +814,29 @@ def login_email(req: LoginEmailRequest, db: Session = Depends(get_db)):
     return _password_sign_in(db, req, user, f"login_fail:email:{email}", "Incorrect email or password. Please check and try again.")
 
 
+@router.post("/email-code/request")
+def email_code_request(req: EmailCodeRequest, db: Session = Depends(get_db)):
+    """The website's sign-in for an admin or the platform owner, step 1: a 6-digit code is emailed to the address if it belongs to one of them. The answer is the
+    same for any address, so it never says which emails have accounts."""
+    email_login.request_code(db, req.email)
+    return {"message": "If that email belongs to an account, a sign-in code has been sent to it."}
+
+
+@router.post("/email-code/verify", response_model=LoginResponse)
+def email_code_verify(req: EmailCodeVerifyRequest, db: Session = Depends(get_db)):
+    """Step 2: the emailed code. The platform owner then still has to pass the authenticator step (same challenge as after a password); an admin is signed in."""
+    user = email_login.verify_code(db, req.email, req.code)
+    if user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
+        raise HTTPException(status_code=403, detail="Account suspended")
+    _enforce_brand(user)
+    if _needs_mfa_challenge(user):
+        db.commit()
+        return _mfa_challenge_response(user)
+    session = _issue_session(db, user, req.app_install_id, req.device_info)
+    db.commit()
+    return session
+
+
 def _password_sign_in(db: Session, req, user: Optional[User], fail_key: str, wrong_message: str):
     """The shared part of a password sign-in (by mobile number or by email): lockout, the always-paid-for password check,
     suspension, brand, authenticator challenge, session."""
@@ -1147,7 +1170,8 @@ def mfa_verify(req: MfaVerifyRequest, db: Session = Depends(get_db)):
         )
 
     code_str = str(code).strip()
-    is_dev = settings.dev_codes_enabled
+    # The fixed development code stands in for the authenticator only while emails are not really being sent (a developer machine with no mail account set up).
+    is_dev = settings.dev_codes_enabled and not email_service.is_real()
     is_mock_code = is_dev and code_str == "123456"
 
     totp_valid = False

@@ -56,6 +56,18 @@ class TestResetPortalPassword(MfaBase):
         live = self.db.query(RefreshToken).filter(RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None)).count()
         self.assertEqual(live, 0)
 
+    def test_authenticator_only_removes_the_authenticator_and_leaves_the_password_and_ends_sessions(self):
+        user = self.person("superadmin", "reset-mfa")
+        user.totp_secret, user.totp_enabled = "JBSWY3DPEHPK3PXP", True
+        self.db.commit()
+        old_hash, before = user.password_hash, user.session_version or 1
+        reset_password(self.db, user.email, None, True)
+        self.db.commit()
+        self.db.refresh(user)
+        self.assertEqual((user.totp_secret, user.totp_enabled), (None, False))
+        self.assertEqual(user.password_hash, old_hash, "no password was asked or changed")
+        self.assertEqual(user.session_version, before + 1)
+
     def test_the_authenticator_is_removed_only_when_asked(self):
         user = self.person()
         self.db.query(User).filter(User.id == user.id).update({"totp_secret": "JBSWY3DPEHPK3PXP", "totp_enabled": True})

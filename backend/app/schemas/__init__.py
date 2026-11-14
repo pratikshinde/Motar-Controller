@@ -34,6 +34,18 @@ class ClaimRequest(BaseModel):
     app_install_id: Optional[str] = None
     device_info: Optional[str] = None
 
+class EmailCodeRequest(BaseModel):
+    """The admin or platform owner asks for a sign-in code to be emailed."""
+    email: str = Field(..., min_length=3, max_length=254)
+
+
+class EmailCodeVerifyRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=254)
+    code: str = Field(..., min_length=4, max_length=12)
+    app_install_id: Optional[str] = None
+    device_info: Optional[str] = None
+
+
 class RegistrationScanRequest(BaseModel):
     """The new distributor or dealer opened the registration QR."""
     token: str = Field(..., min_length=20, max_length=128)

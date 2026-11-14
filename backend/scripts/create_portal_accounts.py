@@ -1,4 +1,4 @@
-"""Create the two website logins: the Ajanta admin and the super admin. Each signs in with an email and a password.
+"""Create the two website logins: the Ajanta admin and the super admin. Each signs in with an email and a code emailed to it; there is no password.
 
     python scripts/create_portal_accounts.py --role superadmin    --name "Platform Owner" --email owner@example.com
     python scripts/create_portal_accounts.py --role ajanta-admin  --name "Ajanta Admin"   --email admin@ajanta.example
@@ -6,15 +6,17 @@
 * The Ajanta admin registers farmers, manages the starters and sees everything of Ajanta. It is the Ajanta brand's own account.
 * The super admin only monitors (see SUPERADMIN_MONITOR_ONLY in backend/.env) and can open the Ajanta dashboard read-only.
 
-The password is asked for here (hidden) and typed twice; it is never printed, never put on the command line and stored only as a
-hash. For a non-interactive run set PORTAL_PASSWORD in the environment instead. At least 10 characters.
-A superadmin has no authenticator yet, so its first sign-in is forced through authenticator (TOTP) setup.
+The super admin enters the emailed code and then the code of an authenticator app (set up at the first sign-in). The admin enters only the emailed
+code. The server needs EMAIL_FROM set and the sender verified in Amazon SES (see deploy/README.md).
+Only if you really want one, `--with-password` asks for a password (hidden, typed twice, at least 10 characters, stored only as a hash; or set
+PORTAL_PASSWORD for a non-interactive run); it then also works on the old email-and-password sign-in.
 """
 import argparse
 import getpass
 import os
 import sys
 import uuid
+from typing import Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -32,20 +34,21 @@ class AccountError(Exception):
     """Something the person running the script can fix (message is for them)."""
 
 
-def create_account(db, role_key: str, name: str, email: str, password: str, replace_owner: bool = False) -> User:
-    """Add the account (no commit). `role_key` is "superadmin" or "ajanta-admin"."""
+def create_account(db, role_key: str, name: str, email: str, password: Optional[str] = None, replace_owner: bool = False) -> User:
+    """Add the account (no commit). `role_key` is "superadmin" or "ajanta-admin". No password by default: the account signs in with an emailed code."""
     email = (email or "").strip().lower()
     if "@" not in email or "." not in email.split("@")[-1]:
         raise AccountError("Enter a valid email address.")
-    if len(password or "") < MIN_PASSWORD:
+    if password is not None and len(password) < MIN_PASSWORD:
         raise AccountError(f"The password must be at least {MIN_PASSWORD} characters.")
+    password_hash = hash_secret(password) if password else None
     if db.query(User.id).filter(func.lower(User.email) == email).first():
         raise AccountError(f"{email} already has an account.")
     new_id = uuid.uuid4()
 
     if role_key == "superadmin":
         user = User(
-            id=new_id, full_name=name.strip(), email=email, password_hash=hash_secret(password), role="superadmin",
+            id=new_id, full_name=name.strip(), email=email, password_hash=password_hash, role="superadmin",
             hierarchy_path="/SA", account_status="ACTIVE", is_active=True, is_verified=True,
         )
         db.add(user)
@@ -59,7 +62,7 @@ def create_account(db, role_key: str, name: str, email: str, password: str, repl
     if brand.owner_user_id is not None and not replace_owner:
         raise AccountError("The Ajanta brand already has an owner account. Pass --replace-owner to make this one the owner.")
     user = User(
-        id=new_id, full_name=name.strip(), email=email, password_hash=hash_secret(password), role="manufacturer",
+        id=new_id, full_name=name.strip(), email=email, password_hash=password_hash, role="manufacturer",
         hierarchy_path=f"/SA/{new_id}", brand_id=brand.id, account_status="ACTIVE", is_active=True, is_verified=True,
     )
     db.add(user)
@@ -84,15 +87,16 @@ def main() -> int:
     ap.add_argument("--role", required=True, choices=["superadmin", "ajanta-admin"])
     ap.add_argument("--name", required=True)
     ap.add_argument("--email", required=True)
+    ap.add_argument("--with-password", action="store_true", help="also give the account a password (not needed: it signs in with an emailed code)")
     ap.add_argument("--replace-owner", action="store_true", help="ajanta-admin: take over as the Ajanta brand's owner account")
     args = ap.parse_args()
 
     db = SessionLocal()
     try:
         db.execute(text("SELECT set_config('app.bypass_rls', 'on', false)"))
-        user = create_account(db, args.role, args.name, args.email, _ask_password(), replace_owner=args.replace_owner)
+        user = create_account(db, args.role, args.name, args.email, _ask_password() if args.with_password else None, replace_owner=args.replace_owner)
         db.commit()
-        print(f"Created {args.role}: {user.email}. Sign in on the website with that email and the password you typed.")
+        print(f"Created {args.role}: {user.email}. Sign in on the website with that email: a code is emailed to it.")
         return 0
     except AccountError as exc:
         db.rollback()

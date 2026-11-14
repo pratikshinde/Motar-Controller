@@ -3,8 +3,7 @@ import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divid
 import { createManufacturerAccount, createManufacturerBrand } from '../api/brands';
 import { useToast } from '../context/ToastContext';
 
-// Mirrors the server (MIN_PARTNER_PASSWORD, KEY_PATTERN, the #RRGGBB check).
-const MIN_PASSWORD = 8;
+// Mirrors the server (KEY_PATTERN, the #RRGGBB check).
 const KEY_RE = /^[a-z][a-z0-9-]{1,29}$/;
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -38,7 +37,6 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
   const [supportEmail, setSupportEmail] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [brandDone, setBrandDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -53,7 +51,6 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
     setSupportEmail('');
     setOwnerName('');
     setEmail('');
-    setPassword('');
     setBrandDone(false);
     setError('');
   }, [open]);
@@ -72,7 +69,6 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
       if (color && !COLOR_RE.test(color)) return setError('The colour must look like #1B4FB8.');
     }
     if (!ownerName.trim() || !email.trim()) return setError('The manufacturer’s login needs a name and an email address.');
-    if (password.length < MIN_PASSWORD) return setError(`The password must be at least ${MIN_PASSWORD} characters.`);
 
     setBusy(true);
     try {
@@ -90,10 +86,9 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
       await createManufacturerAccount({
         brand: key,
         full_name: ownerName.trim(),
-        email: email.trim(),
-        password
+        email: email.trim()
       });
-      showToast(`${name.trim()} added. They can sign in to the web portal now.`);
+      showToast(`${name.trim()} added. They can sign in to the web portal now with a code sent to their email.`);
       onCreated(key);
       onClose();
     } catch (err: any) {
@@ -140,16 +135,7 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
             <Divider />
             <Typography variant="subtitle2">The manufacturer’s login to this portal</Typography>
             <TextField label="Full name" value={ownerName} onChange={e => setOwnerName(e.target.value)} required fullWidth disabled={busy} />
-            <TextField label="Email" type="email" placeholder="name@company.com" helperText="They sign in to the website with this email and password." value={email} onChange={e => setEmail(e.target.value)} required fullWidth disabled={busy} />
-            <TextField
-              label={`Password (at least ${MIN_PASSWORD} characters)`}
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              fullWidth
-              disabled={busy}
-            />
+            <TextField label="Email" type="email" placeholder="name@company.com" helperText="They sign in to the website with this email: a code is sent to it each time. No password." value={email} onChange={e => setEmail(e.target.value)} required fullWidth disabled={busy} />
             {error && <Alert severity="error">{error}</Alert>}
           </Stack>
         </DialogContent>
