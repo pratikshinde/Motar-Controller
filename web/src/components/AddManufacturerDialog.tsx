@@ -99,9 +99,8 @@ export const AddManufacturerDialog: React.FC<Props> = ({ open, onClose, onCreate
         <DialogTitle>{invite.full_name} is registered</DialogTitle>
         <DialogContent>
           <Alert severity="success" data-testid="admin-added">
-            {invite.company_name} is added and so is its admin. Tell {invite.full_name.split(' ')[0]} to open the website, choose Login, then Admin, then “First time here”, and type their
-            email ({invite.email}), the same code from their email, and a password of their own. After that they sign in with the email and that password. The code is never needed
-            again.
+            {invite.company_name} is added and so is its admin. Tell {invite.full_name.split(' ')[0]} to open the website, choose Login, then Admin, type their email ({invite.email}) and
+            choose a password of their own. Do it within 24 hours. After that they sign in with the email and that password.
           </Alert>
         </DialogContent>
         <DialogActions>

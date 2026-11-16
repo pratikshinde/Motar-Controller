@@ -115,15 +115,16 @@ def _session_version(user: User) -> int:
 
 def _issue_session(db: Session, user: User, app_install_id: Optional[str] = None, device_info: Optional[str] = None) -> dict:
     """Access + rotating refresh tokens for a signed-in user.
-    Access tokens are short-lived (15 minutes as per SRS FR-SEC-024).
+    Tokens stay valid until the user explicitly logs out (or 30 days).
     """
     session_ver = _session_version(user)
+    expire_seconds = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     access_token = sign_token({
         "sub": str(user.id),
         "role": user.role,
         "hierarchy_path": user.hierarchy_path,
         "session_ver": session_ver
-    }, expires_in_seconds=15 * 60)
+    }, expires_in_seconds=expire_seconds)
     raw_refresh = generate_refresh_token()
     db.add(RefreshToken(
         user_id=user.id,
@@ -132,7 +133,7 @@ def _issue_session(db: Session, user: User, app_install_id: Optional[str] = None
         app_install_id=app_install_id,
         device_info=device_info or "Web/Mobile Client",
         last_used_at=datetime.utcnow(),
-        expires_at=datetime.utcnow() + timedelta(days=30)
+        expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     ))
     user_data = format_user_response(user)
     return {
@@ -142,14 +143,14 @@ def _issue_session(db: Session, user: User, app_install_id: Optional[str] = None
         "token": access_token,
         "refreshToken": raw_refresh,
         "token_type": "bearer",
-        "expires_in": 15 * 60,
+        "expires_in": expire_seconds,
         "mfa_setup_required": bool(normalize_role(user.role) == ROLE_SUPER_ADMIN and not user.mfa_enabled),
         "user": user_data,
         "session": {
             "access_token": access_token,
             "refresh_token": raw_refresh,
             "token_type": "bearer",
-            "expires_in": 15 * 60
+            "expires_in": expire_seconds
         }
     }
 
@@ -837,11 +838,29 @@ def email_code_verify(req: EmailCodeVerifyRequest, db: Session = Depends(get_db)
     return session
 
 
+@router.post("/admin-password/state")
+def admin_password_state(req: EmailCodeRequest, db: Session = Depends(get_db)):
+    """Does this email still have to choose its first password? True only for an admin the platform owner confirmed in the last 24 hours who has no password yet.
+    Any other email, known or not, gets false, so the page shows the normal password sign-in."""
+    return {"first_time": admin_invites.is_first_time(db, req.email)}
+
+
+@router.post("/admin-password/request")
+def admin_password_request(req: EmailCodeRequest, db: Session = Depends(get_db)):
+    """Forgot password: a 6-digit code is emailed to the address if it belongs to an admin. The answer is the same for any address."""
+    admin_invites.request_reset(db, req.email)
+    db.commit()
+    return {"message": "If that email belongs to an admin, a code has been sent to it."}
+
+
 @router.post("/admin-password/set", response_model=LoginResponse)
 def admin_password_set(req: AdminPasswordSetRequest, db: Session = Depends(get_db)):
-    """An admin's first sign-in (or after the platform owner sent a new code because they forgot the password): the code from their email, with their email, lets
-    them choose their own password, and they are signed in. The code is used up and never needed again. Every earlier sign-in of the account ends."""
-    user = admin_invites.set_password(db, req.email, req.code, req.password, hash_secret)
+    """The admin's own password, saved in the database, and they are signed in. Without a code: the first password. With the emailed code: a new password after
+    Forgot password. Every earlier sign-in of the account ends."""
+    if (req.code or "").strip():
+        user = admin_invites.choose_new_password(db, req.email, req.code, req.password, hash_secret)
+    else:
+        user = admin_invites.choose_first_password(db, req.email, req.password, hash_secret)
     if user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
         raise HTTPException(status_code=403, detail="Account suspended")
     _enforce_brand(user)
@@ -850,7 +869,7 @@ def admin_password_set(req: AdminPasswordSetRequest, db: Session = Depends(get_d
         {"revoked_at": datetime.utcnow()}, synchronize_session=False)
     cache_service.delete(f"login_fail:email:{(req.email or '').strip().lower()}")
     set_db_actor_context(db, user=user)
-    _record_audit_log(db, user.id, user.role, "user", str(user.id), "PASSWORD_SET", {"via": "admin code"})
+    _record_audit_log(db, user.id, user.role, "user", str(user.id), "PASSWORD_SET", {"via": "emailed code" if (req.code or "").strip() else "first password"})
     if _needs_mfa_challenge(user):
         db.commit()
         return _mfa_challenge_response(user)
@@ -891,6 +910,9 @@ def _password_sign_in(db: Session, req, user: Optional[User], fail_key: str, wro
     db.commit()
     return session
 
+REFRESH_REUSE_GRACE_SECONDS = 20
+
+
 @router.post("/refresh", response_model=RefreshResponse)
 def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
     token_hash = hash_refresh_token(req.refresh_token)
@@ -900,6 +922,10 @@ def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
     # Reuse Detection (FR-SEC-024): A reused revoked token revokes the entire token family!
+    # ...except a token that was replaced only moments ago: two tabs (or two requests) renewing at almost the same time is not theft. The late one just gets a
+    # 401 (nothing is issued to it, nothing is revoked) and the website retries with the newest token the other one stored.
+    if rec.revoked_at is not None and (datetime.utcnow() - rec.revoked_at.replace(tzinfo=None)).total_seconds() <= REFRESH_REUSE_GRACE_SECONDS:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="This refresh token was just replaced by a newer one.")
     if rec.revoked_at is not None:
         db.query(RefreshToken).filter(RefreshToken.family_id == rec.family_id).update({"revoked_at": datetime.utcnow()})
         cache_service.increment_user_session_version(str(rec.user_id))
@@ -936,6 +962,7 @@ def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
         expires_at=now_utc + timedelta(days=30)
     )
     db.add(new_rec)
+    db.flush()
     rec.replaced_by = new_rec.id
     db.commit()
 

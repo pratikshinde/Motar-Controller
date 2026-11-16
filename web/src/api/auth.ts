@@ -81,11 +81,27 @@ export async function loginWithEmailCode(email: string, code: string): Promise<L
   return outcomeFrom(body);
 }
 
-/** The code the admin got by email when the platform owner added them proves it is them: their own password is saved and they are signed in. The code works once. */
-export async function setAdminPassword(email: string, code: string, password: string): Promise<LoginOutcome> {
-  const res = await apiFetch('/auth/admin-password/set', { method: 'POST', body: JSON.stringify({ email: email.trim(), code: code.trim(), password }) });
+/** Does this email still have to choose its first password? True only for an admin the platform owner confirmed in the last 24 hours who has no password yet. */
+export async function adminNeedsFirstPassword(email: string): Promise<boolean> {
+  const res = await apiFetch('/auth/admin-password/state', { method: 'POST', body: JSON.stringify({ email: email.trim() }) });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(messageFrom(body, 'That code is not right, or it has expired. Ask for a new one.'));
+  return res.ok && body.first_time === true;
+}
+
+/** Forgot password: a 6-digit code is emailed to the address if it belongs to an admin (the answer never says which). */
+export async function requestAdminCode(email: string): Promise<void> {
+  const res = await apiFetch('/auth/admin-password/request', { method: 'POST', body: JSON.stringify({ email: email.trim() }) });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'Could not send the code. Try again in a moment.'));
+}
+
+/** The admin's own password, saved in the database, and they are signed in. Without a code: the first password. With the emailed code: a new one after Forgot password. */
+export async function setAdminPassword(email: string, password: string, code?: string): Promise<LoginOutcome> {
+  const payload: Record<string, string> = { email: email.trim(), password };
+  if (code && code.trim()) payload.code = code.trim();
+  const res = await apiFetch('/auth/admin-password/set', { method: 'POST', body: JSON.stringify(payload) });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(messageFrom(body, 'Could not set the password.'));
   return outcomeFrom(body);
 }
 

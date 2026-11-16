@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   handleAuthResult: vi.fn(),
   showToast: vi.fn(),
   loginWithEmail: vi.fn(),
+  adminNeedsFirstPassword: vi.fn(),
+  requestAdminCode: vi.fn(),
   setAdminPassword: vi.fn(),
   verifyMfa: vi.fn(),
   clearSession: vi.fn(),
@@ -16,7 +18,12 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../../../context/AuthContext', () => ({ useAuth: () => ({ handleAuthResult: mocks.handleAuthResult }) }));
 vi.mock('../../../context/ToastContext', () => ({ useToast: () => ({ showToast: mocks.showToast }) }));
-vi.mock('../../../api/auth', () => ({ loginWithEmail: mocks.loginWithEmail, setAdminPassword: mocks.setAdminPassword }));
+vi.mock('../../../api/auth', () => ({
+  loginWithEmail: mocks.loginWithEmail,
+  adminNeedsFirstPassword: mocks.adminNeedsFirstPassword,
+  requestAdminCode: mocks.requestAdminCode,
+  setAdminPassword: mocks.setAdminPassword
+}));
 vi.mock('../../../api/mfa', () => ({ verifyMfa: mocks.verifyMfa }));
 vi.mock('../../../api/client', () => ({ clearSession: mocks.clearSession }));
 vi.mock('react-router-dom', async importOriginal => ({ ...(await importOriginal<typeof import('react-router-dom')>()), useNavigate: () => mocks.navigate }));
@@ -25,9 +32,17 @@ import { AdminLoginForm } from '../AdminLoginForm';
 
 const renderForm = () => render(<MemoryRouter><AdminLoginForm /></MemoryRouter>);
 const session = (role: string) => ({ user: { id: 'u1', full_name: 'Ajanta Admin', role }, access_token: 'a', refresh_token: 'r' });
+const EMAIL = 'admin@ajanta.test';
+
+async function typeEmail(email = EMAIL) {
+  await userEvent.type(screen.getByPlaceholderText('name@company.com'), email);
+  await userEvent.tab(); // leaving the email asks the server whether this admin still has to choose a password
+}
 
 beforeEach(() => {
   Object.values(mocks).forEach(m => m.mockReset());
+  mocks.adminNeedsFirstPassword.mockResolvedValue(false);
+  mocks.requestAdminCode.mockResolvedValue(undefined);
 });
 
 describe('the admin sign-in: email and password', () => {
@@ -40,13 +55,19 @@ describe('the admin sign-in: email and password', () => {
     expect(screen.queryByText(/create account/i)).not.toBeInTheDocument();
   });
 
+  it('has no "First time here" line: the page works that out from the email', () => {
+    renderForm();
+    expect(screen.queryByText(/first time here/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('first-time')).not.toBeInTheDocument();
+  });
+
   it('signs in with the email and the password and opens the dashboard', async () => {
     mocks.loginWithEmail.mockResolvedValue(session('manufacturer'));
     renderForm();
-    await userEvent.type(screen.getByPlaceholderText('name@company.com'), 'admin@ajanta.test');
+    await typeEmail();
     await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'my-own-long-pass-1');
     await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
-    await waitFor(() => expect(mocks.loginWithEmail).toHaveBeenCalledWith('admin@ajanta.test', 'my-own-long-pass-1'));
+    await waitFor(() => expect(mocks.loginWithEmail).toHaveBeenCalledWith(EMAIL, 'my-own-long-pass-1'));
     await waitFor(() => expect(mocks.handleAuthResult).toHaveBeenCalledWith(session('manufacturer')));
     expect(mocks.navigate).toHaveBeenCalledWith('/dashboard');
   });
@@ -54,7 +75,7 @@ describe('the admin sign-in: email and password', () => {
   it('shows the server\'s reason when the sign-in is refused', async () => {
     mocks.loginWithEmail.mockRejectedValue(new Error('Incorrect email or password. Please check and try again.'));
     renderForm();
-    await userEvent.type(screen.getByPlaceholderText('name@company.com'), 'admin@ajanta.test');
+    await typeEmail();
     await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'wrong-password');
     await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
     expect(await screen.findByText('Incorrect email or password. Please check and try again.')).toBeInTheDocument();
@@ -64,7 +85,7 @@ describe('the admin sign-in: email and password', () => {
   it('refuses the platform owner here and keeps no session', async () => {
     mocks.loginWithEmail.mockResolvedValue(session('superadmin'));
     renderForm();
-    await userEvent.type(screen.getByPlaceholderText('name@company.com'), 'owner@example.com');
+    await typeEmail('owner@example.com');
     await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'some-long-password');
     await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
     expect(await screen.findByText(/lock icon on the home page/i)).toBeInTheDocument();
@@ -79,43 +100,41 @@ describe('the admin sign-in: email and password', () => {
   });
 });
 
-describe('the first time: the email, the code that was emailed when the platform owner added them, and a password of their own', () => {
-  async function openFirstTime() {
-    await userEvent.click(screen.getByTestId('first-time'));
-  }
+describe('the first time: Set password and Confirm password appear below the email', () => {
+  beforeEach(() => mocks.adminNeedsFirstPassword.mockResolvedValue(true));
 
-  async function fill(email: string, code: string, password: string, again = password) {
-    await userEvent.type(screen.getByPlaceholderText('name@company.com'), email);
-    await userEvent.type(screen.getByPlaceholderText('123456'), code);
-    await userEvent.type(screen.getByLabelText('New password'), password);
-    await userEvent.type(screen.getByLabelText('New password again'), again);
-    await userEvent.click(screen.getByRole('button', { name: /set password and sign in/i }));
-  }
-
-  it('asks for the email, the code and the new password: it does not email anything itself', async () => {
+  it('replaces the password field with Set password and Confirm password, with no code asked', async () => {
     renderForm();
-    await openFirstTime();
-    expect(screen.getByText('Set your password')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('name@company.com')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('123456')).toHaveValue('');
-    expect(screen.queryByRole('button', { name: /send me a code/i })).not.toBeInTheDocument();
+    await typeEmail();
+    expect(await screen.findByText('Set your password')).toBeInTheDocument();
+    expect(mocks.adminNeedsFirstPassword).toHaveBeenCalledWith(EMAIL);
+    expect(screen.getByLabelText('New password')).toBeInTheDocument();
+    expect(screen.getByLabelText('New password again')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Enter your password')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('123456')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /set password and sign in/i })).toBeDisabled();
   });
 
-  it('saves the password with the code and signs the admin in', async () => {
+  it('saves the password in the database and signs the admin in', async () => {
     mocks.setAdminPassword.mockResolvedValue(session('manufacturer'));
     renderForm();
-    await openFirstTime();
-    await fill('admin@ajanta.test', '654321', 'a-brand-new-password-1');
-    await waitFor(() => expect(mocks.setAdminPassword).toHaveBeenCalledWith('admin@ajanta.test', '654321', 'a-brand-new-password-1'));
+    await typeEmail();
+    await screen.findByText('Set your password');
+    await userEvent.type(screen.getByLabelText('New password'), 'a-brand-new-password-1');
+    await userEvent.type(screen.getByLabelText('New password again'), 'a-brand-new-password-1');
+    await userEvent.click(screen.getByRole('button', { name: /set password and sign in/i }));
+    await waitFor(() => expect(mocks.setAdminPassword).toHaveBeenCalledWith(EMAIL, 'a-brand-new-password-1'));
     await waitFor(() => expect(mocks.handleAuthResult).toHaveBeenCalledWith(session('manufacturer')));
     expect(mocks.navigate).toHaveBeenCalledWith('/dashboard');
   });
 
   it('does not ask the server when the password is too short or typed differently twice', async () => {
     renderForm();
-    await openFirstTime();
-    await fill('admin@ajanta.test', '654321', 'short');
+    await typeEmail();
+    await screen.findByText('Set your password');
+    await userEvent.type(screen.getByLabelText('New password'), 'short');
+    await userEvent.type(screen.getByLabelText('New password again'), 'short');
+    await userEvent.click(screen.getByRole('button', { name: /set password and sign in/i }));
     expect(await screen.findByText(/Choose a password of at least 10 characters\./i)).toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText('New password'));
     await userEvent.clear(screen.getByLabelText('New password again'));
@@ -126,25 +145,73 @@ describe('the first time: the email, the code that was emailed when the platform
     expect(mocks.setAdminPassword).not.toHaveBeenCalled();
   });
 
-  it('shows the server\'s reason when the code is wrong, and stays on the form', async () => {
-    mocks.setAdminPassword.mockRejectedValue(new Error('That code is not right, or it has expired. Ask the platform owner for a new one.'));
+  it('goes back to the normal password field when the email is changed to one that is already set up', async () => {
     renderForm();
-    await openFirstTime();
-    await fill('admin@ajanta.test', '000000', 'a-brand-new-password-1');
-    expect(await screen.findByText(/Ask the platform owner for a new one/i)).toBeInTheDocument();
-    expect(mocks.handleAuthResult).not.toHaveBeenCalled();
+    await typeEmail();
+    await screen.findByText('Set your password');
+    mocks.adminNeedsFirstPassword.mockResolvedValue(false);
+    await userEvent.type(screen.getByPlaceholderText('name@company.com'), 'x');
+    await userEvent.tab();
+    expect(await screen.findByPlaceholderText('Enter your password')).toBeInTheDocument();
+  });
+});
+
+describe('forgot password: an emailed code, then a new password that replaces the old one', () => {
+  async function gotCode(email = EMAIL) {
+    await userEvent.click(screen.getByTestId('forgot'));
+    await userEvent.type(screen.getByPlaceholderText('name@company.com'), email);
+    await userEvent.click(screen.getByRole('button', { name: /send me a code/i }));
+    await screen.findByTestId('code-sent');
+  }
+
+  async function fill(code: string, password: string, again = password) {
+    const field = screen.getByPlaceholderText('123456');
+    await userEvent.clear(field);
+    await userEvent.type(field, code);
+    await userEvent.type(screen.getByLabelText('New password'), password);
+    await userEvent.type(screen.getByLabelText('New password again'), again);
+    await userEvent.click(screen.getByRole('button', { name: /set new password and sign in/i }));
+  }
+
+  it('emails the code, then asks for it with nothing pre-filled', async () => {
+    renderForm();
+    await gotCode();
+    expect(mocks.requestAdminCode).toHaveBeenCalledWith(EMAIL);
+    expect(screen.getByTestId('code-sent')).toHaveTextContent(EMAIL);
+    expect(screen.getByPlaceholderText('123456')).toHaveValue('');
+    expect(screen.getByRole('button', { name: /set new password and sign in/i })).toBeDisabled();
   });
 
-  it('tells a forgetful admin to ask the platform owner for a new code: there is no self-service code', async () => {
+  it('saves the new password with the code and signs the admin in', async () => {
+    mocks.setAdminPassword.mockResolvedValue(session('manufacturer'));
     renderForm();
-    expect(screen.getByText(/Ask the platform owner for a new code/i)).toBeInTheDocument();
-    await openFirstTime();
-    expect(screen.getByText(/Ask the platform owner to send you a new one/i)).toBeInTheDocument();
+    await gotCode();
+    await fill('654321', 'a-brand-new-password-1');
+    await waitFor(() => expect(mocks.setAdminPassword).toHaveBeenCalledWith(EMAIL, 'a-brand-new-password-1', '654321'));
+    await waitFor(() => expect(mocks.handleAuthResult).toHaveBeenCalledWith(session('manufacturer')));
+    expect(mocks.navigate).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('does not ask the server when the new password is too short or typed differently twice', async () => {
+    renderForm();
+    await gotCode();
+    await fill('654321', 'short');
+    expect(await screen.findByText(/Choose a password of at least 10 characters\./i)).toBeInTheDocument();
+    expect(mocks.setAdminPassword).not.toHaveBeenCalled();
+  });
+
+  it('shows the server\'s reason when the code is wrong, and stays on the form', async () => {
+    mocks.setAdminPassword.mockRejectedValue(new Error('That code is not right, or it has expired. Ask for a new one.'));
+    renderForm();
+    await gotCode();
+    await fill('000000', 'a-brand-new-password-1');
+    expect(await screen.findByText(/not right, or it has expired/i)).toBeInTheDocument();
+    expect(mocks.handleAuthResult).not.toHaveBeenCalled();
   });
 
   it('goes back to the password sign-in', async () => {
     renderForm();
-    await openFirstTime();
+    await userEvent.click(screen.getByTestId('forgot'));
     await userEvent.click(screen.getByTestId('back-link'));
     expect(screen.getByPlaceholderText('Enter your password')).toBeInTheDocument();
   });
@@ -155,7 +222,7 @@ describe('an admin whose account also needs the authenticator', () => {
     mocks.loginWithEmail.mockResolvedValue({ mfa_required: true, mfa_token: 'temp-token' });
     mocks.verifyMfa.mockResolvedValue(session('manufacturer'));
     renderForm();
-    await userEvent.type(screen.getByPlaceholderText('name@company.com'), 'admin@ajanta.test');
+    await typeEmail();
     await userEvent.type(screen.getByPlaceholderText('Enter your password'), 'my-own-long-pass-1');
     await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
     expect(await screen.findByText('Two-Factor Authentication')).toBeInTheDocument();

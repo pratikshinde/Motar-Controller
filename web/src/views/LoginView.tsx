@@ -18,7 +18,16 @@ import { RoleChooser } from './auth/RoleChooser';
 import { AdminLoginForm } from './auth/AdminLoginForm';
 import { BrandLogo } from '../components/brand/BrandLogo';
 import { useLocale } from '../context/LocaleContext';
+import { useAuth } from '../context/AuthContext';
+import { activateRoleSession } from '../api/client';
 import { supportedLocales, localeLabels, type SupportedLocale } from '../i18n';
+
+const VARIANT_ROLE: Record<string, string> = {
+  owner: 'superadmin',
+  admin: 'manufacturer',
+  distributor: 'distributor',
+  dealer: 'dealer'
+};
 
 interface LoginViewProps {
   /** Which page: the "who are you?" choice (the default), or one kind of person's sign-in. */
@@ -32,6 +41,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ variant = 'choose' }) => {
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { locale, setLocale } = useLocale();
+  const { handleAuthResult } = useAuth();
+
+  // If this role already signed in and never explicitly logged out, restore its session immediately without asking again.
+  useEffect(() => {
+    const targetRole = VARIANT_ROLE[variant];
+    if (!targetRole) return;
+    const saved = activateRoleSession(targetRole);
+    if (saved && saved.user) {
+      handleAuthResult(saved);
+      navigate('/dashboard', { replace: true });
+    }
+  }, [variant, handleAuthResult, navigate]);
 
   // Language Menu dropdown
   const [langAnchor, setLangAnchor] = useState<null | HTMLElement>(null);

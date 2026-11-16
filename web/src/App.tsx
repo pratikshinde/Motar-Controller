@@ -80,13 +80,14 @@ const Gate: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<HomeView />)} />
+      <Route path="/home" element={publicPage(<HomeView />)} />
 
       {/* Authentication & Onboarding Portal */}
-      <Route path="/login" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
-      <Route path="/login/admin" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="admin" />)} />
-      <Route path="/login/distributor" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="distributor" />)} />
-      <Route path="/login/dealer" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="dealer" />)} />
-      <Route path="/owner" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="owner" />)} />
+      <Route path="/login" element={publicPage(<LoginView defaultTab="login" />)} />
+      <Route path="/login/admin" element={isAuthenticated && role === 'manufacturer' ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="admin" />)} />
+      <Route path="/login/distributor" element={isAuthenticated && role === 'distributor' ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="distributor" />)} />
+      <Route path="/login/dealer" element={isAuthenticated && role === 'dealer' ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="dealer" />)} />
+      <Route path="/owner" element={isAuthenticated && role === 'superadmin' ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView variant="owner" />)} />
       <Route path="/auth/login" element={isAuthenticated ? <Navigate to={homePath(role)} replace /> : publicPage(<LoginView defaultTab="login" />)} />
       <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/auth/register" element={<Navigate to="/login" replace />} />

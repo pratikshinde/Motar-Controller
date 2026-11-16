@@ -17,7 +17,7 @@ export interface ManufacturerSummary {
   primary_color: string | null;
   status: 'ACTIVE' | 'SUSPENDED';
   /** The manufacturer's own account; null until one has been created. */
-  owner: { id?: string; name: string; phone: string | null; email?: string | null } | null;
+  owner: { id: string; name: string; phone: string | null; email?: string | null } | null;
   farmers: number;
   /** Distributors, dealers and staff under the manufacturer. */
   team: number;

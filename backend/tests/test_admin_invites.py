@@ -106,8 +106,19 @@ class InviteBase(MfaBase):
         return rid, email, code
 
     # ---- the admin's side
-    def choose(self, email, code, password=PASSWORD):
-        return client.post(f"{API}/auth/admin-password/set", json={"email": email, "code": code, "password": password})
+    def choose(self, email, password=PASSWORD, code=None):
+        body = {"email": email, "password": password}
+        if code is not None:
+            body["code"] = code
+        return client.post(f"{API}/auth/admin-password/set", json=body)
+
+    def ask_reset(self, email):
+        return client.post(f"{API}/auth/admin-password/request", json={"email": email})
+
+    def first_time(self, email):
+        r = client.post(f"{API}/auth/admin-password/state", json={"email": email})
+        self.assertEqual(r.status_code, 200, r.text)
+        return r.json()["first_time"]
 
     def sign_in(self, email, password=PASSWORD):
         return client.post(f"{API}/auth/login-email", json={"email": email, "password": password})
@@ -236,78 +247,192 @@ class TestTheOwnerTypesTheCode(InviteBase):
         self.assertEqual(self.verify(rid, code).status_code, 200)
 
 
-class TestTheAdminChoosesAPassword(InviteBase):
-    def test_nothing_works_before_the_owner_has_typed_the_code(self):
+class TestTheFirstPassword(InviteBase):
+    def test_the_page_is_told_who_still_has_to_choose_a_password(self):
         rid, email, code = self.started()
-        self.assertEqual(self.choose(email, code).status_code, 400)
+        self.assertFalse(self.first_time(email), "not confirmed by the owner yet")
+        self.verify(rid, code)
+        self.assertTrue(self.first_time(email))
+        self.assertFalse(self.first_time("nobody@example.com"))
+        self.assertFalse(self.first_time("not-an-email"))
 
-    def test_the_same_code_and_a_password_of_their_own_sign_the_admin_in(self):
+    def test_nothing_works_before_the_owner_has_confirmed_the_code(self):
+        rid, email, code = self.started()
+        self.assertEqual(self.choose(email).status_code, 400)
+
+    def test_the_admin_chooses_a_password_with_no_code_and_is_signed_in(self):
         rid, email, code = self.added()
-        r = self.choose(email, code)
+        r = self.choose(email)
         self.assertEqual(r.status_code, 200, r.text)
         body = r.json()
         self.assertTrue(body["access_token"])
         self.assertEqual(body["user"]["role"], "manufacturer")
         user = self.user_of(email)
-        self.assertTrue(user.password_hash)
+        self.assertTrue(user.password_hash, "saved in the database")
+        self.assertTrue(user.is_verified)
         self.assertEqual(client.get(f"{API}/auth/me", headers={"Authorization": f"Bearer {body['access_token']}"}).status_code, 200)
         listed = [i["id"] for i in client.get(f"{API}/users/admin-invites", headers=_h(self.owner)).json()["invites"]]
         self.assertNotIn(rid, listed, "finished")
+        self.assertFalse(self.first_time(email), "chosen once: the page now asks for the password")
 
-    def test_afterwards_it_is_email_and_password_and_no_code_ever_again(self):
+    def test_afterwards_it_is_email_and_password_and_no_code_ever(self):
         rid, email, code = self.added()
-        self.choose(email, code)
+        self.choose(email)
         self.inbox.sent.clear()
         self.assertEqual(self.sign_in(email).status_code, 200)
         self.assertEqual(self.sign_in(email, "some-other-password-1").status_code, 401)
         self.assertEqual(self.inbox.sent, [], "no email is sent for a sign-in")
 
-    def test_the_code_works_once(self):
+    def test_the_first_password_can_only_be_chosen_once(self):
         rid, email, code = self.added()
-        self.assertEqual(self.choose(email, code).status_code, 200)
-        self.assertEqual(self.choose(email, code, "another-long-pass-2").status_code, 400)
+        self.assertEqual(self.choose(email).status_code, 200)
+        self.assertEqual(self.choose(email, "another-long-pass-2").status_code, 400)
         self.assertEqual(self.sign_in(email).status_code, 200, "the first password stands")
 
-    def test_a_short_password_is_refused_and_does_not_use_up_the_code(self):
+    def test_a_short_password_is_refused(self):
         rid, email, code = self.added()
-        self.assertEqual(self.choose(email, code, "short").status_code, 422)
-        self.assertEqual(self.choose(email, code).status_code, 200)
+        self.assertEqual(self.choose(email, "short").status_code, 422)
+        self.assertTrue(self.first_time(email), "still waiting for a real one")
+        self.assertEqual(self.choose(email).status_code, 200)
 
-    def test_a_wrong_code_is_refused_and_five_burn_it(self):
+    def test_it_is_only_possible_for_24_hours_after_the_owner_confirmed(self):
         rid, email, code = self.added()
-        wrong = "000000" if code != "000000" else "111111"
-        for _ in range(5):
-            self.assertEqual(self.choose(email, wrong).status_code, 400)
-        self.assertEqual(self.choose(email, code).status_code, 400)
-        self.assertFalse(self.user_of(email).password_hash)
-
-    def test_someone_who_only_knows_the_email_gets_nowhere(self):
-        from app.config import settings
-
-        rid, email, code = self.added()
-        with patch.object(settings, "EMAIL_BACKEND", "smtp"):       # real email: no development shortcut stands in for the code
-            for guess in ("123456", "000000", "999999"):
-                if guess != code:
-                    self.assertEqual(self.choose(email, guess).status_code, 400)
-        self.assertFalse(self.user_of(email).password_hash)
-
-    def test_the_old_self_service_code_request_is_gone(self):
-        self.assertIn(client.post(f"{API}/auth/admin-password/request", json={"email": "a@example.com"}).status_code, (404, 405))
-
-    def test_an_expired_code_is_refused(self):
-        rid, email, code = self.added()
-        self.db.query(AdminInvite).filter(AdminInvite.email == email).update({"expires_at": datetime.now(timezone.utc) - timedelta(minutes=1)})
+        self.db.query(AdminInvite).filter(AdminInvite.email == email).update({"verified_at": datetime.now(timezone.utc) - timedelta(hours=25)})
         self.db.commit()
-        self.assertEqual(self.choose(email, code).status_code, 400)
+        self.assertFalse(self.first_time(email))
+        self.assertEqual(self.choose(email).status_code, 400)
+        self.assertFalse(self.user_of(email).password_hash)
+
+    def test_an_admin_who_already_has_a_password_cannot_have_it_replaced_without_a_code(self):
+        rid, email, code = self.added()
+        self.choose(email, "first-long-password-1")
+        self.assertEqual(self.choose(email, "attacker-password-12").status_code, 400)
+        self.assertEqual(self.sign_in(email, "first-long-password-1").status_code, 200)
 
     def test_a_suspended_admin_cannot_choose_a_password(self):
         rid, email, code = self.added()
         self.db.query(User).filter(User.email == email).update({"account_status": "SUSPENDED"})
         self.db.commit()
-        self.assertEqual(self.choose(email, code).status_code, 400)
+        self.assertFalse(self.first_time(email))
+        self.assertEqual(self.choose(email).status_code, 400)
+
+    def test_the_old_one_step_creation_paths_are_gone(self):
+        rid, email, code = self.added()
+        user = self.user_of(email)
+        self.assertEqual(client.post(f"{API}/users/{user.id}/admin-code", headers=_h(self.owner)).status_code, 404)
 
 
-class TestANewCode(InviteBase):
+class TestForgotPassword(InviteBase):
+    def admin_with_password(self, password="first-long-password-1"):
+        rid, email, code = self.added()
+        self.choose(email, password)
+        self.inbox.sent.clear()
+        return email
+
+    def test_the_admins_address_gets_a_code_and_a_stranger_gets_the_same_answer_and_nothing(self):
+        email = self.admin_with_password()
+        known, unknown = self.ask_reset(email), self.ask_reset("nobody-here@example.com")
+        self.assertEqual((known.status_code, known.json()), (unknown.status_code, unknown.json()))
+        self.assertEqual(len(self.inbox.sent), 1)
+        self.assertEqual(self.inbox.sent[0][0], email)
+
+    def test_only_an_admin_can_use_it_not_the_owner_a_dealer_or_a_farmer(self):
+        for role in ("superadmin", "dealer", "customer", "distributor"):
+            u = _partner(self, role, f"fp-{role}", parent=self.owner)
+            self.db.query(User).filter(User.id == u.id).update({"email": f"{role}-{uuid.uuid4().hex[:6]}@example.com"})
+            self.db.commit()
+            self.ask_reset(self.db.query(User).filter(User.id == u.id).one().email)
+        self.assertEqual(self.inbox.sent, [])
+
+    def test_the_emailed_code_and_a_new_password_replace_the_old_one_in_the_database(self):
+        email = self.admin_with_password()
+        old_hash = self.user_of(email).password_hash
+        self.ask_reset(email)
+        r = self.choose(email, "second-long-password-2", code=self.inbox.code())
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertTrue(r.json()["access_token"])
+        self.assertNotEqual(self.user_of(email).password_hash, old_hash)
+        self.assertEqual(self.sign_in(email, "first-long-password-1").status_code, 401)
+        self.assertEqual(self.sign_in(email, "second-long-password-2").status_code, 200)
+
+    def test_a_wrong_code_is_refused_and_five_burn_the_real_one(self):
+        email = self.admin_with_password()
+        self.ask_reset(email)
+        real = self.inbox.code()
+        wrong = "000000" if real != "000000" else "111111"
+        for _ in range(5):
+            self.assertEqual(self.choose(email, "second-long-password-2", code=wrong).status_code, 400)
+        self.assertEqual(self.choose(email, "second-long-password-2", code=real).status_code, 400, "burned")
+        self.assertEqual(self.sign_in(email, "first-long-password-1").status_code, 200, "the old password still stands")
+
+    def test_a_code_works_once(self):
+        email = self.admin_with_password()
+        self.ask_reset(email)
+        code = self.inbox.code()
+        self.assertEqual(self.choose(email, "second-long-password-2", code=code).status_code, 200)
+        self.assertEqual(self.choose(email, "third-long-password-3", code=code).status_code, 400)
+
+    def test_a_short_password_is_refused_and_does_not_use_up_the_code(self):
+        email = self.admin_with_password()
+        self.ask_reset(email)
+        code = self.inbox.code()
+        self.assertEqual(self.choose(email, "short", code=code).status_code, 422)
+        self.assertEqual(self.choose(email, "second-long-password-2", code=code).status_code, 200)
+
+    def test_the_code_lasts_30_minutes(self):
+        email = self.admin_with_password()
+        self.ask_reset(email)
+        code = self.inbox.code()
+        self.db.query(AdminInvite).filter(AdminInvite.email == email, AdminInvite.purpose == "reset").update({"expires_at": datetime.now(timezone.utc) - timedelta(minutes=1)})
+        self.db.commit()
+        self.assertEqual(self.choose(email, "second-long-password-2", code=code).status_code, 400)
+
+    def test_a_new_request_replaces_the_old_code(self):
+        email = self.admin_with_password()
+        self.ask_reset(email)
+        first = self.inbox.code()
+        self.ask_reset(email)
+        second = self.inbox.code()
+        if first != second:
+            self.assertEqual(self.choose(email, "second-long-password-2", code=first).status_code, 400)
+        self.assertEqual(self.choose(email, "second-long-password-2", code=second).status_code, 200)
+
+    def test_no_more_than_five_codes_an_hour(self):
+        email = self.admin_with_password()
+        for _ in range(8):
+            self.ask_reset(email)
+        self.assertEqual(len(self.inbox.sent), admin_invites.RESET_PER_HOUR)
+
+    def test_an_admin_who_never_chose_a_password_can_also_use_it(self):
+        rid, email, code = self.added()
+        self.db.query(AdminInvite).filter(AdminInvite.email == email).update({"verified_at": datetime.now(timezone.utc) - timedelta(hours=30)})
+        self.db.commit()
+        self.assertFalse(self.first_time(email), "the 24 hours are over")
+        self.inbox.sent.clear()
+        self.ask_reset(email)
+        self.assertEqual(self.choose(email, "first-long-password-1", code=self.inbox.code()).status_code, 200)
+
+    def test_the_fixed_development_code_is_refused_when_real_email_is_set_up(self):
+        from app.config import settings
+
+        email = self.admin_with_password()
+        self.ask_reset(email)
+        with patch.object(settings, "EMAIL_BACKEND", "smtp"):
+            self.assertEqual(self.choose(email, "second-long-password-2", code="123456").status_code, 400)
+
+    def test_a_failing_email_service_does_not_show_in_the_answer(self):
+        email = self.admin_with_password()
+        with patch("app.services.email_service.send_email", side_effect=email_service.EmailNotSent("down")):
+            r = self.ask_reset(email)
+        self.assertEqual(r.status_code, 200)
+
+    def test_an_owners_code_cannot_be_used_to_set_an_admins_password(self):
+        email = self.admin_with_password()
+        self.ask_reset(email)
+        self.assertEqual(self.choose(self.owner.email or "x@example.com", "second-long-password-2", code=self.inbox.code()).status_code, 400)
+
+
+class TestTheOwnersList(InviteBase):
     def test_resend_makes_a_new_code_and_the_old_one_stops_working(self):
         rid, email, old = self.started()
         self.assertEqual(client.post(f"{API}/users/admin-invites/{rid}/resend", headers=_h(self.owner)).status_code, 200)
@@ -316,27 +441,6 @@ class TestANewCode(InviteBase):
         if new != old:
             self.assertEqual(self.verify(rid, old).status_code, 400)
         self.assertEqual(self.verify(rid, new).status_code, 200)
-
-    def test_an_admin_who_forgot_the_password_gets_a_new_code_from_the_owner_and_chooses_a_new_one(self):
-        rid, email, code = self.added()
-        self.choose(email, code, "first-long-password-1")
-        user = self.user_of(email)
-        self.inbox.sent.clear()
-        r = client.post(f"{API}/users/{user.id}/admin-code", headers=_h(self.owner))
-        self.assertEqual(r.status_code, 200, r.text)
-        self.assertEqual(self.inbox.sent[0][0], email)
-        self.assertEqual(self.sign_in(email, "first-long-password-1").status_code, 200, "the old password works until a new one is chosen")
-        self.assertEqual(self.choose(email, self.inbox.code(), "second-long-password-2").status_code, 200)
-        self.assertEqual(self.sign_in(email, "first-long-password-1").status_code, 401)
-        self.assertEqual(self.sign_in(email, "second-long-password-2").status_code, 200)
-
-    def test_only_the_owner_can_send_it_and_only_for_an_admin(self):
-        rid, email, code = self.added()
-        user = self.user_of(email)
-        admin = _partner(self, "manufacturer", "inv-peer", parent=self.owner)
-        self.assertEqual(client.post(f"{API}/users/{user.id}/admin-code", headers=_h(admin)).status_code, 403)
-        dealer = _partner(self, "dealer", "inv-dlr", parent=admin)
-        self.assertEqual(client.post(f"{API}/users/{dealer.id}/admin-code", headers=_h(self.owner)).status_code, 404)
 
     def test_cancelling_an_invite_ends_it(self):
         rid, email, code = self.started()

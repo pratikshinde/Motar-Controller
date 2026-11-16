@@ -47,9 +47,9 @@ class EmailCodeVerifyRequest(BaseModel):
 
 
 class AdminPasswordSetRequest(BaseModel):
-    """An admin proves their email with the emailed code and chooses their own password (the first time, or when they forgot it)."""
+    """An admin chooses their own password: the first time (no code: the owner has just confirmed their email), or after Forgot password (with the emailed code)."""
     email: str = Field(..., min_length=3, max_length=254)
-    code: str = Field(..., min_length=4, max_length=12)
+    code: Optional[str] = Field(None, max_length=12)
     password: str = Field(..., min_length=1, max_length=128)
     app_install_id: Optional[str] = None
     device_info: Optional[str] = None

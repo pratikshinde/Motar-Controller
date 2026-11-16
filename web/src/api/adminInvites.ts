@@ -29,8 +29,8 @@ export const verifyAdminInvite = (id: string, code: string): Promise<{ invite: A
 
 export const resendAdminInvite = (id: string): Promise<{ invite: AdminInvite }> => apiJson(`/users/admin-invites/${encodeURIComponent(id)}/resend`, { method: 'POST' });
 
-/** The admin forgot their password: a new code is emailed to them, and they choose a new password with it ("First time here"). */
-export const sendAdminResetCode = (userId: string): Promise<{ invite: AdminInvite }> => apiJson(`/users/${encodeURIComponent(userId)}/admin-code`, { method: 'POST' });
+export const cancelAdminInvite = (id: string): Promise<{ message: string }> =>
+  apiJson(`/users/admin-invites/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
 /** Admins that were added and are not finished: waiting for the code, or for the admin to choose a password, expired or blocked. */
 export const fetchAdminInvites = (): Promise<{ invites: AdminInvite[] }> => apiJson('/users/admin-invites');

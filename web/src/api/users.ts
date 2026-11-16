@@ -85,3 +85,40 @@ export async function updateUserAccount(
 export async function deleteUserAccount(id: string): Promise<{ message: string; deleted_id: string }> {
   return apiJson(`/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
+
+export interface RemovalPreview {
+  id: string;
+  full_name: string;
+  email: string | null;
+  role: string;
+  status: 'ACTIVE' | 'SUSPENDED';
+  beneath: {
+    distributors: number;
+    dealers: number;
+    farmers: number;
+    other: number;
+    pumps: number;
+    accounts: number;
+  };
+  can_delete: boolean;
+  blocked_reason: string | null;
+}
+
+export async function fetchRemovalPreview(id: string): Promise<RemovalPreview> {
+  return apiJson(`/users/${encodeURIComponent(id)}/removal-preview`);
+}
+
+export async function suspendUserAccount(id: string, reason: string): Promise<{ message: string; id: string }> {
+  return apiJson(`/users/${encodeURIComponent(id)}/suspend`, { method: 'POST', body: JSON.stringify({ reason }) });
+}
+
+export async function reactivateUserAccount(id: string, reason: string): Promise<{ message: string; id: string }> {
+  return apiJson(`/users/${encodeURIComponent(id)}/reactivate`, { method: 'POST', body: JSON.stringify({ reason }) });
+}
+
+export async function removeUserAccount(id: string, reason: string, confirm_name: string): Promise<{ message: string; id: string }> {
+  return apiJson(`/users/${encodeURIComponent(id)}/remove`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, confirm_name })
+  });
+}

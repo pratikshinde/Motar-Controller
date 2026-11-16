@@ -25,6 +25,7 @@ class AdminInvite(Base):
     address = Column(Text, nullable=True)
     phone = Column(String(20), nullable=True)
     brand_key = Column(String(30), nullable=True)               # made when the owner confirms the code
+    purpose = Column(String(10), nullable=False, default="add", server_default=text("'add'"))     # 'add': a new admin; 'reset': a forgotten password
     code_hash = Column(String(64), nullable=False)
     created_by = Column(UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)

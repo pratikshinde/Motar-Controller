@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import { getStoredUser, hasSession, apiFetch, toAuthResult, persistTokens, getRefreshToken } from '../api/client';
+import { getStoredUser, hasSession, apiFetch, toAuthResult, persistTokens, getRefreshToken, getAuthToken, saveRoleSession, activateRoleSession } from '../api/client';
 import { authService } from '../api/authService';
 import type { User, RoleTier, AuthResult } from '../types';
 
@@ -75,11 +75,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const organisation = useMemo<string | null>(() => user?.contract_notes ?? null, [user]);
   const permissions = useMemo<string[]>(() => getRolePermissions(role), [role]);
 
-  const setUser = useCallback((u: User) => setUserState(u), []);
+  const setUser = useCallback((u: User) => {
+    setUserState(u);
+    saveRoleSession(getAuthToken(), getRefreshToken() || undefined, u);
+  }, []);
 
   const handleAuthResult = useCallback((result: AuthResult) => {
     setUserState(result.user);
     setMfaSetupRequired(Boolean(result.mfa_setup_required));
+    if (result.user) {
+      saveRoleSession(result.token || getAuthToken(), result.refreshToken || getRefreshToken() || undefined, result.user);
+    }
   }, []);
 
   const clearMfaSetupRequired = useCallback(() => setMfaSetupRequired(false), []);

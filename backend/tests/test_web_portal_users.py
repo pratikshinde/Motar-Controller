@@ -35,7 +35,8 @@ def _partner(base, role, tag, parent=None):
 
 
 def _h(user):
-    token = sign_token({"sub": str(user.id), "role": user.role, "hierarchy_path": user.hierarchy_path, "session_ver": 1})
+    ver = getattr(user, "session_version", 1) or 1
+    token = sign_token({"sub": str(user.id), "role": user.role, "hierarchy_path": user.hierarchy_path, "session_ver": ver})
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -59,7 +60,7 @@ class TestUsersRequireASession(MfaBase):
         calls = [
             client.get("/api/v1/users"), client.get("/api/v1/users/tree"), client.get(f"/api/v1/users/{some_id}"),
             client.post("/api/v1/users", json=intruder),
-            client.put(f"/api/v1/users/{some_id}", json={"full_name": "x"}), client.delete(f"/api/v1/users/{some_id}"),
+            client.put(f"/api/v1/users/{some_id}", json={"full_name": "x"}), client.post(f"/api/v1/users/{some_id}/remove", json={"reason": "not allowed", "confirm_name": "x"}),
             client.get("/users"), client.get("/api/users/tree"),
         ]
         for r in calls:
@@ -210,21 +211,10 @@ class TestUserManagementRules(MfaBase):
         foreign = client.put(f"/api/v1/users/{self.other_dealer.id}", json={"full_name": "Hijacked"}, headers=_h(self.dist))
         self.assertEqual(foreign.status_code, 404)
 
-    def test_only_the_platform_owner_deletes_and_never_an_owner_of_devices(self):
+    def test_the_old_delete_without_a_reason_is_gone(self):
         child = self.create(self.dealer, role="customer").json()["user"]["id"]
-        self.assertEqual(client.delete(f"/api/v1/users/{child}", headers=_h(self.dealer)).status_code, 403)
-
-        pump = Pump(id=f"PUMP-UM-{uuid.uuid4().hex[:8]}", name="Owned", supply_type="3-phase", hp_rating=5,
-                    owner_user_id=uuid.UUID(child), hierarchy_path="/SA", status="STOPPED", lifecycle_state="ACTIVE")
-        self.db.add(pump)
-        self.db.commit()
-        try:
-            self.assertEqual(client.delete(f"/api/v1/users/{child}", headers=_h(self.sa)).status_code, 409)
-        finally:
-            self.db.delete(pump)
-            self.db.commit()
-        self.assertEqual(client.delete(f"/api/v1/users/{child}", headers=_h(self.sa)).status_code, 200)
-        self.assertEqual(client.delete(f"/api/v1/users/{self.sa.id}", headers=_h(self.sa)).status_code, 403)
+        for actor in (self.dealer, self.sa):
+            self.assertIn(client.delete(f"/api/v1/users/{child}", headers=_h(actor)).status_code, (404, 405))
 
     def test_creation_is_audited(self):
         made = self.create(self.dealer, role="customer").json()["user"]["id"]

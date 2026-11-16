@@ -127,3 +127,13 @@ class AdminInviteCreate(BaseModel):
 
 class AdminInviteVerify(BaseModel):
     code: str = Field(..., min_length=4, max_length=12)
+
+
+class RemovalReason(BaseModel):
+    """Why a person is being switched off or removed: required, and kept in the activity log."""
+    reason: str = Field(..., min_length=5, max_length=300)
+
+
+class RemovalConfirm(RemovalReason):
+    """Permanent removal also needs the person's name typed in, so it cannot happen by one mistaken click."""
+    confirm_name: str = Field(..., min_length=1, max_length=100)

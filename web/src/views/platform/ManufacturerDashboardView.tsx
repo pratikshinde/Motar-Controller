@@ -13,6 +13,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { fetchManufacturersOverview, type ManufacturerSummary } from '../../api/brands';
 import { setViewing } from '../../api/viewing';
 import { ChartCard, StatTile, statusSlices } from '../../components/platform/platformUi';
+import { RemovePersonDialog, type RemovePersonTarget } from '../../components/RemovePersonDialog';
 import { initialsOf } from '../ManufacturersView';
 
 const REFRESH_MS = 30_000;
@@ -24,6 +25,7 @@ export const ManufacturerDashboardView: React.FC = () => {
   const { key = '' } = useParams<{ key: string }>();
   const [m, setM] = useState<ManufacturerSummary | null | undefined>(undefined);
   const [error, setError] = useState('');
+  const [removing, setRemoving] = useState<RemovePersonTarget | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -96,6 +98,16 @@ export const ManufacturerDashboardView: React.FC = () => {
         <Button variant="contained" startIcon={<AccountTreeIcon />} onClick={openHierarchy} disabled={!m.owner} data-testid="open-hierarchy">
           Hierarchy
         </Button>
+        {m.owner && (
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => setRemoving({ id: m.owner!.id, name: m.owner!.name, label: 'admin' })}
+            data-testid="remove-admin"
+          >
+            Remove admin
+          </Button>
+        )}
       </Stack>
 
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(5, 1fr)' } }}>
@@ -115,6 +127,19 @@ export const ManufacturerDashboardView: React.FC = () => {
           <PieChart height={240} series={[{ data: slices, innerRadius: 55, paddingAngle: 2, cornerRadius: 4 }]} />
         )}
       </ChartCard>
+
+      <RemovePersonDialog
+        target={removing}
+        onClose={() => setRemoving(null)}
+        onRemoved={() => {
+          setRemoving(null);
+          navigate('/manufacturers');
+        }}
+        onStatusChanged={() => {
+          setRemoving(null);
+          load();
+        }}
+      />
     </Box>
   );
 };

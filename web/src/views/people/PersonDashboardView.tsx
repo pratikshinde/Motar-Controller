@@ -19,12 +19,17 @@ import { fetchFarmers, type FarmerRow } from '../../api/farmers';
 import { useAuth } from '../../context/AuthContext';
 import { AddSubordinateDialog } from '../../components/AddSubordinateDialog';
 import { NewPartnerQrDialog } from '../../components/NewPartnerQrDialog';
+import { RemovePersonDialog, type RemovePersonTarget } from '../../components/RemovePersonDialog';
 import { FarmerActions, QR_CHIP } from '../../components/people/FarmerActions';
 import { MemberAvatar, MemberChips, PersonCard } from '../../components/people/personUi';
 import { ChartCard, STATUS_COLORS, StatTile, statusSlices } from '../../components/platform/platformUi';
 import { RoleChip } from '../../components/team/teamStyle';
 
 const tabOf = (role: TeamMember['role']) => role;
+
+// Only someone above can switch off or remove someone: the server decides in the end, this only decides whether to show the button.
+const LEVEL: Record<string, number> = { superadmin: 0, manufacturer: 1, distributor: 2, dealer: 3, customer: 4 };
+const isAbove = (actorRole: string | undefined, targetRole: string) => actorRole !== undefined && (LEVEL[actorRole] ?? 99) < (LEVEL[targetRole] ?? -1);
 
 /** One distributor's, dealer's or farmer's own dashboard, opened from their card: their numbers, who is under them and what can be done. */
 export const PersonDashboardView: React.FC = () => {
@@ -37,6 +42,7 @@ export const PersonDashboardView: React.FC = () => {
   const [error, setError] = useState('');
   const [addDealer, setAddDealer] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const [removing, setRemoving] = useState<RemovePersonTarget | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -125,6 +131,16 @@ export const PersonDashboardView: React.FC = () => {
             </Button>
           )}
           {m.role === 'customer' && farmer && <FarmerActions farmer={farmer} onChanged={load} />}
+          {isAbove(user?.role, m.role) && user?.id !== m.id && (
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => setRemoving({ id: m.id, name: m.full_name, label: m.role === 'customer' ? 'farmer' : m.role })}
+              data-testid="remove-person"
+            >
+              Remove
+            </Button>
+          )}
         </Stack>
       </Stack>
 
@@ -193,6 +209,18 @@ export const PersonDashboardView: React.FC = () => {
 
       <AddSubordinateDialog open={addDealer} onClose={() => setAddDealer(false)} onCreated={load} underRole="dealer" lockRole parentId={m.id} parentPath={null} />
       <NewPartnerQrDialog target={qrOpen ? m : null} onClose={() => setQrOpen(false)} onDone={load} />
+      <RemovePersonDialog
+        target={removing}
+        onClose={() => setRemoving(null)}
+        onRemoved={() => {
+          setRemoving(null);
+          navigate(`/people?tab=${tabOf(m.role)}`);
+        }}
+        onStatusChanged={() => {
+          setRemoving(null);
+          load();
+        }}
+      />
     </Box>
   );
 };

@@ -82,27 +82,31 @@ export const AppShell: React.FC = () => {
   const navList = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Brand logo container at top of sidebar */}
-      <Box
-        sx={{
-          height: APPBAR_HEIGHT,
-          display: 'flex',
-          alignItems: 'center',
-          px: isExpanded ? 2.5 : 1.5,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          justifyContent: isExpanded ? 'flex-start' : 'center'
-        }}
-      >
-        {branding?.logo_url ? (
-          <Box
-            component="img"
-            src={branding.logo_url}
-            alt=""
-            sx={{ width: 30, height: 30, borderRadius: 1.5, objectFit: 'contain' }}
-          />
-        ) : (
-          <BrandLogo size="small" light={mode === 'dark'} iconOnlyOnPhone={!isExpanded} partnerName={partnerName} />
-        )}
-      </Box>
+      <Tooltip title="Home / Switch role" placement="right">
+        <Box
+          onClick={() => navigate('/home')}
+          sx={{
+            height: APPBAR_HEIGHT,
+            display: 'flex',
+            alignItems: 'center',
+            px: isExpanded ? 2.5 : 1.5,
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            justifyContent: isExpanded ? 'flex-start' : 'center',
+            cursor: 'pointer'
+          }}
+        >
+          {branding?.logo_url ? (
+            <Box
+              component="img"
+              src={branding.logo_url}
+              alt=""
+              sx={{ width: 30, height: 30, borderRadius: 1.5, objectFit: 'contain' }}
+            />
+          ) : (
+            <BrandLogo size="small" light={mode === 'dark'} iconOnlyOnPhone={!isExpanded} partnerName={partnerName} />
+          )}
+        </Box>
+      </Tooltip>
 
       {/* Nav List */}
       <Box sx={{ flex: 1, overflowY: 'auto', py: 1.5, px: isExpanded ? 1.5 : 0.75 }}>

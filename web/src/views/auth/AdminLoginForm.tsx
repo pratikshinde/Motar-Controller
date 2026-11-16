@@ -4,7 +4,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
-import { loginWithEmail, setAdminPassword } from '../../api/auth';
+import { adminNeedsFirstPassword, loginWithEmail, requestAdminCode, setAdminPassword } from '../../api/auth';
 import { clearSession } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -16,14 +16,15 @@ const FIELD = { sx: { borderRadius: 2.2, bgcolor: '#FFFFFF' } };
 const LABEL = { fontSize: '0.84rem', fontWeight: 600, color: '#334155', mb: 0.75 } as const;
 const PRIMARY = { py: 1.35, borderRadius: 2.2, fontWeight: 700, fontSize: '0.95rem', bgcolor: '#0B7A3E', textTransform: 'none', boxShadow: '0 4px 12px rgba(11, 122, 62, 0.25)', '&:hover': { bgcolor: '#08642F' } } as const;
 
-type Mode = 'password' | 'choose';
+/** `password`: email and password. `first`: the platform owner has confirmed this email and no password exists yet, so the page asks them to choose one right
+ *  below the email. `ask` / `code`: Forgot password: the email, then the emailed code with a new password. */
+type Mode = 'password' | 'first' | 'ask' | 'code';
 
 const WRONG_ROLE = 'This is not an admin account. Choose your role on the previous page.';
 const OWNER_ROLE = 'The platform owner signs in with the lock icon on the home page.';
 
-/** The admin's sign-in: their email and the password they chose. The first time, they type their email, the 6-digit code that was emailed to them when the platform
- *  owner added them (the same code they read out) and a password of their own. The code works once and is never needed again. If they forget the password, the
- *  platform owner sends a new code and they do the first-time step again. */
+/** The admin's sign-in: their email and the password they chose. The first time, the page notices (from the email) that no password is set yet and asks them to
+ *  choose one below the email. If they forget it, "Forgot password" emails a code and they choose a new one. The password is saved in the database. */
 export const AdminLoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { handleAuthResult } = useAuth();
@@ -31,6 +32,7 @@ export const AdminLoginForm: React.FC = () => {
 
   const [mode, setMode] = useState<Mode>('password');
   const [email, setEmail] = useState('');
+  const [checkedEmail, setCheckedEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState('');
@@ -58,11 +60,32 @@ export const AdminLoginForm: React.FC = () => {
     navigate('/dashboard');
   }
 
+  /** Ask the server whether this email still has to choose its first password, and show the matching fields. Returns the mode the page is now in. */
+  async function checkEmail(): Promise<Mode> {
+    const address = email.trim().toLowerCase();
+    if (!address || (mode !== 'password' && mode !== 'first')) return mode;
+    if (address === checkedEmail) return mode;
+    let first = false;
+    try {
+      first = await adminNeedsFirstPassword(address);
+    } catch {
+      first = false;
+    }
+    setCheckedEmail(address);
+    setNewPassword('');
+    setAgain('');
+    const next: Mode = first ? 'first' : 'password';
+    setMode(next);
+    return next;
+  }
+
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setBusy(true);
     try {
+      const now = await checkEmail();
+      if (now === 'first') return; // the page now asks for a new password instead
       const result = await loginWithEmail(email, password);
       if (isMfaRequired(result)) {
         setMfaToken(result.mfa_token);
@@ -76,14 +99,20 @@ export const AdminLoginForm: React.FC = () => {
     }
   }
 
-  async function choosePassword(e: React.FormEvent) {
+  function checkNewPassword(): string | null {
+    if (newPassword.length < MIN_PASSWORD) return `Choose a password of at least ${MIN_PASSWORD} characters.`;
+    if (newPassword !== again) return 'The two passwords are not the same.';
+    return null;
+  }
+
+  async function chooseFirstPassword(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (newPassword.length < MIN_PASSWORD) return setError(`Choose a password of at least ${MIN_PASSWORD} characters.`);
-    if (newPassword !== again) return setError('The two passwords are not the same.');
+    const problem = checkNewPassword();
+    if (problem) return setError(problem);
     setBusy(true);
     try {
-      const result = await setAdminPassword(email, code, newPassword);
+      const result = await setAdminPassword(email, newPassword);
       if (isMfaRequired(result)) {
         setMfaToken(result.mfa_token);
         return;
@@ -96,8 +125,90 @@ export const AdminLoginForm: React.FC = () => {
     }
   }
 
-  const title = mode === 'password' ? 'Admin sign in' : 'Set your password';
-  const subtitle = mode === 'password' ? 'Your email and password' : 'Your email, the code from your email, and a password of your own';
+  async function sendCode(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setBusy(true);
+    try {
+      await requestAdminCode(email);
+      setCode('');
+      setNewPassword('');
+      setAgain('');
+      setMode('code');
+    } catch (err: any) {
+      setError(err.message || 'Could not send the code. Try again in a moment.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function chooseNewPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    const problem = checkNewPassword();
+    if (problem) return setError(problem);
+    setBusy(true);
+    try {
+      const result = await setAdminPassword(email, newPassword, code);
+      if (isMfaRequired(result)) {
+        setMfaToken(result.mfa_token);
+        return;
+      }
+      finish(result);
+    } catch (err: any) {
+      setError(err.message || 'Could not set the password.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const title = mode === 'first' ? 'Set your password' : mode === 'password' ? 'Admin sign in' : 'Forgot password';
+  const subtitle =
+    mode === 'password'
+      ? 'Your email and password'
+      : mode === 'first'
+        ? 'Your email is confirmed. Choose a password to finish.'
+        : mode === 'ask'
+          ? 'We email you a code to confirm it is you'
+          : 'Type the code from your email, then choose a new password';
+
+  const passwordFields = (
+    <>
+      <Box>
+        <Typography sx={LABEL}>{mode === 'first' ? 'Set password' : 'New password'} (at least {MIN_PASSWORD} characters)</Typography>
+        <TextField type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" fullWidth required autoFocus={mode === 'first'} slotProps={{ input: FIELD, htmlInput: { 'aria-label': 'New password' } }} />
+      </Box>
+      <Box>
+        <Typography sx={LABEL}>Confirm password</Typography>
+        <TextField type="password" value={again} onChange={e => setAgain(e.target.value)} autoComplete="new-password" fullWidth required slotProps={{ input: FIELD, htmlInput: { 'aria-label': 'New password again' } }} />
+      </Box>
+    </>
+  );
+
+  const emailField = (readOnly: boolean) => (
+    <Box>
+      <Typography sx={LABEL}>Email</Typography>
+      <TextField
+        placeholder="name@company.com"
+        type="email"
+        value={email}
+        onChange={e => {
+          setEmail(e.target.value);
+          if (mode === 'first') {
+            setMode('password');
+            setCheckedEmail('');
+          }
+        }}
+        onBlur={() => void checkEmail()}
+        autoComplete="username"
+        autoFocus={mode === 'password' || mode === 'ask'}
+        fullWidth
+        required
+        disabled={readOnly}
+        slotProps={{ input: FIELD }}
+      />
+    </Box>
+  );
 
   return (
     <Box sx={{ width: '100%', maxWidth: 460, mx: 'auto' }}>
@@ -126,68 +237,92 @@ export const AdminLoginForm: React.FC = () => {
             if (message) setError(message);
           }}
         />
-      ) : mode === 'password' ? (
-        <form onSubmit={signIn}>
+      ) : mode === 'password' || mode === 'first' ? (
+        <form onSubmit={mode === 'first' ? chooseFirstPassword : signIn}>
           <Stack spacing={2.5}>
-            <Box>
-              <Typography sx={LABEL}>Email</Typography>
-              <TextField placeholder="name@company.com" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" autoFocus fullWidth required slotProps={{ input: FIELD }} />
-            </Box>
-            <Box>
-              <Typography sx={LABEL}>Password</Typography>
-              <TextField
-                placeholder="Enter your password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoComplete="current-password"
-                fullWidth
-                required
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={() => setShowPassword(p => !p)} edge="end" size="small" aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                          {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                    ...FIELD
-                  }
-                }}
-              />
-            </Box>
-            <Button type="submit" variant="contained" size="large" disabled={busy || !email.trim() || !password} sx={PRIMARY}>
-              {busy ? 'Signing in…' : 'Sign In'}
-            </Button>
-            <Box sx={{ p: 1.75, borderRadius: 2, bgcolor: '#F0F9FF', border: '1px solid #BAE6FD', display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
-              <InfoOutlinedIcon sx={{ color: '#0284C7', fontSize: 20, mt: '2px', flexShrink: 0 }} />
-              <Typography sx={{ fontSize: '0.82rem', color: '#0369A1', lineHeight: 1.45 }}>
-                There is no sign-up here. The platform owner adds you and a code is emailed to you. The first time, use the link below with that code to choose your own password. Forgot it later? Ask the platform owner for a new code.
-              </Typography>
-            </Box>
-            <Link
-              component="button"
-              type="button"
-              variant="body2"
-              data-testid="first-time"
-              onClick={() => {
-                setError('');
-                setMode('choose');
-              }}
-              sx={{ color: '#0B7A3E', fontWeight: 600, alignSelf: 'center' }}
+            {emailField(false)}
+            {mode === 'password' ? (
+              <Box>
+                <Typography sx={LABEL}>Password</Typography>
+                <TextField
+                  placeholder="Enter your password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  fullWidth
+                  required
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(p => !p)} edge="end" size="small" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                      ...FIELD
+                    }
+                  }}
+                />
+              </Box>
+            ) : (
+              <>
+                <Alert severity="success" sx={{ borderRadius: 2 }} data-testid="first-time-note">
+                  The platform owner has added you. Choose your password now: you will use it to sign in from now on.
+                </Alert>
+                {passwordFields}
+              </>
+            )}
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={busy || !email.trim() || (mode === 'password' ? !password : !newPassword || !again)}
+              sx={PRIMARY}
             >
-              First time here? Choose your password
-            </Link>
+              {busy ? (mode === 'first' ? 'Saving…' : 'Signing in…') : mode === 'first' ? 'Set password and sign in' : 'Sign In'}
+            </Button>
+            {mode === 'password' && (
+              <>
+                <Box sx={{ p: 1.75, borderRadius: 2, bgcolor: '#F0F9FF', border: '1px solid #BAE6FD', display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
+                  <InfoOutlinedIcon sx={{ color: '#0284C7', fontSize: 20, mt: '2px', flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: '0.82rem', color: '#0369A1', lineHeight: 1.45 }}>
+                    There is no sign-up here. The platform owner adds you. The first time, type your email and the page will ask you to choose a password.
+                  </Typography>
+                </Box>
+                <Link
+                  component="button"
+                  type="button"
+                  variant="body2"
+                  data-testid="forgot"
+                  onClick={() => {
+                    setError('');
+                    setMode('ask');
+                  }}
+                  sx={{ color: '#0B7A3E', fontWeight: 600, alignSelf: 'center' }}
+                >
+                  Forgot password?
+                </Link>
+              </>
+            )}
+          </Stack>
+        </form>
+      ) : mode === 'ask' ? (
+        <form onSubmit={sendCode}>
+          <Stack spacing={2.5}>
+            {emailField(false)}
+            <Button type="submit" variant="contained" size="large" disabled={busy || !email.trim()} sx={PRIMARY}>
+              {busy ? 'Sending…' : 'Send me a code'}
+            </Button>
           </Stack>
         </form>
       ) : (
-        <form onSubmit={choosePassword}>
+        <form onSubmit={chooseNewPassword}>
           <Stack spacing={2.5}>
-            <Box>
-              <Typography sx={LABEL}>Email</Typography>
-              <TextField placeholder="name@company.com" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" autoFocus fullWidth required slotProps={{ input: FIELD }} />
-            </Box>
+            <Alert severity="success" sx={{ borderRadius: 2 }} data-testid="code-sent">
+              If {email.trim()} is an admin email, a 6-digit code was sent to it. It works for 30 minutes. Check your spam folder if it does not arrive.
+            </Alert>
             <Box>
               <Typography sx={LABEL}>Code from your email</Typography>
               <TextField
@@ -195,25 +330,19 @@ export const AdminLoginForm: React.FC = () => {
                 value={code}
                 onChange={e => setCode(e.target.value)}
                 autoComplete="one-time-code"
+                autoFocus
                 fullWidth
                 required
                 slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, style: { letterSpacing: 6, fontWeight: 700, fontSize: '1.2rem' } }, input: FIELD }}
               />
             </Box>
-            <Box>
-              <Typography sx={LABEL}>Choose a password (at least {MIN_PASSWORD} characters)</Typography>
-              <TextField type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" fullWidth required slotProps={{ input: FIELD, htmlInput: { 'aria-label': 'New password' } }} />
-            </Box>
-            <Box>
-              <Typography sx={LABEL}>Type it again</Typography>
-              <TextField type="password" value={again} onChange={e => setAgain(e.target.value)} autoComplete="new-password" fullWidth required slotProps={{ input: FIELD, htmlInput: { 'aria-label': 'New password again' } }} />
-            </Box>
-            <Button type="submit" variant="contained" size="large" disabled={busy || !email.trim() || code.trim().length !== 6 || !newPassword || !again} sx={PRIMARY}>
-              {busy ? 'Saving…' : 'Set password and sign in'}
+            {passwordFields}
+            <Button type="submit" variant="contained" size="large" disabled={busy || code.trim().length !== 6 || !newPassword || !again} sx={PRIMARY}>
+              {busy ? 'Saving…' : 'Set new password and sign in'}
             </Button>
-            <Typography sx={{ fontSize: '0.82rem', color: '#64748B', textAlign: 'center' }}>
-              No code, or it stopped working? Ask the platform owner to send you a new one.
-            </Typography>
+            <Link component="button" type="button" variant="body2" onClick={() => setMode('ask')} sx={{ color: '#0B7A3E', fontWeight: 600, alignSelf: 'center' }}>
+              Send a new code
+            </Link>
           </Stack>
         </form>
       )}
@@ -224,10 +353,10 @@ export const AdminLoginForm: React.FC = () => {
           type="button"
           variant="body2"
           data-testid="back-link"
-          onClick={() => (mode === 'password' || mfaToken ? navigate('/login') : (setError(''), setMode('password')))}
+          onClick={() => (mode === 'ask' || mode === 'code' ? (setError(''), setMode('password')) : navigate('/login'))}
           sx={{ color: '#0B7A3E', fontWeight: 600 }}
         >
-          {mode === 'password' || mfaToken ? '← Choose a different role' : '← Back to sign in'}
+          {mode === 'ask' || mode === 'code' ? '← Back to sign in' : '← Choose a different role'}
         </Link>
       </Box>
     </Box>

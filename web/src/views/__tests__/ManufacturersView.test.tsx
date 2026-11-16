@@ -4,7 +4,19 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@mui/material/styles';
 
-const mocks = vi.hoisted(() => ({ fetchManufacturersOverview: vi.fn(), setManufacturerStatus: vi.fn(), setViewing: vi.fn(), navigate: vi.fn(), fetchAdminInvites: vi.fn(), sendAdminResetCode: vi.fn(), resendAdminInvite: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  fetchManufacturersOverview: vi.fn(),
+  setManufacturerStatus: vi.fn(),
+  setViewing: vi.fn(),
+  navigate: vi.fn(),
+  fetchAdminInvites: vi.fn(),
+  resendAdminInvite: vi.fn(),
+  cancelAdminInvite: vi.fn(),
+  fetchRemovalPreview: vi.fn(),
+  removeUserAccount: vi.fn(),
+  suspendUserAccount: vi.fn(),
+  reactivateUserAccount: vi.fn(),
+}));
 
 vi.mock('../../api/brands', async importOriginal => ({
   ...(await importOriginal<typeof import('../../api/brands')>()),
@@ -12,7 +24,18 @@ vi.mock('../../api/brands', async importOriginal => ({
   setManufacturerStatus: mocks.setManufacturerStatus
 }));
 vi.mock('../../api/viewing', () => ({ setViewing: mocks.setViewing }));
-vi.mock('../../api/adminInvites', () => ({ fetchAdminInvites: mocks.fetchAdminInvites, sendAdminResetCode: mocks.sendAdminResetCode, resendAdminInvite: mocks.resendAdminInvite }));
+vi.mock('../../api/adminInvites', () => ({
+  fetchAdminInvites: mocks.fetchAdminInvites,
+  resendAdminInvite: mocks.resendAdminInvite,
+  cancelAdminInvite: mocks.cancelAdminInvite,
+}));
+vi.mock('../../api/users', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../api/users')>()),
+  fetchRemovalPreview: mocks.fetchRemovalPreview,
+  removeUserAccount: mocks.removeUserAccount,
+  suspendUserAccount: mocks.suspendUserAccount,
+  reactivateUserAccount: mocks.reactivateUserAccount,
+}));
 vi.mock('../../components/VerifyAdminInviteDialog', () => ({ VerifyAdminInviteDialog: ({ invite }: any) => (invite ? <div data-testid="verify-dialog">{invite.email}</div> : null) }));
 vi.mock('../../context/ToastContext', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
 vi.mock('../../components/AddManufacturerDialog', () => ({ AddManufacturerDialog: ({ open }: any) => (open ? <div data-testid="add-dialog" /> : null) }));
@@ -79,20 +102,10 @@ describe('the manufacturers: one card per registered admin', () => {
     expect(mocks.navigate).not.toHaveBeenCalled();
   });
 
-  it('sends an admin who forgot the password a new code, after asking', async () => {
-    mocks.sendAdminResetCode.mockResolvedValue({ invite: {} });
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('has no button to send a forgotten-password code: the admin does that on the sign-in page', async () => {
     open();
-    await userEvent.click(await screen.findByTestId('new-code-ajanta'));
-    expect(mocks.sendAdminResetCode).toHaveBeenCalledWith('u-ajanta');
-    expect(mocks.navigate).not.toHaveBeenCalled();
-  });
-
-  it('does not send anything when the question is answered No', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
-    open();
-    await userEvent.click(await screen.findByTestId('new-code-ajanta'));
-    expect(mocks.sendAdminResetCode).not.toHaveBeenCalled();
+    const ajanta = await screen.findByTestId('card-ajanta');
+    expect(within(ajanta).queryByText(/send new code/i)).not.toBeInTheDocument();
   });
 
   it('lists the admins whose email is not confirmed yet, apart from the manufacturers, with a way to enter the code or send a new one', async () => {
@@ -127,5 +140,38 @@ describe('the manufacturers: one card per registered admin', () => {
     mocks.fetchManufacturersOverview.mockResolvedValue({ manufacturers: [], totals: {} });
     open();
     expect(await screen.findByText(/no admins registered yet/i)).toBeInTheDocument();
+  });
+
+  it('allows the super admin to remove an admin or cancel a waiting invite', async () => {
+    mocks.fetchAdminInvites.mockResolvedValue({
+      invites: [
+        { id: 'inv1', full_name: 'Meera Joshi', company_name: 'New Co Pumps', address: 'Pune', phone: '+919876543210', email: 'meera@newco.test', brand: null, status: 'WAITING_FOR_CODE', created_at: null, expires_at: null, user_id: null },
+      ],
+    });
+    mocks.cancelAdminInvite.mockResolvedValue({ message: 'Invite cancelled.' });
+    mocks.fetchRemovalPreview.mockResolvedValue({
+      id: 'u-ajanta',
+      full_name: 'Ajanta Admin',
+      email: 'admin@ajanta.test',
+      role: 'manufacturer',
+      status: 'ACTIVE',
+      beneath: { distributors: 0, dealers: 0, farmers: 0, other: 0, pumps: 0, accounts: 0 },
+      can_delete: true,
+      blocked_reason: null,
+    });
+    mocks.removeUserAccount.mockResolvedValue({ message: 'Ajanta Admin was permanently removed.', id: 'u-ajanta' });
+
+    open();
+    await userEvent.click(await screen.findByTestId('cancel-invite-inv1'));
+    expect(mocks.cancelAdminInvite).toHaveBeenCalledWith('inv1');
+
+    await userEvent.click(await screen.findByTestId('remove-ajanta'));
+    expect(await screen.findByTestId('remove-person-dialog')).toBeInTheDocument();
+    // Nothing is pre-filled: the reason and the admin's name have to be typed before removing is possible.
+    expect(await screen.findByTestId('confirm-remove')).toBeDisabled();
+    await userEvent.type(screen.getByTestId('remove-reason-input'), 'Registered by mistake');
+    await userEvent.type(screen.getByTestId('remove-confirm-name-input'), 'Ajanta Admin');
+    await userEvent.click(screen.getByTestId('confirm-remove'));
+    expect(mocks.removeUserAccount).toHaveBeenCalledWith('u-ajanta', 'Registered by mistake', 'Ajanta Admin');
   });
 });

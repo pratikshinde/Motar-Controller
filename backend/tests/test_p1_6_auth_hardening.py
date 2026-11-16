@@ -2,7 +2,7 @@ import os
 import sys
 import uuid
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -106,7 +106,11 @@ class TestAuthHardeningSuite(unittest.TestCase):
         token_2 = r_ref.json()["refresh_token"]
         self.assertNotEqual(token_1, token_2, "Refresh token must rotate!")
 
-        # 3. Attacker replays token_1 (REUSE DETECTION)
+        # 3. Attacker replays token_1 later (REUSE DETECTION). (A replay in the first seconds is two tabs racing: see test_01b.)
+        from app.services.jwt_auth import hash_refresh_token as _hash_rt
+        self.db.execute(text("SET app.bypass_rls = 'on';"))
+        self.db.query(RefreshToken).filter(RefreshToken.token_hash == _hash_rt(token_1)).update({"revoked_at": datetime.utcnow() - timedelta(minutes=2)})
+        self.db.commit()
         r_replay = client.post("/api/v1/auth/refresh", json={
             "refresh_token": token_1,
             "app_install_id": "install-device-1"
@@ -122,6 +126,23 @@ class TestAuthHardeningSuite(unittest.TestCase):
         })
         self.assertEqual(r_after.status_code, 401)
         print("[PASS] 1b. Entire token family was automatically revoked upon reuse detection!")
+
+    def test_01b_two_renewals_at_almost_the_same_time_are_not_theft(self):
+        """Two tabs renewing together: the late one is refused, but the session and the newer token live on."""
+        r = client.post("/api/v1/auth/login-password", json={"phone_number": "+919333333333", "password": "Password123!", "app_install_id": "install-device-1"})
+        self.assertEqual(r.status_code, 200, r.text)
+        token_1 = r.json()["refresh_token"]
+        first = client.post("/api/v1/auth/refresh", json={"refresh_token": token_1, "app_install_id": "install-device-1"})
+        self.assertEqual(first.status_code, 200)
+        token_2 = first.json()["refresh_token"]
+        late = client.post("/api/v1/auth/refresh", json={"refresh_token": token_1, "app_install_id": "install-device-1"})
+        self.assertEqual(late.status_code, 401)
+        self.assertNotIn("Compromised", late.json()["detail"])
+        again = client.post("/api/v1/auth/refresh", json={"refresh_token": token_2, "app_install_id": "install-device-1"})
+        self.assertEqual(again.status_code, 200, "the newer token still works: nothing was revoked")
+        # ...and the access token it gives is accepted: no session version was bumped
+        me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {again.json()['access_token']}"})
+        self.assertEqual(me.status_code, 200)
 
     def test_02_device_binding_enforcement(self):
         """FR-SEC-025: Refresh token bound to app_install_id cannot be used from different device."""

@@ -3,11 +3,13 @@
 1. The platform owner types the admin's name, company, address, phone and email. A 6-digit code is emailed to that address. Nothing else exists yet.
 2. The admin reads the code out to the platform owner, who types it in. That proves the email, creates the manufacturer (from the company name) and the admin's
    account (no password yet).
-3. The admin opens the website's Admin sign-in, chooses "First time here", types their email, the same code and a password of their own. The code is used up.
-4. From then on they sign in with the email and that password. The code is never needed again.
+3. The admin opens the website's Admin sign-in and types their email: the page sees that no password is set yet and asks them to choose one. No code is asked
+   at this step. It is only possible for 24 hours after the owner confirmed the code, and only while no password exists.
+4. From then on they sign in with the email and that password.
 
-If an admin forgets the password, the platform owner sends them a new code (reset) and they do step 3 again. The code lasts 24 hours, five wrong tries burn it, and
-only a keyed hash of it is stored. On a developer machine with no real email set up the fixed code 123456 is accepted too.
+A forgotten password: "Forgot password" on the Admin sign-in emails a new 6-digit code to the admin's address (30 minutes, once, five wrong tries burn it, no more
+than five a hour), and they choose a new password with it. Only a keyed hash of a code is stored. On a developer machine with no real email set up the fixed code
+123456 is accepted too.
 """
 import hashlib
 import hmac
@@ -31,11 +33,14 @@ from app.services import brand_service, email_service
 logger = logging.getLogger("agripump.admin_invites")
 
 CODE_HOURS = 24
+FIRST_PASSWORD_HOURS = 24      # how long after the owner confirmed the code the admin can choose the first password
+RESET_MINUTES = 30
+RESET_PER_HOUR = 5
 MAX_ATTEMPTS = 5
 MIN_PASSWORD = 10
 DEV_CODE = "123456"
 WAITING_FOR_CODE, WAITING_FOR_PASSWORD, DONE, EXPIRED, BLOCKED, CANCELLED = "WAITING_FOR_CODE", "WAITING_FOR_PASSWORD", "DONE", "EXPIRED", "BLOCKED", "CANCELLED"
-WRONG = "That code is not right, or it has expired. Ask the platform owner for a new one."
+WRONG = "That code is not right, or it has expired. Ask for a new one."
 
 
 def _now() -> datetime:
@@ -88,23 +93,28 @@ def _brand_key(db: Session, company: str) -> str:
 
 
 def _email_the_code(row: AdminInvite, code: str, why: str) -> None:
+    first = row.full_name.split()[0] if row.full_name.strip() else ""
+    if row.purpose == "reset":
+        steps = (f"Open the website, choose Login, then Admin, then Forgot password, and type this code with a new password. The code works for {RESET_MINUTES} minutes and only "
+                 f"once. If you did not ask for this, ignore this email: your password has not changed.")
+    else:
+        steps = (f"Read it out to the platform owner. After that, open the website, choose Login, then Admin, type your email and choose a password. The code works for "
+                 f"{CODE_HOURS} hours and only once. If you did not expect this email, ignore it.")
     try:
         email_service.send_email(
             row.email,
             "Your admin code",
-            f"Hello {row.full_name.split()[0] if row.full_name.strip() else ''},\n\n{why}{(' (' + row.company_name + ')') if row.company_name else ''}\n\nYour code is {code}.\n\n"
-            f"Read it out to the platform owner. Then open the website, choose Login, then Admin, then \"First time here\", and type your email, this same code and a "
-            f"password of your own. The code works for {CODE_HOURS} hours and only once.\n\nIf you did not expect this email, ignore it.",
+            f"Hello {first},\n\n{why}{(' (' + row.company_name + ')') if row.company_name else ''}\n\nYour code is {code}.\n\n{steps}",
         )
     except email_service.EmailNotSent as exc:
         logger.error("An admin code could not be sent: %s", exc)
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="The code could not be emailed. Check the email settings on the server and try again.")
 
 
-def _new_code(row: AdminInvite) -> str:
+def _new_code(row: AdminInvite, minutes: Optional[int] = None) -> str:
     code = f"{secrets.randbelow(10**6):06d}"
     row.code_hash = _hash(row.email, code)
-    row.expires_at = _now() + timedelta(hours=CODE_HOURS)
+    row.expires_at = _now() + timedelta(minutes=minutes if minutes is not None else CODE_HOURS * 60)
     row.attempts = 0
     row.revoked_at = None
     return code
@@ -146,21 +156,6 @@ def resend(db: Session, row: AdminInvite) -> None:
         raise HTTPException(status_code=409, detail="This admin has already chosen a password. Use Reset password if they forgot it.")
     code = _new_code(row)
     _email_the_code(row, code, "Here is a new code.")
-
-
-def start_reset(db: Session, owner: User, user: User) -> AdminInvite:
-    """The admin forgot their password: a new code, with which they choose a new one the same way as the first time."""
-    now = _now()
-    email = _clean_email(user.email or "")
-    if not email:
-        raise HTTPException(status_code=422, detail="This account has no email address.")
-    db.query(AdminInvite).filter(AdminInvite.email == email, AdminInvite.completed_at.is_(None), AdminInvite.revoked_at.is_(None)).update({"revoked_at": now}, synchronize_session=False)
-    row = AdminInvite(email=email, full_name=user.full_name or "", brand_key=None, code_hash="x", created_by=owner.id, created_at=now, expires_at=now, verified_at=now, user_id=user.id)
-    code = _new_code(row)
-    db.add(row)
-    db.flush()
-    _email_the_code(row, code, "A new code was made for you so you can choose a new password.")
-    return row
 
 
 def _check(db: Session, row: Optional[AdminInvite], code: str) -> None:
@@ -208,21 +203,84 @@ def verify_by_owner(db: Session, owner: User, row: AdminInvite, code: str) -> Us
 
 
 # --------------------------------------------------------------------------------------------------------------------- the admin's side
-def set_password(db: Session, raw_email: str, code: str, password: str, hash_password) -> User:
-    """The admin's own password, chosen with the code from their email. Uses the code up."""
+def _admin(db: Session, email: str) -> Optional[User]:
+    user = db.query(User).filter(func.lower(User.email) == email, User.role == "manufacturer").first()
+    if user is None or not user.is_active or user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
+        return None
+    return user
+
+
+def _first_password_invite(db: Session, email: str) -> Optional[AdminInvite]:
+    """The confirmed invite that still lets this admin choose their first password: confirmed by the owner in the last 24 hours, and no password set yet."""
+    row = (
+        db.query(AdminInvite)
+        .filter(AdminInvite.email == email, AdminInvite.purpose == "add", AdminInvite.verified_at.isnot(None), AdminInvite.completed_at.is_(None), AdminInvite.revoked_at.is_(None))
+        .order_by(AdminInvite.created_at.desc())
+        .first()
+    )
+    if row is None or row.user_id is None or _aware(row.verified_at) + timedelta(hours=FIRST_PASSWORD_HOURS) <= _now():
+        return None
+    user = _admin(db, email)
+    return row if user is not None and user.id == row.user_id and not user.password_hash else None
+
+
+def is_first_time(db: Session, raw_email: str) -> bool:
+    """True when this email is an admin who was confirmed and has not chosen a password yet (the page then asks them to choose one)."""
+    return _first_password_invite(db, _clean_email(raw_email)) is not None
+
+
+def choose_first_password(db: Session, raw_email: str, password: str, hash_password) -> User:
+    """The admin's first password, with no code: the owner confirmed their email a moment ago."""
+    if len(password or "") < MIN_PASSWORD:
+        raise HTTPException(status_code=422, detail=f"Choose a password of at least {MIN_PASSWORD} characters.")
+    email = _clean_email(raw_email)
+    row = _first_password_invite(db, email)
+    user = _admin(db, email) if row is not None else None
+    if row is None or user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="There is no password to set for this email. Sign in, or use Forgot password.")
+    user.password_hash = hash_password(password)
+    user.is_verified = True
+    row.completed_at = _now()
+    return user
+
+
+def request_reset(db: Session, raw_email: str) -> None:
+    """Forgot password: email a code if the address belongs to an admin. Never says which; never raises for a stranger's address or a failed email."""
+    email = _clean_email(raw_email)
+    user = _admin(db, email) if "@" in email else None
+    if user is None:
+        return
+    now = _now()
+    recent = db.query(func.count(AdminInvite.id)).filter(AdminInvite.email == email, AdminInvite.purpose == "reset", AdminInvite.created_at > now - timedelta(hours=1)).scalar() or 0
+    if recent >= RESET_PER_HOUR:
+        logger.warning("Too many password codes asked for one admin email; not sending another yet.")
+        return
+    db.query(AdminInvite).filter(AdminInvite.email == email, AdminInvite.purpose == "reset", AdminInvite.completed_at.is_(None), AdminInvite.revoked_at.is_(None)).update({"revoked_at": now}, synchronize_session=False)
+    row = AdminInvite(email=email, full_name=user.full_name or "", purpose="reset", code_hash="x", created_by=None, created_at=now, expires_at=now, verified_at=now, user_id=user.id)
+    code = _new_code(row, RESET_MINUTES)
+    db.add(row)
+    db.flush()
+    try:
+        _email_the_code(row, code, "A code was asked for so you can choose a new password.")
+    except HTTPException:
+        pass            # logged; the caller's answer is the same either way
+
+
+def choose_new_password(db: Session, raw_email: str, code: str, password: str, hash_password) -> User:
+    """The emailed code and a new password of their own. Uses the code up."""
     if len(password or "") < MIN_PASSWORD:
         # Checked first so a short password does not use up the code.
         raise HTTPException(status_code=422, detail=f"Choose a password of at least {MIN_PASSWORD} characters.")
     email = _clean_email(raw_email)
     row = (
         db.query(AdminInvite)
-        .filter(AdminInvite.email == email, AdminInvite.verified_at.isnot(None), AdminInvite.completed_at.is_(None), AdminInvite.revoked_at.is_(None))
+        .filter(AdminInvite.email == email, AdminInvite.purpose == "reset", AdminInvite.verified_at.isnot(None), AdminInvite.completed_at.is_(None), AdminInvite.revoked_at.is_(None))
         .order_by(AdminInvite.created_at.desc())
         .first()
     )
     _check(db, row, code)
-    user = db.query(User).filter(User.id == row.user_id, User.role == "manufacturer").first() if row and row.user_id else None
-    if user is None or not user.is_active or user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
+    user = _admin(db, email)
+    if user is None or row.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=WRONG)
     user.password_hash = hash_password(password)
     user.is_verified = True

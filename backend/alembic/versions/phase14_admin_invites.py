@@ -25,6 +25,7 @@ def upgrade() -> None:
             address      text,
             phone        varchar(20),
             brand_key    varchar(30),
+            purpose      varchar(10) NOT NULL DEFAULT 'add',
             code_hash    varchar(64) NOT NULL,
             created_by   uuid REFERENCES agripump.users(id) ON DELETE SET NULL,
             created_at   timestamptz NOT NULL DEFAULT now(),

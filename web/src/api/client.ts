@@ -10,9 +10,51 @@ export const API_BASE = '/api';
 const TOKEN_KEY = 'agripump_token';
 const REFRESH_KEY = 'agripump_refresh';
 const USER_KEY = 'agripump_user';
+const ROLE_SESSIONS_KEY = 'agripump_role_sessions';
 
 let authToken = localStorage.getItem(TOKEN_KEY) || '';
 let refreshTokenValue = localStorage.getItem(REFRESH_KEY) || '';
+
+type StoredRoleSessions = Record<string, { token: string; refreshToken?: string; user: User }>;
+
+function readRoleSessions(): StoredRoleSessions {
+  const raw = localStorage.getItem(ROLE_SESSIONS_KEY);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeRoleSessions(map: StoredRoleSessions) {
+  localStorage.setItem(ROLE_SESSIONS_KEY, JSON.stringify(map));
+}
+
+export function saveRoleSession(token: string, refreshToken: string | undefined, user: User | null | undefined) {
+  const role = (user?.role || '').toLowerCase();
+  if (!token || !user || !role) return;
+  const map = readRoleSessions();
+  map[role] = { token, refreshToken: refreshToken || map[role]?.refreshToken, user };
+  writeRoleSessions(map);
+}
+
+/** Read the session back from the browser's storage: it is shared by every tab, and another tab may have renewed it a moment ago. */
+function syncFromStorage() {
+  authToken = localStorage.getItem(TOKEN_KEY) || '';
+  refreshTokenValue = localStorage.getItem(REFRESH_KEY) || '';
+}
+
+// Another tab renewed the session, or signed out: follow it, so this tab never holds an old renewal key (using one would sign everybody out).
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', e => {
+    if (e.key !== TOKEN_KEY && e.key !== REFRESH_KEY) return;
+    const hadSession = Boolean(authToken);
+    syncFromStorage();
+    if (hadSession && !authToken) window.dispatchEvent(new CustomEvent('agripump:session-expired'));
+  });
+}
 
 /** A readable message from any error body the API produces: {detail}, {error:{message_key}}, {error}, {message}. */
 export function messageFrom(body: any, fallback = ''): string {
@@ -63,7 +105,9 @@ export function hasSession() {
 export function updateStoredUser(patch: Partial<import('../types').User>) {
   const current = getStoredUser();
   if (!current) return;
-  localStorage.setItem(USER_KEY, JSON.stringify({ ...current, ...patch }));
+  const updated = { ...current, ...patch };
+  localStorage.setItem(USER_KEY, JSON.stringify(updated));
+  saveRoleSession(authToken, refreshTokenValue, updated);
 }
 
 function persistTokens(data: AuthResult) {
@@ -71,15 +115,53 @@ function persistTokens(data: AuthResult) {
   refreshTokenValue = data.refreshToken || refreshTokenValue;
   localStorage.setItem(TOKEN_KEY, authToken);
   if (data.refreshToken) localStorage.setItem(REFRESH_KEY, data.refreshToken);
+  const effectiveUser = data.user || getStoredUser();
   if (data.user) localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+  const role = (effectiveUser?.role || '').toLowerCase();
+  if (role && readRoleSessions()[role]) {
+    saveRoleSession(authToken, refreshTokenValue, effectiveUser);
+  }
 }
 
-export function clearSession() {
+// Backfill per-role session map if a valid session is already stored in localStorage
+if (authToken) {
+  const initialUser = getStoredUser();
+  if (initialUser) saveRoleSession(authToken, refreshTokenValue, initialUser);
+}
+
+/** Restore a previously signed-in role's session (if that role never explicitly logged out). */
+export function activateRoleSession(role: string): AuthResult | null {
+  const key = (role || '').toLowerCase();
+  if (!key) return null;
+  const entry = readRoleSessions()[key];
+  if (!entry || !entry.token || !entry.user) return null;
+  authToken = entry.token;
+  refreshTokenValue = entry.refreshToken || '';
+  localStorage.setItem(TOKEN_KEY, authToken);
+  if (refreshTokenValue) localStorage.setItem(REFRESH_KEY, refreshTokenValue);
+  else localStorage.removeItem(REFRESH_KEY);
+  localStorage.setItem(USER_KEY, JSON.stringify(entry.user));
+  return {
+    token: entry.token,
+    refreshToken: entry.refreshToken ?? '',
+    user: entry.user
+  };
+}
+
+export function clearSession(removeRoleSession = true) {
+  const currentRole = (getStoredUser()?.role || '').toLowerCase();
   authToken = '';
   refreshTokenValue = '';
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(USER_KEY);
+  if (removeRoleSession && currentRole) {
+    const map = readRoleSessions();
+    if (map[currentRole]) {
+      delete map[currentRole];
+      writeRoleSessions(map);
+    }
+  }
   setViewing(null);
 }
 
@@ -92,7 +174,53 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
-let refreshInFlight: Promise<AuthResult | null> | null = null;
+type Renewal = 'renewed' | 'denied' | 'unavailable';
+let renewing: Promise<Renewal> | null = null;
+
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+/** One renewal at a time across every open tab (where the browser offers it), so two tabs never use the same renewal key. */
+function withTabLock<T>(job: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== 'undefined' ? (navigator as any).locks : undefined;
+  return locks && typeof locks.request === 'function' ? locks.request('agripump-renew-session', job) : job();
+}
+
+async function renewOnce(failedToken: string): Promise<Renewal> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    syncFromStorage();
+    // Another tab (or an earlier request) already renewed it: nothing to do but retry with the new access token.
+    if (authToken && authToken !== failedToken) return 'renewed';
+    const used = refreshTokenValue;
+    if (!used) return 'denied';
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}/auth/refresh`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: used }) });
+    } catch {
+      return 'unavailable'; // no network: the person is still signed in, the next request tries again
+    }
+    if (res.ok) {
+      persistTokens(toAuthResult(await res.json()));
+      return 'renewed';
+    }
+    // The server is busy, restarting or limiting us: that says nothing about the session. Keep it.
+    if (res.status >= 500 || res.status === 429 || res.status === 408) return 'unavailable';
+    // 401/403: maybe another tab renewed it a moment before us. Look again before giving up.
+    await sleep(400);
+    syncFromStorage();
+    if (refreshTokenValue && refreshTokenValue !== used) continue; // renewed elsewhere: try again with the newer key
+    return authToken && authToken !== failedToken ? 'renewed' : 'denied';
+  }
+  return 'denied';
+}
+
+function renewSession(failedToken: string): Promise<Renewal> {
+  if (!renewing) {
+    renewing = withTabLock(() => renewOnce(failedToken)).finally(() => {
+      renewing = null;
+    });
+  }
+  return renewing;
+}
 
 class ApiError extends Error {
   status: number;
@@ -124,7 +252,8 @@ function requestHeaders(options: RequestInit): Record<string, string> {
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
   const mergedHeaders = requestHeaders(options);
-  let response = await fetch(url, { ...options, headers: mergedHeaders });
+  const sentToken = authToken;
+  const response = await fetch(url, { ...options, headers: mergedHeaders });
 
   // A privileged account that has not set up TOTP yet may only do that: tell the shell to show the setup step.
   if (response.status === 403 && authToken) {
@@ -133,25 +262,11 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
   }
 
   if (response.status === 401 && authToken && !AUTH_ENTRY.some(p => path.startsWith(p))) {
-    if (refreshTokenValue) {
-      if (!refreshInFlight) {
-        refreshInFlight = fetch(`${API_BASE}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: refreshTokenValue })
-        })
-          .then(async r => (r.ok ? toAuthResult(await r.json()) : null))
-          .finally(() => {
-            refreshInFlight = null;
-          });
-      }
-      const refreshed = await refreshInFlight;
-      if (refreshed && refreshed.token) {
-        persistTokens(refreshed);
-        return fetch(url, { ...options, headers: requestHeaders(options) });
-      }
-    }
-    // No way to renew the session: end it, so the portal shows the sign-in screen instead of an empty dashboard.
+    const outcome = await renewSession(sentToken);
+    if (outcome === 'renewed') return fetch(url, { ...options, headers: requestHeaders(options) });
+    // The server could not be asked (busy, restarting, no network): the person stays signed in and the next request tries again.
+    if (outcome === 'unavailable') return response;
+    // The server said the session is really over: end it, so the portal shows the sign-in screen instead of an empty dashboard.
     clearSession();
     window.dispatchEvent(new CustomEvent('agripump:session-expired'));
   }

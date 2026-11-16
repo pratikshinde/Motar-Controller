@@ -22,7 +22,7 @@ export const VerifyAdminInviteDialog: React.FC<{ invite: AdminInvite | null; onC
     setBusy(true);
     try {
       await verifyAdminInvite(invite.id, code);
-      showToast(`${invite.full_name} is added. They can now choose their password on the Admin sign-in.`);
+      showToast(`${invite.full_name} is added. They can now open Login, then Admin, and choose their password.`);
       onDone();
     } catch (err: any) {
       setError(err.message || 'That code is not right.');

@@ -5,10 +5,11 @@ import AddIcon from '@mui/icons-material/Add';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useNavigate } from 'react-router-dom';
 import { fetchManufacturersOverview, setManufacturerStatus, type ManufacturerSummary, type ManufacturersOverview } from '../api/brands';
-import { fetchAdminInvites, resendAdminInvite, sendAdminResetCode, type AdminInvite } from '../api/adminInvites';
+import { cancelAdminInvite, fetchAdminInvites, resendAdminInvite, type AdminInvite } from '../api/adminInvites';
 import { VerifyAdminInviteDialog } from '../components/VerifyAdminInviteDialog';
 import { setViewing } from '../api/viewing';
 import { AddManufacturerDialog } from '../components/AddManufacturerDialog';
+import { RemovePersonDialog, type RemovePersonTarget } from '../components/RemovePersonDialog';
 import { useToast } from '../context/ToastContext';
 import { formatDate } from '../components/platform/platformUi';
 
@@ -32,7 +33,13 @@ const Mini: React.FC<{ label: string; value: number; color?: string }> = ({ labe
 );
 
 /** One admin as a card: who they are and, at a glance, how big their business on the platform is. Click to open their own dashboard. */
-const ManufacturerCard: React.FC<{ m: ManufacturerSummary; busy: boolean; onOpen: () => void; onToggle: () => void; onNewCode: () => void }> = ({ m, busy, onOpen, onToggle, onNewCode }) => {
+const ManufacturerCard: React.FC<{
+  m: ManufacturerSummary;
+  busy: boolean;
+  onOpen: () => void;
+  onToggle: () => void;
+  onRemove?: () => void;
+}> = ({ m, busy, onOpen, onToggle, onRemove }) => {
   const theme = useTheme();
   const color = m.primary_color || theme.palette.primary.main;
   const on = m.status === 'ACTIVE';
@@ -73,9 +80,9 @@ const ManufacturerCard: React.FC<{ m: ManufacturerSummary; busy: boolean; onOpen
           {m.joined ? `Added ${formatDate(m.joined)}` : ''}
         </Typography>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-          {m.owner?.id && (
-            <Button size="small" color="inherit" disabled={busy} onClick={onNewCode} data-testid={`new-code-${m.key}`}>
-              Send new code
+          {onRemove && (
+            <Button size="small" color="error" disabled={busy} onClick={onRemove} data-testid={`remove-${m.key}`}>
+              Remove
             </Button>
           )}
           <Button size="small" color="inherit" disabled={busy} onClick={onToggle} data-testid={`toggle-${m.key}`}>
@@ -101,6 +108,7 @@ export const ManufacturersView: React.FC = () => {
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [invites, setInvites] = useState<AdminInvite[]>([]);
   const [confirming, setConfirming] = useState<AdminInvite | null>(null);
+  const [removing, setRemoving] = useState<RemovePersonTarget | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -146,20 +154,6 @@ export const ManufacturersView: React.FC = () => {
     }
   }
 
-  async function newCode(m: ManufacturerSummary) {
-    const email = m.owner?.email || 'their email';
-    if (!window.confirm(`Send a new code to ${email}? They use it on the Admin sign-in, under “First time here”, to choose a new password.`)) return;
-    setBusyKey(m.key);
-    try {
-      await sendAdminResetCode(m.owner!.id!);
-      showToast(`A new code was sent to ${email}`);
-    } catch (err: any) {
-      showToast(err.message || 'Could not send the code', true);
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
   async function sendAgain(invite: AdminInvite) {
     setBusyKey(invite.id);
     try {
@@ -167,6 +161,19 @@ export const ManufacturersView: React.FC = () => {
       showToast(`A new code was sent to ${invite.email}`);
     } catch (err: any) {
       showToast(err.message || 'Could not send the code', true);
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  async function removeInvite(invite: AdminInvite) {
+    setBusyKey(invite.id);
+    try {
+      await cancelAdminInvite(invite.id);
+      showToast(`Removed waiting invite for ${invite.full_name}`);
+      await load();
+    } catch (err: any) {
+      showToast(err.message || 'Could not remove the invite', true);
     } finally {
       setBusyKey(null);
     }
@@ -221,6 +228,9 @@ export const ManufacturersView: React.FC = () => {
                 <Button size="small" color="inherit" disabled={busyKey === i.id} onClick={() => sendAgain(i)} data-testid={`send-again-${i.id}`}>
                   Send a new code
                 </Button>
+                <Button size="small" color="error" disabled={busyKey === i.id} onClick={() => removeInvite(i)} data-testid={`cancel-invite-${i.id}`}>
+                  Remove
+                </Button>
               </Box>
             ))}
           </Stack>
@@ -242,7 +252,7 @@ export const ManufacturersView: React.FC = () => {
               busy={busyKey === m.key}
               onOpen={() => navigate(`/manufacturers/${encodeURIComponent(m.key)}`)}
               onToggle={() => toggleStatus(m)}
-              onNewCode={() => newCode(m)}
+              onRemove={m.owner ? () => setRemoving({ id: m.owner!.id, name: m.owner!.name, label: 'admin' }) : undefined}
             />
           ))}
         </Box>
@@ -254,6 +264,18 @@ export const ManufacturersView: React.FC = () => {
         onClose={() => setConfirming(null)}
         onDone={() => {
           setConfirming(null);
+          load();
+        }}
+      />
+      <RemovePersonDialog
+        target={removing}
+        onClose={() => setRemoving(null)}
+        onRemoved={() => {
+          setRemoving(null);
+          load();
+        }}
+        onStatusChanged={() => {
+          setRemoving(null);
           load();
         }}
       />

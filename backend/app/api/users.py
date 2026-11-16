@@ -20,7 +20,7 @@ from app.core.scope import in_subtree, path_in_scope
 from app.database import get_db
 from app.models import AppBrand, AuditLog, Pump
 from app.models.user import User
-from app.schemas.user import AdminInviteCreate, AdminInviteVerify, RegistrationCreate, UserCreate, UserResponse, UserUpdate
+from app.schemas.user import AdminInviteCreate, AdminInviteVerify, RegistrationCreate, RemovalConfirm, RemovalReason, UserCreate, UserResponse, UserUpdate
 from app.services.cache_service import cache_service
 from app.services.jwt_auth import hash_secret
 from app.services.phone_verification import redeem_phone_verification
@@ -247,6 +247,114 @@ def _invite(db: Session, rid: str) -> AdminInvite:
     return row
 
 
+# ------------------------------------------------------------------------------------------------------------ switching off and removing people
+# Only someone above can do it, and only to someone below them in their own branch: the platform owner to anyone but the platform owner, an admin to their own
+# distributors, dealers and farmers, a distributor to their dealers and farmers, a dealer to their farmers (and sub-dealers). Always with a reason, kept in the log.
+REMOVABLE_ROLES = ("manufacturer", "distributor", "dealer", "customer")
+
+
+def _below(db: Session, actor: User, user_id: uuid.UUID) -> User:
+    target = _get_in_scope(db, actor, user_id)            # 404 for a missing account and for one outside the actor's branch alike
+    if target.id == actor.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot switch off or remove your own account.")
+    if (target.role or "").lower() not in REMOVABLE_ROLES:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account cannot be removed here.")
+    above = (actor.hierarchy_path or "").rstrip("/") + "/"
+    if not (target.hierarchy_path or "").startswith(above):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only switch off or remove someone below you.")
+    return target
+
+
+def _beneath(db: Session, target: User) -> dict:
+    """What sits under this person: accounts by level, and pumps."""
+    prefix = (target.hierarchy_path or "").rstrip("/") + "/"
+    users = db.query(User.role).filter(User.hierarchy_path.like(prefix + "%")).all()
+    counts = {"distributors": 0, "dealers": 0, "farmers": 0, "other": 0}
+    for (role,) in users:
+        key = {"distributor": "distributors", "dealer": "dealers", "customer": "farmers"}.get((role or "").lower(), "other")
+        counts[key] += 1
+    counts["pumps"] = db.query(Pump.id).filter((Pump.hierarchy_path.like(prefix + "%")) | (Pump.owner_user_id == target.id)).count()
+    counts["accounts"] = sum(counts[k] for k in ("distributors", "dealers", "farmers", "other"))
+    return counts
+
+
+@router.get("/{user_id}/removal-preview")
+def removal_preview(user_id: uuid.UUID, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """What switching off or removing this person would touch, so the page can say it plainly before anything is done."""
+    target = _below(db, current_user, user_id)
+    counts = _beneath(db, target)
+    blocked = None
+    if counts["accounts"] or counts["pumps"]:
+        blocked = "There are still people or pumps under them. Switch them off instead, or move or remove everyone under them first."
+    return {
+        "id": str(target.id), "full_name": target.full_name, "email": target.email, "role": target.role,
+        "status": "SUSPENDED" if (target.account_status == "SUSPENDED" or target.status == "SUSPENDED") else "ACTIVE",
+        "beneath": counts, "can_delete": blocked is None, "blocked_reason": blocked,
+    }
+
+
+def _end_sessions(db: Session, target: User) -> None:
+    from app.models import RefreshToken
+    from app.services.cache_service import cache_service
+
+    target.session_version = (target.session_version or 1) + 1
+    cache_service.increment_user_session_version(str(target.id))
+    db.query(RefreshToken).filter(RefreshToken.user_id == target.id, RefreshToken.revoked_at.is_(None)).update({"revoked_at": datetime.now(timezone.utc)}, synchronize_session=False)
+
+
+@router.post("/{user_id}/suspend")
+def switch_off(user_id: uuid.UUID, req: RemovalReason, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """Switch a person off: they cannot sign in and their sessions end, but all their data stays and it can be undone."""
+    target = _below(db, current_user, user_id)
+    target.account_status = "SUSPENDED"
+    _end_sessions(db, target)
+    _audit(db, current_user, target.id, "USER_SWITCHED_OFF", before={"role": target.role, "name": target.full_name}, after={"reason": req.reason.strip()})
+    db.commit()
+    return {"message": "Switched off", "id": str(target.id)}
+
+
+@router.post("/{user_id}/reactivate")
+def switch_on(user_id: uuid.UUID, req: RemovalReason, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """Undo a switch-off."""
+    target = _below(db, current_user, user_id)
+    target.account_status = "ACTIVE"
+    _audit(db, current_user, target.id, "USER_SWITCHED_ON", before={"role": target.role, "name": target.full_name}, after={"reason": req.reason.strip()})
+    db.commit()
+    return {"message": "Switched on", "id": str(target.id)}
+
+
+@router.post("/{user_id}/remove")
+def remove_account(user_id: uuid.UUID, req: RemovalConfirm, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
+    """Remove a person for good. Needs a reason and the person's name typed in, and is refused while anyone or any pump is still under them: switch them off
+    instead, or move or remove those first."""
+    target = _below(db, current_user, user_id)
+    if (req.confirm_name or "").strip().casefold() != (target.full_name or "").strip().casefold():
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="The name typed does not match. Type the person's name exactly to confirm.")
+    counts = _beneath(db, target)
+    if counts["accounts"] or counts["pumps"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="There are still people or pumps under them. Switch them off instead, or move or remove everyone under them first.",
+        )
+    before = {"role": target.role, "name": target.full_name, "email": target.email, "phone": target.phone_number or target.phone}
+    brand = db.query(AppBrand).filter((AppBrand.owner_user_id == target.id) | (AppBrand.id == target.brand_id)).first() if (target.role or "").lower() == "manufacturer" else None
+    _audit(db, current_user, target.id, "USER_DELETED", before=before, after={"reason": req.reason.strip()})
+    target_id = target.id
+    db.delete(target)
+    db.flush()
+    if brand is not None:
+        brand.owner_user_id = None if brand.owner_user_id == target_id else brand.owner_user_id
+        # A manufacturer made by mistake leaves its (empty) company behind: remove that too, but never a brand that has a farmers' app of its own.
+        still_used = db.query(User.id).filter(User.brand_id == brand.id).first() or db.query(Pump.id).filter(Pump.brand_id == brand.id).first()
+        if not still_used and not brand.android_package:
+            key = brand.key
+            db.delete(brand)
+            db.flush()
+            brand_service.forget(key)
+    db.commit()
+    return {"message": "Removed", "id": str(target_id)}
+
+
 @router.post("/admin-invites", status_code=status.HTTP_201_CREATED)
 def create_admin_invite(req: AdminInviteCreate, current_user: User = Depends(require_roles("superadmin")), db: Session = Depends(get_db)):
     """The platform owner adds an admin: a 6-digit code is emailed to the admin's address. No account exists until the owner types the code in."""
@@ -290,18 +398,6 @@ def cancel_admin_invite(rid: str, current_user: User = Depends(require_roles("su
     row.revoked_at = datetime.now(timezone.utc)
     db.commit()
     return {"message": "Invite cancelled"}
-
-
-@router.post("/{user_id}/admin-code")
-def send_admin_reset_code(user_id: uuid.UUID, current_user: User = Depends(require_roles("superadmin")), db: Session = Depends(get_db)):
-    """An admin forgot their password: a new code is emailed to them, and they choose a new password with it (Admin sign-in, "First time here")."""
-    target = db.query(User).filter(User.id == user_id, User.role == "manufacturer").first()
-    if target is None:
-        raise HTTPException(status_code=404, detail="Admin not found")
-    row = admin_invites.start_reset(db, current_user, target)
-    _audit(db, current_user, target.id, "ADMIN_CODE_SENT", after={"email": target.email})
-    db.commit()
-    return {"invite": _invite_view(row)}
 
 
 @router.get("/team")
@@ -492,26 +588,4 @@ def change_user_role(user_id: uuid.UUID, req: UserUpdate, current_user: User = D
     user = UserService.assign_role(db, current_user, user_id, req.role)
     return {"message": "User role updated successfully", "user": _node(user)}
 
-
-@router.delete("/{user_id}")
-def delete_user(user_id: uuid.UUID, current_user: User = Depends(require_roles(["superadmin"])), db: Session = Depends(get_db)):
-    """Superadmin only, and only for an account that owns nothing: deleting one that owns pumps would delete the pumps."""
-    target = db.query(User).filter(User.id == user_id).first()
-    if not target:
-        raise HTTPException(status_code=404, detail="User not found")
-    if target.id == current_user.id:
-        raise HTTPException(status_code=403, detail="You cannot delete your own account.")
-    if target.role == "superadmin":
-        raise HTTPException(status_code=403, detail="A platform-owner account cannot be deleted here.")
-    owns_pumps = db.query(Pump.id).filter(Pump.owner_user_id == target.id).first() is not None
-    has_children = db.query(User.id).filter((User.parent_user_id == target.id) | (User.org_node_id == target.id)).first() is not None
-    if owns_pumps or has_children:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This account still owns devices or has accounts beneath it. Suspend it instead, or move them first.",
-        )
-    _audit(db, current_user, target.id, "USER_DELETED", before={"role": target.role, "name": target.full_name})
-    db.delete(target)
-    db.commit()
-    return {"message": "Account deleted", "deleted_id": str(user_id)}
 

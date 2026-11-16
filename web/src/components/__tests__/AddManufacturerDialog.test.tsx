@@ -81,9 +81,10 @@ describe('registering an admin: five details, Verify email, the code the admin r
     await waitFor(() => expect(mocks.verifyAdminInvite).toHaveBeenCalledWith('inv1', '123456'));
     const added = await screen.findByTestId('admin-added');
     expect(added).toHaveTextContent('Swati Pumps Pvt Ltd');
-    expect(added).toHaveTextContent('First time here');
+    expect(added).toHaveTextContent('choose a password of their own');
     expect(added).toHaveTextContent('meera@swati.test');
-    expect(added).toHaveTextContent('never needed again');
+    expect(added).toHaveTextContent('within 24 hours');
+    expect(added).not.toHaveTextContent('First time here');
   });
 
   it('says why when the code is wrong and stays on the code step', async () => {
