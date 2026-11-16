@@ -7,7 +7,7 @@
 * The super admin only monitors (see SUPERADMIN_MONITOR_ONLY in backend/.env) and can open the Ajanta dashboard read-only.
 
 The super admin signs in with a code emailed to them, then the code of an authenticator app (set up at the first sign-in). The Ajanta admin opens the
-website, chooses Login > Admin > "First time here", gets a code by email to prove the email is theirs and chooses their own password; after that they
+website, chooses Login > Admin > "Forgot password?", gets a code by email to prove the email is theirs and chooses their own password; after that they
 sign in with the email and that password. The server needs EMAIL_BACKEND set up (see deploy/README.md).
 Only if you really want one, `--with-password` asks for a password (hidden, typed twice, at least 10 characters, stored only as a hash; or set
 PORTAL_PASSWORD for a non-interactive run).
@@ -97,7 +97,7 @@ def main() -> int:
         db.execute(text("SELECT set_config('app.bypass_rls', 'on', false)"))
         user = create_account(db, args.role, args.name, args.email, _ask_password() if args.with_password else None, replace_owner=args.replace_owner)
         db.commit()
-        print(f"Created {args.role}: {user.email}. The super admin signs in with an emailed code and the authenticator; the admin uses First time here on the Admin sign-in to choose a password.")
+        print(f"Created {args.role}: {user.email}. The super admin signs in with an emailed code and the authenticator; the admin opens Login > Admin > Forgot password, gets a code by email and chooses a password.")
         return 0
     except AccountError as exc:
         db.rollback()

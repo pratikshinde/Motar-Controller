@@ -118,6 +118,9 @@ services:
   ingest:
     <<: *backend
     command: ["python", "-m", "app.workers.ingest"]
+    # The image's own health check asks port 5000, which a worker does not serve: it would show "unhealthy" while working. Docker restarts a worker that stops.
+    healthcheck:
+      disable: true
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -128,6 +131,8 @@ services:
   jobs:
     <<: *backend
     command: ["python", "-m", "app.workers.jobs"]
+    healthcheck:
+      disable: true
     depends_on:
       migrate:
         condition: service_completed_successfully
