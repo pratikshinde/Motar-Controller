@@ -1,4 +1,4 @@
-# AgriPump in containers: the API, the two workers, the website (with HTTPS), and optionally PostgreSQL.
+# AgriPump in containers: the API, the two workers, the website (with HTTPS), Redis, and optionally PostgreSQL with automatic backups.
 #
 #   cp deploy/env.example .env        # then fill it in (see deploy/README.md)
 #   docker compose --profile db up -d --build      # with the bundled PostgreSQL (fine for a pilot on one server)
@@ -17,6 +17,7 @@ x-backend: &backend
     JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (at least 32 random characters)}
     CORS_ORIGINS: ${CORS_ORIGINS:-[]}
     SUPERADMIN_MONITOR_ONLY: ${SUPERADMIN_MONITOR_ONLY:-true}
+    REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     PROVISIONING_HOOK_SECRET: ${PROVISIONING_HOOK_SECRET:-}
     MFA_REQUIRED_ROLES: ${MFA_REQUIRED_ROLES:-superadmin}
     EMAIL_BACKEND: ${EMAIL_BACKEND:-ses}
@@ -41,6 +42,20 @@ x-backend: &backend
   restart: unless-stopped
 
 services:
+  # The shared cache: login-attempt limits, session revocation (switch-off, password change) and live values, so that all server processes agree. Not published.
+  # Only keys that expire may be dropped when memory is short (volatile-lru): a session-revocation key never expires, so it is never lost.
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "volatile-lru"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   # PostgreSQL, only when started with `--profile db`. Use a managed database (backups, patches) for anything you cannot afford to lose.
   db:
     profiles: ["db"]
@@ -59,6 +74,25 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Copies the database into ./backups every day (and keeps the last 14 days), only with the bundled PostgreSQL. Copy ./backups off the server as well.
+  backup:
+    profiles: ["db"]
+    image: postgres:18-alpine
+    entrypoint: ["sh", "/backup.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+    volumes:
+      - ./deploy/backup.sh:/backup.sh:ro
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   # Runs the database migrations to the newest version and stops. Safe to run again at every update.
   migrate:
     <<: *backend
@@ -75,6 +109,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     expose:
       - "5000"
 
@@ -85,6 +121,8 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
   # The nightly jobs: daily summaries and keeping the history to its retention period.
   jobs:
@@ -113,5 +151,6 @@ services:
 
 volumes:
   db_data:
+  redis_data:
   caddy_data:
   caddy_config:

@@ -116,3 +116,6 @@ firebase-service-account*.json
 
 # local test login written by a developer helper
 backend/dev-admin-login.txt
+
+# Database backups made on the server (deploy/backup.sh)
+backups/

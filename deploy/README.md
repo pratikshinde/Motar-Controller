@@ -1,10 +1,12 @@
 # Deploying the pump platform
 
-One server runs five containers from `docker-compose.yml`:
+One server runs these containers from `docker-compose.yml`:
 
 | Container | What it does |
 |---|---|
 | `db` | PostgreSQL (skip it and use AWS RDS if you prefer: see `env.example`) |
+| `backup` | With the bundled `db`: copies the database into `./backups` every day (keeps 14 days) |
+| `redis` | The shared cache: login limits, session switch-off and live values across all server processes |
 | `migrate` | Builds / upgrades the database tables, then exits |
 | `api` | The backend: website, phone app and factory station all talk to it |
 | `ingest` | Reads pump readings from the AWS queue (SQS) and saves them |
@@ -54,3 +56,25 @@ docker compose --profile db up -d --build
 ## Backups
 
 Back up the `db_data` volume (or turn on RDS automated backups) and the `.env` file. Certificates in `caddy_data` can be re-issued.
+
+## Backups and restoring
+The `backup` container writes `./backups/agripump-YYYYMMDD-HHMMSS.dump` every day and keeps the last 14. Make one by hand at any time:
+
+```bash
+docker compose run --rm -e BACKUP_RUN_ONCE=1 backup
+```
+
+**Copy the folder off the server** (a backup that lives only on the machine that fails is not a backup). The simplest way is a daily upload to an AWS S3 bucket from the
+server's own role (`aws s3 sync ./backups s3://YOUR-BUCKET/agripump-backups/`), or download the files now and then.
+
+To restore (this replaces what is in the database; stop the app first):
+
+```bash
+docker compose stop api ingest jobs
+docker compose exec -T db dropdb -U postgres agripump
+docker compose exec -T db createdb -U postgres -O agripump agripump
+docker compose exec -T db pg_restore -U postgres -d agripump --no-owner --role=agripump < backups/agripump-YYYYMMDD-HHMMSS.dump
+docker compose up -d
+```
+
+Try a restore once on a spare machine before you need it. With AWS RDS instead of the bundled database, use RDS automated backups.

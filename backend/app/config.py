@@ -31,8 +31,10 @@ class Settings(BaseSettings):
     # JWT & Auth
     JWT_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15      # short on purpose: the website renews it quietly, so nobody is asked to sign in again
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    # Shared cache for login-attempt limits, session revocation and live values across every server process (empty: a local Redis if there is one, else memory).
+    REDIS_URL: str = ""
     
     # CORS
     CORS_ORIGINS: list[str] = [
