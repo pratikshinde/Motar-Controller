@@ -208,6 +208,34 @@ class TestTheOwnerTypesTheCode(InviteBase):
         self.assertTrue(user.phone.startswith("+91"))
         self.assertTrue(user.hierarchy_path.startswith(self.owner.hierarchy_path))
 
+    def test_a_company_that_already_has_a_brand_row_gets_that_row_not_a_duplicate(self):
+        """The built-in 'ajanta' / 'swati' rows belong to the farmer apps: the admin is attached to them, and no 'name-2' is made."""
+        key = f"keep{uuid.uuid4().hex[:6]}"
+        self.db.add(AppBrand(key=key, name=f"{key.title()} Pump Controller", short_name=key.upper(), status="ACTIVE", features={}, android_package=f"com.example.{key}"))
+        self.db.commit()
+        type(self).brands.append(key)
+        before = self.db.query(AppBrand).count()
+        rid, email, code = self.started(company_name=f"{key.title()} Pumps Pvt Ltd")
+        r = self.verify(rid, code)
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["invite"]["brand"], key)
+        self.db.expire_all()
+        self.assertEqual(self.db.query(AppBrand).count(), before, "no second brand beside the existing one")
+        brand = self.db.query(AppBrand).filter(AppBrand.key == key).one()
+        self.assertEqual(brand.owner_user_id, self.user_of(email).id)
+        self.assertEqual(brand.android_package, f"com.example.{key}", "what the farmer app relies on is untouched")
+
+    def test_a_brand_row_with_no_admin_shows_no_card_until_its_admin_is_registered(self):
+        key = f"hide{uuid.uuid4().hex[:6]}"
+        self.db.add(AppBrand(key=key, name=f"{key.title()} Pump Controller", short_name=key.upper(), status="ACTIVE", features={}))
+        self.db.commit()
+        type(self).brands.append(key)
+        keys = lambda: {m["key"] for m in client.get(f"{API}/brands/overview", headers=_h(self.owner)).json()["manufacturers"]}
+        self.assertNotIn(key, keys(), "nothing is shown for a company nobody has registered")
+        rid, email, code = self.started(company_name=f"{key.title()} Pumps")
+        self.assertEqual(self.verify(rid, code).status_code, 200)
+        self.assertIn(key, keys())
+
     def test_a_wrong_code_is_refused_and_five_burn_the_invite(self):
         rid, email, code = self.started()
         wrong = "000000" if code != "000000" else "111111"

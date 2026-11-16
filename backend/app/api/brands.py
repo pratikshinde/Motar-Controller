@@ -180,7 +180,9 @@ def overview(current_user: User = Depends(require_roles(["superadmin"])), db: Se
     empty = {"total": 0, "running": 0, "stopped": 0, "fault": 0, "offline": 0, "no_data": 0}
     rows = []
     all_farmers = set()  # one person who farms with two manufacturers is still one farmer in the platform total
-    for b in db.query(AppBrand).order_by(AppBrand.name).all():
+    # A card appears only once the platform owner has registered that company's admin. The two built-in brand rows (ajanta, swati) that the
+    # farmer apps rely on stay out of sight until then, so a fresh server shows nothing at all.
+    for b in db.query(AppBrand).filter(AppBrand.owner_user_id.isnot(None)).order_by(AppBrand.name).all():
         owner = db.query(User).filter(User.id == b.owner_user_id).first() if b.owner_user_id else None
         counts, farmers, team, open_alerts = dict(empty), 0, 0, 0
         distributors = dealers = gsm_pumps = gsm_online = 0

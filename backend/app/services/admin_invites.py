@@ -78,13 +78,27 @@ def state_of(row: Optional[AdminInvite]) -> str:
 _NOISE_WORDS = re.compile(r"\b(pump|pumps|controller|controllers|private|pvt|ltd|limited)\b")
 
 
-def _brand_key(db: Session, company: str) -> str:
-    """A short, unique key for the manufacturer, made from the company name ("Swati Pumps Pvt Ltd" gives "swati")."""
+def _base_slug(company: str) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", _NOISE_WORDS.sub(" ", (company or "").lower())).strip("-")[:24].strip("-")
     if not base or not base[0].isalpha():
         base = ("m-" + base).strip("-")[:24]
     if len(base) < 2 or base in brand_service.RESERVED_KEYS:
         base = (base + "-co")[:24]
+    return base
+
+
+def _ownerless_brand_for(db: Session, company: str) -> Optional[AppBrand]:
+    """A brand that already exists for this company and has no admin yet (the 'ajanta' and 'swati' rows that came with the system, which the
+    farmer apps are built on). The admin is attached to it instead of a second, duplicate brand being made beside it."""
+    name = (company or "").strip().lower()
+    base = _base_slug(company)
+    q = db.query(AppBrand).filter(AppBrand.owner_user_id.is_(None))
+    return q.filter((AppBrand.key == base) | (func.lower(AppBrand.name) == name)).order_by(AppBrand.created_at.asc()).first()
+
+
+def _brand_key(db: Session, company: str) -> str:
+    """A short, unique key for the manufacturer, made from the company name ("Swati Pumps Pvt Ltd" gives "swati")."""
+    base = _base_slug(company)
     key, n = base, 1
     while db.query(AppBrand.id).filter(AppBrand.key == key).first() is not None or key in brand_service.RESERVED_KEYS:
         n += 1
@@ -179,9 +193,17 @@ def verify_by_owner(db: Session, owner: User, row: AdminInvite, code: str) -> Us
         return db.query(User).filter(User.id == row.user_id).one()
     _check(db, row, code)
     new_id = uuid.uuid4()
-    key = _brand_key(db, row.company_name or row.full_name)
-    short = ((row.company_name or key).split() or [key])[0].upper()[:30]
-    db.add(AppBrand(key=key, name=(row.company_name or key)[:100], short_name=short, status="ACTIVE", features={}, support_phone=row.phone, support_email=row.email))
+    existing = _ownerless_brand_for(db, row.company_name or row.full_name)
+    if existing is not None:
+        key = existing.key
+        if not existing.support_phone:
+            existing.support_phone = row.phone
+        if not existing.support_email:
+            existing.support_email = row.email
+    else:
+        key = _brand_key(db, row.company_name or row.full_name)
+        short = ((row.company_name or key).split() or [key])[0].upper()[:30]
+        db.add(AppBrand(key=key, name=(row.company_name or key)[:100], short_name=short, status="ACTIVE", features={}, support_phone=row.phone, support_email=row.email))
     db.flush()
     brand_service.forget(key)
     row.brand_key = key

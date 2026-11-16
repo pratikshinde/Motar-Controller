@@ -428,7 +428,7 @@ class TestManufacturerPortals(BrandBase):
         self.db.query(AppBrand).filter(AppBrand.id == self.brand_b.id).update({"owner_user_id": None})
         self.db.commit()
         rows = {m["key"]: m for m in client.get("/api/v1/brands/overview", headers=_h(self.sa)).json()["manufacturers"]}
-        self.assertEqual((rows[self.brand_b.key]["owner"], rows[self.brand_b.key]["pumps"]["total"]), (None, 0))
+        self.assertNotIn(self.brand_b.key, rows, "a brand with no admin registered shows no card")
 
     def test_the_overview_counts_gsm_pumps_and_how_many_are_online_per_manufacturer_and_in_total(self):
         self.on_gsm(self.a.pump, online=True)
