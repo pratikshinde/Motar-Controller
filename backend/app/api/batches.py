@@ -11,7 +11,7 @@ from sqlalchemy import desc, func, text
 from app.database import get_db
 from app.models import DeviceBatch, BatchImei, User, Pump, DeviceConfig, AuditLog
 from app.api.deps import get_current_user, require_roles
-from app.services import brand_service, starter_sheet
+from app.services import brand_service, starter_registration, starter_sheet
 
 router = APIRouter(tags=["Factory Batches & Provisioning"])
 
@@ -193,7 +193,7 @@ def _station_view(db: Session, row: BatchImei) -> Dict[str, Any]:
     stages = [
         {"key": "on_sheet", "label": "On the uploaded sheet", "done": True},
         {"key": "tested", "label": "Bench test passed", "done": row.test_result == "PASS", "failed": row.test_result == "FAIL"},
-        {"key": "claimed", "label": "Has its own AWS certificate (first power-up done)", "done": bool(row.claimed)},
+        {"key": "claimed", "label": "Registered in AWS (thing and certificate made)", "done": bool(row.claimed)},
         {"key": "online", "label": "Reporting to the cloud", "done": connectivity == "ONLINE"},
         {"key": "farmer", "label": "Registered to a farmer", "done": with_farmer},
     ]
@@ -266,6 +266,30 @@ def record_starter_test(
     db.commit()
     db.refresh(row)
     return _station_view(db, row)
+
+
+@router.post("/starters/{row_id}/register")
+def register_starter(
+    row_id: int,
+    current_user: User = factory_user,
+    db: Session = Depends(get_db),
+):
+    """Scan, then this: the pump is made in the system, and its AWS thing, certificate and policy are made. One zip comes back (shown once, never kept)."""
+    row = _scoped_starters(db, current_user).filter(BatchImei.id == row_id).first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Starter not found")
+    batch = db.query(DeviceBatch).filter(DeviceBatch.id == row.batch_id).first()
+    package = starter_registration.register(db, current_user, row, batch)
+    return Response(
+        content=package.content,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{package.filename}"',
+            "Cache-Control": "no-store",
+            "X-Certificate-Id": package.certificate_id,
+            "Access-Control-Expose-Headers": "Content-Disposition, X-Certificate-Id",
+        },
+    )
 
 
 @router.get("")
@@ -480,35 +504,9 @@ def fleet_provisioning_pre_hook(
     # Enable system provisioning context for RLS
     db.execute(text("SET app.bypass_rls = 'on';"))
 
-    # Ensure pump record exists in state COMMISSIONED first to satisfy FK constraint
+    # The pump row must exist first (the foreign key), as stock in the tree of the admin who uploaded the sheet, so that admin can give it to a farmer.
     pump_id = serial
-    pump = db.query(Pump).filter(Pump.id == pump_id).first()
-    if not pump:
-        owner_id = batch.created_by
-        if not owner_id:
-            superadmin = db.query(User).filter(User.role == "superadmin").first()
-            owner_id = superadmin.id if superadmin else None
-
-        pump = Pump(
-            id=pump_id,
-            name=f"Pump {serial[-6:]}",
-            device_type=getattr(batch, "device_type", "AC_3PH") or "AC_3PH",
-            supply_type=imei_record.supply_type or "3-phase",      # from the factory's sheet when it said
-            hp_rating=imei_record.hp_rating if imei_record.hp_rating is not None else 7.5,
-            owner_user_id=owner_id,
-            hierarchy_path="/SA",
-            status="STOPPED",
-            lifecycle_state="COMMISSIONED",
-            brand_id=batch.brand_id,   # the manufacturer whose factory batch this unit came from
-            firmware_version=None   # the device reports its own firmware version in its first frame
-        )
-        db.add(pump)
-        db.add(DeviceConfig(
-            pump_id=pump_id,
-            desired_json={"ol": 25.0, "ov": 480, "dr": 1, "dr_t": 5},
-            status="APPLIED"
-        ))
-        db.flush()
+    pump = starter_registration.stock_pump_for(db, batch, imei_record, serial)
 
     # Mark IMEI as claimed
     imei_record.claimed = True

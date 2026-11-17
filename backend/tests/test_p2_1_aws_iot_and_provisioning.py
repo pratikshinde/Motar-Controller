@@ -131,10 +131,12 @@ class TestP2_1FleetProvisioning(unittest.TestCase):
         self.assertEqual(data["parameterOverrides"]["ThingName"], self.valid_serial)
         self.assertEqual(data["parameterOverrides"]["ThingGroupName"], "production")
 
-        # Verify device record is created in state COMMISSIONED, under the same id
+        # The pump row is made under the same id, as stock in the uploading admin's own tree (so the admin can give it to a farmer)
         pump = self.db.query(Pump).filter(Pump.id == data["parameterOverrides"]["ThingName"]).first()
         self.assertIsNotNone(pump)
-        self.assertEqual(pump.lifecycle_state, "COMMISSIONED")
+        self.assertEqual(pump.lifecycle_state, "MANUFACTURED")
+        self.assertEqual(pump.owner_user_id, self.creator.id)
+        self.assertEqual(pump.hierarchy_path, self.creator.hierarchy_path)
         print(f"\n[PASS] Pre-provisioning hook approved valid device {self.valid_serial} and commissioned {pump.id}!")
 
     def test_02_pre_provisioning_hook_replay_already_claimed(self):

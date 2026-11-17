@@ -129,6 +129,10 @@ class Settings(BaseSettings):
 
     # Shared secret the fleet-provisioning Lambda sends to POST /batches/provisioning/pre-hook (X-Hook-Secret).
     PROVISIONING_HOOK_SECRET: str = ""
+    # The factory station can register a scanned starter in AWS by itself (thing, certificate, policy): needs the server's AWS role to hold
+    # aws/policies/server-starter-registration-iam-policy.json. Off until that policy is attached.
+    STARTER_REGISTRATION: bool = False
+    IOT_DEVICE_POLICY_NAME: str = "agripump-device-policy"
 
     # A pump that has reported before but not within this long is shown as Offline (never as Running / Stopped).
     # Look a farmer's address up (OpenStreetMap Nominatim) so the pump gets a pin on the map. Only the address text is sent.

@@ -9,7 +9,7 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
-import { downloadStarterTemplate, importStarterSheet, lookupStarter, recordStarterTest } from '../api/batches';
+import { downloadStarterTemplate, importStarterSheet, lookupStarter, recordStarterTest, registerStarter, saveFile } from '../api/batches';
 import { useToast } from '../context/ToastContext';
 import { BarcodeScanDialog, barcodeScanSupported } from '../components/BarcodeScanDialog';
 import { monoFont } from '../theme';
@@ -81,7 +81,7 @@ export const StarterCard: React.FC<{
         )}
         {!starter.claim.claimed && (
           <Alert severity="info" variant="outlined">
-            Waiting for the first power-up. Power the starter on with mobile signal; this page updates by itself when it has claimed its certificate.
+            Not registered in AWS yet. Scanning registers it by itself; if that did not happen, the reason is shown above (for example, registration is switched off on this server).
           </Alert>
         )}
 
@@ -155,7 +155,28 @@ export const FactoryStationView: React.FC = () => {
   const [looking, setLooking] = useState(false);
   const [testing, setTesting] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [registered, setRegistered] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const input = useRef<HTMLInputElement>(null);
+
+  /** The scan made the starter's whole identity without a person: the pump, and in AWS the thing, certificate and policy. The package is saved by the browser. */
+  const register = useCallback(async (s: StarterStationView) => {
+    setRegistering(true);
+    setRegistered(null);
+    try {
+      const pkg = await registerStarter(s.id);
+      saveFile(pkg.blob, pkg.filename);
+      setRegistered({
+        kind: 'ok',
+        text: `Registered in AWS. The package ${pkg.filename} was saved to your downloads: it holds the private key, so keep it private. It cannot be downloaded again.`
+      });
+      setStarter(await lookupStarter(s.starter_id));
+    } catch (err: any) {
+      setRegistered({ kind: 'error', text: err.message || 'Could not register the starter in AWS' });
+    } finally {
+      setRegistering(false);
+    }
+  }, []);
 
   const find = useCallback(
     async (value: string) => {
@@ -163,8 +184,12 @@ export const FactoryStationView: React.FC = () => {
       if (!wanted) return;
       setLooking(true);
       setNotFound(null);
+      setRegistered(null);
       try {
-        setStarter(await lookupStarter(wanted));
+        const found = await lookupStarter(wanted);
+        setStarter(found);
+        // The scan does the rest by itself: a starter not registered yet (and not in a revoked batch) gets its AWS identity now.
+        if (!found.claim.claimed && !found.batch?.revoked) await register(found);
       } catch (err: any) {
         setStarter(null);
         setNotFound(err.message || `'${wanted}' was not found`);
@@ -173,12 +198,13 @@ export const FactoryStationView: React.FC = () => {
         setCode('');
       }
     },
-    []
+    [register]
   );
 
   const next = useCallback(() => {
     setStarter(null);
     setNotFound(null);
+    setRegistered(null);
     setCode('');
     window.setTimeout(() => input.current?.focus(), 0);
   }, []);
@@ -210,7 +236,7 @@ export const FactoryStationView: React.FC = () => {
       <Box>
         <Typography variant="h4">Factory Station</Typography>
         <Typography variant="caption" color="text.secondary">
-          Upload each batch's Excel sheet, then scan every starter's barcode to see its details, test it and watch it claim its AWS certificate.
+          Upload each batch's Excel sheet, then scan every starter's barcode: its AWS identity is made by itself and the certificate package is downloaded.
         </Typography>
       </Box>
 
@@ -316,6 +342,16 @@ export const FactoryStationView: React.FC = () => {
           {notFound && (
             <Alert severity="error" data-testid="not-found">
               {notFound}
+            </Alert>
+          )}
+          {registering && (
+            <Alert severity="info" icon={<CircularProgress size={18} />} data-testid="registering">
+              Registering this starter in AWS: making its thing, certificate and policy…
+            </Alert>
+          )}
+          {registered && (
+            <Alert severity={registered.kind === 'ok' ? 'success' : 'error'} data-testid={registered.kind === 'ok' ? 'registered-ok' : 'registered-error'}>
+              {registered.text}
             </Alert>
           )}
           {starter && <StarterCard starter={starter} busy={testing} onTest={handleTest} onNext={next} />}

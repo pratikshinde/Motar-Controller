@@ -265,7 +265,7 @@ class TestStarterApi(unittest.TestCase):
         self.assertTrue(r.json()["allowProvisioning"], r.text)
         self.db.expire_all()
         pump = self.db.query(Pump).filter(Pump.id == self.sid(1)).one()
-        self.assertEqual((float(pump.hp_rating), pump.supply_type, pump.lifecycle_state, pump.owner_user_id), (7.5, "3-phase", "COMMISSIONED", self.maker.id))
+        self.assertEqual((float(pump.hp_rating), pump.supply_type, pump.lifecycle_state, pump.owner_user_id), (7.5, "3-phase", "MANUFACTURED", self.maker.id))
         v = client.get(f"/api/v1/batches/starters/lookup?code={self.sid(1)}", headers=self.h_maker).json()
         self.assertTrue([s for s in v["stages"] if s["key"] == "claimed"][0]["done"])
         self.assertEqual(v["pump"]["id"], self.sid(1))

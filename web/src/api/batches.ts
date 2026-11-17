@@ -50,6 +50,28 @@ export async function recordStarterTest(id: number, result: 'PASS' | 'FAIL', not
   return apiJson(`/batches/starters/${id}/test`, { method: 'POST', body: JSON.stringify({ result, note: note || null }) });
 }
 
+/** Scan, then this: the pump is made and its AWS thing and certificate are made. Resolves with the one-time package (a zip holding the private key). */
+export async function registerStarter(id: number): Promise<{ filename: string; blob: Blob; certificateId: string }> {
+  const res = await apiFetch(`/batches/starters/${id}/register`, { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const detail = body && typeof body.detail === 'string' ? body.detail : '';
+    throw new Error(detail || `Could not register the starter (${res.status})`);
+  }
+  const named = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '');
+  return { filename: named?.[1] ?? 'starter-aws-identity.zip', blob: await res.blob(), certificateId: res.headers.get('X-Certificate-Id') || '' };
+}
+
+/** Saves a file through the browser's download. */
+export function saveFile(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /** The empty Excel sheet with the column names, saved through the browser's download. */
 export async function downloadStarterTemplate(): Promise<void> {
   const res = await apiFetch('/batches/starters/template.xlsx');

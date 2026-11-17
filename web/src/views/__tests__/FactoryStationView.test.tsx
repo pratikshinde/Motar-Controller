@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   lookupStarter: vi.fn(),
   recordStarterTest: vi.fn(),
   downloadStarterTemplate: vi.fn(),
+  registerStarter: vi.fn(),
+  saveFile: vi.fn(),
   showToast: vi.fn()
 }));
 
@@ -15,7 +17,9 @@ vi.mock('../../api/batches', () => ({
   importStarterSheet: mocks.importStarterSheet,
   lookupStarter: mocks.lookupStarter,
   recordStarterTest: mocks.recordStarterTest,
-  downloadStarterTemplate: mocks.downloadStarterTemplate
+  downloadStarterTemplate: mocks.downloadStarterTemplate,
+  registerStarter: mocks.registerStarter,
+  saveFile: mocks.saveFile
 }));
 vi.mock('../../context/ToastContext', () => ({ useToast: () => ({ showToast: mocks.showToast }) }));
 vi.mock('../../components/BarcodeScanDialog', () => ({ barcodeScanSupported: () => false, BarcodeScanDialog: () => null }));
@@ -36,7 +40,7 @@ const starter = (over: Partial<StarterStationView> = {}): StarterStationView => 
   stages: [
     { key: 'on_sheet', label: 'On the uploaded sheet', done: true },
     { key: 'tested', label: 'Bench test passed', done: false },
-    { key: 'claimed', label: 'Has its own AWS certificate (first power-up done)', done: false },
+    { key: 'claimed', label: 'Registered in AWS (thing and certificate made)', done: false },
     { key: 'online', label: 'Reporting to the cloud', done: false },
     { key: 'farmer', label: 'Registered to a farmer', done: false }
   ],
@@ -45,6 +49,7 @@ const starter = (over: Partial<StarterStationView> = {}): StarterStationView => 
 
 beforeEach(() => {
   Object.values(mocks).forEach(m => m.mockReset());
+  mocks.registerStarter.mockResolvedValue({ filename: 'AJ-0001-aws-identity.zip', blob: new Blob(['zip']), certificateId: 'c1' });
 });
 
 async function scan(code: string) {
@@ -65,7 +70,6 @@ describe('Factory Station: scanning', () => {
     expect(screen.getByText(/first lot/)).toBeInTheDocument();
     expect(screen.getByTestId('stage-on_sheet')).toHaveTextContent('Done');
     expect(screen.getByTestId('stage-claimed')).toHaveTextContent('Waiting');
-    expect(screen.getByText(/Waiting for the first power-up/)).toBeInTheDocument();
   });
 
   it('says plainly when the barcode is on no sheet', async () => {
@@ -93,7 +97,7 @@ describe('Factory Station: scanning', () => {
         stages: [
           { key: 'on_sheet', label: 'On the uploaded sheet', done: true },
           { key: 'tested', label: 'Bench test passed', done: true },
-          { key: 'claimed', label: 'Has its own AWS certificate (first power-up done)', done: true },
+          { key: 'claimed', label: 'Registered in AWS (thing and certificate made)', done: true },
           { key: 'online', label: 'Reporting to the cloud', done: true },
           { key: 'farmer', label: 'Registered to a farmer', done: false }
         ]
@@ -103,7 +107,50 @@ describe('Factory Station: scanning', () => {
     await scan('AJ-0001');
     expect(await screen.findByTestId('stage-claimed')).toHaveTextContent('Done');
     expect(screen.getByTestId('stage-online')).toHaveTextContent('Done');
-    expect(screen.queryByText(/Waiting for the first power-up/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Not registered in AWS yet/)).not.toBeInTheDocument();
+  });
+});
+
+describe('Factory Station: the scan registers the starter in AWS by itself', () => {
+  it('registers an unregistered starter on the scan and saves the package once', async () => {
+    mocks.lookupStarter
+      .mockResolvedValueOnce(starter())
+      .mockResolvedValue(starter({ claim: { claimed: true, claimed_at: '2026-11-11T10:00:00Z', pump_id: 'AJ-0001' } }));
+    render(<FactoryStationView />);
+    await scan('AJ-0001');
+    expect(await screen.findByTestId('registered-ok')).toHaveTextContent('AJ-0001-aws-identity.zip');
+    expect(screen.getByTestId('registered-ok')).toHaveTextContent(/private key/i);
+    expect(mocks.registerStarter).toHaveBeenCalledTimes(1);
+    expect(mocks.registerStarter).toHaveBeenCalledWith(7);
+    expect(mocks.saveFile).toHaveBeenCalledTimes(1);
+    expect(mocks.saveFile.mock.calls[0][1]).toBe('AJ-0001-aws-identity.zip');
+  });
+
+  it('does not register a starter that is already registered', async () => {
+    mocks.lookupStarter.mockResolvedValue(starter({ claim: { claimed: true, claimed_at: '2026-11-11T10:00:00Z', pump_id: 'AJ-0001' } }));
+    render(<FactoryStationView />);
+    await scan('AJ-0001');
+    await screen.findByTestId('starter-id');
+    expect(mocks.registerStarter).not.toHaveBeenCalled();
+    expect(mocks.saveFile).not.toHaveBeenCalled();
+  });
+
+  it('does not register a starter whose batch has been revoked', async () => {
+    mocks.lookupStarter.mockResolvedValue(starter({ batch: { id: 'b1', batch_code: 'BATCH-1', revoked: true } }));
+    render(<FactoryStationView />);
+    await scan('AJ-0001');
+    await screen.findByTestId('starter-id');
+    expect(mocks.registerStarter).not.toHaveBeenCalled();
+  });
+
+  it("shows the server's reason when the registration is refused, and saves nothing", async () => {
+    mocks.lookupStarter.mockResolvedValue(starter());
+    mocks.registerStarter.mockRejectedValue(new Error('Registering starters in AWS is not switched on for this server.'));
+    render(<FactoryStationView />);
+    await scan('AJ-0001');
+    expect(await screen.findByTestId('registered-error')).toHaveTextContent('not switched on for this server');
+    expect(mocks.saveFile).not.toHaveBeenCalled();
+    expect(screen.getByTestId('starter-id')).toHaveTextContent('AJ-0001');
   });
 });
 
