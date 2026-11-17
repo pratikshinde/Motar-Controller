@@ -26,7 +26,15 @@ module.exports = ({ config }) => {
   const push = fs.existsSync(googleServices) && key === 'ajanta';
   // The same Firebase project also verifies phone numbers at sign-in (Firebase Phone Authentication): the library's plugin wires
   // google-services.json into the Android build.
-  if (push) plugins.push('expo-notifications', '@react-native-firebase/app', './plugins/with-firebase-kotlin');
+  if (push) {
+    // The small picture in the status bar and the shade must be a white shape on a clear background (Android paints it in one colour);
+    // without one the phone shows a plain white square.
+    plugins.push(
+      ['expo-notifications', { icon: './brands/ajanta/notification-icon.png', color: (brand.colors || {}).primary || '#7053B8' }],
+      '@react-native-firebase/app',
+      './plugins/with-firebase-kotlin'
+    );
+  }
   // The Ajanta farmer's first sign-in is scanning the QR code the dealer printed.
   if (key === 'ajanta') plugins.push(['expo-camera', { cameraPermission: 'Allow $(PRODUCT_NAME) to use the camera to scan your QR code.' }]);
   // The phone's own clock picker (Weekly schedule) and every other Android dialog take the brand colour from the app theme.
