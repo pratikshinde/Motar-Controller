@@ -48,11 +48,11 @@ module.exports = ({ config }) => {
 
   return {
     ...config,
-    name: brand.appName,
+    name: build.launcherName ?? brand.appName,   // the label under the icon on the phone; the app's own screens keep using brand.appName
     slug: build.slug,
     scheme: build.scheme,
     ...(icon ? { icon } : {}),
-    ...(splashImage ? { splash: { image: splashImage, resizeMode: 'contain', backgroundColor: brand.colors.primary ?? '#007F3B' } } : {}),
+    ...(splashImage ? { splash: { image: splashImage, resizeMode: 'contain', backgroundColor: build.splashBackground ?? brand.colors.primary ?? '#007F3B' } } : {}),
     android: {
       ...config.android,
       package: build.androidPackage,

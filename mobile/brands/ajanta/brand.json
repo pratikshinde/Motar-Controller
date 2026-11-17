@@ -22,14 +22,16 @@
     "idleSoft": "#EEEDF3"
   },
   "build": {
+    "launcherName": "Ajanta",
     "slug": "agripump-farmer",
     "scheme": "agripump",
     "androidPackage": "com.agripump.farmer",
     "iosBundleId": "com.agripump.farmer",
     "easProjectId": null,
-    "icon": null,
-    "adaptiveIconForeground": null,
-    "adaptiveIconBackground": null,
-    "splashImage": null
+    "icon": "icon.png",
+    "adaptiveIconForeground": "adaptive-foreground.png",
+    "adaptiveIconBackground": "#F7F4FC",
+    "splashImage": "splash.png",
+    "splashBackground": "#F7F4FC"
   }
 }

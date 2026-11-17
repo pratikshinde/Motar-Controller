@@ -707,6 +707,9 @@
     "notOurQr": "This is not an Ajanta QR code. Please scan the one your dealer gave you.",
     "numberHelp": "Type the mobile number your dealer registered for you.",
     "continue": "Continue",
-    "scanAgain": "Scan again"
+    "scanAgain": "Scan again",
+    "cameraTitle": "Allow camera access",
+    "notNow": "Not now",
+    "scanHint": "Make sure the QR code is clearly visible"
   }
 }

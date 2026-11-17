@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Image, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -86,18 +86,26 @@ const Drift: React.FC<{ children: React.ReactNode }> = ({ children }) => {
  * A painted farm scene behind the header (there is no photo asset yet). `pump` draws a big pipe with water instead of the palms;
  * `pipe` adds a small pipe with water beside the palms. The clouds drift slowly.
  */
-export const AjantaScene: React.FC<{ pump: boolean; pipe?: boolean; align?: 'xMidYMid' | 'xMaxYMid' }> = ({ pump, pipe, align = 'xMidYMid' }) => (
+export const AjantaScene: React.FC<{ pump: boolean; pipe?: boolean; align?: 'xMidYMid' | 'xMaxYMid'; sky?: boolean; trees?: boolean }> = ({
+  pump,
+  pipe,
+  align = 'xMidYMid',
+  sky = true,
+  trees = false,
+}) => (
   <View style={StyleSheet.absoluteFill} pointerEvents="none">
-    <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 190" preserveAspectRatio={`${align} slice`}>
-      <Defs>
-        <LinearGradient id="ajSky" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={paint.skyTop} />
-          <Stop offset="0.55" stopColor={paint.skyMid} />
-          <Stop offset="1" stopColor={paint.skyLow} />
-        </LinearGradient>
-      </Defs>
-      <Rect x="0" y="0" width="400" height="190" fill="url(#ajSky)" />
-    </Svg>
+    {sky ? (
+      <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 190" preserveAspectRatio={`${align} slice`}>
+        <Defs>
+          <LinearGradient id="ajSky" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={paint.skyTop} />
+            <Stop offset="0.55" stopColor={paint.skyMid} />
+            <Stop offset="1" stopColor={paint.skyLow} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="400" height="190" fill="url(#ajSky)" />
+      </Svg>
+    ) : null}
     <Drift>
       <Clouds align={align} />
     </Drift>
@@ -110,20 +118,70 @@ export const AjantaScene: React.FC<{ pump: boolean; pipe?: boolean; align?: 'xMi
       </Defs>
       <Path d="M0 130 Q90 102 200 126 T400 114 L400 190 L0 190 Z" fill={paint.hillFar} />
       <Path d="M0 152 Q120 128 240 150 T400 142 L400 190 L0 190 Z" fill="url(#ajField)" />
-      {pump ? <PumpArt /> : <Palms />}
+      {trees ? <Trees /> : null}
+      {pump ? <PumpArt /> : trees ? null : <Palms />}
       {pipe ? <PipeWater /> : null}
     </Svg>
   </View>
 );
 
-/** The brand mark: a water drop with a leaf (no logo file yet). */
-export const AjantaLogo: React.FC<{ size?: number }> = ({ size = 40 }) => (
-  <Svg width={size} height={size * 1.15} viewBox="0 0 40 46">
-    <Path d="M20 2 C20 2 5 19 5 29 a15 15 0 0 0 30 0 C35 19 20 2 20 2 Z" fill="#FFFFFF" />
-    <Path d="M20 8 C20 8 10 21 10 29 a10 10 0 0 0 20 0 C30 21 20 8 20 8 Z" fill={colors.primary} />
-    <Path d="M11 33 Q20 21 31 31 Q22 41 11 33 Z" fill={colors.primaryBorder} />
-    <Path d="M14 33 Q21 29 28 31" stroke="#FFFFFF" strokeWidth={1.2} fill="none" strokeLinecap="round" />
-  </Svg>
+/** Round trees and crop rows on the left of the field (the splash screen). */
+const Trees: React.FC = () => (
+  <>
+    <Path d="M30 132 L30 108" stroke={paint.trunk} strokeWidth={3} strokeLinecap="round" />
+    <Circle cx="30" cy="100" r="14" fill={paint.frondDark} opacity={0.85} />
+    <Circle cx="40" cy="106" r="10" fill={paint.frondLight} opacity={0.85} />
+    <Path d="M66 134 L66 116" stroke={paint.trunk} strokeWidth={3} strokeLinecap="round" />
+    <Circle cx="66" cy="110" r="11" fill={paint.frondDark} opacity={0.8} />
+    <Path d="M0 160 Q70 140 150 158" stroke="#FFFFFF" strokeWidth={1.4} opacity={0.25} fill="none" />
+    <Path d="M0 172 Q80 150 170 170" stroke="#FFFFFF" strokeWidth={1.4} opacity={0.22} fill="none" />
+    <Path d="M0 184 Q90 160 190 182" stroke="#FFFFFF" strokeWidth={1.4} opacity={0.2} fill="none" />
+  </>
+);
+
+/** The purple gradient with soft waves behind the sign-in header (no farm: the card below is the focus). */
+export const AjantaHeaderBackdrop: React.FC = () => (
+  <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 260" preserveAspectRatio="none">
+      <Defs>
+        <LinearGradient id="ajHead" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor={colors.primary} />
+          <Stop offset="1" stopColor={colors.primaryDark} />
+        </LinearGradient>
+      </Defs>
+      <Rect x="0" y="0" width="400" height="260" fill="url(#ajHead)" />
+      <Circle cx="60" cy="30" r="120" fill="#FFFFFF" opacity={0.07} />
+      <Circle cx="380" cy="60" r="70" fill="#FFFFFF" opacity={0.05} />
+      <Path d="M0 170 Q110 120 230 165 T400 140 L400 260 L0 260 Z" fill="#FFFFFF" opacity={0.07} />
+      <Path d="M0 205 Q130 160 260 198 T400 178 L400 260 L0 260 Z" fill="#FFFFFF" opacity={0.08} />
+    </Svg>
+  </View>
+);
+
+/** A faint wave at the bottom of the page, so the white card does not float on a flat colour. */
+export const AjantaPageWave: React.FC = () => (
+  <View style={styles.pageWave} pointerEvents="none">
+    <Svg width="100%" height="100%" viewBox="0 0 400 160" preserveAspectRatio="none">
+      <Path d="M0 70 Q100 20 220 62 T400 40 L400 160 L0 160 Z" fill={colors.primary} opacity={0.07} />
+      <Path d="M0 110 Q120 70 250 104 T400 88 L400 160 L0 160 Z" fill={colors.primary} opacity={0.09} />
+    </Svg>
+  </View>
+);
+
+/** The brand mark: Ajanta's coloured triangles, on a white round badge so they read on the blue banner. */
+export const AjantaLogo: React.FC<{ size?: number }> = ({ size = 40 }) => {
+  const badge = Math.round(size * 1.25);
+  const w = size * 0.8;
+  return (
+    <View style={{ width: badge, height: badge, borderRadius: badge / 2, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+      <Image source={require('../../../brands/ajanta/mark.png')} style={{ width: w, height: w / 1.13 }} resizeMode="contain" accessibilityIgnoresInvertColors />
+    </View>
+  );
+};
+
+/** The whole Ajanta logo (triangles and the word), for the splash screen. */
+export const AjantaFullLogo: React.FC<{ width?: number }> = ({ width = 240 }) => (
+  <Image source={require('../../../brands/ajanta/logo.png')} style={{ width, height: width / 3.91 }} resizeMode="contain" accessibilityLabel={brand.shortName} />
 );
 
 interface AjantaBannerProps {
@@ -282,6 +340,7 @@ export const AjantaScreen: React.FC<{ banner: AjantaBannerProps; children: React
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: AJANTA_PAGE },
+  pageWave: { position: 'absolute', start: 0, end: 0, bottom: 0, height: 170 },
   scroll: { flex: 1, backgroundColor: AJANTA_PAGE },
   content: { padding: 12, gap: 12, paddingBottom: 32 },
   banner: { backgroundColor: paint.banner, overflow: 'hidden' },

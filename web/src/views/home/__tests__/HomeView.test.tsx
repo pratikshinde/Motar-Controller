@@ -22,13 +22,35 @@ describe('the home page', () => {
     expect(mocks.navigate).toHaveBeenCalledWith('/owner');
   });
 
-  it('has one Login button in the page that opens the choice of roles', async () => {
+  it('has a Login button in the header that opens the choice of roles', async () => {
     render(<MemoryRouter><HomeView /></MemoryRouter>);
     const login = screen.getByTestId('login-button');
     expect(login).toHaveTextContent('Login');
-    expect(login.closest('header')).toBeNull();
+    expect(login.closest('header')).not.toBeNull();
     await userEvent.click(login);
     expect(mocks.navigate).toHaveBeenCalledWith('/login');
+  });
+
+  it('Get Started also opens the choice of roles', async () => {
+    render(<MemoryRouter><HomeView /></MemoryRouter>);
+    await userEvent.click(screen.getByTestId('get-started'));
+    expect(mocks.navigate).toHaveBeenCalledWith('/login');
+  });
+
+  it('is the Ajanta Pump Controller page: name, the four features and the three steps', () => {
+    render(<MemoryRouter><HomeView /></MemoryRouter>);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Ajanta Pump Controller');
+    for (const f of ['Remote Control', 'Schedule Operation', 'Water & Energy Saving', 'Real-Time Monitoring']) expect(screen.getByText(f)).toBeInTheDocument();
+    for (const s of ['Scan QR Code', 'Control Pump', 'Enjoy Benefits']) expect(screen.getByText(s)).toBeInTheDocument();
+  });
+
+  it('the menu links go to sections that exist on the page', () => {
+    render(<MemoryRouter><HomeView /></MemoryRouter>);
+    const nav = screen.getByRole('navigation', { name: 'Sections' });
+    for (const a of Array.from(nav.querySelectorAll('a'))) {
+      const id = (a.getAttribute('href') || '').slice(1);
+      expect(document.getElementById(id), `section #${id}`).not.toBeNull();
+    }
   });
 
   it('tells farmers to use the mobile app', () => {
