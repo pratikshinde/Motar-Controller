@@ -10,6 +10,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import { fetchManufacturersOverview, type ManufacturersOverview } from '../../api/brands';
 import { ChartCard, STATUS_COLORS, StatTile, monthName, statusSlices } from '../../components/platform/platformUi';
+import { useLiveRefresh } from '../../hooks/useLiveRefresh';
 
 const REFRESH_MS = 30_000;
 
@@ -33,6 +34,7 @@ export const PlatformDashboardView: React.FC = () => {
     const id = setInterval(load, REFRESH_MS);
     return () => clearInterval(id);
   }, [load]);
+  useLiveRefresh(load);
 
   if (error && !data) return <Alert severity="error">{error}</Alert>;
   if (!data) {

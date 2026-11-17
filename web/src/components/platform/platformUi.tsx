@@ -46,6 +46,21 @@ export const ChartCard: React.FC<{ title: string; children: React.ReactNode; tes
 /** The colours of the pump states, the same everywhere a pump status is drawn. */
 export const STATUS_COLORS = { running: '#2e9e5b', stopped: '#e0a030', fault: '#d9534f', offline: '#8a94a6', no_data: '#b9c0cc' };
 
+/** What a farmer's pumps are doing, in plain words (not counts): one pump says "Running"; several say "2 running · 1 fault". */
+export function pumpStatusWords(p: PumpBuckets): { text: string; hint: string; color: string } {
+  const kinds = [
+    { key: 'fault', one: 'Fault', many: 'fault', hint: 'The pump tripped and needs attention', color: STATUS_COLORS.fault, n: p.fault },
+    { key: 'offline', one: 'Offline', many: 'offline', hint: 'No contact. The power may be off', color: STATUS_COLORS.offline, n: p.offline },
+    { key: 'running', one: 'Running', many: 'running', hint: 'Water is being pumped', color: STATUS_COLORS.running, n: p.running },
+    { key: 'stopped', one: 'Stopped', many: 'stopped', hint: 'The pump is switched off', color: STATUS_COLORS.stopped, n: p.stopped },
+    { key: 'no_data', one: 'No signal yet', many: 'no signal yet', hint: 'Waiting for the first signal from the pump', color: STATUS_COLORS.no_data, n: p.no_data }
+  ].filter(k => k.n > 0);
+  if (kinds.length === 0) return { text: 'No pump yet', hint: '', color: STATUS_COLORS.no_data };
+  const total = kinds.reduce((sum, k) => sum + k.n, 0);
+  if (total === 1) return { text: kinds[0].one, hint: kinds[0].hint, color: kinds[0].color };
+  return { text: kinds.map(k => `${k.n} ${k.many}`).join(' · '), hint: kinds[0].hint, color: kinds[0].color };
+}
+
 /** The slices of the pump-status donut (empty states are left out so the legend only names what exists). */
 export function statusSlices(p: PumpBuckets) {
   return [

@@ -98,8 +98,13 @@ async def lifespan(app: FastAPI):
     # Startup: carry out the weekly schedules (send START / STOP when a set time comes due). One worker at a time (an advisory lock).
     schedule_runner = asyncio.create_task(_schedule_loop()) if settings.SCHEDULE_RUN_INTERVAL_SECONDS > 0 else None
 
+    # Startup: the ingest worker and the jobs worker are other processes; what they push to the browsers comes through Redis.
+    from app.services.ws_hub import ws_hub
+    ws_relay = asyncio.create_task(ws_hub.run_relay_listener())
+
     yield
     # Shutdown
+    ws_relay.cancel()
     if schedule_runner:
         schedule_runner.cancel()
     sweeper.cancel()

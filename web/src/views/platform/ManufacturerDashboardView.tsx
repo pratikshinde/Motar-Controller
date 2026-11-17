@@ -15,6 +15,7 @@ import { setViewing } from '../../api/viewing';
 import { ChartCard, StatTile, statusSlices } from '../../components/platform/platformUi';
 import { RemovePersonDialog, type RemovePersonTarget } from '../../components/RemovePersonDialog';
 import { initialsOf } from '../ManufacturersView';
+import { useLiveRefresh } from '../../hooks/useLiveRefresh';
 
 const REFRESH_MS = 30_000;
 
@@ -42,6 +43,7 @@ export const ManufacturerDashboardView: React.FC = () => {
     const id = setInterval(load, REFRESH_MS);
     return () => clearInterval(id);
   }, [load]);
+  useLiveRefresh(load);
 
   const back = (
     <Box>

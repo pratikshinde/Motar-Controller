@@ -11,6 +11,7 @@ import { NewPartnerQrDialog } from '../../components/NewPartnerQrDialog';
 import { PersonCard } from '../../components/people/personUi';
 import { PendingRegistrations } from '../../components/people/PendingRegistrations';
 import { cancelRegistration, fetchRegistrations, type Registration } from '../../api/registrations';
+import { useLiveRefresh } from '../../hooks/useLiveRefresh';
 
 type Level = TeamMember['role'];
 
@@ -54,6 +55,7 @@ export const PeopleView: React.FC = () => {
   useEffect(() => {
     load();
   }, [load]);
+  useLiveRefresh(load);
 
   const tabParam = params.get('tab');
   const level: Level = (levels.find(l => l === tabParam) ?? levels[0]) as Level;

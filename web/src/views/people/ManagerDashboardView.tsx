@@ -14,6 +14,7 @@ import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import { fetchTeam, type Team } from '../../api/team';
 import { useAuth } from '../../context/AuthContext';
 import { ChartCard, STATUS_COLORS, StatTile, monthName, statusSlices } from '../../components/platform/platformUi';
+import { useLiveRefresh } from '../../hooks/useLiveRefresh';
 
 const REFRESH_MS = 30_000;
 
@@ -40,6 +41,7 @@ export const ManagerDashboardView: React.FC = () => {
     const id = setInterval(load, REFRESH_MS);
     return () => clearInterval(id);
   }, [load]);
+  useLiveRefresh(load);
 
   if (error && !team) return <Alert severity="error">{error}</Alert>;
   if (!team) {

@@ -108,6 +108,11 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   return <WebSocketCtx.Provider value={{ status, lastMessageAt, subscribe }}>{children}</WebSocketCtx.Provider>;
 };
 
+/** The same as useWs, but null (not an error) where there is no live connection, for pages that only use it as a bonus. */
+export function useWsOptional() {
+  return useContext(WebSocketCtx);
+}
+
 export function useWs() {
   const ctx = useContext(WebSocketCtx);
   if (!ctx) throw new Error('useWs must be used within WebSocketProvider');

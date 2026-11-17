@@ -22,7 +22,8 @@ import { NewPartnerQrDialog } from '../../components/NewPartnerQrDialog';
 import { RemovePersonDialog, type RemovePersonTarget } from '../../components/RemovePersonDialog';
 import { FarmerActions, QR_CHIP } from '../../components/people/FarmerActions';
 import { MemberAvatar, MemberChips, PersonCard } from '../../components/people/personUi';
-import { ChartCard, STATUS_COLORS, StatTile, statusSlices } from '../../components/platform/platformUi';
+import { ChartCard, STATUS_COLORS, StatTile, pumpStatusWords, statusSlices } from '../../components/platform/platformUi';
+import { useLiveRefresh } from '../../hooks/useLiveRefresh';
 import { RoleChip } from '../../components/team/teamStyle';
 
 const tabOf = (role: TeamMember['role']) => role;
@@ -60,6 +61,7 @@ export const PersonDashboardView: React.FC = () => {
   useEffect(() => {
     load();
   }, [load]);
+  useLiveRefresh(load);
 
   const m = team?.people.find(p => p.id === id);
 
@@ -93,6 +95,7 @@ export const PersonDashboardView: React.FC = () => {
   const underDealers = under.filter(p => p.role === 'dealer');
   const underFarmers = under.filter(p => p.role === 'customer');
   const slices = statusSlices(m.pumps);
+  const farmerWords = pumpStatusWords(m.pumps);
   const success = theme.palette.success.main;
 
   return (
@@ -148,9 +151,14 @@ export const PersonDashboardView: React.FC = () => {
         {m.role === 'customer' ? (
           <>
             <StatTile testId="tile-pumps" icon={InventoryIcon} label="Pumps" value={m.pumps.total} color={theme.palette.warning.main} />
-            <StatTile testId="tile-running" icon={PlayCircleIcon} label="Running now" value={m.pumps.running} color={STATUS_COLORS.running} />
-            <StatTile testId="tile-faults" icon={ReportProblemIcon} label="Faults" value={m.pumps.fault} color={STATUS_COLORS.fault} />
-            <StatTile testId="tile-offline" icon={WifiOffIcon} label="Offline" value={m.pumps.offline} color={STATUS_COLORS.offline} />
+            <StatTile
+              testId="tile-pump-status"
+              icon={farmerWords.color === STATUS_COLORS.fault ? ReportProblemIcon : farmerWords.color === STATUS_COLORS.offline ? WifiOffIcon : PlayCircleIcon}
+              label="Pump status"
+              value={farmerWords.text}
+              color={farmerWords.color}
+              hint={farmerWords.hint}
+            />
           </>
         ) : (
           <>
