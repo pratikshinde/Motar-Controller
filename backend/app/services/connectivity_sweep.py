@@ -26,6 +26,7 @@ logger = logging.getLogger("agripump.connectivity")
 
 OFFLINE_ALERT = "OFFLINE"
 IN_SERVICE = ("COMMISSIONED", "ACTIVE")       # stock, suspended and retired devices are expected to be quiet
+POWER_WATCHED = ("ALLOCATED", "COMMISSIONED", "ACTIVE")   # a farmer has this pump, so the farmer hears about a power cut
 # Any constant: only one API worker at a time may run the sweep, or every worker would raise its own alert.
 SWEEP_LOCK_KEY = 5_119_207
 
@@ -79,6 +80,26 @@ def sweep_connectivity(db: Session, now: Optional[datetime] = None) -> Tuple[Lis
     return raised, resolved
 
 
+def sweep_power_silence(db: Session, now: Optional[datetime] = None) -> List[power_service.PowerChange]:
+    """Pumps whose power is ON but that have been quiet for POWER_SILENCE_SECONDS are taken to have lost power. Commits.
+
+    Not tied to the "Offline" alert: that one waits longer, and it skips devices that are assigned but not yet commissioned, which would
+    leave their farmer without the message. Stock that is not placed with anyone (MANUFACTURED, IN_STOCK) is ignored.
+    """
+    now = now or datetime.now(timezone.utc)
+    cutoff = now - timedelta(seconds=settings.POWER_SILENCE_SECONDS)
+    pumps = (
+        db.query(Pump)
+        .filter(Pump.power_state == power_service.ON, Pump.last_seen_at.isnot(None), Pump.last_seen_at < cutoff,
+                Pump.lifecycle_state.in_(POWER_WATCHED))
+        .with_for_update(skip_locked=True)       # two workers never announce the same cut
+        .all()
+    )
+    changes = [c for c in (power_service.observe_silence(db, p, now) for p in pumps) if c is not None]
+    db.commit()
+    return changes
+
+
 def _announcement(db: Session, alert: Alert) -> Tuple[str, Dict[str, Any], Optional[str]]:
     pump = db.query(Pump.hierarchy_path).filter(Pump.id == alert.pump_id).first()
     payload = {
@@ -93,6 +114,13 @@ def _announcement(db: Session, alert: Alert) -> Tuple[str, Dict[str, Any], Optio
 
 def _sweep() -> List[Tuple[str, Dict[str, Any], Optional[str]]]:
     with system_session() as db:
+        try:
+            for change in sweep_power_silence(db):
+                logger.info("Pump %s has been silent: power taken to be off", change.pump_id)
+                power_service.announce(db, change)
+        except Exception:
+            db.rollback()
+            logger.exception("The power-silence check failed")
         raised, resolved = sweep_connectivity(db)
         for alert in raised:
             logger.info("Pump %s stopped reporting: connectivity alert raised", alert.pump_id)

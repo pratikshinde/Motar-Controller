@@ -158,7 +158,12 @@ class Settings(BaseSettings):
     COMMAND_INTERIM_CONFIRM: bool = True # infer APPLIED from the pump's own reading until firmware acks (F2)
     COMMAND_SWEEP_INTERVAL_SECONDS: int = 5
     # How often the API looks for pumps that stopped reporting (and for ones that came back). 0 turns the sweep off.
-    CONNECTIVITY_SWEEP_INTERVAL_SECONDS: int = 60
+    CONNECTIVITY_SWEEP_INTERVAL_SECONDS: int = 20
+    # A pump that was ON and has not been heard from for this long is taken to have lost its power, and the farmer's phone is told
+    # ("Power may be off"). Shorter than OFFLINE_AFTER_SECONDS on purpose: the starter sends a heartbeat every 60 s, so two missed
+    # ones are enough for a power cut, while "Offline" on the screen waits for three. A starter that dies with the mains usually gets one
+    # last "no voltage" reading out first (that is announced at once); this is for the ones that do not.
+    POWER_SILENCE_SECONDS: int = 120
     # The weekly schedule runner: how often it looks for a START / STOP that has come due (0 turns it off), and how long it keeps
     # trying a pump that is offline or cooling down before giving up on that time.
     SCHEDULE_RUN_INTERVAL_SECONDS: int = 30

@@ -1,4 +1,4 @@
-"""Power events: the farmer's phone is told when the power came and when it went, and nothing else.
+"""Power events: the farmer's phone is told when the power came, when it went, and when a fault stops the pump.
 
 Runs against the local development database; every pump, event and alert created here is removed again.
 """
@@ -53,6 +53,12 @@ class PowerBase(FarmerAppBase):
     def events(self, pid):
         self.db.expire_all()
         return [(e.state, e.source) for e in self.db.query(PumpPowerEvent).filter(PumpPowerEvent.pump_id == pid).order_by(PumpPowerEvent.occurred_at)]
+
+    def pump_in(self, tag, lifecycle_state):
+        pid = self.pump(tag).id
+        self.db.query(Pump).filter(Pump.id == pid).update({"lifecycle_state": lifecycle_state})
+        self.db.commit()
+        return pid
 
     def fresh(self, pid):
         self.db.expire_all()
@@ -145,7 +151,7 @@ class TestPowerState(PowerBase):
         self.assertEqual(listed[pid]["power_state"], "OFF")
 
 
-class TestOnlyPowerIsPushed(PowerBase):
+class TestWhatIsPushed(PowerBase):
     def frame(self, pid, volts, seq):
         return {"clientid": pid, "dev_id": pid, "vl": volts, "i": [0, 0, 0], "mot": 0, "st": 0, "flt": 0, "rt": 10, "rssi": -70, "seq": seq}
 
@@ -164,16 +170,55 @@ class TestOnlyPowerIsPushed(PowerBase):
         self.assertEqual([p[1] for p in self.pushes], ["Power gone", "Power is back"], "one push per change, none for repeats")
         self.assertEqual(self.events(pid), [("ON", "VOLTAGE"), ("OFF", "VOLTAGE"), ("ON", "VOLTAGE")])
 
-    def test_a_fault_is_an_alert_and_never_a_push(self):
+    def test_a_fault_is_an_alert_and_one_push_however_often_it_repeats(self):
         if not self.db.query(FaultCodeCatalog).filter(FaultCodeCatalog.code == 5).first():
             self.db.add(FaultCodeCatalog(code=5, name="DryRun", severity="HIGH", description="DryRun"))
             self.db.commit()
         pid = self.pump("PW8").id
         before = len(self.pushes)
-        asyncio.run(process_batch([{"Body": json.dumps({"clientid": pid, "cmd": "fault", "code": 5, "desc": "DryRun", "vl": [415, 412, 410], "i": [2, 0, 2]}), "ReceiptHandle": "r-flt"}]))
+        for n in range(3):
+            asyncio.run(process_batch([{"Body": json.dumps({"clientid": pid, "cmd": "fault", "code": 5, "desc": "DryRun", "vl": [415, 412, 410], "i": [2, 0, 2]}), "ReceiptHandle": f"r-flt-{n}"}]))
         self.db.expire_all()
         self.assertTrue(self.db.query(Alert).filter(Alert.pump_id == pid, Alert.alert_type == "FAULT").first(), "it is in the Alerts list")
-        self.assertEqual(self.pushes[before:], [], "but the phone is not pushed")
+        mine = self.pushes[before:]
+        self.assertEqual([(p[0], p[1], p[3]) for p in mine], [(pid, "Pump fault", {"type": "FAULT", "fault_code": "5"})], "the phone is pushed once")
+        self.assertIn("Dry Run Fault", mine[0][2], "in the starter's own words")
+
+    def test_a_phase_fail_while_the_power_is_gone_is_not_pushed_twice(self):
+        pid = self.pump("PW8B").id
+        ps.observe_reading(self.db, self.fresh(pid), 415, 415, 415, False)
+        ps.observe_reading(self.db, self.fresh(pid), 0, 0, 0, False)       # power gone: that is what the phone is told
+        self.db.commit()
+        before = len(self.pushes)
+        pump_notify.fault(self.db, pid, 1)
+        self.assertEqual(self.pushes[before:], [], "'Power gone' already says it")
+        pump_notify.fault(self.db, pid, 8)
+        self.assertEqual([p[1] for p in self.pushes[before:]], ["Pump fault"], "any other fault still is")
+
+    def test_a_pump_silent_for_two_minutes_is_taken_to_have_lost_power_even_before_it_is_commissioned(self):
+        from app.services import connectivity_sweep as cswp
+        pid = self.pump_in("PW11", "ALLOCATED")
+        ps.observe_reading(self.db, self.fresh(pid), 415, 415, 415, False)
+        self.db.commit()
+        self.db.query(Pump).filter(Pump.id == pid).update({"last_seen_at": datetime.now(UTC) - timedelta(seconds=settings.POWER_SILENCE_SECONDS - 30)})
+        self.db.commit()
+        self.assertEqual(cswp.sweep_power_silence(self.db), [], "not silent long enough yet")
+        self.db.query(Pump).filter(Pump.id == pid).update({"last_seen_at": datetime.now(UTC) - timedelta(seconds=settings.POWER_SILENCE_SECONDS + 5)})
+        self.db.commit()
+        changes = cswp.sweep_power_silence(self.db)
+        self.assertEqual([(c.pump_id, c.state, c.source) for c in changes if c.pump_id == pid], [(pid, "OFF", "CONTACT")])
+        for c in changes:
+            ps.announce(self.db, c)
+        self.assertIn("Power may be off", [p[1] for p in self.pushes if p[0] == pid])
+        self.assertEqual([c for c in cswp.sweep_power_silence(self.db) if c.pump_id == pid], [], "one message per outage")
+
+    def test_a_pump_in_stock_is_not_watched_for_power(self):
+        from app.services import connectivity_sweep as cswp
+        pid = self.pump_in("PW12", "IN_STOCK")
+        ps.observe_reading(self.db, self.fresh(pid), 415, 415, 415, False)
+        self.db.query(Pump).filter(Pump.id == pid).update({"last_seen_at": datetime.now(UTC) - timedelta(hours=1)})
+        self.db.commit()
+        self.assertEqual([c for c in cswp.sweep_power_silence(self.db) if c.pump_id == pid], [])
 
     def test_a_pump_that_stops_reporting_gets_an_alert_and_a_power_may_be_off_push_only(self):
         pid = self.pump("PW9", last_seen_at=datetime.now(UTC) - timedelta(seconds=settings.OFFLINE_AFTER_SECONDS + 60)).id
@@ -190,13 +235,14 @@ class TestOnlyPowerIsPushed(PowerBase):
         mine = [p for p in self.pushes if p[0] == pid]
         self.assertEqual([p[1] for p in mine], ["Power may be off"], "no 'Pump offline' push any more")
 
-    def test_pump_notify_no_longer_pushes_faults_or_offline(self):
+    def test_pump_notify_pushes_a_fault_but_not_offline_or_back_online(self):
         pid = self.pump("PW10").id
         before = len(self.pushes)
-        pump_notify.fault(self.db, pid, 5)
         pump_notify.no_contact(self.db, pid)
         pump_notify.back_online(self.db, pid)
-        self.assertEqual(self.pushes[before:], [])
+        self.assertEqual(self.pushes[before:], [], "offline and back-online are only in the Alerts list")
+        pump_notify.fault(self.db, pid, 5)
+        self.assertEqual([p[1] for p in self.pushes[before:]], ["Pump fault"])
 
 
 if __name__ == "__main__":
