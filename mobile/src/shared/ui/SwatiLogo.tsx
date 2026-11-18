@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { View, StyleSheet, Text, Image } from 'react-native';
 import { brand } from '@/config/brand';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const logoImage = require('../../../brands/swati/logo.png');
 
 interface SwatiLogoProps {
   size?: number;
@@ -18,37 +20,13 @@ export const SwatiLogo: React.FC<SwatiLogoProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <Svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-        <Defs>
-          <LinearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#29B6F6" />
-            <Stop offset="100%" stopColor="#1565C0" />
-          </LinearGradient>
-          <LinearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor="#4ADE80" />
-            <Stop offset="100%" stopColor="#16A34A" />
-          </LinearGradient>
-        </Defs>
-
-        {/* Outer green curving leaf */}
-        <Path
-          d="M28 78 C20 62 24 38 42 22 C36 34 35 48 41 62 C46 72 56 79 68 81 C55 86 38 86 28 78 Z"
-          fill="url(#leafGrad)"
-        />
-
-        {/* Central blue water droplet */}
-        <Path
-          d="M56 18 C56 18 36 46 36 62 C36 76 47 84 58 84 C69 84 80 76 80 62 C80 46 56 18 56 18 Z"
-          fill="url(#waterGrad)"
-        />
-
-        {/* Inner water droplet highlight */}
-        <Path
-          d="M62 38 C62 38 50 54 50 64 C50 71 55 76 60 76 C56 75 52 70 52 64 C52 54 62 38 62 38 Z"
-          fill="#FFFFFF"
-          opacity={0.35}
-        />
-      </Svg>
+      {/* SolarLogger's own picture: brands/swati/logo.png (a rounded blue square), not a drawing */}
+      <Image
+        source={logoImage}
+        style={{ width: size, height: size, borderRadius: size * 0.22 }}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
 
       {showText && (
         <View style={styles.textWrap}>

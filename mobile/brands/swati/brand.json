@@ -24,9 +24,11 @@
     "androidPackage": "com.swati.pumpcontroller",
     "iosBundleId": "com.swati.pumpcontroller",
     "easProjectId": "f79194d5-61a5-4d68-b6f7-ec0130548023",
-    "icon": null,
-    "adaptiveIconForeground": null,
-    "adaptiveIconBackground": null,
-    "splashImage": null
+    "icon": "icon.png",
+    "adaptiveIconForeground": "adaptive-foreground.png",
+    "adaptiveIconBackground": "#FFFFFF",
+    "splashImage": "splash.png",
+    "launcherName": "SolarLogger",
+    "splashBackground": "#FFFFFF"
   }
 }
