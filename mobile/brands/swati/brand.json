@@ -5,6 +5,12 @@
   "titleLine1": "SOLAR",
   "titleLine2": "LOGGER",
   "design": "swati",
+  "features": {
+    "push": false,
+    "firebasePhone": true,
+    "phoneOnly": true,
+    "qrScan": true
+  },
   "colors": {
     "primary": "#1565C0",
     "primaryDark": "#0D47A1",

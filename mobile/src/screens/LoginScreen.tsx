@@ -51,9 +51,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const { t } = useTranslation();
   const expired = useAuth((st) => st.expired);
 
-  // Ajanta's farmers have no password: a mobile number and the SMS code sent to it are the whole sign-in, and a number that has no
-  // account yet gets one the first time it is verified. The other brands keep their password / code tabs as they were.
-  const phoneOnly = brand.key === 'ajanta';
+  // Where a brand is phone-only (`features.phoneOnly`) its farmers have no password: a mobile number and the SMS code sent to it are
+  // the whole sign-in, and a number that has no account yet gets one the first time it is verified. Other brands keep their password / code tabs.
+  const phoneOnly = !!brand.features?.phoneOnly;
   const [mode, setMode] = useState<'password' | 'otp'>(phoneOnly ? 'otp' : 'password');
   // Where Firebase is set up (the Ajanta Android app) the SMS code comes from Firebase; elsewhere from our own backend.
   const viaFirebase = phoneOnly && firebasePhoneSupported;

@@ -4,6 +4,12 @@
   "shortName": "AJANTA",
   "titleLine1": "AJANTA PUMP",
   "titleLine2": "CONTROLLER",
+  "features": {
+    "push": true,
+    "firebasePhone": true,
+    "phoneOnly": true,
+    "qrScan": true
+  },
   "colors": {
     "primary": "#7053B8",
     "primaryDark": "#563B99",

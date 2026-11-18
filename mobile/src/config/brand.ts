@@ -22,6 +22,12 @@ export interface Brand {
   design?: 'classic' | 'swati';
   /** Overrides for the design tokens in shared/theme (same names, #RRGGBB). */
   colors: Record<string, string>;
+  /**
+   * What this brand's app can do. `push` (phone notifications) and `firebasePhone` (the SMS code from Firebase) are also off in a
+   * build that has no Firebase file for this app's package (app.config.js turns them off), whatever brand.json says.
+   * `phoneOnly`: sign in with a mobile number and an SMS code, no password. `qrScan`: the first sign-in by scanning the dealer's QR code.
+   */
+  features?: { push?: boolean; firebasePhone?: boolean; phoneOnly?: boolean; qrScan?: boolean };
 }
 
 type PublicBrand = Partial<Brand>;
@@ -62,10 +68,12 @@ const defaults: Brand = {
   titleLine2: ajanta.titleLine2,
   design: 'classic',
   colors: ajanta.colors as Record<string, string>,
+  features: ajanta.features,
 };
 
 export const brand: Brand = {
   ...defaults,
   ...fromBuild,
   colors: { ...defaults.colors, ...(fromBuild?.colors ?? {}) },
+  features: { ...defaults.features, ...(fromBuild?.features ?? {}) },
 };

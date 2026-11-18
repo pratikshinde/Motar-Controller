@@ -5,12 +5,12 @@ import { httpRequest } from '@/api/http';
 
 /**
  * Push notifications through Firebase Cloud Messaging: the phone asks for permission, gets its registration token and gives it
- * to the backend, which then pushes "the power came" and "the power went" for the farmer's pumps, and nothing else (faults and
- * every other alert are in the Alerts list). Only the Ajanta Android app
- * has a Firebase project (app.config.js adds it only when google-services.json is present); everywhere else this does nothing.
+ * to the backend, which then pushes "the power came", "the power went" and a fault that stopped the pump (everything else is in
+ * the Alerts list). It works only in an Android build that carries this app's Firebase file (app.config.js turns the brand's
+ * `features.push` off when google-services.json does not hold this package); everywhere else this does nothing.
  * Push is best effort: any failure here must never get in the way of using the app.
  */
-export const pushSupported = Platform.OS === 'android' && brand.key === 'ajanta';
+export const pushSupported = Platform.OS === 'android' && !!brand.features?.push;
 
 export const ALERTS_CHANNEL = 'alerts';
 
@@ -34,7 +34,7 @@ export async function registerPush(): Promise<void> {
   if (!pushSupported) return;
   try {
     await Notifications.setNotificationChannelAsync(ALERTS_CHANNEL, {
-      name: 'Power alerts',
+      name: 'Alerts',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
     });

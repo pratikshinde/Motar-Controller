@@ -5,10 +5,10 @@ import { brand } from '@/config/brand';
  * Sign in with Firebase Phone Authentication. Firebase sends the SMS code itself (no SMS provider or DLT registration of ours),
  * the farmer types it, and Firebase gives the app a signed ID token that the backend checks (POST /auth/firebase-phone).
  *
- * Only the Ajanta Android app has a Firebase project (app.config.js adds the library's plugin only when google-services.json is
- * present); everywhere else (tests, the web, other brands) the login screen keeps using the backend's own SMS-code route.
+ * Only an Android build that carries this app's Firebase file can do it (app.config.js turns the brand's `features.firebasePhone` off
+ * when google-services.json does not hold this package); everywhere else (tests, the web) the login screen uses the backend's own SMS-code route.
  */
-export const firebasePhoneSupported = Platform.OS === 'android' && brand.key === 'ajanta';
+export const firebasePhoneSupported = Platform.OS === 'android' && !!brand.features?.firebasePhone;
 
 export type FirebasePhoneProblem = 'wrongCode' | 'tooMany' | 'badPhone' | 'network' | 'other';
 

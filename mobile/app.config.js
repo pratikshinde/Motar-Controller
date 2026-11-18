@@ -20,23 +20,36 @@ module.exports = ({ config }) => {
   const profile = process.env.EAS_BUILD_PROFILE || '';
   const production = profile === 'production' || profile.endsWith('-production');
   const plugins = [...(config.plugins ?? [])];
-  // Push notifications (Firebase Cloud Messaging): only where this app has its Firebase file. google-services.json belongs to
-  // one Android package (the Ajanta app's) and is kept out of git; a build without it simply has no push.
+  // Push notifications (Firebase Cloud Messaging) and Firebase phone sign-in: only where this build has a Firebase file that holds THIS app's
+  // Android package. google-services.json is kept out of git; it can list several apps of one Firebase project (add each brand's package in
+  // the Firebase console and download the file again). A build whose package is not in it simply has no push and no Firebase sign-in.
   const googleServices = path.join(__dirname, 'google-services.json');
-  const push = fs.existsSync(googleServices) && key === 'ajanta';
+  const hasFirebaseFor = (pkg) => {
+    try {
+      const j = JSON.parse(fs.readFileSync(googleServices, 'utf8'));
+      return (j.client || []).some((cl) => (cl.client_info || {}).android_client_info?.package_name === pkg);
+    } catch {
+      return false;
+    }
+  };
+  const brandFeatures = brand.features || {};
+  const firebase = hasFirebaseFor(build.androidPackage);
+  const push = firebase && !!brandFeatures.push;
+  const features = { ...brandFeatures, push, firebasePhone: firebase && !!brandFeatures.firebasePhone };
+  const notificationIcon = fs.existsSync(path.join(__dirname, 'brands', key, 'notification-icon.png')) ? `./brands/${key}/notification-icon.png` : undefined;
   // The same Firebase project also verifies phone numbers at sign-in (Firebase Phone Authentication): the library's plugin wires
   // google-services.json into the Android build.
   if (push) {
     // The small picture in the status bar and the shade must be a white shape on a clear background (Android paints it in one colour);
     // without one the phone shows a plain white square.
     plugins.push(
-      ['expo-notifications', { icon: './brands/ajanta/notification-icon.png', color: (brand.colors || {}).primary || '#7053B8' }],
+      ['expo-notifications', { ...(notificationIcon ? { icon: notificationIcon } : {}), color: (brand.colors || {}).primary || '#7053B8' }],
       '@react-native-firebase/app',
       './plugins/with-firebase-kotlin'
     );
   }
-  // The Ajanta farmer's first sign-in is scanning the QR code the dealer printed.
-  if (key === 'ajanta') plugins.push(['expo-camera', { cameraPermission: 'Allow $(PRODUCT_NAME) to use the camera to scan your QR code.' }]);
+  // A farmer's first sign-in is scanning the QR code the dealer printed.
+  if (brandFeatures.qrScan) plugins.push(['expo-camera', { cameraPermission: 'Allow $(PRODUCT_NAME) to use the camera to scan your QR code.' }]);
   // The phone's own clock picker (Weekly schedule) and every other Android dialog take the brand colour from the app theme.
   const c = brand.colors || {};
   if (key === 'ajanta' && c.primary) {
@@ -78,7 +91,7 @@ module.exports = ({ config }) => {
     plugins,
     extra: {
       ...config.extra,
-      brand: brands.publicPart(brand),
+      brand: { ...brands.publicPart(brand), features },
       ...(build.easProjectId ? { eas: { projectId: build.easProjectId } } : {}),
     },
   };

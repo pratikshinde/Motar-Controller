@@ -31,6 +31,14 @@ FAULT_NAMES: Dict[int, str] = {
     8: "Over load",
     9: "Motor Fault",
     10: "Low voltage",
+    # Solar pumps (the drive's own faults, backend phase6_solar_vfd): in the farmer's words.
+    100: "Solar voltage too high",
+    101: "Not enough sunlight (solar voltage too low)",
+    102: "Over current",
+    103: "Dry run (not enough sun to pump water)",
+    104: "Over heating",
+    105: "Pump drive not responding",
+    106: "Over load",
 }
 
 _NO_CONTACT = "{name}: no contact for {minutes} minutes. The power may be off, or there is no mobile signal."

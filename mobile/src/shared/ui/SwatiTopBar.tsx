@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Bell, Sparkles, User } from 'lucide-react-native';
 import { SwatiLogo } from './SwatiLogo';
 import { brand } from '@/config/brand';
+import { pushSupported } from '@/services/push';
 
 interface SwatiTopBarProps {
   farmerName?: string;
@@ -36,21 +37,23 @@ export const SwatiTopBar: React.FC<SwatiTopBarProps> = ({
         </View>
 
         <View style={styles.rightIcons}>
-          {/* Notifications Bell with Glowing Badge */}
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={onPressAlerts}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel={t('nav.alerts')}
-          >
-            <Bell size={21} color="#FFFFFF" />
-            {unreadAlerts > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadAlerts > 99 ? '99+' : unreadAlerts}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          {/* Notifications Bell with Glowing Badge: only where the phone does not get push notifications itself (the Alerts list is also in Settings) */}
+          {!pushSupported && (
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={onPressAlerts}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('nav.alerts')}
+            >
+              <Bell size={21} color="#FFFFFF" />
+              {unreadAlerts > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadAlerts > 99 ? '99+' : unreadAlerts}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
 
           {/* Farmer Profile Avatar */}
           <TouchableOpacity
