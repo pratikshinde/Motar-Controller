@@ -64,8 +64,16 @@ The `backup` container writes `./backups/agripump-YYYYMMDD-HHMMSS.dump` every da
 docker compose run --rm -e BACKUP_RUN_ONCE=1 backup
 ```
 
-**Copy the folder off the server** (a backup that lives only on the machine that fails is not a backup). The simplest way is a daily upload to an AWS S3 bucket from the
-server's own role (`aws s3 sync ./backups s3://YOUR-BUCKET/agripump-backups/`), or download the files now and then.
+**Copy the folder off the server** (a backup that lives only on the machine that fails is not a backup). From your own PC, in PowerShell:
+
+```powershell
+.\deploy\pull-backups.ps1            # copies the backup files it has not got yet into %USERPROFILE%\AjantaBackups
+.\deploy\pull-backups.ps1 -Make      # asks the server for a fresh backup first
+```
+
+It only adds files on your PC (it deletes nothing on the server) and never touches `.env`, the Firebase key or the AWS keys; it uses the server's SSH key.
+Run it every week or two until you set up the unattended way: a daily upload to an AWS S3 bucket from the server's own role
+(`aws s3 sync ./backups s3://YOUR-BUCKET/agripump-backups/`).
 
 To restore (this replaces what is in the database; stop the app first):
 
