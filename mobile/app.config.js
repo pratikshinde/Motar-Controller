@@ -44,10 +44,12 @@ module.exports = ({ config }) => {
     // without one the phone shows a plain white square.
     plugins.push(
       ['expo-notifications', { ...(notificationIcon ? { icon: notificationIcon } : {}), color: (brand.colors || {}).primary || '#7053B8' }],
-      '@react-native-firebase/app',
-      './plugins/with-firebase-kotlin'
+      '@react-native-firebase/app'
     );
   }
+  // The React Native Firebase modules are in every brand's Android build (they are dependencies of the app, whether or not the brand
+  // uses Firebase), and they only compile with this fix: so it is not tied to push.
+  plugins.push('./plugins/with-firebase-kotlin');
   // A farmer's first sign-in is scanning the QR code the dealer printed.
   if (brandFeatures.qrScan) plugins.push(['expo-camera', { cameraPermission: 'Allow $(PRODUCT_NAME) to use the camera to scan your QR code.' }]);
   // The phone's own clock picker (Weekly schedule) and every other Android dialog take the brand colour from the app theme.
