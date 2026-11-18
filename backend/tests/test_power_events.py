@@ -184,16 +184,19 @@ class TestWhatIsPushed(PowerBase):
         self.assertEqual([(p[0], p[1], p[3]) for p in mine], [(pid, "Pump fault", {"type": "FAULT", "fault_code": "5"})], "the phone is pushed once")
         self.assertIn("Dry Run Fault", mine[0][2], "in the starter's own words")
 
-    def test_a_phase_fail_while_the_power_is_gone_is_not_pushed_twice(self):
+    def test_while_the_power_is_gone_only_that_is_pushed_and_with_power_a_fault_is(self):
         pid = self.pump("PW8B").id
         ps.observe_reading(self.db, self.fresh(pid), 415, 415, 415, False)
+        self.db.commit()
+        before = len(self.pushes)
+        pump_notify.fault(self.db, pid, 8)
+        self.assertEqual([p[1] for p in self.pushes[before:]], ["Pump fault"], "power is there and a fault stopped the pump: the fault is told")
         ps.observe_reading(self.db, self.fresh(pid), 0, 0, 0, False)       # power gone: that is what the phone is told
         self.db.commit()
         before = len(self.pushes)
-        pump_notify.fault(self.db, pid, 1)
-        self.assertEqual(self.pushes[before:], [], "'Power gone' already says it")
-        pump_notify.fault(self.db, pid, 8)
-        self.assertEqual([p[1] for p in self.pushes[before:]], ["Pump fault"], "any other fault still is")
+        for code in (1, 2, 8):
+            pump_notify.fault(self.db, pid, code)
+        self.assertEqual(self.pushes[before:], [], "'Power gone' says it; no fault message while there is no supply")
 
     def test_a_pump_silent_for_two_minutes_is_taken_to_have_lost_power_even_before_it_is_commissioned(self):
         from app.services import connectivity_sweep as cswp

@@ -1,4 +1,4 @@
-"""Power at the pump: "the power came" and "the power went". The only thing the farmer's phone is notified about.
+"""Power at the pump: "the power came" and "the power went". With a fault (pump_notify), what the farmer's phone is notified about.
 
 A pump is in one of two power states, ON or OFF, and a change of state is one event (a row in `pump_power_events`, and a push). Two things can tell us:
 

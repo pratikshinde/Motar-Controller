@@ -17,7 +17,6 @@ from app.services.schedule_service import DEFAULT_TIMEZONE, _zone
 
 logger = logging.getLogger(__name__)
 
-PHASE_FAIL_CODES = (1, 2)
 
 
 def no_contact(db: Session, pump_id: str) -> None:
@@ -35,8 +34,8 @@ def fault(db: Session, pump_id: str, fault_code: Optional[int]) -> None:
     alert_sms.notify_fault(db, pump_id, fault_code)
     try:
         pump = db.query(Pump).filter(Pump.id == pump_id).first()
-        if fault_code in PHASE_FAIL_CODES and pump is not None and pump.power_state == "OFF":
-            return       # the supply is gone and "Power gone" already says so; a second message about the same thing is noise
+        if pump is not None and pump.power_state == "OFF":
+            return       # no supply: the farmer is told the power is off, not about faults that a missing supply causes
         push.notify_pump(
             db, pump_id, "Pump fault", alert_sms.text_fault(db, pump_id, fault_code) + " Open the app to see what to do.",
             {"type": "FAULT", "fault_code": "" if fault_code is None else str(fault_code)},
