@@ -188,7 +188,7 @@ interface AjantaBannerProps {
   title: string;
   /** `pump` = a pipe with water behind the title (the Timer page); `farm` = fields and palms. */
   scene?: 'farm' | 'pump' | 'home';
-  /** Given: a back arrow and the title only. Not given: the brand, the bell and the profile above the title. */
+  /** Given: a back arrow and the title only. Not given: the brand, the bell and the profile above the title. The bell is drawn only when `onPressAlerts` is given. */
   onBack?: () => void;
   unreadAlerts?: number;
   onPressAlerts?: () => void;
@@ -243,20 +243,22 @@ export const AjantaBanner: React.FC<AjantaBannerProps> = ({
               </View>
             </View>
             <View style={styles.right}>
-              <TouchableOpacity
-                style={styles.bell}
-                onPress={onPressAlerts}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel={unreadAlerts > 0 ? `${t('nav.alerts')}, ${unreadAlerts}` : t('nav.alerts')}
-              >
-                <Bell size={28} color="#FFFFFF" />
-                {unreadAlerts > 0 ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{unreadAlerts > 99 ? '99+' : unreadAlerts}</Text>
-                  </View>
-                ) : null}
-              </TouchableOpacity>
+              {onPressAlerts ? (
+                <TouchableOpacity
+                  style={styles.bell}
+                  onPress={onPressAlerts}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={unreadAlerts > 0 ? `${t('nav.alerts')}, ${unreadAlerts}` : t('nav.alerts')}
+                >
+                  <Bell size={28} color="#FFFFFF" />
+                  {unreadAlerts > 0 ? (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{unreadAlerts > 99 ? '99+' : unreadAlerts}</Text>
+                    </View>
+                  ) : null}
+                </TouchableOpacity>
+              ) : null}
               <TouchableOpacity
                 style={styles.avatar}
                 onPress={onPressProfile}

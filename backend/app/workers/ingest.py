@@ -366,6 +366,8 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
     power_reads: Dict[str, Tuple[Any, Any, Any, bool]] = {}   # pump_id -> (v_ry, v_yb, v_br, buffered): what says whether the power is on
     power_changes: List[Any] = []                 # the power came / went (announced after the commit)
     command_events: List[Any] = []                # their WebSocket announcements, built before the session closes
+    faulted_before: Dict[str, bool] = {}          # pump_id -> was it already in FAULT before this batch: a trip after a non-fault state is a NEW fault
+    fault_told: set = set()                       # (pump_id, code) already announced in this batch: one message per fault, not per frame
 
     db: Session = SessionLocal()
     try:
@@ -436,6 +438,7 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                     logger.warning("Fault code %s from '%s' is not in the catalog, skipped", trip[0], client_id)
                 else:
                     code, (v_ry, v_yb, v_br, i_r, i_y, i_b), occurred_at = trip
+                    faulted_before.setdefault(client_id, trip_pump.status == "FAULT")
                     fault_events.append((client_id, code, v_ry, v_yb, v_br, i_r, i_y, i_b, occurred_at))
                     trip_pump.status = "FAULT"
                     trip_pump.last_seen_at = datetime.now(timezone.utc)
@@ -461,6 +464,8 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 logger.warning("Unknown device '%s', skipping", telem.device_id)
                 handled_receipts.append(receipt)
                 continue
+
+            faulted_before.setdefault(pump.id, pump.status == "FAULT")
 
             # Reject commands for suspended/retired/RMA devices (defensive — ingestion side)
             if pump.status in ("SUSPENDED", "RETIRED", "RMA"):
@@ -638,7 +643,11 @@ async def process_batch(messages: List[Dict[str, Any]]) -> List[str]:
                 fault_code=fault_code,
                 source_fault_log_id=fault_log_id,
             )
-            if alert.occurrence_count == 1:  # the first of its kind in this window: one SMS, not one per repeat
+            # One message per fault: the first of its kind in the alert window, or a trip after the pump was out of FAULT
+            # (cleared, or running again), so that a fault that comes back is told again. Repeat frames of a fault that is
+            # still active, and the fault frame plus its status frame, are not.
+            if (alert.occurrence_count == 1 or not faulted_before.get(pump_id, True)) and (pump_id, fault_code) not in fault_told:
+                fault_told.add((pump_id, fault_code))
                 pump_notify.fault(db, pump_id, fault_code)
 
         # The power came / went: the one thing the farmer's phone is notified about.

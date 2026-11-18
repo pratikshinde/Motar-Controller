@@ -184,6 +184,23 @@ class TestWhatIsPushed(PowerBase):
         self.assertEqual([(p[0], p[1], p[3]) for p in mine], [(pid, "Pump fault", {"type": "FAULT", "fault_code": "5"})], "the phone is pushed once")
         self.assertIn("Dry Run Fault", mine[0][2], "in the starter's own words")
 
+    def test_a_fault_that_comes_back_after_it_was_cleared_is_told_again(self):
+        if not self.db.query(FaultCodeCatalog).filter(FaultCodeCatalog.code == 5).first():
+            self.db.add(FaultCodeCatalog(code=5, name="DryRun", severity="HIGH", description="DryRun"))
+            self.db.commit()
+        pid = self.pump("PW8C").id
+        base = 7_300_000 + int(self.sfx[:3], 16)
+        trip = lambda n: asyncio.run(process_batch([{"Body": json.dumps({"clientid": pid, "cmd": "fault", "code": 5, "desc": "DryRun", "vl": [415, 412, 410], "i": [0, 0, 0]}), "ReceiptHandle": f"r-again-{n}"}]))
+        self.send(self.frame(pid, [415, 412, 410], base))                  # healthy, stopped
+        before = len(self.pushes)
+        trip(1)
+        self.assertEqual([p[1] for p in self.pushes[before:]], ["Pump fault"], "the trip is told")
+        trip(2)
+        self.assertEqual(len(self.pushes[before:]), 1, "the same trip repeating while it is still active is not")
+        self.send(self.frame(pid, [415, 412, 410], base + 1))              # the fault was cleared: healthy again
+        trip(3)
+        self.assertEqual([p[1] for p in self.pushes[before:]], ["Pump fault", "Pump fault"], "it came back: told again")
+
     def test_while_the_power_is_gone_only_that_is_pushed_and_with_power_a_fault_is(self):
         pid = self.pump("PW8B").id
         ps.observe_reading(self.db, self.fresh(pid), 415, 415, 415, False)

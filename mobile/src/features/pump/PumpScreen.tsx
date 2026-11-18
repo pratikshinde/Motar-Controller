@@ -114,8 +114,6 @@ export const PumpScreen: React.FC<{ id: string; embedded?: boolean; initialTab?:
     <AjantaBanner
       title={t('nav.home')}
       scene="home"
-      unreadAlerts={openAlerts}
-      onPressAlerts={() => router.push('/alerts')}
       onPressProfile={() => router.push('/settings')}
     />
   ) : (

@@ -23,7 +23,6 @@ import {
   getGetDeletionRequestQueryKey,
   getListSessionsQueryKey,
   useGetDeletionRequest,
-  useListAlerts,
   useListPumps,
   useListSessions,
   useRequestDeletion,
@@ -106,9 +105,6 @@ export const SettingsScreenAjanta: React.FC = () => {
   const user = useAuth((s) => s.user);
   useStatusBar('light');
 
-  const alertsQ = useListAlerts({ unresolved_only: true });
-  const openAlerts = (alertsQ.data?.alerts ?? []).length;
-
   // The pump the farmer is looking at is who Help & support rings.
   const pumps = useListPumps().data?.pumps ?? [];
   const selected = useSelectedPump((s) => s.id);
@@ -179,8 +175,6 @@ export const SettingsScreenAjanta: React.FC = () => {
     <AjantaScreen
       banner={{
         title: t('settings.title'),
-        unreadAlerts: openAlerts,
-        onPressAlerts: () => router.push('/alerts'),
         onPressProfile: () => router.push('/settings'),
       }}
     >
