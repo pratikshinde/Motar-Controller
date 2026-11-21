@@ -79,6 +79,8 @@ module.exports = ({ config }) => {
     android: {
       ...config.android,
       package: build.androidPackage,
+      // A brand with no QR scan never opens the camera: keep the camera / microphone permissions (declared by the bundled camera library) out of the app.
+      ...(brandFeatures.qrScan ? {} : { blockedPermissions: ['android.permission.CAMERA', 'android.permission.RECORD_AUDIO'] }),
       ...(push ? { googleServicesFile: './google-services.json' } : {}),
       ...(adaptiveForeground
         ? {

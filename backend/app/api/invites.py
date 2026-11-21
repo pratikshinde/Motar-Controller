@@ -54,7 +54,7 @@ def _utc_iso(value: datetime) -> str:
 @router.post("")
 def create_invite_link(req: PartnerInviteCreate, current_user: User = Depends(partner_only), db: Session = Depends(get_db)):
     role = (req.role or "").strip().lower()
-    if role not in ASSIGNABLE_ROLES.get(current_user.role, []):
+    if role not in brand_service.assignable_roles(db, current_user, ASSIGNABLE_ROLES):
         raise HTTPException(status_code=403, detail=f"A {current_user.role} account cannot invite a {role or 'blank'} account.")
 
     parent = current_user
@@ -63,7 +63,7 @@ def create_invite_link(req: PartnerInviteCreate, current_user: User = Depends(pa
             parent = _get_in_scope(db, current_user, uuid.UUID(req.parent_user_id))
         except ValueError:
             raise HTTPException(status_code=422, detail="parent_user_id is not a valid id")
-    if parent.role not in PARTNER_ROLES or role not in ASSIGNABLE_ROLES.get(parent.role, []):
+    if parent.role not in PARTNER_ROLES or role not in brand_service.assignable_roles(db, parent, ASSIGNABLE_ROLES):
         raise HTTPException(status_code=422, detail=f"A {role} account cannot be placed under a {parent.role} account.")
     if _dealer_depth(role, parent) > MAX_DEALER_DEPTH:
         raise HTTPException(status_code=422, detail=f"Dealer sub-levels are limited to {MAX_DEALER_DEPTH}.")

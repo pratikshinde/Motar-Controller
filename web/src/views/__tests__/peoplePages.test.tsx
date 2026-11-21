@@ -5,10 +5,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 
-const mocks = vi.hoisted(() => ({ fetchTeam: vi.fn(), fetchFarmers: vi.fn(), navigate: vi.fn(), role: 'manufacturer' }));
+const mocks = vi.hoisted(() => ({ fetchTeam: vi.fn(), fetchFarmers: vi.fn(), fetchMyBrand: vi.fn(), navigate: vi.fn(), role: 'manufacturer' }));
 
 vi.mock('../../api/team', async importOriginal => ({ ...(await importOriginal<typeof import('../../api/team')>()), fetchTeam: mocks.fetchTeam }));
 vi.mock('../../api/farmers', async importOriginal => ({ ...(await importOriginal<typeof import('../../api/farmers')>()), fetchFarmers: mocks.fetchFarmers }));
+vi.mock('../../api/brands', async importOriginal => ({ ...(await importOriginal<typeof import('../../api/brands')>()), fetchMyBrand: mocks.fetchMyBrand }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: mocks.role } }) }));
 vi.mock('../../context/ToastContext', () => ({ useToast: () => ({ showToast: vi.fn() }) }));
 vi.mock('@mui/x-charts/PieChart', () => ({ PieChart: () => <div data-testid="pie" /> }));
@@ -24,6 +25,7 @@ vi.mock('../../components/people/FarmerActions', async importOriginal => ({
 }));
 
 import { PeopleView } from '../people/PeopleView';
+import { forgetBrandRules } from '../../hooks/useBrandRules';
 import { PersonDashboardView } from '../people/PersonDashboardView';
 import { ManagerDashboardView } from '../people/ManagerDashboardView';
 import { buildAppTheme } from '../../theme';
@@ -68,7 +70,9 @@ const themed = (ui: React.ReactElement, url = '/') =>
 
 beforeEach(() => {
   Object.values(mocks).forEach(m => typeof m === 'function' && (m as ReturnType<typeof vi.fn>).mockReset());
+  forgetBrandRules();
   mocks.role = 'manufacturer';
+  mocks.fetchMyBrand.mockResolvedValue({ brand: { key: 'ajanta', name: 'Ajanta', short_name: null, primary_color: null, logo_url: null, hierarchy: 'full' } });
   mocks.fetchTeam.mockResolvedValue({ summary, people });
   mocks.fetchFarmers.mockResolvedValue({
     farmers: [{ id: '101', full_name: 'Ganesh Jadhav', phone_number: '+919000000101', address: 'Hadapsar, Pune', status: 'ACTIVE', created_at: null,
@@ -170,6 +174,29 @@ describe('People: one tab per level, each person a card', () => {
     mocks.fetchTeam.mockResolvedValue({ summary, people: [] });
     open();
     expect(await screen.findByTestId('empty')).toHaveTextContent('No distributors yet');
+  });
+});
+
+describe('a brand with super admin > admin > users (SolarLogger)', () => {
+  const open = () => themed(<Routes><Route path="/people" element={<PeopleView />} /></Routes>, '/people');
+  const usersBrand = () =>
+    mocks.fetchMyBrand.mockResolvedValue({ brand: { key: 'swati', name: 'SolarLogger', short_name: null, primary_color: null, logo_url: null, hierarchy: 'admin_users' } });
+
+  it('shows users only: no distributor or dealer tabs, and an Add user button', async () => {
+    usersBrand();
+    open();
+    expect(await screen.findByTestId('add-person')).toHaveTextContent('Add user');
+    expect(screen.queryByTestId('tab-distributor')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tab-dealer')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Users' })).toBeInTheDocument();
+  });
+
+  it('adds a user with a mobile number and a password', async () => {
+    usersBrand();
+    open();
+    await userEvent.click(await screen.findByTestId('add-person'));
+    expect(await screen.findByRole('dialog', { name: 'Add user' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password/i)).toBeInTheDocument();
   });
 });
 

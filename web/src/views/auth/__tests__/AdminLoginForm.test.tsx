@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   adminNeedsFirstPassword: vi.fn(),
   requestAdminCode: vi.fn(),
   setAdminPassword: vi.fn(),
+  requestEmailCode: vi.fn(),
+  loginWithEmailCode: vi.fn(),
   verifyMfa: vi.fn(),
   clearSession: vi.fn(),
   navigate: vi.fn()
@@ -22,7 +24,9 @@ vi.mock('../../../api/auth', () => ({
   loginWithEmail: mocks.loginWithEmail,
   adminNeedsFirstPassword: mocks.adminNeedsFirstPassword,
   requestAdminCode: mocks.requestAdminCode,
-  setAdminPassword: mocks.setAdminPassword
+  setAdminPassword: mocks.setAdminPassword,
+  requestEmailCode: mocks.requestEmailCode,
+  loginWithEmailCode: mocks.loginWithEmailCode
 }));
 vi.mock('../../../api/mfa', () => ({ verifyMfa: mocks.verifyMfa }));
 vi.mock('../../../api/client', () => ({ clearSession: mocks.clearSession }));
@@ -43,6 +47,7 @@ beforeEach(() => {
   Object.values(mocks).forEach(m => m.mockReset());
   mocks.adminNeedsFirstPassword.mockResolvedValue(false);
   mocks.requestAdminCode.mockResolvedValue(undefined);
+  mocks.requestEmailCode.mockResolvedValue(undefined);
 });
 
 describe('the admin sign-in: email and password', () => {
@@ -232,5 +237,45 @@ describe('an admin whose account also needs the authenticator', () => {
     await userEvent.click(screen.getByRole('button', { name: /verify code/i }));
     await waitFor(() => expect(mocks.verifyMfa).toHaveBeenCalledWith('temp-token', '654321'));
     await waitFor(() => expect(mocks.handleAuthResult).toHaveBeenCalledWith(session('manufacturer')));
+  });
+});
+
+describe('the admin sign-in with an emailed code (no password)', () => {
+  it('sends a code, then signs in with it and opens the dashboard', async () => {
+    mocks.loginWithEmailCode.mockResolvedValue(session('manufacturer'));
+    renderForm();
+    await userEvent.click(screen.getByTestId('code-signin'));
+    await userEvent.type(screen.getByPlaceholderText('name@company.com'), EMAIL);
+    await userEvent.click(screen.getByRole('button', { name: /send me a code/i }));
+    await waitFor(() => expect(mocks.requestEmailCode).toHaveBeenCalledWith(EMAIL));
+    expect(await screen.findByTestId('signin-code-sent')).toBeInTheDocument();
+    await userEvent.type(screen.getByPlaceholderText('123456'), '482913');
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+    await waitFor(() => expect(mocks.loginWithEmailCode).toHaveBeenCalledWith(EMAIL, '482913'));
+    await waitFor(() => expect(mocks.handleAuthResult).toHaveBeenCalledWith(session('manufacturer')));
+    expect(mocks.navigate).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('refuses a code sign-in that belongs to someone who is not an admin', async () => {
+    mocks.loginWithEmailCode.mockResolvedValue(session('customer'));
+    renderForm();
+    await userEvent.click(screen.getByTestId('code-signin'));
+    await userEvent.type(screen.getByPlaceholderText('name@company.com'), EMAIL);
+    await userEvent.click(screen.getByRole('button', { name: /send me a code/i }));
+    await userEvent.type(await screen.findByPlaceholderText('123456'), '111111');
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+    await waitFor(() => expect(mocks.clearSession).toHaveBeenCalled());
+    expect(mocks.handleAuthResult).not.toHaveBeenCalled();
+  });
+
+  it('shows the server reason for a wrong code', async () => {
+    mocks.loginWithEmailCode.mockRejectedValue(new Error('That code is wrong or has expired.'));
+    renderForm();
+    await userEvent.click(screen.getByTestId('code-signin'));
+    await userEvent.type(screen.getByPlaceholderText('name@company.com'), EMAIL);
+    await userEvent.click(screen.getByRole('button', { name: /send me a code/i }));
+    await userEvent.type(await screen.findByPlaceholderText('123456'), '000000');
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+    expect(await screen.findByText(/wrong or has expired/i)).toBeInTheDocument();
   });
 });

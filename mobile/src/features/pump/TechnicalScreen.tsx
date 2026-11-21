@@ -167,7 +167,7 @@ export const TechnicalScreen: React.FC = () => {
                     value: pump.vfd_hz,
                     unit: 'Hz',
                     digits: 1,
-                    subtitle: 'Fuji FRENIC-Ace Output (0–50 Hz)',
+                    subtitle: 'Drive output (0–50 Hz)',
                     barRatio: pump.vfd_hz != null ? Math.min(Math.max(pump.vfd_hz / 50, 0), 1) : 0,
                   },
                   {
@@ -196,15 +196,17 @@ export const TechnicalScreen: React.FC = () => {
 
               {/* 3. Fuji Drive Controller Status */}
               <EngineeringCard
-                title="Fuji FRENIC-Ace Drive Diagnostics"
+                title="Solar drive diagnostics"
                 icon={Cpu}
                 accentColor={skin(colors.primary, skin(colors.primary, '#7C3AED'))}
                 metrics={[]}
                 footerLabel={t('swati.driveStatus')}
                 footerValue={
-                  driveStatusKey(pump.vfd_status)
-                    ? (t(driveStatusKey(pump.vfd_status) as string) as string)
-                    : pump.vfd_status ?? '—'
+                  pump.vfd_fault_code
+                    ? faultName(t, pump.vfd_fault_code)
+                    : driveStatusKey(pump.vfd_status)
+                      ? (t(driveStatusKey(pump.vfd_status) as string) as string)
+                      : pump.vfd_status ?? '—'
                 }
               />
             </>

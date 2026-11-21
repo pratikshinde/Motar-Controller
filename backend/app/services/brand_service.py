@@ -224,3 +224,39 @@ def info_for_id(db, brand_id) -> Optional[BrandInfo]:
         return None
     row = db.query(AppBrand).filter(AppBrand.id == brand_id).first()
     return _to_info(row) if row else None
+
+
+# ---------------------------------------------------------------------------
+# Brand rules kept in `brands.features` (JSON), so one backend can serve brands with different hierarchies.
+#   "hierarchy": "admin_users"   super admin > admin > users: the admin adds users directly, there are no distributors or dealers.
+#                                (anything else, or nothing: the full tree manufacturer > distributor > dealer > farmer)
+#   "admin_login": "email_code"  the admin signs in with a code emailed to them, not with a password.
+# ---------------------------------------------------------------------------
+HIERARCHY_ADMIN_USERS = "admin_users"
+ADMIN_LOGIN_EMAIL_CODE = "email_code"
+PARTNER_TIERS = ("distributor", "dealer")
+
+
+def features_of(db, user) -> Dict[str, Any]:
+    """The features of the brand this account belongs to ({} for an account with no brand)."""
+    info = info_for_id(db, getattr(user, "brand_id", None))
+    return dict(info.features) if info is not None else {}
+
+
+def hierarchy_of(db, user) -> str:
+    return str(features_of(db, user).get("hierarchy") or "full")
+
+
+def assignable_roles(db, actor, table: Dict[str, List[str]]) -> List[str]:
+    """The roles `actor` may create: the role table's list, minus distributors and dealers in a brand whose hierarchy is admin > users."""
+    roles = list(table.get(getattr(actor, "role", None), []))
+    if hierarchy_of(db, actor) == HIERARCHY_ADMIN_USERS:
+        roles = [r for r in roles if r not in PARTNER_TIERS]
+    return roles
+
+
+def admin_signs_in_by_code(db, user) -> bool:
+    """True for an admin (manufacturer) whose brand has its admins sign in with an emailed code instead of a password."""
+    if user is None or getattr(user, "role", None) != "manufacturer":
+        return False
+    return str(features_of(db, user).get("admin_login") or "") == ADMIN_LOGIN_EMAIL_CODE

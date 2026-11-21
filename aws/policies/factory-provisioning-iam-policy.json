@@ -5,7 +5,10 @@
       "Sid": "ReadTheDevicePolicy",
       "Effect": "Allow",
       "Action": "iot:GetPolicy",
-      "Resource": "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:policy/agripump-device-policy"
+      "Resource": [
+        "arn:aws:iot:ap-south-1:267834697472:policy/agripump-device-policy",
+        "arn:aws:iot:ap-south-1:267834697472:policy/solar-logger-policy"
+      ]
     },
     {
       "Sid": "ThingsAndTheirCertificates",
@@ -19,8 +22,8 @@
         "iot:DetachThingPrincipal"
       ],
       "Resource": [
-        "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:thing/*",
-        "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:cert/*"
+        "arn:aws:iot:ap-south-1:267834697472:thing/*",
+        "arn:aws:iot:ap-south-1:267834697472:cert/*"
       ]
     },
     {
@@ -39,8 +42,9 @@
         "iot:DetachPolicy"
       ],
       "Resource": [
-        "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:cert/*",
-        "arn:aws:iot:ap-south-1:<ACCOUNT_ID>:policy/agripump-device-policy"
+        "arn:aws:iot:ap-south-1:267834697472:cert/*",
+        "arn:aws:iot:ap-south-1:267834697472:policy/agripump-device-policy",
+        "arn:aws:iot:ap-south-1:267834697472:policy/solar-logger-policy"
       ]
     }
   ]

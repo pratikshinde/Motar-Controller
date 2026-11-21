@@ -172,7 +172,7 @@ def create_registration(req: RegistrationCreate, current_user: User = Depends(pa
     """Start registering a distributor or a dealer: saves what was typed and returns the QR (shown once). No account exists until the new person has
     scanned the QR, typed their mobile number and chosen their own password."""
     role = (req.role or "").lower()
-    if role not in ASSIGNABLE_ROLES.get(current_user.role, []):
+    if role not in brand_service.assignable_roles(db, current_user, ASSIGNABLE_ROLES):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"A {current_user.role} account cannot register a {role} account.")
     parent = current_user
     if req.parent_user_id:
@@ -180,7 +180,7 @@ def create_registration(req: RegistrationCreate, current_user: User = Depends(pa
             parent = _get_in_scope(db, current_user, uuid.UUID(req.parent_user_id))
         except ValueError:
             raise HTTPException(status_code=422, detail="parent_user_id is not a valid id")
-    if role not in ASSIGNABLE_ROLES.get(parent.role, []):
+    if role not in brand_service.assignable_roles(db, parent, ASSIGNABLE_ROLES):
         raise HTTPException(status_code=422, detail=f"A {parent.role} cannot have a {role} under it.")
     row, token = partner_registration.create(db, current_user, parent, role, req.full_name, req.address, req.phone_number)
     _audit(db, current_user, row.id, "PARTNER_REGISTRATION_STARTED", after={"role": role, "parent": str(parent.id)})
@@ -441,7 +441,7 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
         org_role = req.org_role if req.org_role in ("staff", "readonly") else "staff"
     else:
         role = (req.role or "dealer").lower()
-        allowed = ASSIGNABLE_ROLES.get(current_user.role, [])
+        allowed = brand_service.assignable_roles(db, current_user, ASSIGNABLE_ROLES)
         if role not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

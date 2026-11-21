@@ -53,7 +53,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   // Where a brand is phone-only (`features.phoneOnly`) its farmers have no password: a mobile number and the SMS code sent to it are
   // the whole sign-in, and a number that has no account yet gets one the first time it is verified. Other brands keep their password / code tabs.
-  const phoneOnly = !!brand.features?.phoneOnly;
+  // `passwordOnly` (SolarLogger): the account is made by an admin who hands over the password. Mobile number + password only: no code tab,
+  // no "create account", no "forgot password" (the admin resets it).
+  const passwordOnly = !!brand.features?.passwordOnly;
+  const phoneOnly = !!brand.features?.phoneOnly && !passwordOnly;
   const [mode, setMode] = useState<'password' | 'otp'>(phoneOnly ? 'otp' : 'password');
   // Where Firebase is set up (the Ajanta Android app) the SMS code comes from Firebase; elsewhere from our own backend.
   const viaFirebase = phoneOnly && firebasePhoneSupported;
@@ -310,7 +313,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   return (
     <AuthShell rightAction={renderLanguagePill}>
       {/* Mode Switcher Tabs (not for Ajanta: code only) */}
-      {!phoneOnly && (
+      {!phoneOnly && !passwordOnly && (
       <View style={localStyles.tabBar}>
         <TouchableOpacity
           style={[localStyles.tabItem, mode === 'password' && localStyles.tabItemActive]}
@@ -400,9 +403,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity onPress={onForgotPassword} style={{ alignSelf: 'flex-end', marginTop: 10 }}>
-            <Text style={s.footerLink}>{t('login.forgotPassword')}</Text>
-          </TouchableOpacity>
+          {!passwordOnly && (
+            <TouchableOpacity onPress={onForgotPassword} style={{ alignSelf: 'flex-end', marginTop: 10 }}>
+              <Text style={s.footerLink}>{t('login.forgotPassword')}</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[s.submitBtn, loading && { opacity: 0.7 }]}
@@ -523,7 +528,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         </TouchableOpacity>
       )}
 
-      {!phoneOnly && (
+      {!phoneOnly && !passwordOnly && (
         <View style={s.footerRow}>
           <Text style={s.footerText}>{t('login.newHere')}</Text>
           <TouchableOpacity onPress={onRegister}>

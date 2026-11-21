@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import i18n, { isSupportedLanguage, syncLanguageToServer } from '@/shared/i18n';
 import { useStatusBar } from '@/shared/hooks/useStatusBar';
 import { LoginScreen } from '@/screens/LoginScreen';
+import { brand } from '@/config/brand';
 
 export default function LoginRoute() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function LoginRoute() {
       }}
       onForgotPassword={() => router.push('/forgot-password')}
       onRegister={() => router.push('/register')}
-      onScanQr={() => router.push('/scan')}
+      onScanQr={brand.features?.qrScan ? () => router.push('/scan') : undefined}
       onChangeLanguage={() => router.push({ pathname: '/language', params: { mode: 'change' } })}
     />
   );

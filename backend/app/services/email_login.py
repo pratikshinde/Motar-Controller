@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import User
 from app.models.email_login_code import EmailLoginCode
-from app.services import email_service
+from app.services import brand_service, email_service
 
 logger = logging.getLogger("agripump.email_login")
 
@@ -30,6 +30,8 @@ MAX_ATTEMPTS = 5
 MAX_SENDS = 5
 SEND_WINDOW_MINUTES = 15
 OWNER_ROLES = ("superadmin",)
+# Who may sign in with an emailed code: the platform owner, and an admin (manufacturer) of a brand that chose it (brand feature admin_login = email_code).
+CODE_ROLES = ("superadmin", "manufacturer")
 DEV_CODE = "123456"
 WRONG = "That code is not right, or it has expired. Ask for a new one."
 
@@ -57,6 +59,8 @@ def find_account(db: Session, email: str, roles: Tuple[str, ...]) -> Optional[Us
     user = db.query(User).filter(func.lower(User.email) == email, User.role.in_(roles)).first()
     if user is None or not user.is_active or user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
         return None
+    if user.role == "manufacturer" and not brand_service.admin_signs_in_by_code(db, user):
+        return None      # an admin of a brand that uses passwords: no code is sent
     return user
 
 

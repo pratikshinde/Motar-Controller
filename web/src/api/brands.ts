@@ -59,7 +59,7 @@ export function fetchPlatformMap(): Promise<PlatformMap> {
 }
 
 /** The manufacturer the signed-in partner belongs to (its name for the portal's header), or null for a super admin. */
-export function fetchMyBrand(): Promise<{ brand: { key: string; name: string; short_name: string | null; primary_color: string | null; logo_url: string | null } | null }> {
+export function fetchMyBrand(): Promise<{ brand: { key: string; name: string; short_name: string | null; primary_color: string | null; logo_url: string | null; hierarchy?: string } | null }> {
   return apiJson('/brands/mine');
 }
 

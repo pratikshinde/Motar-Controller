@@ -7,9 +7,10 @@
   "design": "swati",
   "features": {
     "push": false,
-    "firebasePhone": true,
-    "phoneOnly": true,
-    "qrScan": true
+    "firebasePhone": false,
+    "phoneOnly": false,
+    "passwordOnly": true,
+    "qrScan": false
   },
   "colors": {
     "primary": "#1565C0",

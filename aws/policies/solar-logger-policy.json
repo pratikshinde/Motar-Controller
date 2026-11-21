@@ -1,0 +1,33 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "iot:Connect",
+      "Resource": "arn:aws:iot:ap-south-1:267834697472:client/${iot:Connection.Thing.ThingName}",
+      "Condition": {
+        "Bool": {
+          "iot:Connection.Thing.IsAttached": "true"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iot:Publish",
+      "Resource": [
+        "arn:aws:iot:ap-south-1:267834697472:topic/solar/${iot:Connection.Thing.ThingName}/data",
+        "arn:aws:iot:ap-south-1:267834697472:topic/solar/${iot:Connection.Thing.ThingName}/config/req"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iot:Subscribe",
+      "Resource": "arn:aws:iot:ap-south-1:267834697472:topicfilter/solar/${iot:Connection.Thing.ThingName}/config"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iot:Receive",
+      "Resource": "arn:aws:iot:ap-south-1:267834697472:topic/solar/${iot:Connection.Thing.ThingName}/config"
+    }
+  ]
+}

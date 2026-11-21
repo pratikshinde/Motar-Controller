@@ -25,9 +25,10 @@ export interface Brand {
   /**
    * What this brand's app can do. `push` (phone notifications) and `firebasePhone` (the SMS code from Firebase) are also off in a
    * build that has no Firebase file for this app's package (app.config.js turns them off), whatever brand.json says.
-   * `phoneOnly`: sign in with a mobile number and an SMS code, no password. `qrScan`: the first sign-in by scanning the dealer's QR code.
+   * `phoneOnly`: sign in with a mobile number and an SMS code, no password. `passwordOnly`: mobile number + a password an admin hands
+   * over (no SMS code, no sign-up, no forgot-password). `qrScan`: the first sign-in by scanning the dealer's QR code.
    */
-  features?: { push?: boolean; firebasePhone?: boolean; phoneOnly?: boolean; qrScan?: boolean };
+  features?: { push?: boolean; firebasePhone?: boolean; phoneOnly?: boolean; passwordOnly?: boolean; qrScan?: boolean };
 }
 
 type PublicBrand = Partial<Brand>;

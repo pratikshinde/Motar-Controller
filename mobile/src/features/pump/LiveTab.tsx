@@ -311,7 +311,7 @@ export const LiveTab: React.FC<{
               <Text style={[styles.solarValue, { color: colors.primaryDark, fontSize: 18 }]}>
                 {pump.vfd_status || (known ? (pumpOn ? t('dashboard.running') : t('dashboard.stopped')) : '—')}
               </Text>
-              <Text style={styles.solarUnit}>FRENIC-Ace</Text>
+              <Text style={styles.solarUnit}>Solar drive</Text>
             </View>
           </View>
         </Card>

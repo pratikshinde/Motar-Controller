@@ -7,6 +7,8 @@ import { fetchTeam, LEVEL_LABEL, type Team, type TeamMember } from '../../api/te
 import { useAuth } from '../../context/AuthContext';
 import { AddSubordinateDialog } from '../../components/AddSubordinateDialog';
 import { AddFarmerDialog } from '../../components/AddFarmerDialog';
+import { AddUserDialog } from '../../components/AddUserDialog';
+import { useBrandRules } from '../../hooks/useBrandRules';
 import { NewPartnerQrDialog } from '../../components/NewPartnerQrDialog';
 import { PersonCard } from '../../components/people/personUi';
 import { PendingRegistrations } from '../../components/people/PendingRegistrations';
@@ -16,7 +18,8 @@ import { useLiveRefresh } from '../../hooks/useLiveRefresh';
 type Level = TeamMember['role'];
 
 /** The levels this login looks after: the admin has all three, a distributor its dealers and farmers, a dealer its farmers. */
-export function levelsFor(role: string | undefined): Level[] {
+export function levelsFor(role: string | undefined, usersOnly = false): Level[] {
+  if (role === 'manufacturer' && usersOnly) return ['customer']; // a brand with super admin > admin > users: the admin has users only
   if (role === 'manufacturer') return ['distributor', 'dealer', 'customer'];
   if (role === 'distributor') return ['dealer', 'customer'];
   if (role === 'dealer') return ['customer'];
@@ -31,7 +34,9 @@ export const PeopleView: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const levels = levelsFor(user?.role);
+  const rules = useBrandRules();
+  const levels = levelsFor(user?.role, rules.usersOnly);
+  const noun = rules.usersOnly ? { one: 'user', many: 'Users' } : null;
   const [team, setTeam] = useState<Team | null>(null);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
@@ -62,19 +67,26 @@ export const PeopleView: React.FC = () => {
   const people = useMemo(() => (team ? team.people.filter(p => p.role === level && matches(p, query)) : []), [team, level, query]);
   const count = (l: Level) => (team ? team.people.filter(p => p.role === l).length : 0);
 
+  if (user?.role === 'manufacturer' && !rules.loaded) {
+    return (
+      <Box sx={{ display: 'grid', placeItems: 'center', py: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
   if (levels.length === 0) return <Typography color="text.secondary">There is nothing to show here for your login.</Typography>;
 
-  const addLabel = level === 'customer' ? 'Add farmer' : level === 'dealer' ? 'Add dealer' : 'Add distributor';
+  const addLabel = level === 'customer' ? (noun ? 'Add user' : 'Add farmer') : level === 'dealer' ? 'Add dealer' : 'Add distributor';
   const onAdd = () => (level === 'customer' ? setAddFarmer(true) : setAddPartner(level));
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
       <Box>
         <Typography variant="h4" sx={{ fontWeight: 800, fontSize: '1.5rem' }}>
-          {levels.length === 1 ? LEVEL_LABEL[levels[0]].many : 'People'}
+          {levels.length === 1 ? (noun?.many ?? LEVEL_LABEL[levels[0]].many) : 'People'}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {levels.length === 1 ? 'Add a farmer here, and open a card for their own dashboard.' : `${levels.map(l => LEVEL_LABEL[l].many).join(', ')}: add them here, and open a card for their own dashboard.`}
+          {levels.length === 1 ? (noun ? 'Add a user here with a mobile number and password, and open a card for their own dashboard.' : 'Add a farmer here, and open a card for their own dashboard.') : `${levels.map(l => LEVEL_LABEL[l].many).join(', ')}: add them here, and open a card for their own dashboard.`}
         </Typography>
       </Box>
 
@@ -119,7 +131,7 @@ export const PeopleView: React.FC = () => {
 
       {team && people.length === 0 && (
         <Typography color="text.secondary" sx={{ py: 6, textAlign: 'center' }} data-testid="empty">
-          {query ? 'Nobody matches that search.' : `No ${LEVEL_LABEL[level].many.toLowerCase()} yet. Use “${addLabel}” to add the first one.`}
+          {query ? 'Nobody matches that search.' : `No ${(noun?.many ?? LEVEL_LABEL[level].many).toLowerCase()} yet. Use “${addLabel}” to add the first one.`}
         </Typography>
       )}
 
@@ -154,7 +166,11 @@ export const PeopleView: React.FC = () => {
         lockRole
         resume={resume}
       />
-      <AddFarmerDialog open={addFarmer} onClose={() => setAddFarmer(false)} onRegistered={load} />
+      {noun ? (
+        <AddUserDialog open={addFarmer} onClose={() => setAddFarmer(false)} onCreated={load} />
+      ) : (
+        <AddFarmerDialog open={addFarmer} onClose={() => setAddFarmer(false)} onRegistered={load} />
+      )}
       <NewPartnerQrDialog target={qrTarget} onClose={() => setQrTarget(null)} onDone={load} />
     </Box>
   );

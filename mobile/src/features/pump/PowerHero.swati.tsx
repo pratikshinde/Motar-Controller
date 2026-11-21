@@ -353,7 +353,7 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
                 <Zap size={18} color="#D97706" />
               </View>
               <View>
-                <Text style={styles.solarTitle}>FRENIC-Ace Drive Telemetry</Text>
+                <Text style={styles.solarTitle}>Solar Drive Telemetry</Text>
                 <Text style={styles.solarSubtitle}>Solar Inverter Modbus Loop (Port 2)</Text>
               </View>
             </View>

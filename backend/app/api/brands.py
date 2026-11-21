@@ -160,6 +160,8 @@ def my_brand(current_user: User = Depends(get_current_user), db: Session = Depen
     return {"brand": {
         "key": info.key, "name": info.name, "short_name": info.short_name,
         "primary_color": info.primary_color, "logo_url": info.logo_url,
+        # The brand's own rules, so the website hides what this brand does not have (distributors and dealers).
+        "hierarchy": str((info.features or {}).get("hierarchy") or "full"),
     }}
 
 

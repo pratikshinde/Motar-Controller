@@ -4,7 +4,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
-import { adminNeedsFirstPassword, loginWithEmail, requestAdminCode, setAdminPassword } from '../../api/auth';
+import { adminNeedsFirstPassword, loginWithEmail, loginWithEmailCode, requestAdminCode, requestEmailCode, setAdminPassword } from '../../api/auth';
 import { clearSession } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -18,7 +18,8 @@ const PRIMARY = { py: 1.35, borderRadius: 2.2, fontWeight: 700, fontSize: '0.95r
 
 /** `password`: email and password. `first`: the platform owner has confirmed this email and no password exists yet, so the page asks them to choose one right
  *  below the email. `ask` / `code`: Forgot password: the email, then the emailed code with a new password. */
-type Mode = 'password' | 'first' | 'ask' | 'code';
+type Mode = 'password' | 'first' | 'ask' | 'code' | 'signinAsk' | 'signinCode';
+/* `signinAsk` / `signinCode`: sign in with an emailed 6-digit code, no password (admins of a brand that uses emailed codes, e.g. SolarLogger). */
 
 const WRONG_ROLE = 'This is not an admin account. Choose your role on the previous page.';
 const OWNER_ROLE = 'The platform owner signs in with the lock icon on the home page.';
@@ -162,9 +163,47 @@ export const AdminLoginForm: React.FC = () => {
     }
   }
 
-  const title = mode === 'first' ? 'Set your password' : mode === 'password' ? 'Admin sign in' : 'Forgot password';
+  async function sendSignInCode(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setBusy(true);
+    try {
+      await requestEmailCode(email);
+      setCode('');
+      setMode('signinCode');
+    } catch (err: any) {
+      setError(err.message || 'Could not send the code. Try again in a moment.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function signInWithCode(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setBusy(true);
+    try {
+      const result = await loginWithEmailCode(email, code.trim());
+      if (isMfaRequired(result)) {
+        setMfaToken(result.mfa_token);
+        return;
+      }
+      finish(result);
+    } catch (err: any) {
+      setError(err.message || 'Sign-in failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const byCode = mode === 'signinAsk' || mode === 'signinCode';
+  const title = byCode ? 'Admin sign in' : mode === 'first' ? 'Set your password' : mode === 'password' ? 'Admin sign in' : 'Forgot password';
   const subtitle =
-    mode === 'password'
+    mode === 'signinAsk'
+      ? 'We email you a 6-digit code: no password needed'
+      : mode === 'signinCode'
+        ? 'Type the code from your email'
+        : mode === 'password'
       ? 'Your email and password'
       : mode === 'first'
         ? 'Your email is confirmed. Choose a password to finish.'
@@ -201,7 +240,7 @@ export const AdminLoginForm: React.FC = () => {
         }}
         onBlur={() => void checkEmail()}
         autoComplete="username"
-        autoFocus={mode === 'password' || mode === 'ask'}
+        autoFocus={mode === 'password' || mode === 'ask' || mode === 'signinAsk'}
         fullWidth
         required
         disabled={readOnly}
@@ -295,6 +334,19 @@ export const AdminLoginForm: React.FC = () => {
                   component="button"
                   type="button"
                   variant="body2"
+                  data-testid="code-signin"
+                  onClick={() => {
+                    setError('');
+                    setMode('signinAsk');
+                  }}
+                  sx={{ color: '#0B7A3E', fontWeight: 600, alignSelf: 'center' }}
+                >
+                  Sign in with an emailed code instead
+                </Link>
+                <Link
+                  component="button"
+                  type="button"
+                  variant="body2"
                   data-testid="forgot"
                   onClick={() => {
                     setError('');
@@ -306,6 +358,42 @@ export const AdminLoginForm: React.FC = () => {
                 </Link>
               </>
             )}
+          </Stack>
+        </form>
+      ) : mode === 'signinAsk' ? (
+        <form onSubmit={sendSignInCode}>
+          <Stack spacing={2.5}>
+            {emailField(false)}
+            <Button type="submit" variant="contained" size="large" disabled={busy || !email.trim()} sx={PRIMARY}>
+              {busy ? 'Sending…' : 'Send me a code'}
+            </Button>
+          </Stack>
+        </form>
+      ) : mode === 'signinCode' ? (
+        <form onSubmit={signInWithCode}>
+          <Stack spacing={2.5}>
+            <Alert severity="success" sx={{ borderRadius: 2 }} data-testid="signin-code-sent">
+              If {email.trim()} is an admin email that signs in with a code, a 6-digit code was sent to it. It works for 30 minutes. Check your spam folder if it does not arrive.
+            </Alert>
+            <Box>
+              <Typography sx={LABEL}>Code from your email</Typography>
+              <TextField
+                placeholder="123456"
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                autoComplete="one-time-code"
+                autoFocus
+                fullWidth
+                required
+                slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6, style: { letterSpacing: 6, fontWeight: 700, fontSize: '1.2rem' } }, input: FIELD }}
+              />
+            </Box>
+            <Button type="submit" variant="contained" size="large" disabled={busy || code.trim().length !== 6} sx={PRIMARY}>
+              {busy ? 'Signing in…' : 'Sign In'}
+            </Button>
+            <Link component="button" type="button" variant="body2" onClick={() => setMode('signinAsk')} sx={{ color: '#0B7A3E', fontWeight: 600, alignSelf: 'center' }}>
+              Send a new code
+            </Link>
           </Stack>
         </form>
       ) : mode === 'ask' ? (
@@ -353,10 +441,10 @@ export const AdminLoginForm: React.FC = () => {
           type="button"
           variant="body2"
           data-testid="back-link"
-          onClick={() => (mode === 'ask' || mode === 'code' ? (setError(''), setMode('password')) : navigate('/login'))}
+          onClick={() => (mode === 'ask' || mode === 'code' || byCode ? (setError(''), setMode('password')) : navigate('/login'))}
           sx={{ color: '#0B7A3E', fontWeight: 600 }}
         >
-          {mode === 'ask' || mode === 'code' ? '← Back to sign in' : '← Choose a different role'}
+          {mode === 'ask' || mode === 'code' || byCode ? '← Back to sign in' : '← Choose a different role'}
         </Link>
       </Box>
     </Box>

@@ -55,6 +55,7 @@ from app.schemas.farmer import (
     SessionsResponse, DeletionRequestIn, DeletionRequestOut, DeletionRequestState, ExportResponse,
 )
 from app.core.errors import AppError
+from app.services import brand_service
 from app.services.brand_service import current_brand
 
 MFA_MAX_ATTEMPTS = 5
@@ -812,6 +813,8 @@ def login_email(req: LoginEmailRequest, db: Session = Depends(get_db)):
     passwords lock the email for a few minutes."""
     email = req.email.strip().lower()
     user = db.query(User).filter(func.lower(User.email) == email).first() if email else None
+    if brand_service.admin_signs_in_by_code(db, user):
+        user = None      # this brand's admins sign in with the emailed code only: a password gets the same answer as a wrong one
     return _password_sign_in(db, req, user, f"login_fail:email:{email}", "Incorrect email or password. Please check and try again.")
 
 
@@ -819,14 +822,14 @@ def login_email(req: LoginEmailRequest, db: Session = Depends(get_db)):
 def email_code_request(req: EmailCodeRequest, db: Session = Depends(get_db)):
     """The platform owner's sign-in, step 1: a 6-digit code is emailed to the address if it belongs to the platform owner. The answer is the same for any
     address, so it never says which emails have accounts."""
-    email_login.request_code(db, req.email, email_login.OWNER_ROLES)
+    email_login.request_code(db, req.email, email_login.CODE_ROLES)
     return {"message": "If that email belongs to an account, a sign-in code has been sent to it."}
 
 
 @router.post("/email-code/verify", response_model=LoginResponse)
 def email_code_verify(req: EmailCodeVerifyRequest, db: Session = Depends(get_db)):
     """Step 2: the emailed code. The platform owner then still has to pass the authenticator step (same challenge as after a password)."""
-    user = email_login.verify_code(db, req.email, req.code, email_login.OWNER_ROLES)
+    user = email_login.verify_code(db, req.email, req.code, email_login.CODE_ROLES)
     if user.status == "SUSPENDED" or user.account_status == "SUSPENDED":
         raise HTTPException(status_code=403, detail="Account suspended")
     _enforce_brand(user)
