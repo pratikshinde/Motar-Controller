@@ -18,8 +18,10 @@ import { LiveStatusChip } from '../components/LiveStatusChip';
 import { monoFont } from '../theme';
 import { effectiveStatus } from '../utils/pumpStatus';
 import type { PumpListItem } from '../types';
+import { useWording } from '../hooks/useWording';
 
 export const TelemetryView: React.FC = () => {
+  const w = useWording();
   const theme = useTheme();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
@@ -134,7 +136,7 @@ export const TelemetryView: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 260, maxWidth: 540 }}>
           <TextField
             fullWidth
-            placeholder="Search pumps by name, Thing ID, or GPS location…"
+            placeholder={w('Search pumps by name, Thing ID, or GPS location…')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             size="small"
@@ -203,12 +205,12 @@ export const TelemetryView: React.FC = () => {
             <BoltIcon sx={{ color: 'text.secondary', fontSize: 24 }} />
           </Box>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-            No pumps found
+            {w('No pumps found')}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 380, mb: 2 }}>
             {search || statusFilter !== 'ALL'
               ? 'No devices matched your active search query or status filter. Try clearing the filter.'
-              : 'There are no pump devices registered in your account hierarchy.'}
+              : w('There are no pump devices registered in your account hierarchy.')}
           </Typography>
           {(search || statusFilter !== 'ALL') && (
             <Button

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useBrandRules } from '../../hooks/useBrandRules';
 import { Avatar, Box, Chip, Stack, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import WarehouseIcon from '@mui/icons-material/Warehouse';
@@ -25,6 +26,7 @@ const LEVEL_COLORS = {
 /** How each level of the hierarchy looks: one colour and one icon per level, the same on every tab. */
 export function useRoleLook(role: RoleTier): RoleLook {
   const { palette } = useTheme();
+  const { usersOnly } = useBrandRules();
   const shade = palette.mode === 'dark' ? 'dark' : 'light';
   switch (role) {
     case 'distributor':
@@ -32,7 +34,7 @@ export function useRoleLook(role: RoleTier): RoleLook {
     case 'dealer':
       return { label: 'Dealer', plural: 'Dealers', Icon: StorefrontIcon, color: LEVEL_COLORS.dealer[shade] };
     case 'customer':
-      return { label: 'Farmer', plural: 'Farmers', Icon: AgricultureIcon, color: palette.success.main };
+      return { label: usersOnly ? 'User' : 'Farmer', plural: usersOnly ? 'Users' : 'Farmers', Icon: AgricultureIcon, color: palette.success.main };
     default:
       return { label: role === 'superadmin' ? 'Platform owner' : 'Admin', plural: 'Admins', Icon: AdminPanelSettingsIcon, color: palette.warning.main };
   }

@@ -9,6 +9,7 @@ import { useToast } from '../context/ToastContext';
 import { ResolveAlertDialog } from '../components/ResolveAlertDialog';
 import { timeAgo } from '../utils/timeAgo';
 import type { AlertRow } from '../types';
+import { useWording } from '../hooks/useWording';
 
 type Show = 'open' | 'resolved' | 'all';
 
@@ -18,6 +19,7 @@ export const alertText = (a: Pick<AlertRow, 'alert_type' | 'fault_name' | 'fault
 
 /** The pumps that need attention: what happened, to which pump and when. Resolve one when it has been dealt with. */
 export const AlertsView: React.FC = () => {
+  const w = useWording();
   const theme = useTheme();
   const navigate = useNavigate();
   const { subscribe } = useWs();
@@ -64,7 +66,7 @@ export const AlertsView: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
         <Typography variant="body2" color="text.secondary">
-          Pumps that need attention. Mark one resolved when it has been dealt with.
+          {w('Pumps that need attention. Mark one resolved when it has been dealt with.')}
         </Typography>
         <ToggleButtonGroup value={show} exclusive size="small" onChange={(_, v: Show | null) => v && setShow(v)}>
           <ToggleButton value="open" data-testid="show-open">Open</ToggleButton>
@@ -82,7 +84,7 @@ export const AlertsView: React.FC = () => {
           <CheckCircleOutlineIcon sx={{ fontSize: 36, color: 'success.main', mb: 1 }} />
           <Typography sx={{ fontWeight: 700 }}>{show === 'resolved' ? 'Nothing resolved yet' : 'All clear'}</Typography>
           <Typography variant="body2" color="text.secondary">
-            {show === 'open' ? 'No pump needs attention right now.' : 'There are no alerts to show here.'}
+            {show === 'open' ? w('No pump needs attention right now.') : 'There are no alerts to show here.'}
           </Typography>
         </Box>
       ) : (
@@ -109,7 +111,7 @@ export const AlertsView: React.FC = () => {
               >
                 <Box sx={{ minWidth: 0 }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}>
-                    <Typography sx={{ fontWeight: 800 }}>{alertText(a)}</Typography>
+                    <Typography sx={{ fontWeight: 800 }}>{w(alertText(a))}</Typography>
                     {urgent && !a.resolved_at && <Chip size="small" color="error" label="Urgent" sx={{ height: 20 }} />}
                     {a.occurrence_count > 1 && <Chip size="small" variant="outlined" label={`${a.occurrence_count} times`} sx={{ height: 20 }} />}
                   </Stack>

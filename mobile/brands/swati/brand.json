@@ -10,7 +10,8 @@
     "firebasePhone": false,
     "phoneOnly": false,
     "passwordOnly": true,
-    "qrScan": false
+    "qrScan": false,
+    "deviceWording": true
   },
   "colors": {
     "primary": "#1565C0",

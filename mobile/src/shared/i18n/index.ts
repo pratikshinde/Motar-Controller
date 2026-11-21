@@ -6,6 +6,7 @@ import { getAccessToken } from '@/api/session';
 import { updateMe } from '@/api/generated/farmer';
 import { brand } from '@/config/brand';
 import { pseudoLocalize } from './pseudo';
+import { deviceWording } from './deviceWording';
 import { DEFAULT_LANGUAGE, LangCode, isSupportedLanguage } from './languages';
 import en from './locales/en.json';
 import hi from './locales/hi.json';
@@ -49,6 +50,11 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false, defaultVariables: { appName: brand.appName } },
   returnNull: false,
 });
+
+// A brand that monitors a solar logger (SolarLogger) never says "pump": the English strings say "device".
+if (brand.features?.deviceWording) {
+  i18n.addResourceBundle('en', 'translation', deviceWording(en as never), true, true);
+}
 
 // EXPO_PUBLIC_PSEUDO_LOCALE=1 shows every string accented and stretched, to spot untranslated or clipped text.
 if (process.env.EXPO_PUBLIC_PSEUDO_LOCALE === '1') {

@@ -16,6 +16,8 @@ import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchTeam, lineageOf, type Team, type TeamMember } from '../../api/team';
 import { fetchFarmers, type FarmerRow } from '../../api/farmers';
+import { useWording } from '../../hooks/useWording';
+import { useBrandRules } from '../../hooks/useBrandRules';
 import { useAuth } from '../../context/AuthContext';
 import { AddSubordinateDialog } from '../../components/AddSubordinateDialog';
 import { NewPartnerQrDialog } from '../../components/NewPartnerQrDialog';
@@ -35,6 +37,8 @@ const isAbove = (actorRole: string | undefined, targetRole: string) => actorRole
 /** One distributor's, dealer's or farmer's own dashboard, opened from their card: their numbers, who is under them and what can be done. */
 export const PersonDashboardView: React.FC = () => {
   const theme = useTheme();
+  const w = useWording();
+  const usersOnly = useBrandRules().usersOnly;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { id = '' } = useParams<{ id: string }>();
@@ -133,12 +137,12 @@ export const PersonDashboardView: React.FC = () => {
               New QR
             </Button>
           )}
-          {m.role === 'customer' && farmer && <FarmerActions farmer={farmer} onChanged={load} />}
+          {m.role === 'customer' && farmer && <FarmerActions farmer={farmer} onChanged={load} hideQr={usersOnly} />}
           {isAbove(user?.role, m.role) && user?.id !== m.id && (
             <Button
               variant="outlined"
               color="error"
-              onClick={() => setRemoving({ id: m.id, name: m.full_name, label: m.role === 'customer' ? 'farmer' : m.role })}
+              onClick={() => setRemoving({ id: m.id, name: m.full_name, label: m.role === 'customer' ? w('farmer') : m.role })}
               data-testid="remove-person"
             >
               Remove
@@ -150,32 +154,32 @@ export const PersonDashboardView: React.FC = () => {
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(5, 1fr)' } }}>
         {m.role === 'customer' ? (
           <>
-            <StatTile testId="tile-pumps" icon={InventoryIcon} label="Pumps" value={m.pumps.total} color={theme.palette.warning.main} />
+            <StatTile testId="tile-pumps" icon={InventoryIcon} label={w('Pumps')} value={m.pumps.total} color={theme.palette.warning.main} />
             <StatTile
               testId="tile-pump-status"
               icon={farmerWords.color === STATUS_COLORS.fault ? ReportProblemIcon : farmerWords.color === STATUS_COLORS.offline ? WifiOffIcon : PlayCircleIcon}
-              label="Pump status"
-              value={farmerWords.text}
+              label={w('Pump status')}
+              value={w(farmerWords.text)}
               color={farmerWords.color}
-              hint={farmerWords.hint}
+              hint={farmerWords.hint ? w(farmerWords.hint) : farmerWords.hint}
             />
           </>
         ) : (
           <>
-            <StatTile testId="tile-pumps" icon={InventoryIcon} label="Pumps supplied" value={m.pumps.total} color={theme.palette.warning.main} />
+            <StatTile testId="tile-pumps" icon={InventoryIcon} label={w('Pumps supplied')} value={m.pumps.total} color={theme.palette.warning.main} />
             <StatTile testId="tile-running" icon={PlayCircleIcon} label="Running now" value={m.pumps.running} color={STATUS_COLORS.running} />
             {m.role === 'distributor' && <StatTile testId="tile-dealers" icon={StorefrontIcon} label="Dealers" value={m.dealers} color="#C58BF2" />}
-            <StatTile testId="tile-farmers" icon={AgricultureIcon} label="Farmers" value={m.farmers} color={success} />
-            <StatTile testId="tile-gsm" icon={SignalCellularAltIcon} label="GSM pumps running" value={m.gsm_online} color="#3bb8d9" hint={`of ${m.gsm_pumps} on GSM`} />
+            <StatTile testId="tile-farmers" icon={AgricultureIcon} label={w('Farmers')} value={m.farmers} color={success} />
+            <StatTile testId="tile-gsm" icon={SignalCellularAltIcon} label={w('GSM pumps running')} value={m.gsm_online} color="#3bb8d9" hint={`of ${m.gsm_pumps} on GSM`} />
           </>
         )}
       </Box>
 
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: m.role === 'customer' ? '1fr 1fr' : '1fr' } }}>
-        <ChartCard title="Pumps by state" testId="chart-status">
+        <ChartCard title={w('Pumps by state')} testId="chart-status">
           {slices.length === 0 ? (
             <Typography color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
-              No pumps yet.
+              {w('No pumps yet.')}
             </Typography>
           ) : (
             <PieChart height={230} series={[{ data: slices, innerRadius: 55, paddingAngle: 2, cornerRadius: 4 }]} />
@@ -184,7 +188,8 @@ export const PersonDashboardView: React.FC = () => {
 
         {m.role === 'customer' && farmer && (
           <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }} data-testid="farmer-details">
-            <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Pumps and app</Typography>
+            <Typography sx={{ fontWeight: 700, mb: 1.5 }}>{w(usersOnly ? 'Pumps' : 'Pumps and app')}</Typography>
+            {!usersOnly || farmer.status === 'SUSPENDED' ? (
             <Chip
               size="small"
               label={farmer.status === 'SUSPENDED' ? 'Stopped' : QR_CHIP[farmer.qr.state].label}
@@ -192,8 +197,9 @@ export const PersonDashboardView: React.FC = () => {
               variant={farmer.qr.state === 'CLAIMED' && farmer.status !== 'SUSPENDED' ? 'filled' : 'outlined'}
               sx={{ mb: 1.5 }}
             />
+            ) : null}
             {farmer.pumps.length === 0 ? (
-              <Typography color="text.secondary">No pump yet.</Typography>
+              <Typography color="text.secondary">{w('No pump yet.')}</Typography>
             ) : (
               farmer.pumps.map(p => (
                 <Box key={p.id} sx={{ py: 1, borderTop: 1, borderColor: 'divider' }}>
@@ -212,7 +218,7 @@ export const PersonDashboardView: React.FC = () => {
         <Section title={`Dealers under ${m.full_name} (${underDealers.length})`} empty="No dealers under this distributor yet." members={underDealers} onOpen={pid => navigate(`/people/${pid}`)} />
       )}
       {m.role !== 'customer' && (
-        <Section title={`Farmers under ${m.full_name} (${underFarmers.length})`} empty="No farmers under them yet." members={underFarmers} onOpen={pid => navigate(`/people/${pid}`)} />
+        <Section title={w(`Farmers under ${m.full_name} (${underFarmers.length})`)} empty={w('No farmers under them yet.')} members={underFarmers} onOpen={pid => navigate(`/people/${pid}`)} />
       )}
 
       <AddSubordinateDialog open={addDealer} onClose={() => setAddDealer(false)} onCreated={load} underRole="dealer" lockRole parentId={m.id} parentPath={null} />

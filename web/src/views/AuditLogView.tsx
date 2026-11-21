@@ -12,6 +12,8 @@ import type { AuditLogEntry, RoleTier } from '../types';
 const WHO: Record<string, string> = { operator: 'Server operator' };
 const who = (role: string | null) => (role ? WHO[role] || ROLE_NAMES[role as RoleTier] || role : '');
 
+import { useWording } from '../hooks/useWording';
+
 const GROUPS = [
   { key: '', label: 'Everything' },
   { key: 'user', label: 'People' },
@@ -21,6 +23,7 @@ const GROUPS = [
 
 /** Who did what, and when: the most recent actions first. */
 export const AuditLogView: React.FC = () => {
+  const w = useWording();
   const theme = useTheme();
   const { showToast } = useToast();
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
@@ -67,7 +70,7 @@ export const AuditLogView: React.FC = () => {
         <ToggleButtonGroup value={group} exclusive size="small" onChange={(_, v: string | null) => v !== null && setGroup(v)}>
           {GROUPS.map(g => (
             <ToggleButton key={g.key} value={g.key} data-testid={`group-${g.key || 'all'}`}>
-              {g.label}
+              {w(g.label)}
             </ToggleButton>
           ))}
         </ToggleButtonGroup>

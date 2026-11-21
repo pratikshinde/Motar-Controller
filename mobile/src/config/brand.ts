@@ -28,7 +28,7 @@ export interface Brand {
    * `phoneOnly`: sign in with a mobile number and an SMS code, no password. `passwordOnly`: mobile number + a password an admin hands
    * over (no SMS code, no sign-up, no forgot-password). `qrScan`: the first sign-in by scanning the dealer's QR code.
    */
-  features?: { push?: boolean; firebasePhone?: boolean; phoneOnly?: boolean; passwordOnly?: boolean; qrScan?: boolean };
+  features?: { push?: boolean; firebasePhone?: boolean; phoneOnly?: boolean; passwordOnly?: boolean; qrScan?: boolean; deviceWording?: boolean };
 }
 
 type PublicBrand = Partial<Brand>;

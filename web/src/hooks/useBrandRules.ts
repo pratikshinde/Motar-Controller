@@ -16,7 +16,13 @@ export const forgetBrandRules = () => cache.clear();
 
 /** The signed-in account's brand rules (brands.features on the server). A failed lookup counts as the full tree, which is what every other brand has. */
 export function useBrandRules(): BrandRules {
-  const { user } = useAuth();
+  // Outside a signed-in session (a page rendered on its own) there is no account, and so no brand rule: the full tree.
+  let user: { id?: string } | null = null;
+  try {
+    user = useAuth().user;
+  } catch {
+    user = null;
+  }
   const id = user?.id ?? '';
   const [usersOnly, setUsersOnly] = useState<boolean | null>(() => (id && cache.has(id) ? cache.get(id)! : null));
 

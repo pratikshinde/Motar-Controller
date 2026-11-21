@@ -200,6 +200,29 @@ describe('a brand with super admin > admin > users (SolarLogger)', () => {
   });
 });
 
+describe('a user of a users-only brand (SolarLogger) never sees pump or farmer words', () => {
+  it('on the people card and on their own dashboard', async () => {
+    mocks.fetchMyBrand.mockResolvedValue({ brand: { key: 'swati', name: 'SolarLogger', short_name: null, primary_color: null, logo_url: null, hierarchy: 'admin_users' } });
+    const user = member('101', 'customer', 'Ravi User', { pumps: buckets({ total: 1, running: 0, no_data: 1 }) });
+    mocks.fetchTeam.mockResolvedValue({ summary, people: [user] });
+    themed(<Routes><Route path="/people" element={<PeopleView />} /><Route path="/people/:id" element={<PersonDashboardView />} /></Routes>, '/people');
+    const card = await screen.findByTestId('person-101');
+    expect(card.textContent).not.toMatch(/pump|farmer/i);
+    expect(card.textContent).toMatch(/Devices/);
+  });
+
+  it('on their own dashboard', async () => {
+    mocks.fetchMyBrand.mockResolvedValue({ brand: { key: 'swati', name: 'SolarLogger', short_name: null, primary_color: null, logo_url: null, hierarchy: 'admin_users' } });
+    const user = member('101', 'customer', 'Ravi User', { pumps: buckets({ total: 1, running: 0, no_data: 1 }) });
+    mocks.fetchTeam.mockResolvedValue({ summary, people: [user] });
+    themed(<Routes><Route path="/people/:id" element={<PersonDashboardView />} /></Routes>, '/people/101');
+    expect(await screen.findByTestId('tile-pumps')).toHaveTextContent('Devices');
+    // (the names in the data, such as "Ganesh pump", are the user's own and are not changed)
+    const text = (document.body.textContent ?? '').replace(/Ganesh Jadhav|Ganesh pump/g, '');
+    expect(text).not.toMatch(/pump|farmer/i);
+  });
+});
+
 describe('a person own dashboard', () => {
   const open = (id: string) => themed(<Routes><Route path="/people/:id" element={<PersonDashboardView />} /></Routes>, `/people/${id}`);
 

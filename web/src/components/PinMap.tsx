@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Alert, Box, Chip } from '@mui/material';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useWording } from '../hooks/useWording';
 
 export interface Pin {
   id: string;
@@ -21,6 +22,7 @@ const ICON = L.icon({ iconUrl: PIN, iconSize: [28, 36], iconAnchor: [14, 36], po
 
 /** A map with a red pin for every pump that has a position, and how many there are. Nothing else. `pins` is null while loading. */
 export const PinMap: React.FC<{ pins: Pin[] | null; error?: string }> = ({ pins, error }) => {
+  const w = useWording();
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
@@ -58,7 +60,7 @@ export const PinMap: React.FC<{ pins: Pin[] | null; error?: string }> = ({ pins,
       <Box ref={host} data-testid="pin-map" sx={{ position: 'absolute', inset: 0 }} />
       <Chip
         data-testid="map-count"
-        label={pins === null ? 'Loading…' : `${pins.length} ${pins.length === 1 ? 'pump' : 'pumps'} on the map`}
+        label={pins === null ? 'Loading…' : w(`${pins.length} ${pins.length === 1 ? 'pump' : 'pumps'} on the map`)}
         sx={{ position: 'absolute', top: 14, right: 14, zIndex: 1100, fontWeight: 700, fontSize: '0.9rem', height: 34, bgcolor: 'background.paper', border: 1, borderColor: 'divider' }}
       />
       {error && (

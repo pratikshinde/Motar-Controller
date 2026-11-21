@@ -1,4 +1,5 @@
 import React from 'react';
+import { useWording } from '../../hooks/useWording';
 import { Avatar, Box, Button, Card, CardActionArea, Chip, Stack, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
@@ -61,7 +62,8 @@ export function memberStats(m: TeamMember, success: string): { label: string; va
 export const PersonCard: React.FC<{ m: TeamMember; onOpen: () => void; onNewQr?: () => void }> = ({ m, onOpen, onNewQr }) => {
   const theme = useTheme();
   const look = useRoleLook(m.role);
-  const stats = memberStats(m, theme.palette.success.main);
+  const w = useWording();
+  const stats = memberStats(m, theme.palette.success.main).map(s => ({ ...s, label: w(s.label) }));
   return (
     <Card
       variant="outlined"

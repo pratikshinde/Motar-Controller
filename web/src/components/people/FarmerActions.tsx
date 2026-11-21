@@ -18,7 +18,7 @@ export const QR_CHIP: Record<QrState, { label: string; color: 'default' | 'succe
 };
 
 /** What can be done to one farmer: fix their details, make a new QR (lost phone), stop or restore their app access. */
-export const FarmerActions: React.FC<{ farmer: FarmerRow; onChanged: () => void }> = ({ farmer: f, onChanged }) => {
+export const FarmerActions: React.FC<{ farmer: FarmerRow; onChanged: () => void; hideQr?: boolean }> = ({ farmer: f, onChanged, hideQr }) => {
   const { showToast } = useToast();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -59,9 +59,11 @@ export const FarmerActions: React.FC<{ farmer: FarmerRow; onChanged: () => void 
         <Button size="small" startIcon={<EditOutlinedIcon />} disabled={busy} onClick={() => setEditing(true)}>
           Edit
         </Button>
+        {!hideQr && (
         <Button size="small" startIcon={<QrCode2Icon />} disabled={busy || stopped} onClick={makeQr}>
           New QR
         </Button>
+        )}
         {stopped ? (
           <Button size="small" color="success" startIcon={<RestoreIcon />} disabled={busy} onClick={() => setAccess(false)}>
             Restore

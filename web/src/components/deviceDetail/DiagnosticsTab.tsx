@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useWording } from '../../hooks/useWording';
 import { Box, Card, CardContent, Typography, CircularProgress, Alert, TextField, Button, Stack, List, ListItem, ListItemText, Divider } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { fetchPumpProvenance, fetchPumpTelemetry, setPumpPanel, fetchMcuSwapHistory, postMcuSwap } from '../../api/pumps';
@@ -22,6 +23,7 @@ export const DiagnosticsTab: React.FC<{
   deviceType?: DeviceType;
 }> = ({ pumpId, firmwareVersion, panel, onPanelSaved, deviceType }) => {
   const { user } = useAuth();
+  const w = useWording();
   const { showToast } = useToast();
   const [provenance, setProvenance] = useState<PumpProvenance | null>(null);
   const [telemetry, setTelemetry] = useState<TelemetryRow[]>([]);
@@ -208,13 +210,13 @@ export const DiagnosticsTab: React.FC<{
                 />
                 <TextField
                   size="small"
-                  label="Pump make"
+                  label={w('Pump make')}
                   value={panelForm.pump_make || ''}
                   onChange={e => setPanelField('pump_make', e.target.value)}
                 />
                 <TextField
                   size="small"
-                  label="Pump model"
+                  label={w('Pump model')}
                   value={panelForm.pump_model || ''}
                   onChange={e => setPanelField('pump_model', e.target.value)}
                 />
@@ -228,8 +230,8 @@ export const DiagnosticsTab: React.FC<{
               <Row label="Panel serial" value={panel.panel_serial || '—'} mono />
               <Row label="Motor rating" value={panel.motor_rating || '—'} />
               <Row label="Starter type" value={panel.starter_type || '—'} />
-              <Row label="Pump make" value={panel.pump_make || '—'} />
-              <Row label="Pump model" value={panel.pump_model || '—'} />
+              <Row label={w('Pump make')} value={panel.pump_make || '—'} />
+              <Row label={w('Pump model')} value={panel.pump_model || '—'} />
             </Box>
           )}
         </CardContent>
