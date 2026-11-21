@@ -3,6 +3,7 @@ import { Box, Tab, Tabs } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useViewing } from '../api/viewing';
+import { useBrandRules } from '../hooks/useBrandRules';
 import { TelemetryView } from './TelemetryView';
 import { DevicesView } from './DevicesView';
 import { FactoryStationView } from './FactoryStationView';
@@ -45,11 +46,12 @@ export const TabbedPage: React.FC<{ tabs: HubTab[] }> = ({ tabs }) => {
 export const DevicesHub: React.FC = () => {
   const { role } = useAuth();
   const viewing = useViewing();
+  const { usersOnly } = useBrandRules();
   return (
     <TabbedPage
       tabs={[
         { key: 'devices', label: 'Devices', element: <DevicesView /> },
-        { key: 'live', label: 'Live pumps', element: <TelemetryView /> },
+        { key: 'live', label: usersOnly ? 'Live devices' : 'Live pumps', element: <TelemetryView /> },
         { key: 'factory', label: 'Factory station', element: <FactoryStationView />, hidden: role !== 'manufacturer' || Boolean(viewing) }
       ]}
     />

@@ -84,6 +84,8 @@
     "loading": "మీ పంపులు లోడ్ అవుతున్నాయి…",
     "emptyTitle": "ఇంకా పంపు లేదు",
     "emptyMessage": "మీ మొబైల్ నంబర్‌కు ఇంకా ఏ పంపూ జత చేయబడలేదు. దయచేసి మీ డీలర్‌ను పంపు జోడించమని అడగండి.",
+    "emptyTitle_swati": "No devices yet",
+    "emptyMessage_swati": "No device is linked to your mobile number yet. Please ask your admin to add your device.",
     "hp": "{{hp}} హెచ్‌పి",
     "openPump": "{{name}}, {{status}}. పంపును తెరవండి",
     "status": {

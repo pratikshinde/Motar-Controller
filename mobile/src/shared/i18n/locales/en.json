@@ -84,6 +84,8 @@
     "loading": "Loading your pumps…",
     "emptyTitle": "No pumps yet",
     "emptyMessage": "No pump is linked to your mobile number yet. Please ask your dealer to add your pump.",
+    "emptyTitle_swati": "No devices yet",
+    "emptyMessage_swati": "No device is linked to your mobile number yet. Please ask your admin to add your device.",
     "hp": "{{hp}} HP",
     "openPump": "{{name}}, {{status}}. Open pump",
     "status": {

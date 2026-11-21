@@ -24,6 +24,7 @@ import { dayName, lengthLabel, nextLabel, timeLabel } from './labels';
 import {
   DAY_KEYS, DEFAULT_LIMITS, Row, RowProblem, entriesFromRows, newRowFor, rowsFromEntries, simpleWindowOf, validateRows,
 } from './model';
+import { brand } from '@/config/brand';
 
 /**
  * The weekly schedule of Swati's app: for each day of the week, the times the pump should switch on and off by
@@ -42,7 +43,7 @@ export const ScheduleScreen: React.FC = () => {
       ) : pump ? (
         ajantaHome ? <AjantaSchedule pump={pump} /> : <ScheduleEditor pump={pump} />
       ) : (
-        <StateView kind="empty" title={t('pumps.emptyTitle')} message={t('pumps.emptyMessage')} />
+        <StateView kind="empty" title={t('pumps.emptyTitle', { context: brand.key })} message={t('pumps.emptyMessage', { context: brand.key })} />
       )}
     </SwatiPage>
   );

@@ -84,6 +84,8 @@
     "loading": "உங்கள் பம்புகள் ஏற்றப்படுகின்றன…",
     "emptyTitle": "இன்னும் பம்ப் இல்லை",
     "emptyMessage": "உங்கள் மொபைல் எண்ணுடன் இன்னும் எந்த பம்பும் இணைக்கப்படவில்லை. தயவுசெய்து உங்கள் டீலரிடம் பம்பைச் சேர்க்கச் சொல்லுங்கள்.",
+    "emptyTitle_swati": "No devices yet",
+    "emptyMessage_swati": "No device is linked to your mobile number yet. Please ask your admin to add your device.",
     "hp": "{{hp}} ஹெச்பி",
     "openPump": "{{name}}, {{status}}. பம்பைத் திற",
     "status": {

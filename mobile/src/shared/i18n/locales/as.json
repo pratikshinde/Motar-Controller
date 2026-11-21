@@ -84,6 +84,8 @@
     "loading": "আপোনাৰ পাম্প লোড হৈ আছে…",
     "emptyTitle": "এতিয়াও কোনো পাম্প নাই",
     "emptyMessage": "আপোনাৰ মোবাইল নম্বৰত এতিয়াও কোনো পাম্প সংযুক্ত হোৱা নাই। অনুগ্ৰহ কৰি আপোনাৰ ডিলাৰক পাম্প যোগ কৰিবলৈ কওক।",
+    "emptyTitle_swati": "No devices yet",
+    "emptyMessage_swati": "No device is linked to your mobile number yet. Please ask your admin to add your device.",
     "hp": "{{hp}} এইচপি",
     "openPump": "{{name}}, {{status}}। পাম্প খোলক",
     "status": {

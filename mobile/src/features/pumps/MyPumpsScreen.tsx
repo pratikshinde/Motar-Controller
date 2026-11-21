@@ -14,6 +14,7 @@ import { useCurrentPump } from './useCurrentPump';
 import { PumpState, displayName, pumpState } from './model';
 
 import { colors } from '@/shared/theme';
+import { brand } from '@/config/brand';
 const CHIP: Record<PumpState, { bg: string; fg: string; dot: string; key: string }> = {
   running: { bg: '#DCFCE7', fg: '#15803D', dot: '#16A34A', key: 'pumps.status.running' },
   stopped: { bg: '#F1F5F9', fg: '#475569', dot: '#94A3B8', key: 'pumps.status.stopped' },
@@ -43,7 +44,7 @@ export const MyPumpsScreen: React.FC = () => {
           onAction={refetch}
         />
       ) : pumps.length === 0 ? (
-        <StateView kind="empty" title={t('pumps.emptyTitle')} message={t('pumps.emptyMessage')} />
+        <StateView kind="empty" title={t('pumps.emptyTitle', { context: brand.key })} message={t('pumps.emptyMessage', { context: brand.key })} />
       ) : (
         pumps.map((p) => {
           const chip = CHIP[pumpState(p, now)];

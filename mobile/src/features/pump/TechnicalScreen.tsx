@@ -22,6 +22,7 @@ import { pumpState } from '@/features/pumps/model';
 import { driveStatusKey } from './swatiHome';
 
 import { skin } from '@/shared/theme/skin';
+import { brand } from '@/config/brand';
 interface MetricItem {
   label: string;
   value: number | null | undefined;
@@ -114,7 +115,7 @@ export const TechnicalScreen: React.FC = () => {
       {loading || !pump ? (
         <StateView
           kind={loading ? 'loading' : 'empty'}
-          title={loading ? t('common.loading') : t('pumps.emptyTitle')}
+          title={loading ? t('common.loading') : t('pumps.emptyTitle', { context: brand.key })}
         />
       ) : (
         <>

@@ -133,8 +133,8 @@ export const PumpsScreen: React.FC = () => {
         <StateView
           kind="empty"
           icon={Droplets}
-          title={t('pumps.emptyTitle')}
-          message={t('pumps.emptyMessage')}
+          title={t('pumps.emptyTitle', { context: brand.key })}
+          message={t('pumps.emptyMessage', { context: brand.key })}
           actionLabel={t('common.checkAgain')}
           onAction={() => void q.refetch()}
         />

@@ -84,6 +84,8 @@
     "loading": "ನಿಮ್ಮ ಪಂಪ್‌ಗಳು ಲೋಡ್ ಆಗುತ್ತಿವೆ…",
     "emptyTitle": "ಇನ್ನೂ ಪಂಪ್ ಇಲ್ಲ",
     "emptyMessage": "ನಿಮ್ಮ ಮೊಬೈಲ್ ಸಂಖ್ಯೆಗೆ ಇನ್ನೂ ಯಾವುದೇ ಪಂಪ್ ಜೋಡಿಸಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಡೀಲರ್‌ಗೆ ಪಂಪ್ ಸೇರಿಸಲು ಹೇಳಿ.",
+    "emptyTitle_swati": "No devices yet",
+    "emptyMessage_swati": "No device is linked to your mobile number yet. Please ask your admin to add your device.",
     "hp": "{{hp}} ಎಚ್‌ಪಿ",
     "openPump": "{{name}}, {{status}}. ಪಂಪ್ ತೆರೆಯಿರಿ",
     "status": {

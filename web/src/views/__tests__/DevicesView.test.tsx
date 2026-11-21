@@ -5,8 +5,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 
-const mocks = vi.hoisted(() => ({ role: 'manufacturer', pumps: [] as any[], reload: vi.fn() }));
+const mocks = vi.hoisted(() => ({ role: 'manufacturer', pumps: [] as any[], reload: vi.fn(), usersOnly: false }));
 
+vi.mock('../../hooks/useBrandRules', () => ({ useBrandRules: () => ({ loaded: true, usersOnly: mocks.usersOnly }) }));
 vi.mock('../../hooks/usePumps', () => ({ usePumps: () => ({ pumps: mocks.pumps, loading: false, reload: mocks.reload }) }));
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', role: mocks.role } }) }));
 vi.mock('../../components/AllocateDialog', () => ({ AllocateDialog: ({ open, pumpIds }: any) => (open ? <div data-testid="give-dialog">{pumpIds.join(',')}</div> : null) }));
@@ -21,6 +22,7 @@ const pump = (id: string, lifecycle: string, over: any = {}) => ({
 
 beforeEach(() => {
   mocks.role = 'manufacturer';
+  mocks.usersOnly = false;
   mocks.reload.mockReset();
   mocks.pumps = [pump('S-1', 'IN_STOCK'), pump('S-2', 'ALLOCATED'), pump('F-1', 'ACTIVE', { status: 'RUNNING' })];
 });
@@ -70,5 +72,18 @@ describe('Devices', () => {
     open();
     const row = screen.getByText('F-1').closest('[role="row"]') as HTMLElement;
     expect(within(row).getByRole('checkbox')).toBeDisabled();
+  });
+});
+
+describe('Devices in a brand where the admin has users only (SolarLogger)', () => {
+  it('says devices and users, never starters or farmers', () => {
+    mocks.usersOnly = true;
+    open();
+    expect(screen.getByText('Your devices. Tick the ones in stock to give them to a user.')).toBeInTheDocument();
+    expect(screen.getByTestId('filter-in-use')).toHaveTextContent('With users (1)');
+    expect(screen.getByText('Device ID')).toBeInTheDocument();
+    expect(screen.getByText('With a user')).toBeInTheDocument();
+    expect(screen.queryByText(/farmer/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/starter/i)).not.toBeInTheDocument();
   });
 });

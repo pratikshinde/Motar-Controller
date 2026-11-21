@@ -84,6 +84,8 @@
     "loading": "تُہنٛد پَمپ لوڈ گَژھان چھِ…",
     "emptyTitle": "اَتھ کُنہِ پَمپ چُھنہ",
     "emptyMessage": "تُہنٛدِس موبایِل نَمبَرَس سٕتۍ چُھ اَتھ کُنہِ پَمپ جوڑمُت نہٕ۔ مِہربانی کَرِتھ پَنٕنِس ڈیٖلَرَس وَنِو زِ پَمپ جوڑِن۔",
+    "emptyTitle_swati": "No devices yet",
+    "emptyMessage_swati": "No device is linked to your mobile number yet. Please ask your admin to add your device.",
     "hp": "{{hp}} اَیچ پی",
     "openPump": "{{name}}, {{status}}۔ پَمپ کھولِو",
     "status": {

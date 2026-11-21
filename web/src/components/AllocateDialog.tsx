@@ -7,6 +7,7 @@ import {
 import { fetchUserTree, ROLE_NAMES } from '../api/users';
 import { bulkAllocatePumps, type BulkAllocateResult } from '../api/pumps';
 import { useAuth } from '../context/AuthContext';
+import { useBrandRules } from '../hooks/useBrandRules';
 import { useToast } from '../context/ToastContext';
 import { monoFont } from '../theme';
 import type { UserTreeNode } from '../types';
@@ -46,6 +47,7 @@ interface Props {
 export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pumpIds }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { usersOnly } = useBrandRules();
   const [accounts, setAccounts] = useState<FlatAccount[]>([]);
   const [accountsLoaded, setAccountsLoaded] = useState(false);
   const [targetId, setTargetId] = useState('');
@@ -66,7 +68,10 @@ export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pu
       setOpenedWithCount(pumpIds.length);
       fetchUserTree()
         // Stock goes to a distributor or a dealer under the caller (a farmer gets a starter by being registered with it).
-        .then(data => setAccounts(flattenTree(data.tree).filter(a => a.id !== user?.id && (a.role === 'distributor' || a.role === 'dealer') && (user?.role !== 'distributor' || a.role === 'dealer'))))
+        // In a brand where the admin has users only, a device goes straight to a user.
+        .then(data => setAccounts(flattenTree(data.tree).filter(a => a.id !== user?.id && (usersOnly
+          ? a.role === 'customer'
+          : (a.role === 'distributor' || a.role === 'dealer') && (user?.role !== 'distributor' || a.role === 'dealer')))))
         .catch(err => showToast(err.message || 'Could not load accounts', true))
         .finally(() => setAccountsLoaded(true));
     }
@@ -103,14 +108,16 @@ export const AllocateDialog: React.FC<Props> = ({ open, onClose, onAllocated, pu
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <form onSubmit={submit}>
-        <DialogTitle>Give {openedWithCount} starter{openedWithCount === 1 ? '' : 's'}</DialogTitle>
+        <DialogTitle>Give {openedWithCount} {usersOnly ? 'device' : 'starter'}{openedWithCount === 1 ? '' : 's'}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            The starters you ticked move to the person you choose. They can then register farmers with them. Each move is recorded.
+            {usersOnly
+              ? 'The devices you ticked go to the user you choose, and show in their app. Each move is recorded.'
+              : 'The starters you ticked move to the person you choose. They can then register farmers with them. Each move is recorded.'}
           </Typography>
           {accountsLoaded && accounts.length === 0 && (
             <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
-              There is nobody to give them to yet. Add a {user?.role === 'distributor' ? 'dealer' : 'distributor or dealer'} on the People page first.
+              There is nobody to give them to yet. Add {usersOnly ? 'a user' : `a ${user?.role === 'distributor' ? 'dealer' : 'distributor or dealer'}`} on the People page first.
             </Typography>
           )}
           <Stack spacing={2}>

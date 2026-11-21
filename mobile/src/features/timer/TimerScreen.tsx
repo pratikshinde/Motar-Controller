@@ -11,6 +11,7 @@ import { useCurrentPump } from '@/features/pumps/useCurrentPump';
 import { ScheduleEntryCard } from '@/features/schedule/ScheduleEntryCard';
 import { AjantaSchedule } from '@/features/schedule/ScheduleScreen';
 import { TimerTab } from './TimerTab';
+import { brand } from '@/config/brand';
 
 /** The page around the Timer content: Ajanta's banner with a back arrow, or Swati's plain page. */
 const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -56,7 +57,7 @@ export const TimerScreen: React.FC = () => {
           <TimerTab pump={pump} />
         </View>
       ) : (
-        <StateView kind="empty" title={t('pumps.emptyTitle')} message={t('pumps.emptyMessage')} />
+        <StateView kind="empty" title={t('pumps.emptyTitle', { context: brand.key })} message={t('pumps.emptyMessage', { context: brand.key })} />
       )}
     </Shell>
   );

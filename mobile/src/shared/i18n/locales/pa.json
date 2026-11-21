@@ -84,6 +84,8 @@
     "loading": "ਤੁਹਾਡੇ ਪੰਪ ਲੋਡ ਹੋ ਰਹੇ ਹਨ…",
     "emptyTitle": "ਅਜੇ ਕੋਈ ਪੰਪ ਨਹੀਂ",
     "emptyMessage": "ਤੁਹਾਡੇ ਮੋਬਾਈਲ ਨੰਬਰ ਨਾਲ ਅਜੇ ਕੋਈ ਪੰਪ ਜੁੜਿਆ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨੂੰ ਪੰਪ ਜੋੜਨ ਲਈ ਕਹੋ।",
+    "emptyTitle_swati": "No devices yet",
+    "emptyMessage_swati": "No device is linked to your mobile number yet. Please ask your admin to add your device.",
     "hp": "{{hp}} ਐਚਪੀ",
     "openPump": "{{name}}, {{status}}। ਪੰਪ ਖੋਲ੍ਹੋ",
     "status": {

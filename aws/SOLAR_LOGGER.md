@@ -70,4 +70,4 @@ The website has no screen for this, so use the script (dry run first), on the se
     docker compose exec api python scripts/add_solar_logger.py --imei 862818041287022 --admin-email <the swati admin's email>
     docker compose exec api python scripts/add_solar_logger.py --imei 862818041287022 --admin-email <the swati admin's email> --apply
 
-It creates a `SOLAR_VFD` device with the admin's brand, owned by the admin. The admin then gives it to a user on the website: Devices > Allocate.
+It creates a `SOLAR_VFD` device with the admin's brand, owned by the admin. The admin then gives it to a user on the website: Devices > tick it > Give.

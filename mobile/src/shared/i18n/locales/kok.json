@@ -84,6 +84,8 @@
     "loading": "तुमचे पंप लोड जाता आसात…",
     "emptyTitle": "अजून पंप ना",
     "emptyMessage": "तुमच्या मोबायल नंबराक अजून खंयचोच पंप जोडिल्लो ना. उपकार करून तुमच्या डीलराक पंप जोडपाक सांगात.",
+    "emptyTitle_swati": "No devices yet",
+    "emptyMessage_swati": "No device is linked to your mobile number yet. Please ask your admin to add your device.",
     "hp": "{{hp}} एचपी",
     "openPump": "{{name}}, {{status}}. पंप उगडात",
     "status": {

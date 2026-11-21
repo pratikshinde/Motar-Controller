@@ -4,7 +4,7 @@
     python scripts/add_solar_logger.py --imei 862818041287022 --admin-email admin@example.com --apply
 
 The device id is the module's IMEI: it is also the AWS IoT thing name, the MQTT client id and `dev_id` in every frame. The device is created in the
-admin's account tree, with the admin's brand. The admin then gives it to a user on the website (Devices > Allocate).
+admin's account tree, with the admin's brand. The admin then gives it to a user on the website (Devices > tick it > Give).
 
 Run it on the server with:
     docker compose exec api python scripts/add_solar_logger.py --imei <IMEI> --admin-email <email> [--apply]
@@ -51,7 +51,7 @@ def add_logger(db, imei: str, admin_email: str, name: str = "", hp: float = 7.5,
         org_id=getattr(admin, "org_id", None),
         brand_id=admin.brand_id,
         status="STOPPED",
-        lifecycle_state="ACTIVE",
+        lifecycle_state="IN_STOCK",                   # in stock: the admin then gives it to a user (Devices > Give)
         firmware_version=None,                       # the logger reports its own
         device_key_hash=hash_secret(secrets.token_urlsafe(32)),   # the logger signs in to AWS IoT with its certificate, not this key
     )

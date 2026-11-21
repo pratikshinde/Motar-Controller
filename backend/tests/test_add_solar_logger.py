@@ -41,6 +41,7 @@ class TestAddSolarLogger(BrandBase):
         p = self.pump()
         self.assertEqual((p.device_type, p.owner_user_id, p.brand_id, p.hierarchy_path), ("SOLAR_VFD", self.admin.id, self.brand.id, self.admin.hierarchy_path))
         self.assertIsNone(p.last_seen_at, "creating it is not seeing it")
+        self.assertEqual(p.lifecycle_state, "IN_STOCK", "in stock, so the admin can give it to a user")
         self.assertIsNotNone(self.db.query(DeviceConfig).filter(DeviceConfig.pump_id == IMEI).first())
 
     def test_refusals(self):

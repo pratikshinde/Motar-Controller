@@ -6,6 +6,7 @@ import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { usePumps } from '../hooks/usePumps';
 import { useAuth } from '../context/AuthContext';
+import { useBrandRules } from '../hooks/useBrandRules';
 import { AllocateDialog } from '../components/AllocateDialog';
 import { effectiveStatus, STATUS_LABEL } from '../utils/pumpStatus';
 import { monoFont } from '../theme';
@@ -22,6 +23,7 @@ export const DevicesView: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { usersOnly } = useBrandRules();
   const { pumps, loading, reload } = usePumps();
   const [filter, setFilter] = useState<Filter>('ALL');
   const [giveOpen, setGiveOpen] = useState(false);
@@ -37,7 +39,7 @@ export const DevicesView: React.FC = () => {
 
   const columns: GridColDef<PumpListItem>[] = useMemo(
     () => [
-      { field: 'id', headerName: 'Starter ID', flex: 1.2, minWidth: 170, renderCell: p => <span style={{ fontFamily: monoFont, fontWeight: 700 }}>{p.value}</span> },
+      { field: 'id', headerName: usersOnly ? 'Device ID' : 'Starter ID', flex: 1.2, minWidth: 170, renderCell: p => <span style={{ fontFamily: monoFont, fontWeight: 700 }}>{p.value}</span> },
       { field: 'name', headerName: 'Name', flex: 1, minWidth: 140 },
       { field: 'hp_rating', headerName: 'HP', width: 80, valueGetter: (_v, row) => (row.hp_rating ? Number(row.hp_rating) : '—') },
       {
@@ -52,7 +54,7 @@ export const DevicesView: React.FC = () => {
         flex: 0.8,
         minWidth: 120,
         sortable: false,
-        valueGetter: (_v, row) => (isInStock(row) ? 'In stock' : 'With a farmer'),
+        valueGetter: (_v, row) => (isInStock(row) ? 'In stock' : usersOnly ? 'With a user' : 'With a farmer'),
         renderCell: p => <Chip size="small" variant="outlined" label={p.value as string} color={p.value === 'In stock' ? 'info' : 'default'} />
       },
       {
@@ -71,7 +73,7 @@ export const DevicesView: React.FC = () => {
         }
       }
     ],
-    [theme]
+    [theme, usersOnly]
   );
 
   return (
@@ -79,12 +81,14 @@ export const DevicesView: React.FC = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
         <Box>
           <Typography variant="body2" color="text.secondary">
-            {canGive ? 'Your starters and pumps. Tick the ones in stock to give them to someone under you.' : 'Your starters and pumps.'}
+            {usersOnly
+              ? 'Your devices. Tick the ones in stock to give them to a user.'
+              : canGive ? 'Your starters and pumps. Tick the ones in stock to give them to someone under you.' : 'Your starters and pumps.'}
           </Typography>
         </Box>
         {canGive && selectedIds.length > 0 && (
           <Button variant="contained" startIcon={<SendIcon />} onClick={() => setGiveOpen(true)} data-testid="give-stock">
-            {user?.role === 'distributor' ? `Give ${selectedIds.length} to a dealer` : `Give ${selectedIds.length} to a distributor or dealer`}
+            {usersOnly ? `Give ${selectedIds.length} to a user` : user?.role === 'distributor' ? `Give ${selectedIds.length} to a dealer` : `Give ${selectedIds.length} to a distributor or dealer`}
           </Button>
         )}
       </Box>
@@ -97,7 +101,7 @@ export const DevicesView: React.FC = () => {
           In stock ({stock.length})
         </ToggleButton>
         <ToggleButton value="IN_USE" data-testid="filter-in-use">
-          With farmers ({inUse.length})
+          {usersOnly ? 'With users' : 'With farmers'} ({inUse.length})
         </ToggleButton>
       </ToggleButtonGroup>
 
