@@ -797,10 +797,11 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
 @router.post("/login-password", response_model=LoginResponse)
 def login_password(req: LoginPasswordRequest, db: Session = Depends(get_db)):
     clean_phone = req.phone_number.strip().replace(" ", "")
+    # If the same number was ever stored in two forms (with and without +91), the one that has a password is the one to sign in to.
     user = db.query(User).filter(
         (User.phone.in_(get_phone_variants(clean_phone))) |
         (User.phone_number.in_(get_phone_variants(clean_phone)))
-    ).first()
+    ).order_by(User.password_hash.is_(None), User.created_at.desc()).first()
     return _password_sign_in(
         db, req, user, _login_fail_key(clean_phone), "Incorrect mobile number or password. Please check and try again."
     )

@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
-from app.core.phone import india_phone, normalize_phone
+from app.core.phone import get_phone_variants, india_phone, normalize_phone
 from app.core.scope import in_subtree, path_in_scope
 from app.database import get_db
 from app.models import AppBrand, AuditLog, Pump
@@ -469,12 +469,13 @@ def create_user(req: UserCreate, current_user: User = Depends(partner_only), db:
         if not phone:
             raise HTTPException(status_code=422, detail="Enter the 10-digit mobile number of the person you are adding.")
     else:
-        phone = normalize_phone(req.phone_number or req.phone or "") or None
+        # An Indian mobile number is always stored in one form ("+91" and ten digits), so the same real number can never be two accounts.
+        phone = india_phone(req.phone_number or req.phone or "") or normalize_phone(req.phone_number or req.phone or "") or None
 
     email = req.email.lower().strip() if req.email else None
     if email and db.query(User.id).filter(User.email == email).first():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That phone number or email is already registered.")
-    if phone and db.query(User.id).filter((User.phone == phone) | (User.phone_number == phone)).first():
+    if phone and db.query(User.id).filter(User.phone.in_(get_phone_variants(phone)) | User.phone_number.in_(get_phone_variants(phone))).first():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That phone number or email is already registered.")
 
     # No WhatsApp/SMS code is asked for: it costs money. A distributor or dealer proves they are the person by holding the QR and typing the

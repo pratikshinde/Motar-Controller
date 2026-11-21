@@ -126,6 +126,33 @@ class TestNoDistributorsOrDealers(BrandBase):
         r = self.create(headers, "dealer")
         self.assertEqual(r.status_code, 201, r.text)
 
+    def test_the_same_number_is_never_two_accounts_and_signs_in_with_its_password(self):
+        brand = self.make_brand(admin_login="email_code", hierarchy="admin_users")
+        headers = self.sign_in_by_code(self.admin_in(brand))
+        number = f"9{uuid.uuid4().int % 10**9:09d}"
+        r = self.create(headers, "customer", password=PASSWORD, phone_number=number)
+        self.assertEqual(r.status_code, 201, r.text)
+        self.assertEqual(r.json()["user"]["phone_number"], "+91" + number, "stored in the one +91 form")
+        again = self.create(headers, "customer", password=PASSWORD, phone_number="+91 " + number)
+        self.assertEqual(again.status_code, 409, "the same number typed another way is refused")
+        ok = client.post(f"{API}/login-password", json={"phone_number": number, "password": PASSWORD})
+        self.assertEqual(ok.status_code, 200, ok.text)
+
+    def test_sign_in_prefers_the_account_that_has_a_password(self):
+        number = f"9{uuid.uuid4().int % 10**9:09d}"
+        brand = self.make_brand()
+        old = User(id=uuid.uuid4(), full_name="Old form", phone="+91" + number, phone_number="+91" + number, role="customer", hierarchy_path="/x", is_active=True, account_status="ACTIVE")
+        new = User(id=uuid.uuid4(), full_name="New form", phone=number, phone_number=number, role="customer", hierarchy_path="/y", is_active=True, account_status="ACTIVE", password_hash=hash_secret(PASSWORD))
+        self.db.add_all([old, new])
+        self.db.commit()
+        type(self).brand_ids.append(brand.id)
+        try:
+            r = client.post(f"{API}/login-password", json={"phone_number": number, "password": PASSWORD})
+            self.assertEqual(r.status_code, 200, r.text)
+        finally:
+            self.db.query(User).filter(User.id.in_([old.id, new.id])).delete(synchronize_session=False)
+            self.db.commit()
+
     def test_the_rule_helper(self):
         brand = self.make_brand(hierarchy="admin_users")
         admin = self.admin_in(brand)
