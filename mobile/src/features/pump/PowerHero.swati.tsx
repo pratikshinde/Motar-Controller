@@ -271,7 +271,8 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
             <Text style={styles.lastUpdatedText}>{t('swati.lastUpdated', { when: lastSeen })}</Text>
           ) : null}
 
-          {/* Start/Stop Tactile Control Button */}
+          {/* Start/Stop Tactile Control Button. A solar device is monitored only: its logger reads the drive and cannot start or stop it. */}
+          {!isSolar ? (
           <TouchableOpacity
             testID="power-button"
             style={[
@@ -293,8 +294,9 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
               {pumpOn ? t('swati.stopPump') : t('swati.startPump')}
             </Text>
           </TouchableOpacity>
+          ) : null}
 
-          {cooldownLeft > 0 ? (
+          {cooldownLeft > 0 && !isSolar ? (
             <View style={styles.cooldownPill}>
               <Text style={styles.cooldownNotice}>
                 ⏳ {t('swati.nextCommandIn', { seconds: cooldownLeft })}
@@ -322,6 +324,7 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
           <ChevronRight size={16} color="#CBD5E1" />
         </TouchableOpacity>
 
+        {!isSolar ? (
         <TouchableOpacity
           style={styles.statCard}
           onPress={onOpenTimer}
@@ -337,6 +340,7 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
           </View>
           <ChevronRight size={16} color="#CBD5E1" />
         </TouchableOpacity>
+        ) : null}
       </View>
 
       {/* 4. High-Tech Solar VFD Inverter Cockpit (Swati Solar Pumps) */}

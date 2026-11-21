@@ -403,6 +403,7 @@ export const LiveTab: React.FC<{
       <Card>
         <CardTitle icon={TimerIcon} title={t('dashboard.quickActions')} />
         <View style={styles.quickGrid}>
+          {!isSolar && (<>
           <TouchableOpacity
             style={[styles.quickBtn, { backgroundColor: colors.primarySoft }, (powerDisabled || pumpOn) && styles.quickBtnDisabled]}
             onPress={() => setTarget('START')}
@@ -429,6 +430,7 @@ export const LiveTab: React.FC<{
             <TimerIcon size={20} color={skin(colors.primary, colors.water)} />
             <Text style={[styles.quickBtnText, { color: skin(colors.primary, colors.water) }]}>{t('dashboard.viewTimer')}</Text>
           </TouchableOpacity>
+          </>)}
           <TouchableOpacity
             style={[styles.quickBtn, { backgroundColor: skin(colors.primarySoft, colors.purpleSoft) }]}
             onPress={onOpenHistory}

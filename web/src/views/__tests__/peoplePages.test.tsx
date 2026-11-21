@@ -281,6 +281,20 @@ describe('the dashboard of an admin, a distributor or a dealer', () => {
     expect(screen.getByTestId('tile-gsm')).toHaveTextContent('of 6 on GSM');
   });
 
+  it('shows devices and users only, with no distributors, dealers or Hierarchy, in a users-only brand', async () => {
+    mocks.fetchMyBrand.mockResolvedValue({ brand: { key: 'swati', name: 'SolarLogger', short_name: null, primary_color: null, logo_url: null, hierarchy: 'admin_users' } });
+    open();
+    expect(await screen.findByText('Devices running')).toBeInTheDocument();
+    expect(screen.getByTestId('tile-running')).toHaveTextContent('of 8 devices');
+    expect(screen.getByTestId('tile-farmers')).toHaveTextContent('Users');
+    expect(screen.queryByTestId('tile-distributors')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tile-dealers')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('open-hierarchy')).not.toBeInTheDocument();
+    expect(screen.queryByText(/distributor/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/farmer/i)).not.toBeInTheDocument();
+    expect(screen.getByText('Devices per user')).toBeInTheDocument();
+  });
+
   it('has a Hierarchy button for the admin and a distributor, and not for a dealer', async () => {
     const first = open();
     await userEvent.click(await screen.findByTestId('open-hierarchy'));

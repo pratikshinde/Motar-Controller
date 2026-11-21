@@ -15,6 +15,7 @@ import { fetchTeam, type Team } from '../../api/team';
 import { useAuth } from '../../context/AuthContext';
 import { ChartCard, STATUS_COLORS, StatTile, monthName, statusSlices } from '../../components/platform/platformUi';
 import { useLiveRefresh } from '../../hooks/useLiveRefresh';
+import { useBrandRules } from '../../hooks/useBrandRules';
 
 const REFRESH_MS = 30_000;
 
@@ -24,6 +25,9 @@ export const ManagerDashboardView: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const role = user?.role;
+  // A brand where the admin has users only (SolarLogger): devices and users, no distributors, dealers or hierarchy.
+  const { usersOnly: brandUsersOnly } = useBrandRules();
+  const usersOnly = brandUsersOnly && role === 'manufacturer';
   const [team, setTeam] = useState<Team | null>(null);
   const [error, setError] = useState('');
 
@@ -55,16 +59,18 @@ export const ManagerDashboardView: React.FC = () => {
   const s = team.summary;
   const slices = statusSlices(s.pumps);
   // The bar graph compares the people one level down: the admin's distributors, a distributor's dealers, a dealer's farmers.
-  const belowRole = role === 'manufacturer' ? 'distributor' : role === 'distributor' ? 'dealer' : 'customer';
-  const belowLabel = belowRole === 'distributor' ? 'distributor' : belowRole === 'dealer' ? 'dealer' : 'farmer';
+  const belowRole = usersOnly ? 'customer' : role === 'manufacturer' ? 'distributor' : role === 'distributor' ? 'dealer' : 'customer';
+  const belowLabel = belowRole === 'distributor' ? 'distributor' : belowRole === 'dealer' ? 'dealer' : usersOnly ? 'user' : 'farmer';
+  const thing = usersOnly ? 'devices' : 'pumps';
+  const Thing = usersOnly ? 'Devices' : 'Pumps';
   const below = team.people.filter(p => p.role === belowRole && p.above.length === 0).sort((a, b) => b.pumps.total - a.pumps.total).slice(0, 8);
 
   const tiles = [
-    <StatTile key="running" testId="tile-running" icon={PlayCircleIcon} label="Pumps running" value={s.pumps.running} color={STATUS_COLORS.running} hint={`of ${s.pumps.total} pumps`} />,
-    role === 'manufacturer' && <StatTile key="d" testId="tile-distributors" icon={WarehouseIcon} label="Distributors" value={s.distributors} color="#7C9CFF" />,
-    role !== 'dealer' && <StatTile key="dl" testId="tile-dealers" icon={StorefrontIcon} label="Dealers" value={s.dealers} color="#C58BF2" />,
-    <StatTile key="f" testId="tile-farmers" icon={AgricultureIcon} label="Farmers" value={s.farmers} color={theme.palette.success.main} />,
-    <StatTile key="g" testId="tile-gsm" icon={SignalCellularAltIcon} label="GSM pumps running" value={s.gsm_online} color="#3bb8d9" hint={`of ${s.gsm_pumps} on GSM`} />
+    <StatTile key="running" testId="tile-running" icon={PlayCircleIcon} label={`${Thing} running`} value={s.pumps.running} color={STATUS_COLORS.running} hint={`of ${s.pumps.total} ${thing}`} />,
+    role === 'manufacturer' && !usersOnly && <StatTile key="d" testId="tile-distributors" icon={WarehouseIcon} label="Distributors" value={s.distributors} color="#7C9CFF" />,
+    role !== 'dealer' && !usersOnly && <StatTile key="dl" testId="tile-dealers" icon={StorefrontIcon} label="Dealers" value={s.dealers} color="#C58BF2" />,
+    <StatTile key="f" testId="tile-farmers" icon={AgricultureIcon} label={usersOnly ? 'Users' : 'Farmers'} value={s.farmers} color={theme.palette.success.main} />,
+    <StatTile key="g" testId="tile-gsm" icon={SignalCellularAltIcon} label={usersOnly ? 'Devices online' : 'GSM pumps running'} value={s.gsm_online} color="#3bb8d9" hint={`of ${s.gsm_pumps} on GSM`} />
   ].filter(Boolean);
   if (role === 'dealer') tiles.unshift(<StatTile key="p" testId="tile-pumps" icon={InventoryIcon} label="Pumps" value={s.pumps.total} color={theme.palette.warning.main} />);
 
@@ -79,7 +85,7 @@ export const ManagerDashboardView: React.FC = () => {
             Everything under you, at a glance.
           </Typography>
         </Box>
-        {(role === 'manufacturer' || role === 'distributor') && (
+        {(role === 'manufacturer' || role === 'distributor') && !usersOnly && (
           <Button variant="contained" startIcon={<AccountTreeIcon />} onClick={() => navigate('/hierarchy')} data-testid="open-hierarchy">
             Hierarchy
           </Button>
@@ -89,17 +95,17 @@ export const ManagerDashboardView: React.FC = () => {
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: `repeat(${tiles.length}, 1fr)` } }}>{tiles}</Box>
 
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
-        <ChartCard title="Pumps by state" testId="chart-status">
+        <ChartCard title={`${Thing} by state`} testId="chart-status">
           {slices.length === 0 ? (
             <Typography color="text.secondary" sx={{ py: 6, textAlign: 'center' }}>
-              No pumps yet.
+              No {thing} yet.
             </Typography>
           ) : (
             <PieChart height={260} series={[{ data: slices, innerRadius: 60, paddingAngle: 2, cornerRadius: 4 }]} />
           )}
         </ChartCard>
 
-        <ChartCard title={`Pumps per ${belowLabel}`} testId="chart-below">
+        <ChartCard title={`${Thing} per ${belowLabel}`} testId="chart-below">
           {below.length === 0 ? (
             <Typography color="text.secondary" sx={{ py: 6, textAlign: 'center' }}>
               No {belowLabel}s yet.
@@ -109,7 +115,7 @@ export const ManagerDashboardView: React.FC = () => {
               height={260}
               xAxis={[{ data: below.map(p => p.full_name.split(/\s+/)[0]), scaleType: 'band' }]}
               series={[
-                { data: below.map(p => p.pumps.total), label: 'Pumps', color: theme.palette.info.main },
+                { data: below.map(p => p.pumps.total), label: Thing, color: theme.palette.info.main },
                 { data: below.map(p => p.pumps.running), label: 'Running', color: STATUS_COLORS.running }
               ]}
             />
@@ -117,11 +123,11 @@ export const ManagerDashboardView: React.FC = () => {
         </ChartCard>
       </Box>
 
-      <ChartCard title="New pumps, last 6 months" testId="chart-monthly">
+      <ChartCard title={`New ${thing}, last 6 months`} testId="chart-monthly">
         <BarChart
           height={240}
           xAxis={[{ data: s.monthly_pumps.map(m => monthName(m.month)), scaleType: 'band' }]}
-          series={[{ data: s.monthly_pumps.map(m => m.pumps), label: 'Pumps added', color: theme.palette.primary.main }]}
+          series={[{ data: s.monthly_pumps.map(m => m.pumps), label: `${Thing} added`, color: theme.palette.primary.main }]}
         />
       </ChartCard>
     </Box>
