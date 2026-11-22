@@ -66,7 +66,12 @@ def _dispatch(cid: uuid.UUID) -> List[Announcement]:
             cs.advance(db, cmd, cs.EXPIRED, reason="not_sent_in_time")
         else:
             try:
-                get_publisher().publish(command_topic(cmd.pump_id), _message_for(db, cmd))
+                message = _message_for(db, cmd)
+                # A SolarLogger gets START/STOP at QoS 0: the broker must never keep one for it while it is offline and send it again later ("on" a pump that nobody asked for now).
+                if "cmd" not in message:
+                    get_publisher().publish(command_topic(cmd.pump_id), message, qos=0)
+                else:
+                    get_publisher().publish(command_topic(cmd.pump_id), message)
             except PublishError as exc:
                 cs.advance(db, cmd, cs.FAILED, reason=exc.code)
             else:

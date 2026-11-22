@@ -61,7 +61,7 @@ def build_envelope(cmd) -> Dict[str, Any]:
 
 
 class Publisher(Protocol):
-    def publish(self, topic: str, message: Dict[str, Any]) -> None:
+    def publish(self, topic: str, message: Dict[str, Any], qos: int = 1) -> None:
         """Hands `message` to the broker. Raises PublishError if the broker did not take it."""
 
 
@@ -95,10 +95,10 @@ class AwsIotPublisher:
                 raise PublishError("publisher_unavailable", str(exc)) from exc
         return self._client
 
-    def publish(self, topic: str, message: Dict[str, Any]) -> None:
+    def publish(self, topic: str, message: Dict[str, Any], qos: int = 1) -> None:
         client = self._get_client()
         try:
-            client.publish(topic=topic, qos=1, payload=json.dumps(message, separators=(",", ":")))
+            client.publish(topic=topic, qos=qos, payload=json.dumps(message, separators=(",", ":")))
         except Exception as exc:  # botocore ClientError, NoCredentialsError, EndpointConnectionError ...
             logger.error("AWS IoT publish to %s failed: %s", topic, exc)
             raise PublishError("publish_failed", str(exc)) from exc
@@ -107,7 +107,7 @@ class AwsIotPublisher:
 class OutboxPublisher:
     """Development: the broker is the database. The simulator collects SENT commands over HTTP."""
 
-    def publish(self, topic: str, message: Dict[str, Any]) -> None:
+    def publish(self, topic: str, message: Dict[str, Any], qos: int = 1) -> None:
         logger.info("Outbox: %s <- %s", topic, message)
 
 
@@ -121,13 +121,16 @@ class BothPublisher:
         self._aws = aws or AwsIotPublisher()
         self._outbox = OutboxPublisher()
 
-    def publish(self, topic: str, message: Dict[str, Any]) -> None:
-        self._aws.publish(topic, message)
-        self._outbox.publish(topic, message)
+    def publish(self, topic: str, message: Dict[str, Any], qos: int = 1) -> None:
+        if qos == 1:
+            self._aws.publish(topic, message)
+        else:
+            self._aws.publish(topic, message, qos)
+        self._outbox.publish(topic, message, qos)
 
 
 class DisabledPublisher:
-    def publish(self, topic: str, message: Dict[str, Any]) -> None:
+    def publish(self, topic: str, message: Dict[str, Any], qos: int = 1) -> None:
         raise PublishError("publisher_disabled", "IOT_PUBLISH_MODE is off: no command channel to pumps is configured")
 
 
