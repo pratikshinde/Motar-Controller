@@ -6,9 +6,8 @@ from an ack / reading / sweep, is announced to WebSocket subscribers as a `comma
 
 Device-side command contract:
 - AC_3PH: START / STOP activates/deactivates the pump contactor.
-- SOLAR_VFD: START = write 0001h to Fuji FRENIC-Ace S06 (run command FWD).
-             STOP  = write 0000h to Fuji FRENIC-Ace S06 (stop command).
-  Device firmware carries out the Modbus RTU communication over Port 2 (DX+/DX-) with H30=6.
+- SOLAR_VFD: START/STOP switch the logger's RTS output pin (HIGH = pump ON, LOW = OFF) that drives the VFD start terminal; the logger answers with a CMD_ACK.
+             (see SolarLogger_M66/SOLAR_LOGGER.md, "Pump ON / OFF").
   The platform uses the exact same command types ("START", "STOP") and lifecycle.
 """
 from __future__ import annotations
@@ -47,6 +46,15 @@ async def announce(items: Iterable[Announcement]) -> None:
             logger.exception("Could not announce command %s", event.get("cid"))
 
 
+def _message_for(db, cmd: Command) -> dict:
+    """What the device receives. A SolarLogger (M66 module) gets only the first ~58 bytes of a downlink, and its topic already uses 49 of them,
+    so START / STOP go as {"on":1} / {"on":0}; the command is settled by the next reading that shows the state. Everything else: the full envelope."""
+    pump = db.query(Pump).filter(Pump.id == cmd.pump_id).first()
+    if pump is not None and (pump.device_type or "") == "SOLAR_VFD" and cmd.action in ("START", "STOP"):
+        return {"on": 1 if cmd.action == "START" else 0}
+    return build_envelope(cmd)
+
+
 def _dispatch(cid: uuid.UUID) -> List[Announcement]:
     with system_session() as db:
         cmd = db.query(Command).filter(Command.cid == cid).with_for_update().first()
@@ -56,7 +64,7 @@ def _dispatch(cid: uuid.UUID) -> List[Announcement]:
             cs.advance(db, cmd, cs.EXPIRED, reason="not_sent_in_time")
         else:
             try:
-                get_publisher().publish(command_topic(cmd.pump_id), build_envelope(cmd))
+                get_publisher().publish(command_topic(cmd.pump_id), _message_for(db, cmd))
             except PublishError as exc:
                 cs.advance(db, cmd, cs.FAILED, reason=exc.code)
             else:

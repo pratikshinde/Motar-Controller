@@ -55,6 +55,9 @@ export interface PowerHeroProps {
   onSelectPump?: () => void;
   onOpenTimer?: () => void;
   onOpenHistory?: () => void;
+  /** A solar device has its own Start and Stop buttons (its logger switches the drive's start terminal). */
+  onStart?: () => void;
+  onStop?: () => void;
 }
 
 const kwText = (kw: number): string => (Math.round(kw * 10) / 10).toFixed(1);
@@ -79,6 +82,8 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
   onSelectPump,
   onOpenTimer,
   onOpenHistory,
+  onStart,
+  onStop,
 }) => {
   const { t } = useTranslation();
   const kind = heroKind({ state, pending, isSolar, faultCode });
@@ -271,7 +276,7 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
             <Text style={styles.lastUpdatedText}>{t('swati.lastUpdated', { when: lastSeen })}</Text>
           ) : null}
 
-          {/* Start/Stop Tactile Control Button. A solar device is monitored only: its logger reads the drive and cannot start or stop it. */}
+          {/* Start/Stop Tactile Control Button (a solar device has its own Start and Stop row below) */}
           {!isSolar ? (
           <TouchableOpacity
             testID="power-button"
@@ -296,7 +301,7 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
           </TouchableOpacity>
           ) : null}
 
-          {cooldownLeft > 0 && !isSolar ? (
+          {cooldownLeft > 0 ? (
             <View style={styles.cooldownPill}>
               <Text style={styles.cooldownNotice}>
                 ⏳ {t('swati.nextCommandIn', { seconds: cooldownLeft })}
@@ -305,6 +310,34 @@ export const PowerHeroSwati: React.FC<PowerHeroProps> = ({
           ) : null}
         </View>
       )}
+
+      {/* Start and Stop of a solar device: always there (greyed out while it cannot be reached or is working on the last command) */}
+      {isSolar && kind !== 'starting' && kind !== 'stopping' ? (
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+          <TouchableOpacity
+            testID="start-button"
+            style={[styles.mainActionButton, styles.btnGreen, { flex: 1 }, (disabled || pumpOn) && { opacity: 0.45 }]}
+            onPress={onStart ?? onPower}
+            disabled={disabled || pumpOn}
+            activeOpacity={0.88}
+            accessibilityRole="button"
+          >
+            <Play size={20} color="#FFFFFF" fill="#FFFFFF" style={{ marginEnd: 8 }} />
+            <Text style={styles.btnText}>{t('swati.startPump')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="stop-button"
+            style={[styles.mainActionButton, styles.btnRed, { flex: 1 }, (disabled || !pumpOn) && { opacity: 0.45 }]}
+            onPress={onStop ?? onPower}
+            disabled={disabled || !pumpOn}
+            activeOpacity={0.88}
+            accessibilityRole="button"
+          >
+            <Square size={20} color="#FFFFFF" fill="#FFFFFF" style={{ marginEnd: 8 }} />
+            <Text style={styles.btnText}>{t('swati.stopPump')}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       {/* 3. Quick Stats Cards (Runtime & Timer) */}
       <View style={styles.bottomStatsRow}>
