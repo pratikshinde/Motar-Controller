@@ -51,9 +51,9 @@ def _message_for(db, cmd: Command) -> dict:
     so START / STOP go as {"on":1} / {"on":0}; the command is settled by the next reading that shows the state. Everything else: the full envelope."""
     pump = db.query(Pump).filter(Pump.id == cmd.pump_id).first()
     if pump is not None and (pump.device_type or "") == "SOLAR_VFD" and cmd.action in ("START", "STOP"):
-        # Exactly 9 characters ({"on":10} / {"on":-1}): with the 49-byte topic prefix that is the 58 bytes the module hands over. A shorter message
-        # ({"on":1}, 57 bytes) reset the module. The firmware reads the first digit: 1 = START, anything else = STOP.
-        return {"on": 10 if cmd.action == "START" else -1}
+        # The module resets when a message FITS in its 58-byte receive window, and copes when it is cut off. So the message is longer than that:
+        # {"on":1,"p":"------------------------"}; only its first part ({"on":1,") reaches the firmware, which reads "on":1 / "on":0 from the raw text.
+        return {"on": 1 if cmd.action == "START" else 0, "p": "------------------------"}
     return build_envelope(cmd)
 
 

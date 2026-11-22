@@ -39,8 +39,8 @@ def cmd(action):
 class TestSolarCommandMessage(unittest.TestCase):
     def test_start_and_stop_are_the_short_form_for_a_solar_logger(self):
         db = FakeDb(FakePump("SOLAR_VFD"))
-        self.assertEqual(command_dispatch._message_for(db, cmd("START")), {"on": 10})
-        self.assertEqual(command_dispatch._message_for(db, cmd("STOP")), {"on": -1})
+        self.assertEqual(command_dispatch._message_for(db, cmd("START"))["on"], 1)
+        self.assertEqual(command_dispatch._message_for(db, cmd("STOP"))["on"], 0)
 
     def test_it_fits_in_what_the_module_hands_over(self):
         import json
@@ -48,9 +48,8 @@ class TestSolarCommandMessage(unittest.TestCase):
         prefix = len("\r\n+QMTRECV: 0,1,") + len(topic) + 1
         for action in ("START", "STOP"):
             payload = json.dumps(command_dispatch._message_for(FakeDb(FakePump("SOLAR_VFD")), cmd(action)), separators=(",", ":"))
-            self.assertEqual(prefix + len(payload), 58, action)
-        return
-        self.assertEqual(prefix + len(payload), 58, "exactly what the module hands over: shorter reset it, longer is cut")
+            self.assertGreater(prefix + len(payload), 58, action)
+            self.assertTrue(payload.startswith('{"on":%d,"' % (1 if action == "START" else 0)), payload)
 
     def test_other_devices_and_other_commands_keep_the_full_envelope(self):
         for pump, action in ((FakePump("AC_3PH"), "START"), (FakePump("SOLAR_VFD"), "SET_TIMER")):
